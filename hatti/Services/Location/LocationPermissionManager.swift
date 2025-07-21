@@ -43,7 +43,7 @@ final class LocationPermissionManager: NSObject, ObservableObject {
         authorizationStatus = locationManager.authorizationStatus
         isLocationServicesEnabled = CLLocationManager.locationServicesEnabled()
         
-        logger.info("Location manager initialized with status: \(authorizationStatus.description)")
+        logger.info("Location manager initialized with status: \(self.authorizationStatus.description)")
     }
     
     private func checkLocationServicesStatus() {
@@ -219,7 +219,7 @@ extension LocationPermissionManager: CLLocationManagerDelegate {
         Task { @MainActor in
             guard let location = locations.last else { return }
             
-            logger.info("Location updated: \(location.coordinate)")
+            logger.info("Location updated: \(location.coordinate.latitude), \(location.coordinate.longitude)")
             
             // Stop location updates and timer
             locationManager.stopUpdatingLocation()
@@ -264,7 +264,7 @@ extension LocationPermissionManager: CLLocationManagerDelegate {
                     locationError = .networkError
                 case .locationUnknown:
                     locationError = .locationUnavailable
-                case .timeout:
+                case .network:
                     locationError = .timeout
                 default:
                     locationError = .unknown

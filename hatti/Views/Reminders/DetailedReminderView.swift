@@ -103,7 +103,9 @@ struct DetailedReminderView: View {
             customNavigationBar
         }
         .confirmationDialog("Delete Reminder", isPresented: $showingDeleteConfirmation) {
-            deleteConfirmationDialog
+            deleteConfirmationDialogButtons()
+        } message: {
+            Text("This action cannot be undone. The reminder and all its history will be permanently deleted.")
         }
         .sheet(isPresented: $showingShareSheet) {
             ShareReminderView(reminder: reminder)
@@ -208,10 +210,9 @@ struct DetailedReminderView: View {
                     // Weather icon and temperature
                     HStack(spacing: 20) {
                         // Weather icon
-                        Image(systemName: currentWeather.weatherIconName)
-                            .font(.system(size: 60))
-                            .foregroundStyle(currentWeather.weatherIconColor)
-                            .symbolRenderingMode(.hierarchical)
+                        Image(systemName: currentWeather.weatherCondition.icon)
+                            .font(.title2)
+                            .foregroundColor(.primary)
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text("\(Int(currentWeather.temperature))°")
@@ -510,7 +511,7 @@ struct DetailedReminderView: View {
     
     // MARK: - Delete Confirmation Dialog
     
-    private var deleteConfirmationDialog: some View {
+    private func deleteConfirmationDialogButtons() -> some View {
         Group {
             Button("Delete", role: .destructive) {
                 viewModel.deleteReminder()
@@ -518,8 +519,6 @@ struct DetailedReminderView: View {
             }
             
             Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("This action cannot be undone. The reminder and all its history will be permanently deleted.")
         }
     }
     

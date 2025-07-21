@@ -360,13 +360,12 @@ struct ReadOnlyNotificationSettingsView: View {
                     }
                     
                     HStack {
-                        if config.enableBadge {
-                            Label("Badge", systemImage: "app.badge")
-                                .font(.caption2)
-                                .foregroundColor(.blue)
-                        }
+                        // Badge feature not implemented yet
+                        Label("Badge", systemImage: "app.badge")
+                            .font(.caption2)
+                            .foregroundColor(.blue)
                         
-                        if config.enableSound {
+                        if config.customSound != nil {
                             Label("Sound", systemImage: "speaker.wave.2")
                                 .font(.caption2)
                                 .foregroundColor(.blue)
@@ -445,16 +444,23 @@ struct ReadOnlyLocationView: View {
                 .foregroundColor(.blue)
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(location?.name ?? "Current Location")
+                Text(location?.displayName ?? "Current Location")
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
                 
-                if let address = location?.address {
-                    Text(address)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
+                if let location = location {
+                    let addressComponents = [location.city, location.state, location.country].filter { !$0.isEmpty }
+                    if !addressComponents.isEmpty {
+                        Text(addressComponents.joined(separator: ", "))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                    } else {
+                        Text("Using device location")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 } else {
                     Text("Using device location")
                         .font(.caption)
@@ -506,7 +512,7 @@ struct TriggerHistoryTimeline: View {
             
             Text("History will appear here when the reminder triggers")
                 .font(.caption)
-                .foregroundColor(.tertiary)
+                .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -564,7 +570,7 @@ struct TriggerHistoryRow: View {
                 
                 Text(entry.timestamp, format: .dateTime.weekday().month().day())
                     .font(.caption2)
-                    .foregroundColor(.tertiary)
+                    .foregroundColor(.secondary)
             }
             
             Spacer()
@@ -744,6 +750,20 @@ struct DuplicateReminderView: View {
     }
 }
 
+
+
+// MARK: - Preview
+
+#Preview {
+    let reminder = WeatherReminder(
+        title: "Morning Walk",
+        reminderDescription: "Perfect weather for a refreshing morning walk",
+        category: .exercise
+    )
+    
+    return ShareReminderView(reminder: reminder)
+}
+
 // MARK: - Extensions
 
 extension ComparisonType {
@@ -769,24 +789,4 @@ extension TriggerType {
         case .historicalComparison: return "Historical"
         }
     }
-}
-
-// MARK: - Preview
-
-#Preview {
-    let reminder = WeatherReminder(
-        title: "Morning Walk",
-        reminderDescription: "Perfect weather for a refreshing morning walk",
-        category: .exercise
-    )
-    
-    return DetailedReminderView(reminder: reminder)
-        .modelContainer(for: [
-            WeatherReminder.self,
-            TriggerCondition.self,
-            LocationData.self,
-            WeatherData.self,
-            ReminderHistory.self,
-            NotificationConfig.self
-        ], inMemory: true)
 }

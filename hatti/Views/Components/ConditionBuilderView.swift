@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Condition Builder View
 struct ConditionBuilderView: View {
-    @State private var condition = WeatherConditionBuilder()
+    @State private var condition = WeatherConditionBuilderModel()
     
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -25,7 +25,7 @@ struct ConditionBuilderView: View {
 }
 
 // MARK: - Data Model
-struct WeatherConditionBuilder {
+struct WeatherConditionBuilderModel {
     enum ConditionType: String, CaseIterable, Identifiable {
         case exact = "Exact"
         case range = "Range"
@@ -45,14 +45,14 @@ struct WeatherConditionBuilder {
 
 // MARK: - Subcomponents
 struct ConditionTypePicker: View {
-    @Binding var selection: WeatherConditionBuilder.ConditionType
+    @Binding var selection: WeatherConditionBuilderModel.ConditionType
     
     var body: some View {
         VStack(alignment: .leading) {
             Text("Condition Type")
                 .font(.headline)
             Picker("Condition Type", selection: $selection) {
-                ForEach(WeatherConditionBuilder.ConditionType.allCases) { type in
+                ForEach(WeatherConditionBuilderModel.ConditionType.allCases) { type in
                     Text(type.rawValue).tag(type)
                 }
             }
@@ -63,7 +63,7 @@ struct ConditionTypePicker: View {
 }
 
 struct TemperatureSelector: View {
-    @Binding var condition: WeatherConditionBuilder
+    @Binding var condition: WeatherConditionBuilderModel
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -87,7 +87,7 @@ struct TemperatureSelector: View {
 }
 
 struct TimeOfDayRestriction: View {
-    @Binding var condition: WeatherConditionBuilder
+    @Binding var condition: WeatherConditionBuilderModel
 
     var body: some View {
         VStack(alignment: .leading) {
@@ -110,7 +110,7 @@ struct TimeOfDayRestriction: View {
 }
 
 struct PreviewTextView: View {
-    let condition: WeatherConditionBuilder
+    let condition: WeatherConditionBuilderModel
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -136,7 +136,9 @@ struct PreviewTextView: View {
         }
         
         if condition.timeRestrictionEnabled {
-            text += " between \(condition.startTime, style: .time) and \(condition.endTime, style: .time)."
+            let startTimeStr = condition.startTime.formatted(date: .omitted, time: .shortened)
+            let endTimeStr = condition.endTime.formatted(date: .omitted, time: .shortened)
+            text += " between \(startTimeStr) and \(endTimeStr)."
         }
         
         return text

@@ -42,16 +42,17 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     private var modelContext: ModelContext?
     private let locationManager = CLLocationManager()
     private let searchCompleter = MKLocalSearchCompleter()
-    private let geocoder = CLGeocoder()
     private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "LocationManagementViewModel")
     
     private var cancellables = Set<AnyCancellable>()
     private var locationUpdateTimer: Timer?
+    private var timer: Timer?
+    
+    private let locationTimeout: TimeInterval = 15.0
     
     // MARK: - Initialization
     
-    override init() {
-        super.init()
+    init() {
         setupLocationManager()
         setupSearchCompleter()
         setupBindings()
@@ -69,9 +70,9 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     private func setupLocationManager() {
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        authorizationStatus = locationManager.authorizationStatus
+        self.authorizationStatus = locationManager.authorizationStatus
         
-        logger.info("Location manager initialized with status: \(authorizationStatus.description)")
+        self.logger.info("Location manager initialized with status: \(self.authorizationStatus.description)")
     }
     
     private func setupSearchCompleter() {
@@ -82,7 +83,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     private func setupBindings() {
         $searchText
             .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-            .sink { [weak self] searchText in
+            .sink { [weak self] (searchText: String) in
                 self?.performSearch(searchText)
             }
             .store(in: &cancellables)
@@ -149,9 +150,18 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         locationManager.startUpdatingLocation()
         
         // Set timeout for location request
-        locationUpdateTimer = Timer.scheduledTimer(withTimeInterval: 15.0, repeats: false) { [weak self] _ in
-            self?.handleLocationTimeout()
-        }
+        startLocationTimeout()
+    }
+    
+    private func startLocationTimeout() {
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: locationTimeout, repeats: false, block: { [weak self] (_: Timer) in
+            guard let self = self else { return }
+            Task { @MainActor in
+                self.timer?.invalidate()
+                self.handleLocationTimeout()
+            }
+        })
     }
     
     private func handleLocationTimeout() {
@@ -174,7 +184,8 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         currentLocation = location
         updateLocationAccuracy(location)
         
-        // Reverse geocode to get readable name
+        // Reverse geocode to get readable name using CLGeocoder
+        let geocoder = CLGeocoder()
         geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
             DispatchQueue.main.async {
                 if let error = error {
@@ -236,24 +247,27 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     
     private func loadSavedLocations() {
         guard let modelContext = modelContext else { return }
-        
         do {
-            let descriptor = FetchDescriptor<SavedLocation>(
-                sortBy: [SortDescriptor(\SavedLocation.isFavorite, order: .reverse),
-                        SortDescriptor(\SavedLocation.lastUsed, order: .reverse)]
-            )
-            savedLocations = try modelContext.fetch(descriptor)
-            logger.info("Loaded \(savedLocations.count) saved locations")
+            let fetchedLocations = try modelContext.fetch(FetchDescriptor<SavedLocation>())
+            self.savedLocations = fetchedLocations.sorted { lhs, rhs in
+                if lhs.isFavorite != rhs.isFavorite {
+                    return lhs.isFavorite && !rhs.isFavorite
+                }
+                if let lhsLastUsed = lhs.lastUsed, let rhsLastUsed = rhs.lastUsed {
+                    return lhsLastUsed > rhsLastUsed
+                }
+                return false
+            }
+            self.logger.info("Loaded \(self.savedLocations.count) saved locations")
         } catch {
-            logger.error("Failed to load saved locations: \(error.localizedDescription)")
+            self.logger.error("Failed to load saved locations: \(error.localizedDescription)")
         }
     }
     
     func addSavedLocation(_ location: SavedLocation) {
         guard let modelContext = modelContext else { return }
         
-        // Check for duplicates
-        let existingLocation = savedLocations.first { savedLocation in
+        let existingLocation = savedLocations.first { [self] (savedLocation: SavedLocation) -> Bool in
             savedLocation.distance(from: location.clLocation) < 100 // Within 100 meters
         }
         
@@ -295,10 +309,10 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         
         do {
             try modelContext?.save()
-            loadSavedLocations() // Reload to update sorting
-            logger.info("Toggled favorite for location: \(location.name)")
+            self.loadSavedLocations() // Reload to update sorting
+            self.logger.info("Toggled favorite for location: \(location.name)")
         } catch {
-            logger.error("Failed to toggle favorite: \(error.localizedDescription)")
+            self.logger.error("Failed to toggle favorite: \(error.localizedDescription)")
         }
     }
     
@@ -317,22 +331,20 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     
     private func loadLocationHistory() {
         guard let modelContext = modelContext else { return }
-        
         do {
-            let descriptor = FetchDescriptor<LocationHistory>(
-                sortBy: [SortDescriptor(\LocationHistory.timestamp, order: .reverse)]
-            )
+            var descriptor = FetchDescriptor<LocationHistory>()
+            descriptor.sortBy = [SortDescriptor(\LocationHistory.timestamp, order: .reverse)]
             descriptor.fetchLimit = 10 // Last 10 locations
-            locationHistory = try modelContext.fetch(descriptor)
-            logger.info("Loaded \(locationHistory.count) location history entries")
+            let fetchedHistory = try modelContext.fetch(descriptor)
+            self.locationHistory = fetchedHistory
+            self.logger.info("Loaded \(self.locationHistory.count) location history entries")
         } catch {
-            logger.error("Failed to load location history: \(error.localizedDescription)")
+            self.logger.error("Failed to load location history: \(error.localizedDescription)")
         }
     }
     
     private func addToLocationHistory(_ location: CLLocation, name: String, source: LocationSource) {
         guard let modelContext = modelContext else { return }
-        
         let historyEntry = LocationHistory(
             latitude: location.coordinate.latitude,
             longitude: location.coordinate.longitude,
@@ -340,35 +352,30 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
             source: source,
             accuracy: location.horizontalAccuracy
         )
-        
         modelContext.insert(historyEntry)
-        locationHistory.insert(historyEntry, at: 0)
-        
+        self.locationHistory.insert(historyEntry, at: 0)
         // Keep only last 10 entries
-        if locationHistory.count > 10 {
-            let toRemove = Array(locationHistory.dropFirst(10))
+        if self.locationHistory.count > 10 {
+            let toRemove = Array(self.locationHistory.dropFirst(10))
             toRemove.forEach { modelContext.delete($0) }
-            locationHistory = Array(locationHistory.prefix(10))
+            self.locationHistory = Array(self.locationHistory.prefix(10))
         }
-        
         do {
             try modelContext.save()
         } catch {
-            logger.error("Failed to save location history: \(error.localizedDescription)")
+            self.logger.error("Failed to save location history: \(error.localizedDescription)")
         }
     }
     
     func clearLocationHistory() {
         guard let modelContext = modelContext else { return }
-        
-        locationHistory.forEach { modelContext.delete($0) }
-        locationHistory.removeAll()
-        
+        self.locationHistory.forEach { modelContext.delete($0) }
+        self.locationHistory.removeAll()
         do {
             try modelContext.save()
-            logger.info("Cleared location history")
+            self.logger.info("Cleared location history")
         } catch {
-            logger.error("Failed to clear location history: \(error.localizedDescription)")
+            self.logger.error("Failed to clear location history: \(error.localizedDescription)")
         }
     }
     
@@ -389,15 +396,17 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         let request = MKLocalSearch.Request(completion: completion)
         let search = MKLocalSearch(request: request)
         
-        search.start { [weak self] response, error in
+        search.start { [weak self] (response: MKLocalSearch.Response?, error: Error?) in
             DispatchQueue.main.async {
+                guard let self = self else { return }
+                
                 if let error = error {
-                    self?.logger.error("Search resolution failed: \(error.localizedDescription)")
+                    self.logger.error("Search resolution failed: \(error.localizedDescription)")
                     return
                 }
                 
                 guard let mapItem = response?.mapItems.first else {
-                    self?.logger.warning("No map items found for search result")
+                    self.logger.warning("No map items found for search result")
                     return
                 }
                 
@@ -412,9 +421,9 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
                     source: .search
                 )
                 
-                self?.addSavedLocation(savedLocation)
-                self?.searchText = ""
-                self?.searchResults = []
+                self.addSavedLocation(savedLocation)
+                self.searchText = ""
+                self.searchResults = []
             }
         }
     }
@@ -450,28 +459,28 @@ extension LocationManagementViewModel: CLLocationManagerDelegate {
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         Task { @MainActor in
             let newStatus = manager.authorizationStatus
-            logger.info("Location authorization changed to: \(newStatus.description)")
+            self.logger.info("Location authorization changed to: \(newStatus.description)")
             
-            authorizationStatus = newStatus
+            self.authorizationStatus = newStatus
             
             switch newStatus {
             case .authorizedWhenInUse, .authorizedAlways:
-                locationError = nil
-                getCurrentLocation()
+                self.locationError = nil
+                self.getCurrentLocation()
                 
             case .denied, .restricted:
-                locationError = .permissionDenied
-                currentLocationName = "Location access denied"
-                currentLocationAccuracy = "Unknown"
+                self.locationError = .permissionDenied
+                self.currentLocationName = "Location access denied"
+                self.currentLocationAccuracy = "Unknown"
                 
             case .notDetermined:
-                currentLocationName = "Location permission needed"
-                currentLocationAccuracy = "Unknown"
+                self.currentLocationName = "Location permission needed"
+                self.currentLocationAccuracy = "Unknown"
                 
             @unknown default:
-                locationError = .unknown
-                currentLocationName = "Location unavailable"
-                currentLocationAccuracy = "Unknown"
+                self.locationError = .unknown
+                self.currentLocationName = "Location unavailable"
+                self.currentLocationAccuracy = "Unknown"
             }
         }
     }
@@ -480,65 +489,65 @@ extension LocationManagementViewModel: CLLocationManagerDelegate {
         Task { @MainActor in
             guard let location = locations.last else { return }
             
-            logger.info("Location updated: \(location.coordinate)")
+            self.logger.info("Location updated: \(location.coordinate)")
             
             // Stop location updates and timer
-            locationManager.stopUpdatingLocation()
-            locationUpdateTimer?.invalidate()
-            locationUpdateTimer = nil
-            isLoadingCurrentLocation = false
+            self.locationManager.stopUpdatingLocation()
+            self.locationUpdateTimer?.invalidate()
+            self.locationUpdateTimer = nil
+            self.isLoadingCurrentLocation = false
             
             // Validate location accuracy
             if location.horizontalAccuracy < 0 {
-                logger.warning("Invalid location accuracy: \(location.horizontalAccuracy)")
-                locationError = .inaccurateLocation
+                self.logger.warning("Invalid location accuracy: \(location.horizontalAccuracy)")
+                self.locationError = .inaccurateLocation
                 return
             }
             
             // Check if location is too old (more than 5 minutes)
             if abs(location.timestamp.timeIntervalSinceNow) > 300 {
-                logger.warning("Location timestamp is too old: \(location.timestamp)")
-                locationError = .staleLocation
+                self.logger.warning("Location timestamp is too old: \(location.timestamp)")
+                self.locationError = .staleLocation
                 return
             }
             
-            processLocationUpdate(location)
-            locationError = nil
+            self.processLocationUpdate(location)
+            self.locationError = nil
             
-            logger.info("Successfully obtained current location with accuracy: \(location.horizontalAccuracy)m")
+            self.logger.info("Successfully obtained current location with accuracy: \(location.horizontalAccuracy)m")
         }
     }
     
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor in
-            logger.error("Location manager failed with error: \(error.localizedDescription)")
+            self.logger.error("Location manager failed with error: \(error.localizedDescription)")
             
-            locationManager.stopUpdatingLocation()
-            locationUpdateTimer?.invalidate()
-            locationUpdateTimer = nil
-            isLoadingCurrentLocation = false
+            self.locationManager.stopUpdatingLocation()
+            self.locationUpdateTimer?.invalidate()
+            self.locationUpdateTimer = nil
+            self.isLoadingCurrentLocation = false
             
             if let clError = error as? CLError {
                 switch clError.code {
                 case .denied:
-                    locationError = .permissionDenied
-                    currentLocationName = "Location access denied"
+                    self.locationError = .permissionDenied
+                    self.currentLocationName = "Location access denied"
                 case .network:
-                    locationError = .networkError
-                    currentLocationName = "Network error"
+                    self.locationError = .networkError
+                    self.currentLocationName = "Network error"
                 case .locationUnknown:
-                    locationError = .locationUnavailable
-                    currentLocationName = "Location unavailable"
+                    self.locationError = .locationUnavailable
+                    self.currentLocationName = "Location unavailable"
                 default:
-                    locationError = .unknown
-                    currentLocationName = "Location error"
+                    self.locationError = .unknown
+                    self.currentLocationName = "Location error"
                 }
             } else {
-                locationError = .unknown
-                currentLocationName = "Location error"
+                self.locationError = .unknown
+                self.currentLocationName = "Location error"
             }
             
-            currentLocationAccuracy = "Unknown"
+            self.currentLocationAccuracy = "Unknown"
         }
     }
 }
@@ -547,14 +556,18 @@ extension LocationManagementViewModel: CLLocationManagerDelegate {
 
 extension LocationManagementViewModel: MKLocalSearchCompleterDelegate {
     
-    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
-        searchResults = completer.results
-        isSearching = false
+    nonisolated func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        Task { @MainActor in
+            self.searchResults = completer.results
+            self.isSearching = false
+        }
     }
     
-    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
-        logger.error("Search completer failed: \(error.localizedDescription)")
-        searchResults = []
-        isSearching = false
+    nonisolated func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+        self.logger.error("Search completer failed: \(error.localizedDescription)")
+        Task { @MainActor in
+            self.searchResults = []
+            self.isSearching = false
+        }
     }
 }

@@ -9,7 +9,7 @@ import Foundation
 import SwiftData
 
 @Model
-final class WeatherData: Sendable {
+class WeatherData {
     @Attribute(.unique) var id: UUID = UUID()
     
     // Timestamp and validity
@@ -90,7 +90,7 @@ final class WeatherData: Sendable {
 }
 
 @Model
-final class ForecastDay: Sendable {
+class ForecastDay {
     @Attribute(.unique) var id: UUID = UUID()
     
     // Date for this forecast
@@ -390,3 +390,4 @@ extension WeatherData {
         }
     }
 }
+

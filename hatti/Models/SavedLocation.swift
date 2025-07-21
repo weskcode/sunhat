@@ -95,7 +95,7 @@ extension SavedLocation {
     }
     
     var shortAddress: String {
-        let components = [city, state].compactMap { $0.isEmpty ? nil : $0 }
+        let components = [city, state].filter { !$0.isEmpty }
         return components.joined(separator: ", ")
     }
     

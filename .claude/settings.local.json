@@ -6,7 +6,10 @@
       "Bash(mkdir:*)",
       "Bash(mv:*)",
       "Bash(timeout 45 xcodebuild:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(swift:*)",
+      "Bash(xcrun swiftc:*)",
+      "Bash(awk:*)"
     ],
     "deny": []
   }

@@ -14,7 +14,7 @@ struct ParsedLanguageInfo {
     let originalInput: String
     let extractedTemperature: Double?
     let extractedTemperatureRange: ClosedRange<Double>?
-    let suggestedCategory: ActivityCategory
+    let suggestedCategory: ActivityInterest
     let suggestedTiming: NotificationTiming
     let suggestedTitle: String
     let suggestedMessage: String
@@ -26,15 +26,15 @@ struct SmartSuggestion: Identifiable {
     let title: String
     let description: String
     let naturalLanguageText: String
-    let category: ActivityCategory
+    let category: ActivityInterest
     let temperature: Double
     let temperatureRange: ClosedRange<Double>?
-    let conditionType: ConditionType
+    let conditionType: TriggerType
     let timing: NotificationTiming
     let icon: String
     let color: Color
     
-    init(id: UUID, title: String, description: String, naturalLanguageText: String, category: ActivityCategory, temperature: Double, temperatureRange: ClosedRange<Double>? = nil, conditionType: ConditionType, timing: NotificationTiming, icon: String, color: Color) {
+    init(id: UUID, title: String, description: String, naturalLanguageText: String, category: ActivityInterest, temperature: Double, temperatureRange: ClosedRange<Double>? = nil, conditionType: TriggerType, timing: NotificationTiming, icon: String, color: Color) {
         self.id = id
         self.title = title
         self.description = description
@@ -106,38 +106,6 @@ enum SeasonalTriggerType: String, CaseIterable {
 }
 
 // Note: ActivityCategory moved to UserPreferences.swift as ActivityInterest to avoid redeclaration
-    }
-    
-    var keywords: [String] {
-        switch self {
-        case .none: return []
-        case .general: return ["reminder", "notify", "alert"]
-        case .exercise: return ["exercise", "workout", "gym", "run", "jog", "fitness"]
-        case .gardening: return ["garden", "plant", "water", "prune", "weed", "harvest"]
-        case .outdoor: return ["outdoor", "outside", "picnic", "barbecue", "bbq"]
-        case .maintenance: return ["maintenance", "repair", "fix", "paint", "clean"]
-        case .travel: return ["travel", "trip", "drive", "commute"]
-        case .photography: return ["photo", "picture", "photography", "shoot"]
-        case .sports: return ["sport", "game", "play", "tennis", "golf", "soccer"]
-        case .walking: return ["walk", "stroll", "hike", "dog walk"]
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .none: return .gray
-        case .general: return .blue
-        case .exercise: return .red
-        case .gardening: return .green
-        case .outdoor: return .orange
-        case .maintenance: return .brown
-        case .travel: return .purple
-        case .photography: return .pink
-        case .sports: return .cyan
-        case .walking: return .mint
-        }
-    }
-}
 
 // MARK: - Supporting Views
 
@@ -230,7 +198,7 @@ struct SmartSuggestionCard: View {
 struct VisualTemperatureSlider: View {
     @Binding var value: Double
     @Binding var range: ClosedRange<Double>
-    let conditionType: ConditionType
+    let conditionType: TriggerType
     let temperatureUnit: TemperatureUnit
     
     var body: some View {
@@ -275,7 +243,7 @@ struct VisualTemperatureSlider: View {
             }
             
             // Slider based on condition type
-            if conditionType == .range {
+            if conditionType == .temperatureRange {
                 RangeSlider(
                     range: $range,
                     bounds: 0...110,
@@ -309,7 +277,7 @@ struct VisualTemperatureSlider: View {
 // MARK: - Additional Supporting Views
 
 struct ConditionTypeCard: View {
-    let type: ConditionType
+    let type: TriggerType
     let isSelected: Bool
     let onTap: () -> Void
     
@@ -349,7 +317,7 @@ struct ConditionTypeCard: View {
 }
 
 struct ActivityCategoryCard: View {
-    let category: ActivityCategory
+    let category: ActivityInterest
     let isSelected: Bool
     let onTap: () -> Void
     

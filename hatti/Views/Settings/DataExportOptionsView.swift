@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct DataExportOptionsView: View {
-    @ObservedObject var viewModel: DataPrivacyViewModel
+    @State var viewModel: DataPrivacyViewModel
     @Environment(\.dismiss) private var dismiss
     
     @State private var selectedFormat: ExportFormat = .json

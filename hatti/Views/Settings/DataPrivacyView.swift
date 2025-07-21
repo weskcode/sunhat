@@ -11,7 +11,7 @@ import CloudKit
 
 struct DataPrivacyView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel = DataPrivacyViewModel()
+    @State private var viewModel = DataPrivacyViewModel()
     
     @State private var showingDeleteConfirmation = false
     @State private var showingExportOptions = false

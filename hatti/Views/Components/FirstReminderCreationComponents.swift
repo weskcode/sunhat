@@ -624,7 +624,7 @@ struct ReminderPreviewCard: View {
                 ConditionRow(
                     icon: "clock",
                     title: "Time",
-                    value: reminder.timeRange.displayName,
+                    value: reminder.preferredTimeRange.displayName,
                     color: .orange
                 )
                 

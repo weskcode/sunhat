@@ -169,11 +169,10 @@ final class DataPrivacyViewModel {
             }
             
             // Enable sync in user preferences
-            if let preferences = try await fetchUserPreferences() {
-                // CloudKit sync would be handled by SwiftData automatically
-                cloudKitSyncEnabled = true
-                statusMessage = "iCloud sync enabled"
-            }
+            _ = try await fetchUserPreferences()
+            // CloudKit sync would be handled by SwiftData automatically
+            cloudKitSyncEnabled = true
+            statusMessage = "iCloud sync enabled"
             
         } catch {
             errorMessage = "Failed to enable iCloud sync: \(error.localizedDescription)"
@@ -186,15 +185,10 @@ final class DataPrivacyViewModel {
     func disableCloudKitSync() async {
         isSyncing = true
         
-        do {
-            // This would typically involve configuring the ModelContainer to not use CloudKit
-            // For now, we'll mark it as disabled
-            cloudKitSyncEnabled = false
-            statusMessage = "iCloud sync disabled. Data remains on this device."
-            
-        } catch {
-            errorMessage = "Failed to disable iCloud sync: \(error.localizedDescription)"
-        }
+        // This would typically involve configuring the ModelContainer to not use CloudKit
+        // For now, we'll mark it as disabled
+        cloudKitSyncEnabled = false
+        statusMessage = "iCloud sync disabled. Data remains on this device."
         
         isSyncing = false
     }
@@ -310,8 +304,8 @@ final class DataPrivacyViewModel {
                 "description": reminder.reminderDescription,
                 "category": reminder.category.rawValue,
                 "is_active": reminder.isCurrentlyActive,
-                "created_at": ISO8601DateFormatter().string(from: reminder.createdAt),
-                "updated_at": ISO8601DateFormatter().string(from: reminder.updatedAt),
+                "created_at": ISO8601DateFormatter().string(from: reminder.createdDate),
+                "updated_at": ISO8601DateFormatter().string(from: reminder.lastModified),
                 "trigger_condition": reminder.triggerCondition?.exportData ?? [:],
                 "location": reminder.location?.exportData ?? [:],
                 "notification_config": reminder.notificationConfig?.exportData ?? [:]
@@ -361,8 +355,8 @@ final class DataPrivacyViewModel {
                 escapeCSVField(reminder.reminderDescription),
                 reminder.category.rawValue,
                 reminder.isCurrentlyActive ? "Yes" : "No",
-                DateFormatter.csvFormat.string(from: reminder.createdAt),
-                DateFormatter.csvFormat.string(from: reminder.updatedAt)
+                DateFormatter.csvFormat.string(from: reminder.createdDate),
+                DateFormatter.csvFormat.string(from: reminder.lastModified)
             ].joined(separator: ",")
             
             csvContent += row + "\n"
@@ -568,12 +562,13 @@ extension LocationData {
     var exportData: [String: Any] {
         return [
             "id": id.uuidString,
-            "name": name,
-            "address": address ?? "",
+            "display_name": displayName,
+            "city": city,
+            "state": state,
             "latitude": latitude,
             "longitude": longitude,
-            "country": country ?? "",
-            "timezone": timezone ?? ""
+            "country": country,
+            "timezone": timeZoneIdentifier
         ]
     }
 }
@@ -583,7 +578,7 @@ extension WeatherData {
         return [
             "timestamp": ISO8601DateFormatter().string(from: timestamp),
             "temperature": temperature,
-            "feels_like": feelsLikeTemperature,
+            "feels_like": feelsLike,
             "humidity": humidity,
             "pressure": pressure,
             "visibility": visibility,

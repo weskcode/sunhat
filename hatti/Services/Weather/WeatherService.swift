@@ -88,14 +88,18 @@ actor WeatherServiceActor {
     
     private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "WeatherServiceActor")
     
-    func configure(modelContext: ModelContext, openWeatherMapKey: String? = nil) {
+    func configure(modelContext: ModelContext, openWeatherMapKey: String? = nil) async {
         self.modelContext = modelContext
         
-        // Initialize providers in priority order
-        self.providers = [
-            AppleWeatherKitAPI(),
-            OpenWeatherMapAPI(apiKey: openWeatherMapKey ?? "")
-        ]
+        // Initialize providers in priority order on main actor, then assign to actor property
+        let newProviders = await MainActor.run {
+            return [
+                AppleWeatherKitAPI(),
+                OpenWeatherMapAPI(apiKey: openWeatherMapKey ?? "")
+            ]
+        }
+        
+        self.providers = newProviders as! [any WeatherAPI]
         
         logger.info("WeatherService configured with \(self.providers.count) providers")
     }
@@ -103,7 +107,7 @@ actor WeatherServiceActor {
     func fetchWeatherData(for location: CLLocation, forceRefresh: Bool = false) async throws -> WeatherData {
         // Check cache first unless force refresh is requested
         if !forceRefresh, let cachedData = await getCachedWeatherData(for: location) {
-            logger.debug("Returning cached weather data for location: \(location.coordinate)")
+            logger.debug("Returning cached weather data for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
             return cachedData
         }
         
@@ -173,10 +177,12 @@ actor WeatherServiceActor {
         let maxLon = location.coordinate.longitude + (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
         
         let predicate = #Predicate<WeatherData> { weather in
-            weather.location?.latitude >= minLat &&
-            weather.location?.latitude <= maxLat &&
-            weather.location?.longitude >= minLon &&
-            weather.location?.longitude <= maxLon
+            weather.location?.latitude != nil &&
+            weather.location?.longitude != nil &&
+            weather.location!.latitude >= minLat &&
+            weather.location!.latitude <= maxLat &&
+            weather.location!.longitude >= minLon &&
+            weather.location!.longitude <= maxLon
         }
         
         let descriptor = FetchDescriptor<WeatherData>(
@@ -220,7 +226,7 @@ actor WeatherServiceActor {
         
         do {
             try modelContext.save()
-            logger.debug("Cached weather data for location: \(location.coordinate)")
+            logger.debug("Cached weather data for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
         } catch {
             logger.error("Failed to cache weather data: \(error)")
         }
@@ -315,9 +321,9 @@ actor WeatherServiceActor {
                         
                         do {
                             let _ = try await self.fetchWeatherData(for: location, forceRefresh: true)
-                            self.logger.debug("Background refresh successful for location: \(location.coordinate)")
+                            self.logger.debug("Background refresh successful for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
                         } catch {
-                            self.logger.warning("Background refresh failed for location: \(location.coordinate), error: \(error)")
+                            self.logger.warning("Background refresh failed for location: \(location.coordinate.latitude), \(location.coordinate.longitude), error: \(error)")
                         }
                     }
                 }
@@ -373,3 +379,4 @@ private actor RateLimiter {
         return nil
     }
 }
+

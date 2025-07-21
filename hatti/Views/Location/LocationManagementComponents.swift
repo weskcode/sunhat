@@ -531,12 +531,12 @@ struct LocationMapView: View {
         }
     }
     
-    private var mapAnnotations: [MapAnnotation] {
-        var annotations: [MapAnnotation] = []
+    private var mapAnnotations: [CustomMapAnnotation] {
+        var annotations: [CustomMapAnnotation] = []
         
         // Add current location
         if let currentLocation = viewModel.currentLocation {
-            annotations.append(MapAnnotation(
+            annotations.append(CustomMapAnnotation(
                 coordinate: currentLocation.coordinate,
                 title: "Current",
                 icon: "location.fill",
@@ -546,7 +546,7 @@ struct LocationMapView: View {
         
         // Add saved locations
         for location in viewModel.savedLocations {
-            annotations.append(MapAnnotation(
+            annotations.append(CustomMapAnnotation(
                 coordinate: location.coordinate,
                 title: location.displayName,
                 icon: location.isFavorite ? "heart.fill" : "bookmark.fill",
@@ -588,7 +588,7 @@ struct LocationMapView: View {
     }
 }
 
-struct MapAnnotation: Identifiable {
+struct CustomMapAnnotation: Identifiable {
     let id = UUID()
     let coordinate: CLLocationCoordinate2D
     let title: String

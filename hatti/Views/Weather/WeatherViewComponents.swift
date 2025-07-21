@@ -28,7 +28,7 @@ struct DetailedMetricCard: View {
             }
             
             VStack(alignment: .leading, spacing: 2) {
-                Text(value)
+                            Text(String(format: "%.0f", value))
                     .font(.title3)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
@@ -338,7 +338,7 @@ struct HistoricalComparisonRow: View {
     private var differenceText: String {
         let absValue = abs(difference)
         let direction = difference > 0 ? "warmer" : "cooler"
-        return "\(absValue, specifier: "%.1f")° \(direction)"
+        return "\(String(format: "%.1f", absValue))° \(direction)"
     }
     
     var body: some View {

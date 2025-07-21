@@ -23,6 +23,7 @@ struct SettingsView: View {
     @State private var showingCloudKitInfo = false
     @State private var showingPrivacyPolicy = false
     @State private var showingAbout = false
+    @State private var selectedLocation = ReminderLocation.currentLocation
     
     var body: some View {
         NavigationView {
@@ -65,7 +66,7 @@ struct SettingsView: View {
                 viewModel.configure(modelContext: modelContext)
             }
             .sheet(isPresented: $showingLocationPicker) {
-                LocationPickerView()
+                LocationPickerView(selectedLocation: $selectedLocation)
             }
             .alert("Notification Settings", isPresented: $showingNotificationInfo) {
                 Button("Settings") {
@@ -159,7 +160,7 @@ struct SettingsView: View {
     // MARK: - Notification Section
     
     private var notificationSection: some View {
-        Section("Notifications") {
+        Section {
             // Notification status
             HStack {
                 Label("Notifications", systemImage: "bell.fill")
@@ -240,6 +241,8 @@ struct SettingsView: View {
                     NotificationPreferencesView()
                 }
             }
+        } header: {
+            Text("Notifications")
         } footer: {
             if viewModel.quietHoursEnabled && viewModel.notificationsEnabled {
                 Text("Notifications will be silenced during quiet hours: \(viewModel.quietHoursDescription)")
@@ -250,7 +253,7 @@ struct SettingsView: View {
     // MARK: - Location Section
     
     private var locationSection: some View {
-        Section("Location") {
+        Section {
             // Location permission status
             HStack {
                 Label("Location Access", systemImage: "location.fill")
@@ -292,6 +295,8 @@ struct SettingsView: View {
                 // Background location updates
                 Toggle("Background Updates", isOn: $viewModel.backgroundLocationEnabled)
             }
+        } header: {
+            Text("Location")
         } footer: {
             Text("Location access is required for weather-based reminders. We only access your location to provide relevant weather data.")
         }
@@ -300,7 +305,7 @@ struct SettingsView: View {
     // MARK: - Temperature Section
     
     private var temperatureSection: some View {
-        Section("Temperature") {
+        Section {
             Picker("Temperature Unit", selection: $viewModel.temperatureUnit) {
                 ForEach(TemperatureUnit.allCases, id: \.self) { unit in
                     HStack {
@@ -316,6 +321,8 @@ struct SettingsView: View {
             .onChange(of: viewModel.temperatureUnit) {
                 viewModel.handleTemperatureUnitChange()
             }
+        } header: {
+            Text("Temperature")
         } footer: {
             Text("Choose your preferred temperature unit for all weather displays and reminders.")
         }
@@ -324,7 +331,7 @@ struct SettingsView: View {
     // MARK: - Appearance Section
     
     private var appearanceSection: some View {
-        Section("Appearance") {
+        Section {
             Picker("Theme", selection: $viewModel.selectedAppearance) {
                 ForEach(AppearanceMode.allCases, id: \.self) { mode in
                     HStack {
@@ -349,6 +356,8 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                 }
             }
+        } header: {
+            Text("Appearance")
         } footer: {
             Text("Choose how the app appears. System matches your device settings.")
         }
@@ -406,7 +415,7 @@ struct SettingsView: View {
     // MARK: - About Section
     
     private var aboutSection: some View {
-        Section("About") {
+        Section {
             HStack {
                 Text("Version")
                 Spacer()
@@ -430,6 +439,8 @@ struct SettingsView: View {
             Button("Terms of Service") {
                 viewModel.openTermsOfService()
             }
+        } header: {
+            Text("About")
         } footer: {
             VStack(spacing: 8) {
                 Text("Made with ❤️ for weather enthusiasts")

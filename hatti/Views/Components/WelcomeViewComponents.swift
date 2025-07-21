@@ -326,8 +326,8 @@ struct AnimatedBackgroundGradient: View {
 // MARK: - Accessibility Helpers
 
 extension View {
-    func customAccessibilityRespondsToInversion(_ inverts: Bool = true) -> some View {
-        self.accessibilityRespondsToInversion(inverts)
+    func customAccessibilityRespondsToInversion(_ responds: Bool = true) -> some View {
+        self.accessibilityIgnoresInvertColors(!responds)
     }
     
     func customDynamicTypeSize(_ range: ClosedRange<DynamicTypeSize>) -> some View {
@@ -338,8 +338,6 @@ extension View {
 // MARK: - Custom Transitions
 
 extension AnyTransition {
-    
-    
     static var temperatureScale: AnyTransition {
         .asymmetric(
             insertion: .scale(scale: 0.1, anchor: .bottom).combined(with: .opacity),

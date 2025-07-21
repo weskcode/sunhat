@@ -91,7 +91,6 @@ actor TriggerEngine {
     static let shared = TriggerEngine()
     
     private var modelContext: ModelContext?
-    private let weatherService = WeatherService.shared
     private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "TriggerEngine")
     
     // Evaluation caches
@@ -137,14 +136,24 @@ actor TriggerEngine {
             
             // Group reminders by location to optimize weather data fetching
             let locationGroups = Dictionary(grouping: activeReminders) { reminder in
-                reminder.location?.coordinate ?? CLLocationCoordinate2D()
+                if let location = reminder.location {
+                    return "\(location.latitude),\(location.longitude)"
+                } else {
+                    return "0.0,0.0"
+                }
             }
             
             var allResults: [TriggerEvaluationResult] = []
             
             // Evaluate each location group
-            for (coordinate, reminders) in locationGroups {
-                let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+            for (coordinateString, reminders) in locationGroups {
+                let components = coordinateString.split(separator: ",")
+                guard components.count == 2,
+                      let latitude = Double(components[0]),
+                      let longitude = Double(components[1]) else {
+                    continue
+                }
+                let location = CLLocation(latitude: latitude, longitude: longitude)
                 let results = await evaluateRemindersForLocation(reminders, at: location)
                 allResults.append(contentsOf: results)
             }
@@ -174,7 +183,7 @@ actor TriggerEngine {
     private func evaluateRemindersForLocation(_ reminders: [WeatherReminder], at location: CLLocation) async -> [TriggerEvaluationResult] {
         do {
             // Fetch current weather data for the location
-            let weatherData = try await weatherService.fetchWeatherData(for: location)
+            let weatherData = try await WeatherService.shared.fetchWeatherData(for: location)
             
             var results: [TriggerEvaluationResult] = []
             
@@ -214,7 +223,7 @@ actor TriggerEngine {
             currentWeatherData = providedData
         } else {
             do {
-                currentWeatherData = try await weatherService.fetchWeatherData(for: location)
+                currentWeatherData = try await WeatherService.shared.fetchWeatherData(for: location)
             } catch {
                 logger.warning("Failed to fetch weather data for evaluation: \(error)")
                 return nil
@@ -276,15 +285,15 @@ extension TriggerEngine {
             triggered = currentTemp > targetTemp
             confidence = min(1.0, max(0.0, (currentTemp - targetTemp) / 10.0))
             triggerReason = triggered ? 
-                "Temperature \(currentTemp, specifier: "%.1f")° is above target \(targetTemp, specifier: "%.1f")°" :
-                "Temperature \(currentTemp, specifier: "%.1f")° is below target \(targetTemp, specifier: "%.1f")°"
+                "Temperature \(String(format: "%.1f", currentTemp))° is above target \(String(format: "%.1f", targetTemp))°" :
+                "Temperature \(String(format: "%.1f", currentTemp))° is below target \(String(format: "%.1f", targetTemp))°"
             
         case .below:
             triggered = currentTemp < targetTemp
             confidence = min(1.0, max(0.0, (targetTemp - currentTemp) / 10.0))
             triggerReason = triggered ?
-                "Temperature \(currentTemp, specifier: "%.1f")° is below target \(targetTemp, specifier: "%.1f")°" :
-                "Temperature \(currentTemp, specifier: "%.1f")° is above target \(targetTemp, specifier: "%.1f")°"
+                "Temperature \(String(format: "%.1f", currentTemp))° is below target \(String(format: "%.1f", targetTemp))°" :
+                "Temperature \(String(format: "%.1f", currentTemp))° is above target \(String(format: "%.1f", targetTemp))°"
             
         case .equals:
             let difference = abs(currentTemp - targetTemp)

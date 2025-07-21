@@ -10,6 +10,7 @@ import SwiftUI
 import SwiftData
 import UserNotifications
 import Combine
+import UIKit
 
 @MainActor
 @Observable
@@ -360,7 +361,7 @@ final class NotificationPreferencesViewModel {
                     )
                 ],
                 intentIdentifiers: [],
-                options: [.criticalAlert]
+                options: [.customDismissAction]
             )
             categories.insert(criticalCategory)
         }

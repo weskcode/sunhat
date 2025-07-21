@@ -260,7 +260,7 @@ struct ComprehensiveReminderCreationView: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 12) {
-                ForEach(ConditionType.allCases, id: \.self) { type in
+                ForEach(TriggerType.allCases, id: \.self) { type in
                     ConditionTypeCard(
                         type: type,
                         isSelected: viewModel.conditionType == type
@@ -273,7 +273,7 @@ struct ComprehensiveReminderCreationView: View {
             }
             
             // Additional condition parameters
-            if viewModel.conditionType == .trend {
+            if viewModel.conditionType == .historicalComparison {
                 TrendConditionParameters(
                     trendType: $viewModel.trendType,
                     trendDuration: $viewModel.trendDuration
@@ -281,7 +281,7 @@ struct ComprehensiveReminderCreationView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
             
-            if viewModel.conditionType == .seasonal {
+            if viewModel.conditionType == .seasonalMarker {
                 SeasonalConditionParameters(
                     seasonalType: $viewModel.seasonalType,
                     historicalComparison: $viewModel.historicalComparison
@@ -355,13 +355,14 @@ struct ComprehensiveReminderCreationView: View {
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 12) {
-                ForEach(ActivityCategory.allCases, id: \.self) { category in
+                ForEach(ActivityInterest.allCases, id: \.self) { interest in
                     ActivityCategoryCard(
-                        category: category,
-                        isSelected: viewModel.selectedCategory == category
+                        category: interest,
+                        isSelected: viewModel.selectedCategory == interest
                     ) {
                         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            viewModel.selectedCategory = category
+                            // selectedCategory is already of type ActivityInterest
+                            viewModel.selectedCategory = interest
                         }
                     }
                 }

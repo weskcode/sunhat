@@ -6,12 +6,13 @@
 //
 
 import SwiftUI
+import SwiftData
 import UserNotifications
 import AVFoundation
 
 struct NotificationPreferencesView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel = NotificationPreferencesViewModel()
+    @State private var viewModel = NotificationPreferencesViewModel()
     
     @State private var showingResetAlert = false
     @State private var showingSoundPicker = false
@@ -341,7 +342,7 @@ struct NotificationPreferencesView: View {
 
 struct NotificationPreviewCard: View {
     let title: String
-    let body: String
+    let message: String
     let time: String
     let grouping: NotificationGrouping
     let lockScreenBehavior: LockScreenBehavior
@@ -372,7 +373,7 @@ struct NotificationPreviewCard: View {
                     .foregroundColor(.primary)
                 
                 if lockScreenBehavior != .hideDetails {
-                    Text(lockScreenBehavior == .showPreviews ? body : "Notification content hidden")
+                    Text(lockScreenBehavior == .showPreviews ? message : "Notification content hidden")
                         .font(.caption)
                         .foregroundColor(lockScreenBehavior == .showPreviews ? .secondary : .tertiary)
                         .lineLimit(2)

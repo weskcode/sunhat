@@ -386,26 +386,26 @@ final class DashboardViewModel: NSObject, ObservableObject {
 // MARK: - CLLocationManagerDelegate
 
 extension DashboardViewModel: CLLocationManagerDelegate {
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         
-        Task {
+        Task { @MainActor in
             await updateLocationName(for: location)
             await refreshWeatherData()
         }
     }
     
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         logger.error("Location manager failed with error: \(error.localizedDescription)")
         
         // Use default location
-        Task {
+        Task { @MainActor in
             let defaultLocation = CLLocation(latitude: 37.7749, longitude: -122.4194)
             await updateLocationName(for: defaultLocation)
         }
     }
     
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+    nonisolated func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         switch status {
         case .authorizedWhenInUse, .authorizedAlways:
             locationManager.requestLocation()

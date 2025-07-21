@@ -222,10 +222,12 @@ extension TriggerEngine {
         let predicate = #Predicate<WeatherData> { weather in
             weather.timestamp >= startDate &&
             weather.timestamp <= endDate &&
-            weather.location?.latitude >= minLat &&
-            weather.location?.latitude <= maxLat &&
-            weather.location?.longitude >= minLon &&
-            weather.location?.longitude <= maxLon
+            weather.location?.latitude != nil &&
+            weather.location?.longitude != nil &&
+            weather.location!.latitude >= minLat &&
+            weather.location!.latitude <= maxLat &&
+            weather.location!.longitude >= minLon &&
+            weather.location!.longitude <= maxLon
         }
         
         let descriptor = FetchDescriptor<WeatherData>(
@@ -356,10 +358,12 @@ extension TriggerEngine {
         let predicate = #Predicate<WeatherData> { weather in
             weather.timestamp >= startDate &&
             weather.timestamp <= endDate &&
-            weather.location?.latitude >= minLat &&
-            weather.location?.latitude <= maxLat &&
-            weather.location?.longitude >= minLon &&
-            weather.location?.longitude <= maxLon
+            weather.location?.latitude != nil &&
+            weather.location?.longitude != nil &&
+            weather.location!.latitude >= minLat &&
+            weather.location!.latitude <= maxLat &&
+            weather.location!.longitude >= minLon &&
+            weather.location!.longitude <= maxLon
         }
         
         let descriptor = FetchDescriptor<WeatherData>(

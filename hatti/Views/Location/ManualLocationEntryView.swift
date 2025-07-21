@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreLocation
+import MapKit
 
 struct ManualLocationEntryView: View {
     @Binding var isPresented: Bool
@@ -23,8 +24,7 @@ struct ManualLocationEntryView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
     @FocusState private var isSearchFieldFocused: Bool
-    
-    private let geocoder = CLGeocoder()
+    @State private var searchWorkItem: DispatchWorkItem?
     
     var body: some View {
         NavigationView {
@@ -355,8 +355,6 @@ struct ManualLocationEntryView: View {
         }
     }
     
-    private var searchWorkItem: DispatchWorkItem?
-    
     private func debounceSearch() {
         searchWorkItem?.cancel()
         
@@ -381,38 +379,43 @@ struct ManualLocationEntryView: View {
         isSearching = true
         searchError = nil
         
-        geocoder.geocodeAddressString(searchText) { placemarks, error in
-            DispatchQueue.main.async {
-                isSearching = false
+        Task {
+            do {
+                let request = MKGeocodingRequest(address: searchText)
+                let placemarks = try await MKGeocoder().geocode(request)
                 
-                if let error = error {
-                    searchError = "Unable to find cities matching '\(searchText)'. Please try a different search."
-                    searchResults = []
-                    return
-                }
-                
-                guard let placemarks = placemarks else {
-                    searchError = "No results found for '\(searchText)'"
-                    searchResults = []
-                    return
-                }
-                
-                // Convert placemarks to search results
-                searchResults = placemarks.compactMap { placemark in
-                    guard let location = placemark.location,
-                          let city = placemark.locality ?? placemark.name else {
-                        return nil
+                await MainActor.run {
+                    isSearching = false
+                    
+                    guard !placemarks.isEmpty else {
+                        searchError = "No results found for '\(searchText)'"
+                        searchResults = []
+                        return
                     }
                     
-                    return LocationSearchResult(
-                        city: city,
-                        state: placemark.administrativeArea,
-                        country: placemark.country,
-                        coordinate: location.coordinate
-                    )
+                    // Convert placemarks to search results
+                    searchResults = placemarks.compactMap { placemark in
+                        guard let location = placemark.location,
+                              let city = placemark.locality ?? placemark.name else {
+                            return nil
+                        }
+                        
+                        return LocationSearchResult(
+                            city: city,
+                            state: placemark.administrativeArea,
+                            country: placemark.country,
+                            coordinate: location.coordinate
+                        )
+                    }
+                    .prefix(10) // Limit to 10 results
+                    .map { $0 }
                 }
-                .prefix(10) // Limit to 10 results
-                .map { $0 }
+            } catch {
+                await MainActor.run {
+                    isSearching = false
+                    searchError = "Unable to find cities matching '\(searchText)'. Please try a different search."
+                    searchResults = []
+                }
             }
         }
     }

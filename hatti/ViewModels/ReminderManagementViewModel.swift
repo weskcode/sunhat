@@ -229,9 +229,25 @@ final class ReminderManagementViewModel: ObservableObject {
             let newLocation = LocationData(
                 latitude: originalLocation.latitude,
                 longitude: originalLocation.longitude,
-                name: originalLocation.name,
-                address: originalLocation.address
+                city: originalLocation.city,
+                timeZoneIdentifier: originalLocation.timeZoneIdentifier
             )
+            
+            // Copy additional properties
+            newLocation.state = originalLocation.state
+            newLocation.country = originalLocation.country
+            newLocation.postalCode = originalLocation.postalCode
+            newLocation.displayName = originalLocation.displayName
+            newLocation.customName = originalLocation.customName
+            newLocation.altitude = originalLocation.altitude
+            newLocation.horizontalAccuracy = originalLocation.horizontalAccuracy
+            newLocation.timeZoneAbbreviation = originalLocation.timeZoneAbbreviation
+            newLocation.utcOffset = originalLocation.utcOffset
+            newLocation.isUserLocation = originalLocation.isUserLocation
+            newLocation.isManuallyEntered = originalLocation.isManuallyEntered
+            newLocation.weatherServiceLocationID = originalLocation.weatherServiceLocationID
+            newLocation.elevationMeters = originalLocation.elevationMeters
+            
             duplicate.location = newLocation
         }
         

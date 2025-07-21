@@ -24,7 +24,7 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
     @Published var targetTemperature: Double = 70.0
     @Published var temperatureRange: ClosedRange<Double> = 65.0...75.0
     @Published var useFeelsLike: Bool = false
-    @Published var conditionType: ConditionType = .exact
+    @Published var conditionType: TriggerType = .exactTemperature
     
     @Published var trendType: TrendType = .rising
     @Published var trendDuration: Int = 3
@@ -32,7 +32,7 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
     @Published var historicalComparison: Bool = false
     
     @Published var selectedLocation: ReminderLocation = ReminderLocation.currentLocation
-    @Published var selectedCategory: ActivityCategory = .general
+    @Published var selectedCategory: ActivityInterest = .exercise
     @Published var notificationTiming: NotificationTiming = .immediate
     
     @Published var triggerLikelihood: TriggerLikelihood?
@@ -411,10 +411,10 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         }
         
         // Extract activity category
-        var suggestedCategory: ActivityCategory = .general
+        var suggestedCategory: ActivityInterest = .exercise
         
-        for category in ActivityCategory.allCases {
-            for keyword in category.keywords {
+        for category in ActivityInterest.allCases {
+            for keyword in category.displayName.lowercased().components(separatedBy: " ") {
                 if lowercasedInput.contains(keyword) {
                     suggestedCategory = category
                     break
@@ -451,7 +451,7 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         )
     }
     
-    private func generateTitle(from input: String, category: ActivityCategory, temperature: Double?) -> String {
+    private func generateTitle(from input: String, category: ActivityInterest, temperature: Double?) -> String {
         let activity = category.displayName.lowercased()
         
         if let temp = temperature {
@@ -462,7 +462,7 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         return "Great \(activity) weather!"
     }
     
-    private func generateMessage(from input: String, category: ActivityCategory) -> String {
+    private func generateMessage(from input: String, category: ActivityInterest) -> String {
         let activity = category.displayName.lowercased()
         return "The weather conditions are ideal for your \(activity) activity. Time to get outside!"
     }
@@ -479,8 +479,8 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         }
         
         // Activity mentioned
-        for category in ActivityCategory.allCases {
-            for keyword in category.keywords {
+        for category in ActivityInterest.allCases {
+            for keyword in category.displayName.lowercased().components(separatedBy: " ") {
                 if input.lowercased().contains(keyword) {
                     confidence += 0.2
                     break
@@ -542,9 +542,9 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
                     title: "Your usual \(category.displayName.lowercased())",
                     description: "Based on your history",
                     naturalLanguageText: "Remind me to \(category.displayName.lowercased()) when it's \(Int(avgTemp))°F",
-                    category: ActivityCategory(rawValue: category.rawValue) ?? .general,
+                    category: ActivityInterest(rawValue: category.rawValue) ?? .exercise,
                     temperature: avgTemp,
-                    conditionType: .exact,
+                    conditionType: .exactTemperature,
                     timing: .immediate,
                     icon: category.iconName,
                     color: Color.blue
@@ -716,19 +716,19 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
 // MARK: - CLLocationManagerDelegate
 
 extension ComprehensiveReminderCreationViewModel: CLLocationManagerDelegate {
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
         
-        Task {
+        Task { @MainActor in
             await updateLocationName(for: location)
         }
     }
     
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         logger.error("Location manager failed: \(error.localizedDescription)")
     }
     
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
             manager.requestLocation()

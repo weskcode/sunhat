@@ -424,20 +424,24 @@ final class SettingsViewModel: NSObject, ObservableObject {
 // MARK: - Location Manager Delegate
 
 extension SettingsViewModel: CLLocationManagerDelegate {
-    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        updateLocationStatus(status)
-        
-        if status == .authorizedWhenInUse || status == .authorizedAlways {
+    nonisolated func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        Task { @MainActor in
+            updateLocationStatus(status)
+            
+            if status == .authorizedWhenInUse || status == .authorizedAlways {
+                updateCurrentLocation()
+            }
+        }
+    }
+    
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        // Handle location updates if needed
+        Task { @MainActor in
             updateCurrentLocation()
         }
     }
     
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        // Handle location updates if needed
-        updateCurrentLocation()
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         logger.error("Location manager failed with error: \(error)")
     }
 }

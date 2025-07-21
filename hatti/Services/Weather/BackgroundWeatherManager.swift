@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import UIKit
 import BackgroundTasks
 import SwiftData
 import CoreLocation
@@ -30,17 +31,17 @@ final class BackgroundWeatherManager: ObservableObject {
     }
     
     private func registerBackgroundTask() {
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: taskIdentifier, using: nil) { task in
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: self.taskIdentifier, using: nil) { task in
             Task {
                 await self.handleBackgroundTask(task as! BGAppRefreshTask)
             }
         }
-        logger.info("Registered background task: \(taskIdentifier)")
+        logger.info("Registered background task: \(self.taskIdentifier)")
     }
     
     private func updateBackgroundRefreshStatus() {
         Task {
-            let status = await UIApplication.shared.backgroundRefreshStatus
+            let status = await MainActor.run { UIApplication.shared.backgroundRefreshStatus }
             await MainActor.run {
                 self.isBackgroundRefreshEnabled = (status == .available)
             }
@@ -53,7 +54,7 @@ final class BackgroundWeatherManager: ObservableObject {
             return
         }
         
-        let request = BGAppRefreshTaskRequest(identifier: taskIdentifier)
+        let request = BGAppRefreshTaskRequest(identifier: self.taskIdentifier)
         request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60) // 15 minutes
         
         do {
@@ -66,37 +67,23 @@ final class BackgroundWeatherManager: ObservableObject {
     
     private func handleBackgroundTask(_ task: BGAppRefreshTask) async {
         logger.info("Starting background weather refresh task")
-        
         let startTime = Date()
         backgroundRefreshCount += 1
-        
         // Set up task completion
         task.expirationHandler = {
             self.logger.warning("Background task expired")
             task.setTaskCompleted(success: false)
         }
-        
-        do {
-            // Perform the background refresh
-            await WeatherService.shared.handleBackgroundRefresh()
-            
-            // Check for triggered conditions and send notifications
-            await checkTriggeredConditions()
-            
-            lastBackgroundRefresh = Date()
-            
-            let duration = Date().timeIntervalSince(startTime)
-            logger.info("Background refresh completed successfully in \(duration) seconds")
-            
-            // Schedule next refresh
-            scheduleBackgroundRefresh()
-            
-            task.setTaskCompleted(success: true)
-            
-        } catch {
-            logger.error("Background refresh failed: \(error.localizedDescription)")
-            task.setTaskCompleted(success: false)
-        }
+        // Perform the background refresh
+        await WeatherService.shared.handleBackgroundRefresh()
+        // Check for triggered conditions and send notifications
+        await checkTriggeredConditions()
+        lastBackgroundRefresh = Date()
+        let duration = Date().timeIntervalSince(startTime)
+        logger.info("Background refresh completed successfully in \(duration) seconds")
+        // Schedule next refresh
+        scheduleBackgroundRefresh()
+        task.setTaskCompleted(success: true)
     }
     
     private func checkTriggeredConditions() async {
@@ -108,14 +95,14 @@ final class BackgroundWeatherManager: ObservableObject {
         }
         
         // Fetch all active reminders
-        let descriptor = FetchDescriptor<WeatherReminder>(
+        let descriptor: FetchDescriptor<WeatherReminder> = FetchDescriptor<WeatherReminder>(
             predicate: #Predicate { reminder in
                 reminder.isCurrentlyActive && reminder.canTrigger
             }
         )
         
         do {
-            let activeReminders = try modelContext.fetch(descriptor)
+            let activeReminders: [WeatherReminder] = try modelContext.fetch(descriptor)
             logger.debug("Checking \(activeReminders.count) active reminders")
             
             var triggeredCount = 0
@@ -123,7 +110,7 @@ final class BackgroundWeatherManager: ObservableObject {
             for reminder in activeReminders {
                 if await evaluateReminderCondition(reminder) {
                     await sendNotificationForReminder(reminder)
-                    reminder.trigger()
+                    reminder.trigger(with: nil)
                     triggeredCount += 1
                 }
             }
@@ -224,8 +211,6 @@ final class BackgroundWeatherManager: ObservableObject {
     // MARK: - Public Interface
     
     func requestBackgroundRefreshPermission() async -> Bool {
-        await UIApplication.shared.setMinimumBackgroundFetchInterval(UIApplication.backgroundFetchIntervalMinimum)
-        
         let center = UNUserNotificationCenter.current()
         do {
             let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
@@ -251,7 +236,7 @@ final class BackgroundWeatherManager: ObservableObject {
     }
     
     func cancelScheduledRefresh() {
-        BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: taskIdentifier)
+        BGTaskScheduler.shared.cancel(taskRequestWithIdentifier: self.taskIdentifier)
         logger.info("Cancelled scheduled background refresh")
     }
 }
@@ -259,3 +244,4 @@ final class BackgroundWeatherManager: ObservableObject {
 // MARK: - Background Refresh Status Extension
 
 // Note: BGBackgroundRefreshStatus extension removed - use UIApplication.backgroundRefreshStatus instead
+

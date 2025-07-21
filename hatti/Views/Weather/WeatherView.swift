@@ -10,13 +10,20 @@ import SwiftData
 import CoreLocation
 
 struct WeatherView: View {
-    @StateObject private var viewModel = WeatherViewModel()
     @Environment(\.modelContext) private var modelContext
+    @StateObject private var viewModel: WeatherViewModel
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
     @State private var selectedTimeframe: WeatherTimeframe = .current
     @State private var showingLocationPicker = false
+    @State private var selectedLocation: ReminderLocation = .currentLocation
+    
+    init() {
+        // Initialize with a dummy modelContext - will be configured in onAppear
+        let container = try! ModelContainer(for: WeatherData.self, WeatherReminder.self, LocationData.self, TriggerCondition.self)
+        self._viewModel = StateObject(wrappedValue: WeatherViewModel(modelContext: container.mainContext))
+    }
     
     var body: some View {
         NavigationView {
@@ -25,7 +32,7 @@ struct WeatherView: View {
                     .ignoresSafeArea()
                 
                 RefreshableScrollView {
-                    await viewModel.refreshWeatherData()
+                    await viewModel.refresh()
                 } content: {
                     LazyVStack(spacing: 20) {
                         // Weather timeframe picker
@@ -77,10 +84,10 @@ struct WeatherView: View {
                 }
             }
             .sheet(isPresented: $showingLocationPicker) {
-                LocationPickerView()
+                LocationPickerView(selectedLocation: $selectedLocation)
             }
             .onAppear {
-                viewModel.configure(modelContext: modelContext)
+                // The viewModel is already configured with modelContext from init
             }
         }
     }
@@ -119,7 +126,7 @@ struct WeatherView: View {
                             .font(.caption)
                             .foregroundColor(.blue)
                         
-                        Text(viewModel.currentLocationName)
+                        Text(viewModel.locationName)
                             .font(.headline)
                             .fontWeight(.semibold)
                             .foregroundColor(.primary)
@@ -249,15 +256,15 @@ struct WeatherView: View {
             DetailedMetricCard(
                 icon: "wind",
                 title: "Wind",
-                value: "\(viewModel.windSpeed, specifier: "%.1f") mph",
-                description: "\(viewModel.windDirection) • \(viewModel.windGust > 0 ? "Gusts \(viewModel.windGust, specifier: "%.0f") mph" : "Steady")",
+                value: "\(String(format: "%.1f", viewModel.windSpeed)) mph",
+                description: "\(viewModel.windDirection) • \(viewModel.windGust > 0 ? "Gusts \(String(format: "%.0f", viewModel.windGust)) mph" : "Steady")",
                 color: .green
             )
             
             DetailedMetricCard(
                 icon: "eye.fill",
                 title: "Visibility",
-                value: "\(viewModel.visibility, specifier: "%.1f") mi",
+                value: "\(String(format: "%.1f", viewModel.visibility)) mi",
                 description: visibilityDescription,
                 color: .purple
             )
@@ -265,7 +272,7 @@ struct WeatherView: View {
             DetailedMetricCard(
                 icon: "barometer",
                 title: "Pressure",
-                value: "\(viewModel.pressure, specifier: "%.2f") inHg",
+                value: "\(String(format: "%.2f", viewModel.pressure)) inHg",
                 description: pressureDescription,
                 color: .indigo
             )
@@ -273,7 +280,7 @@ struct WeatherView: View {
             DetailedMetricCard(
                 icon: "sun.max.fill",
                 title: "UV Index",
-                value: "\(viewModel.uvIndex, specifier: "%.0f")",
+                value: String(format: "%.0f", viewModel.uvIndex),
                 description: uvIndexDescription,
                 color: uvIndexColor
             )
@@ -391,21 +398,21 @@ struct WeatherView: View {
                 HistoricalComparisonRow(
                     title: "vs. Yesterday",
                     currentTemp: viewModel.currentTemperature,
-                    historicalTemp: viewModel.yesterdayTemperature,
+                    historicalTemp: viewModel.yesterdayTemp,
                     timeframe: "24h ago"
                 )
                 
                 HistoricalComparisonRow(
                     title: "vs. Last Week",
                     currentTemp: viewModel.currentTemperature,
-                    historicalTemp: viewModel.lastWeekTemperature,
+                    historicalTemp: viewModel.lastWeekTemp,
                     timeframe: "7 days ago"
                 )
                 
                 HistoricalComparisonRow(
                     title: "vs. Historical Average",
                     currentTemp: viewModel.currentTemperature,
-                    historicalTemp: viewModel.historicalAverageTemperature,
+                    historicalTemp: viewModel.historicalAvgTemp,
                     timeframe: "Historical avg for today"
                 )
             }

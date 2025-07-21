@@ -258,7 +258,9 @@ extension UserPreferences {
         record["lockScreenBehavior"] = lockScreenBehavior.rawValue
         record["criticalAlertsEnabled"] = criticalAlertsEnabled
         record["vibrationPattern"] = vibrationPattern.rawValue
-        record["notificationSounds"] = notificationSounds as CKRecordValue
+        if let soundsData = try? JSONEncoder().encode(notificationSounds) {
+            record["notificationSounds"] = soundsData
+        }
         record["createdAt"] = createdAt
         record["updatedAt"] = updatedAt
         
@@ -281,7 +283,10 @@ extension UserPreferences {
         preferences.lockScreenBehavior = LockScreenBehavior(rawValue: record["lockScreenBehavior"] as? String ?? "showPreviews") ?? .showPreviews
         preferences.criticalAlertsEnabled = record["criticalAlertsEnabled"] as? Bool ?? false
         preferences.vibrationPattern = VibrationPattern(rawValue: record["vibrationPattern"] as? String ?? "default") ?? .default
-        preferences.notificationSounds = record["notificationSounds"] as? [String: String] ?? [:]
+        if let soundsData = record["notificationSounds"] as? Data,
+           let sounds = try? JSONDecoder().decode([String: String].self, from: soundsData) {
+            preferences.notificationSounds = sounds
+        }
         preferences.createdAt = record["createdAt"] as? Date ?? Date()
         preferences.updatedAt = record["updatedAt"] as? Date ?? Date()
         preferences.lastSyncedAt = Date()
