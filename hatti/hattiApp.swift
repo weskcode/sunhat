@@ -19,6 +19,9 @@ struct hattiApp: App {
             ForecastDay.self,
             NotificationConfig.self,
             ReminderHistory.self,
+            UserPreferences.self,
+            SavedLocation.self,
+            LocationHistory.self,
             Item.self,
         ])
         let modelConfiguration = ModelConfiguration(
