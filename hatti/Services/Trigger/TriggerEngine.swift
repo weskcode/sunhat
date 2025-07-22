@@ -198,7 +198,7 @@ actor TriggerEngine {
             return results
             
         } catch {
-            logger.warning("Failed to fetch weather data for location \(location.coordinate): \(error)")
+            logger.warning("Failed to fetch weather data for location \(location.coordinate.latitude),\(location.coordinate.longitude): \(error)")
             return []
         }
     }
