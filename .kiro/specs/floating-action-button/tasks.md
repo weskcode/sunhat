@@ -1,16 +1,20 @@
 # Implementation Plan
 
 - [ ] 1. Create core FAB data structures and configuration
-  - Define FABConfiguration struct with position, templates, and animation settings
-  - Create QuickReminderRequest struct for template-based reminder creation
-  - Define FABError enum with proper error handling cases
+  - Define WeatherReminderTemplate struct with temperature ranges and weather conditions following existing Models/ patterns
+  - Define FABConfiguration struct with position, templates, and animation settings using SwiftUI 6.0 conventions
+  - Create QuickReminderRequest struct for template-based WeatherReminder creation integrating with existing @Model classes
+  - Define FABError enum with proper error handling cases following Swift 6 error handling patterns
+  - Place new models in appropriate directories following structure.md organization
   - _Requirements: 1.1, 1.2, 7.1_
 
 - [ ] 2. Implement FAB view model for state management
-  - Create FABViewModel class with @Published properties for state
-  - Implement template selection and quick reminder creation logic
-  - Add integration with existing reminder creation system
-  - Write unit tests for view model functionality
+  - Create FABViewModel class in ViewModels/ directory with @MainActor and @Published properties following MVVM patterns
+  - Implement weather template selection and quick WeatherReminder creation logic using existing Models/WeatherReminder.swift
+  - Add integration with SwiftData ModelContext for persistence with automatic CloudKit sync
+  - Add integration with existing Models/LocationData.swift and Models/TriggerCondition.swift models
+  - Use Combine publishers for reactive programming following ComprehensiveReminderCreationViewModel.swift patterns
+  - Write unit tests in hattiTests/ directory for view model functionality
   - _Requirements: 2.2, 2.3, 7.2_
 
 - [ ] 3. Build core FAB button component
@@ -27,23 +31,26 @@
   - Create backdrop overlay for dismissing expanded state
   - _Requirements: 1.4, 4.1, 4.3, 5.2_
 
-- [ ] 5. Implement template option buttons
-  - Create FABTemplateOption view for individual template buttons
-  - Add template-specific icons, colors, and compact labels
+- [ ] 5. Implement weather template option buttons
+  - Create FABTemplateOption view for individual weather template buttons
+  - Add weather-specific icons, temperature ranges, and compact labels
+  - Display temperature conditions (e.g., "65-75°F", "Above 50°F") in template buttons
   - Implement staggered entrance animations with delays
   - Integrate haptic feedback for template selection
   - _Requirements: 2.1, 2.3, 4.2, 6.2_
 
 - [ ] 6. Build custom reminder option button
   - Create FABCustomOption view for custom reminder navigation
-  - Add distinct visual styling to differentiate from templates
-  - Implement navigation to existing FirstReminderCreationView
-  - Handle state management for navigation flow
+  - Add distinct visual styling to differentiate from weather templates
+  - Implement navigation to existing ComprehensiveReminderCreationView
+  - Handle SwiftUI navigation state management for navigation flow
   - _Requirements: 3.1, 3.2, 3.3_
 
-- [ ] 7. Add quick reminder creation functionality
-  - Implement template-to-reminder conversion logic
-  - Integrate with existing location services for automatic location
+- [ ] 7. Add quick weather reminder creation functionality
+  - Implement weather template-to-WeatherReminder conversion logic
+  - Create TriggerCondition objects from template temperature ranges
+  - Integrate with existing Core Location services for automatic LocationData
+  - Add SwiftData persistence for created WeatherReminder objects
   - Add success confirmation with brief visual feedback
   - Create error handling for failed reminder creation
   - _Requirements: 2.2, 7.1, 7.2, 7.3_

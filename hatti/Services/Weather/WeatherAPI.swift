@@ -23,7 +23,7 @@ protocol WeatherAPI: Sendable {
 @MainActor
 final class AppleWeatherKitAPI: WeatherAPI {
     let provider: WeatherProvider = .appleWeatherKit
-    private let weatherService = WeatherService.shared
+    private let weatherService = WeatherKit.WeatherService.shared
     
     nonisolated var isAvailable: Bool {
         get async { 

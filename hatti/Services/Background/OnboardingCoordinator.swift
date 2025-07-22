@@ -284,13 +284,12 @@ extension WelcomeView {
             .accessibilityLabel("TempTrigger welcome screen")
             .accessibilityHint("Introduces smart weather-based reminders with comparison examples")
             .accessibilityAction(named: "Start onboarding") {
-                showingOnboarding = true
+                // This should be handled by the coordinator
             }
             .accessibilityAction(named: "Skip onboarding") {
-                dismiss()
+                // This should be handled by the coordinator
             }
             .dynamicTypeSize(.large ... .accessibility5)
-            .accessibilityRespondsToInversion(false) // Weather icons should not invert
     }
 }
 
@@ -300,7 +299,6 @@ extension View {
     func accessibilityWeatherIcon() -> some View {
         self
             .accessibilityHidden(true) // Weather icons are decorative
-            .accessibilityRespondsToInversion(false)
     }
     
     func accessibilityTemperatureDisplay(_ temperature: String) -> some View {

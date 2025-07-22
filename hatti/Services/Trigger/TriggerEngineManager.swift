@@ -101,7 +101,7 @@ final class TriggerEngineManager: ObservableObject {
                 await self.handleBackgroundEvaluation(task as! BGAppRefreshTask)
             }
         }
-        logger.info("Registered background task: \(backgroundTaskIdentifier)")
+        logger.info("Registered background task: \(self.backgroundTaskIdentifier)")
     }
     
     func scheduleBackgroundEvaluation() {
@@ -196,7 +196,7 @@ final class TriggerEngineManager: ObservableObject {
     
     private func sendNotificationForResult(_ result: TriggerEvaluationResult, isBackground: Bool) async {
         do {
-            await notificationManager.sendTriggerNotification(for: result, isBackground: isBackground)
+            try await notificationManager.sendTriggerNotification(for: result, isBackground: isBackground)
             logger.info("Sent notification for triggered reminder: \(result.reminderId)")
         } catch {
             logger.error("Failed to send notification for reminder \(result.reminderId): \(error)")
@@ -224,7 +224,7 @@ final class TriggerEngineManager: ObservableObject {
                     }
                 }
                 
-                logger.debug("Scheduled next evaluation in \(timeInterval / 3600, specifier: "%.1f") hours")
+                logger.debug("Scheduled next evaluation in \(String(format: "%.1f", timeInterval / 3600)) hours")
             }
         }
     }
@@ -470,7 +470,7 @@ actor TriggerNotificationManager {
             Task {
                 // Re-evaluate this specific reminder after snooze
                 // This would typically involve fetching the reminder from the database
-                logger.info("Re-evaluating snoozed reminder \(reminderId)")
+                self.logger.info("Re-evaluating snoozed reminder \(reminderId)")
             }
         }
     }

@@ -126,7 +126,7 @@ extension TriggerEngine {
     ) async -> TriggerEvaluationResult {
         
         do {
-            let weatherData = try await weatherService.fetchWeatherData(for: location)
+            let weatherData = try await WeatherService.shared.fetchWeatherData(for: location)
             let forecastAnalysis = analyzeForecastForCondition(
                 condition: condition,
                 weatherData: weatherData,
@@ -137,7 +137,7 @@ extension TriggerEngine {
             let confidence = forecastAnalysis.confidence
             let triggerReason = forecastAnalysis.description
             
-            let metadata = [
+            let metadata: [String: String] = [
                 "advance_hours": String(advanceHours),
                 "forecast_days_analyzed": String(forecastAnalysis.daysAnalyzed),
                 "trigger_probability": String(forecastAnalysis.triggerProbability),
@@ -163,7 +163,7 @@ extension TriggerEngine {
             )
             
         } catch {
-            logger.error("Failed to fetch weather data for forecast prediction: \(error)")
+            self.logger.error("Failed to fetch weather data for forecast prediction: \(error)")
             return TriggerEvaluationResult(
                 reminderId: reminderId,
                 condition: condition,
@@ -191,7 +191,7 @@ extension TriggerEngine {
             return ComponentEvaluationResult(
                 met: met,
                 confidence: confidence,
-                description: "Temperature \(currentTemp, specifier: "%.1f")° \(met ? "above" : "below") target \(targetTemp, specifier: "%.1f")°"
+                description: "Temperature \(String(format: "%.1f", currentTemp))° \(met ? "above" : "below") target \(String(format: "%.1f", targetTemp))°"
             )
             
         case .below:
@@ -200,7 +200,7 @@ extension TriggerEngine {
             return ComponentEvaluationResult(
                 met: met,
                 confidence: confidence,
-                description: "Temperature \(currentTemp, specifier: "%.1f")° \(met ? "below" : "above") target \(targetTemp, specifier: "%.1f")°"
+                description: "Temperature \(String(format: "%.1f", currentTemp))° \(met ? "below" : "above") target \(String(format: "%.1f", targetTemp))°"
             )
             
         case .equals:
@@ -211,7 +211,7 @@ extension TriggerEngine {
             return ComponentEvaluationResult(
                 met: met,
                 confidence: confidence,
-                description: "Temperature \(currentTemp, specifier: "%.1f")° \(met ? "matches" : "differs from") target \(targetTemp, specifier: "%.1f")° (±\(tolerance, specifier: "%.1f")°)"
+                description: "Temperature \(String(format: "%.1f", currentTemp))° \(met ? "matches" : "differs from") target \(String(format: "%.1f", targetTemp))° (±\(String(format: "%.1f", tolerance))°)"
             )
             
         case .between:
@@ -228,7 +228,7 @@ extension TriggerEngine {
             return ComponentEvaluationResult(
                 met: met,
                 confidence: confidence,
-                description: "Temperature \(currentTemp, specifier: "%.1f")° \(met ? "within" : "outside") range \(minTemp, specifier: "%.1f")°-\(maxTemp, specifier: "%.1f")°"
+                description: "Temperature \(String(format: "%.1f", currentTemp))° \(met ? "within" : "outside") range \(String(format: "%.1f", minTemp))°-\(String(format: "%.1f", maxTemp))°"
             )
         }
     }
@@ -255,7 +255,7 @@ extension TriggerEngine {
         return ComponentEvaluationResult(
             met: met,
             confidence: confidence,
-            description: "Humidity \(currentHumidity, specifier: "%.0f")% \(met ? "matches" : "differs from") target \(targetHumidity, specifier: "%.0f")% (±\(tolerance, specifier: "%.0f")%)"
+            description: "Humidity \(String(format: "%.0f", currentHumidity))% \(met ? "matches" : "differs from") target \(String(format: "%.0f", targetHumidity))% (±\(String(format: "%.0f", tolerance))%)"
         )
     }
     
@@ -279,7 +279,7 @@ extension TriggerEngine {
         return ComponentEvaluationResult(
             met: met,
             confidence: confidence,
-            description: "Wind speed \(currentWindSpeed, specifier: "%.1f") mph \(met ? "below" : "above") maximum \(maxWindSpeed, specifier: "%.1f") mph"
+            description: "Wind speed \(String(format: "%.1f", currentWindSpeed)) mph \(met ? "below" : "above") maximum \(String(format: "%.1f", maxWindSpeed)) mph"
         )
     }
     
@@ -304,7 +304,7 @@ extension TriggerEngine {
             return ComponentEvaluationResult(
                 met: met,
                 confidence: met ? 1.0 : 0.0,
-                description: "Weather is \(met ? "dry" : "wet") (precipitation: \(weatherData.precipitationAmount, specifier: "%.2f"))"
+                description: "Weather is \(met ? "dry" : "wet") (precipitation: \(String(format: "%.2f", weatherData.precipitationAmount)))"
             )
             
         case .anyPrecipitation:
@@ -312,7 +312,7 @@ extension TriggerEngine {
             return ComponentEvaluationResult(
                 met: met,
                 confidence: met ? 1.0 : 0.0,
-                description: "\(met ? "Precipitation detected" : "No precipitation") (amount: \(weatherData.precipitationAmount, specifier: "%.2f"))"
+                description: "\(met ? "Precipitation detected" : "No precipitation") (amount: \(String(format: "%.2f", weatherData.precipitationAmount)))"
             )
             
         case .rain:
@@ -397,7 +397,7 @@ extension TriggerEngine {
     // MARK: - Helper Methods
     
     private func checkDryPeriod(location: CLLocation, hours: Int) async -> (isDry: Bool, confidence: Double, dryHours: Int) {
-        guard let modelContext = modelContext else {
+        guard let modelContext = self.modelContext else {
             return (isDry: false, confidence: 0.0, dryHours: 0)
         }
         
@@ -436,7 +436,7 @@ extension TriggerEngine {
             return (isDry: isDry, confidence: confidence, dryHours: dryHours)
             
         } catch {
-            logger.error("Failed to check dry period: \(error)")
+            self.logger.error("Failed to check dry period: \(error)")
             return (isDry: false, confidence: 0.0, dryHours: 0)
         }
     }
@@ -486,7 +486,7 @@ extension TriggerEngine {
         let averageConfidence = triggerDays > 0 ? totalConfidence / Double(triggerDays) : 0.0
         
         let description = willTrigger ?
-            "Forecast indicates conditions will be met in \(triggerDays) of \(daysToAnalyze) days (probability: \(triggerProbability * 100, specifier: "%.0f")%)" :
+            "Forecast indicates conditions will be met in \(triggerDays) of \(daysToAnalyze) days (probability: \(String(format: "%.0f", triggerProbability * 100))%)" :
             "Forecast indicates conditions unlikely to be met in next \(daysToAnalyze) days"
         
         let weatherPattern = analyzeWeatherPattern(forecast: relevantForecast)

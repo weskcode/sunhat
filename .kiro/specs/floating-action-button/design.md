@@ -2,9 +2,9 @@
 
 ## Overview
 
-The floating action button (FAB) feature will provide a persistent, easily accessible entry point for quick reminder creation throughout the app. The design leverages existing SwiftUI components and follows the established design patterns in the codebase, particularly building upon the existing reminder template system and button styles.
+The floating action button (FAB) feature will provide a persistent, easily accessible entry point for quick weather-triggered reminder creation throughout the TempTrigger (Hatti) app. The design leverages existing SwiftUI 6.0 components and follows the established MVVM architecture patterns in the codebase, particularly building upon the existing `Models/WeatherReminder.swift`, `Models/TriggerCondition.swift`, and button styles from `Utilities/Helpers/ButtonStyles.swift`.
 
-The FAB will use a radial expansion pattern optimized for one-handed use, with smooth SwiftUI animations and haptic feedback integration. The implementation will be modular and reusable across different views in the app.
+The FAB will use a radial expansion pattern optimized for one-handed use, with smooth SwiftUI 6.0 animations using Swift 6 structured concurrency and haptic feedback integration. The implementation will be modular and reusable across different views in the app, integrating seamlessly with the existing SwiftData persistence layer and automatic CloudKit synchronization. It follows the iOS 18.0+ minimum target and leverages the established Services/Weather/ architecture.
 
 ## Architecture
 
@@ -22,10 +22,13 @@ FloatingActionButton (Main Container)
 
 ### Integration Points
 
-- **Existing Templates**: Leverages the existing `ReminderTemplate` structure and `reminderTemplates` array
-- **Button Styles**: Extends the existing `ButtonStyles.swift` with new FAB-specific styles
-- **Navigation**: Integrates with existing navigation patterns for custom reminder creation
-- **Location Services**: Uses existing `LocationData` for automatic location assignment
+- **SwiftData Models**: Leverages existing `Models/WeatherReminder.swift`, `Models/TriggerCondition.swift`, and `Models/LocationData.swift` models with @Model decorators
+- **ViewModels**: Integrates with `ViewModels/ComprehensiveReminderCreationViewModel.swift` patterns for MVVM state management using Combine publishers
+- **Button Styles**: Extends the existing `Utilities/Helpers/ButtonStyles.swift` with new FAB-specific styles following SwiftUI 6.0 patterns
+- **Navigation**: Integrates with existing SwiftUI NavigationStack patterns for custom reminder creation in Views/Reminders/
+- **Location Services**: Uses existing `Models/LocationData.swift` and Core Location integration for automatic location assignment
+- **Weather Services**: Connects with `Services/Weather/WeatherAPI.swift` for real-time weather context using Apple WeatherKit and OpenWeatherMap backup
+- **Background Processing**: Integrates with BackgroundTasks framework for weather monitoring as established in the tech stack
 
 ## Components and Interfaces
 
@@ -51,20 +54,33 @@ struct FloatingActionButton: View {
 
 ```swift
 @MainActor
-class FABViewModel: ObservableObject {
-    @Published var selectedTemplate: ReminderTemplate?
+final class FABViewModel: ObservableObject {
+    @Published var selectedTemplate: WeatherReminderTemplate?
     @Published var isCreatingReminder = false
+    @Published var currentLocation: LocationData?
     
-    func createQuickReminder(from template: ReminderTemplate)
-    func handleTemplateSelection(_ template: ReminderTemplate)
+    private var modelContext: ModelContext?
+    private let locationManager = CLLocationManager()
+    private var cancellables = Set<AnyCancellable>()
+    
+    func configure(modelContext: ModelContext)
+    func createQuickReminder(from template: WeatherReminderTemplate) async -> Bool
+    func handleTemplateSelection(_ template: WeatherReminderTemplate)
+    private func buildTriggerCondition(from template: WeatherReminderTemplate) -> TriggerCondition
+    
+    // Follows Swift 6 concurrency patterns with structured concurrency
+    // Integrates with existing WeatherAPI.swift for weather context
+    // Uses Combine for reactive state management like ComprehensiveReminderCreationViewModel
 }
 ```
 
 **Responsibilities:**
-- Template selection logic
-- Quick reminder creation
+- Weather template selection logic
+- Quick WeatherReminder creation with SwiftData persistence
 - Integration with existing reminder creation flow
 - State management for animations
+- Location services integration
+- CloudKit synchronization through SwiftData
 
 ### 3. FABButton (Core Button)
 
@@ -89,12 +105,12 @@ struct FABButton: View {
 ```swift
 struct FABOptionsMenu: View {
     let isExpanded: Bool
-    let templates: [ReminderTemplate]
-    let onTemplateSelect: (ReminderTemplate) -> Void
+    let templates: [WeatherReminderTemplate]
+    let onTemplateSelect: (WeatherReminderTemplate) -> Void
     let onCustomSelect: () -> Void
     
     var body: some View
-    // Radial or vertical layout of options
+    // Radial or vertical layout of weather-based options
 }
 ```
 
@@ -107,12 +123,12 @@ struct FABOptionsMenu: View {
 
 ```swift
 struct FABTemplateOption: View {
-    let template: ReminderTemplate
+    let template: WeatherReminderTemplate
     let animationDelay: Double
     let onSelect: () -> Void
     
     var body: some View
-    // Individual template option with icon and label
+    // Individual weather template option with temperature range and activity icon
 }
 ```
 
@@ -124,12 +140,28 @@ struct FABTemplateOption: View {
 
 ## Data Models
 
+### WeatherReminderTemplate
+
+```swift
+struct WeatherReminderTemplate: Identifiable {
+    let id = UUID()
+    let title: String
+    let category: ReminderCategory
+    let triggerType: TriggerType
+    let temperatureRange: ClosedRange<Double>?
+    let exactTemperature: Double?
+    let icon: String
+    let color: Color
+    let description: String
+}
+```
+
 ### FABConfiguration
 
 ```swift
 struct FABConfiguration {
     let position: FABPosition
-    let templates: [ReminderTemplate]
+    let templates: [WeatherReminderTemplate]
     let animationDuration: Double
     let hapticStyle: UIImpactFeedbackGenerator.FeedbackStyle
 }
@@ -145,9 +177,10 @@ enum FABPosition {
 
 ```swift
 struct QuickReminderRequest {
-    let template: ReminderTemplate
+    let template: WeatherReminderTemplate
     let location: LocationData?
     let createdAt: Date
+    let triggerCondition: TriggerCondition
 }
 ```
 

@@ -2,7 +2,9 @@
 
 ## Introduction
 
-This feature introduces a floating action button (FAB) that provides quick access to reminder creation functionality. The FAB will expand to reveal pre-built reminder templates and a custom option, optimized for one-handed use and speed. The implementation will focus on smooth animations, haptic feedback, and streamlined user experience to minimize the steps required to create weather-based reminders.
+This feature introduces a floating action button (FAB) that provides quick access to weather-triggered reminder creation functionality in the TempTrigger (Hatti) app. The FAB will expand to reveal pre-built weather-based reminder templates and a custom option, optimized for one-handed use and speed. The implementation will focus on smooth SwiftUI 6.0 animations, haptic feedback, and streamlined user experience to minimize the steps required to create temperature and weather condition-based reminders.
+
+The FAB integrates with the existing MVVM architecture using SwiftData models and follows the established patterns in `Views/Reminders/FirstReminderCreationView.swift` and `ViewModels/ComprehensiveReminderCreationViewModel.swift`. It leverages the existing `Models/WeatherReminder.swift`, `Models/TriggerCondition.swift`, and `Services/Weather/WeatherAPI.swift` infrastructure.
 
 ## Requirements
 
@@ -23,10 +25,10 @@ This feature introduces a floating action button (FAB) that provides quick acces
 
 #### Acceptance Criteria
 
-1. WHEN the FAB expands THEN the system SHALL display three pre-built templates: "Walking Weather", "Gardening Day", and "Car Wash"
-2. WHEN the user selects a pre-built template THEN the system SHALL create a reminder with predefined weather conditions and settings
-3. WHEN a template is selected THEN the system SHALL provide haptic feedback and visual confirmation
-4. WHEN a template reminder is created THEN the system SHALL use appropriate default settings for each activity type
+1. WHEN the FAB expands THEN the system SHALL display weather-based templates including "Perfect Walking Weather (65-75°F)", "Gardening Conditions (Above 50°F)", and "Outdoor Exercise (60-80°F)"
+2. WHEN the user selects a pre-built template THEN the system SHALL create a WeatherReminder using the existing SwiftData @Model class with predefined TriggerCondition and temperature ranges
+3. WHEN a template is selected THEN the system SHALL provide haptic feedback and visual confirmation using UINotificationFeedbackGenerator following iOS 18.0+ patterns
+4. WHEN a template reminder is created THEN the system SHALL use appropriate ReminderCategory enum values and default NotificationConfig settings from the existing Models directory structure
 
 ### Requirement 3
 
@@ -35,9 +37,9 @@ This feature introduces a floating action button (FAB) that provides quick acces
 #### Acceptance Criteria
 
 1. WHEN the FAB expands THEN the system SHALL display a "Custom Reminder" option alongside the templates
-2. WHEN the user selects "Custom Reminder" THEN the system SHALL navigate to the full reminder creation flow
-3. WHEN navigating to custom creation THEN the system SHALL maintain context and provide smooth transition animations
-4. WHEN returning from custom creation THEN the system SHALL collapse the FAB automatically
+2. WHEN the user selects "Custom Reminder" THEN the system SHALL navigate to Views/Reminders/ComprehensiveReminderCreationView with full weather condition configuration
+3. WHEN navigating to custom creation THEN the system SHALL maintain SwiftUI 6.0 navigation context and provide smooth transition animations using modern NavigationStack patterns
+4. WHEN returning from custom creation THEN the system SHALL collapse the FAB automatically and refresh the reminder list
 
 ### Requirement 4
 
@@ -80,6 +82,6 @@ This feature introduces a floating action button (FAB) that provides quick acces
 #### Acceptance Criteria
 
 1. WHEN the user selects a template THEN the system SHALL create the reminder immediately without additional forms
-2. WHEN a template reminder is created THEN the system SHALL use the user's current location automatically
-3. WHEN creation is complete THEN the system SHALL show brief confirmation and return to the previous screen
-4. WHEN the process completes THEN the system SHALL require no more than 2 taps for template-based reminders
+2. WHEN a template reminder is created THEN the system SHALL use the user's current LocationData from Models/LocationData.swift automatically via Core Location services
+3. WHEN creation is complete THEN the system SHALL show brief confirmation using SwiftUI 6.0 animations and return to the previous screen
+4. WHEN the process completes THEN the system SHALL require no more than 2 taps for template-based reminders and persist data using SwiftData with automatic CloudKit sync

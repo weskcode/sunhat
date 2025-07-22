@@ -52,7 +52,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     
     // MARK: - Initialization
     
-    init() {
+    override init() {
         setupLocationManager()
         setupSearchCompleter()
         setupBindings()
@@ -184,17 +184,40 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         currentLocation = location
         updateLocationAccuracy(location)
         
-        // Reverse geocode to get readable name using CLGeocoder
-        let geocoder = CLGeocoder()
-        geocoder.reverseGeocodeLocation(location) { [weak self] placemarks, error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    self?.logger.error("Reverse geocoding failed: \(error.localizedDescription)")
-                    self?.currentLocationName = "Unknown Location"
-                } else if let placemark = placemarks?.first {
-                    self?.currentLocationName = self?.formatPlacemarkName(placemark) ?? "Unknown Location"
-                } else {
-                    self?.currentLocationName = "Unknown Location"
+        // Reverse geocode to get readable name
+        if #available(iOS 26.0, *) {
+            let request = MKReverseGeocodeRequest(coordinate: location.coordinate)
+            let geocoder = MKGeocoder()
+            geocoder.reverseGeocode(with: request) { [weak self] placemarks, error in
+                guard let self = self else { return }
+                DispatchQueue.main.async {
+                    if let error = error {
+                        self.logger.error("Reverse geocoding failed (MapKit): \(error.localizedDescription)")
+                        self.currentLocationName = "Unknown Location"
+                        return
+                    }
+                    if let placemark = placemarks?.first {
+                        self.currentLocationName = self.formatPlacemarkName(placemark)
+                    } else {
+                        self.currentLocationName = "Unknown Location"
+                    }
+                }
+            }
+        } else {
+            let geocoder = CLGeocoder()
+            geocoder.reverseGeocodeLocation(location) { [weak self] (placemarks: [CLPlacemark]?, error: Error?) in
+                guard let self = self else { return }
+                DispatchQueue.main.async {
+                    if let error = error {
+                        self.logger.error("Reverse geocoding failed: \(error.localizedDescription)")
+                        self.currentLocationName = "Unknown Location"
+                        return
+                    }
+                    if let placemark = placemarks?.first {
+                        self.currentLocationName = self.formatPlacemarkName(MKPlacemark(placemark: placemark))
+                    } else {
+                        self.currentLocationName = "Unknown Location"
+                    }
                 }
             }
         }
@@ -219,7 +242,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         }
     }
     
-    private func formatPlacemarkName(_ placemark: CLPlacemark) -> String {
+    private func formatPlacemarkName(_ placemark: MKPlacemark) -> String {
         let components = [
             placemark.name,
             placemark.locality,
@@ -253,10 +276,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
                 if lhs.isFavorite != rhs.isFavorite {
                     return lhs.isFavorite && !rhs.isFavorite
                 }
-                if let lhsLastUsed = lhs.lastUsed, let rhsLastUsed = rhs.lastUsed {
-                    return lhsLastUsed > rhsLastUsed
-                }
-                return false
+                return lhs.lastUsed > rhs.lastUsed
             }
             self.logger.info("Loaded \(self.savedLocations.count) saved locations")
         } catch {
@@ -267,7 +287,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     func addSavedLocation(_ location: SavedLocation) {
         guard let modelContext = modelContext else { return }
         
-        let existingLocation = savedLocations.first { [self] (savedLocation: SavedLocation) -> Bool in
+        let existingLocation = savedLocations.first { (savedLocation: SavedLocation) -> Bool in
             savedLocation.distance(from: location.clLocation) < 100 // Within 100 meters
         }
         
@@ -571,3 +591,4 @@ extension LocationManagementViewModel: MKLocalSearchCompleterDelegate {
         }
     }
 }
+

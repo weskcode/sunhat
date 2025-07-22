@@ -300,16 +300,16 @@ extension TriggerEngine {
             triggered = difference <= tolerance
             confidence = max(0.0, 1.0 - (difference / tolerance))
             triggerReason = triggered ?
-                "Temperature \(currentTemp, specifier: "%.1f")° matches target \(targetTemp, specifier: "%.1f")° (±\(tolerance, specifier: "%.1f")°)" :
-                "Temperature \(currentTemp, specifier: "%.1f")° differs from target \(targetTemp, specifier: "%.1f")° by \(difference, specifier: "%.1f")°"
+                "Temperature \(String(format: "%.1f", currentTemp))° matches target \(String(format: "%.1f", targetTemp))° (±\(String(format: "%.1f", tolerance))°)" :
+                "Temperature \(String(format: "%.1f", currentTemp))° differs from target \(String(format: "%.1f", targetTemp))° by \(String(format: "%.1f", difference))°"
             
         case .between:
             if let minTemp = condition.minTemperature, let maxTemp = condition.maxTemperature {
                 triggered = currentTemp >= minTemp && currentTemp <= maxTemp
                 confidence = triggered ? 1.0 : 0.0
                 triggerReason = triggered ?
-                    "Temperature \(currentTemp, specifier: "%.1f")° is within range \(minTemp, specifier: "%.1f")° - \(maxTemp, specifier: "%.1f")°" :
-                    "Temperature \(currentTemp, specifier: "%.1f")° is outside range \(minTemp, specifier: "%.1f")° - \(maxTemp, specifier: "%.1f")°"
+                    "Temperature \(String(format: "%.1f", currentTemp))° is within range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°" :
+                    "Temperature \(String(format: "%.1f", currentTemp))° is outside range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°"
             } else {
                 triggered = false
                 confidence = 0.0
@@ -369,8 +369,8 @@ extension TriggerEngine {
         }
         
         let triggerReason = triggered ?
-            "Temperature \(currentTemp, specifier: "%.1f")° is within range \(minTemp, specifier: "%.1f")° - \(maxTemp, specifier: "%.1f")°" :
-            "Temperature \(currentTemp, specifier: "%.1f")° is outside range \(minTemp, specifier: "%.1f")° - \(maxTemp, specifier: "%.1f")°"
+            "Temperature \(String(format: "%.1f", currentTemp))° is within range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°" :
+            "Temperature \(String(format: "%.1f", currentTemp))° is outside range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°"
         
         let metadata = [
             "current_temperature": String(currentTemp),
@@ -404,7 +404,7 @@ extension TriggerEngine {
             averageEvaluationDuration = (averageEvaluationDuration * 0.8) + (duration * 0.2)
         }
         
-        logger.debug("Evaluation #\(evaluationCount) completed in \(duration)s (avg: \(averageEvaluationDuration)s)")
+        logger.debug("Evaluation #\(self.evaluationCount) completed in \(duration)s (avg: \(self.averageEvaluationDuration)s)")
     }
     
     func getPerformanceMetrics() -> (count: Int, lastEvaluation: Date?, averageDuration: TimeInterval) {
