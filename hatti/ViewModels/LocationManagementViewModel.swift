@@ -11,7 +11,7 @@ import SwiftData
 import CoreLocation
 import MapKit
 import Combine
-import os.log
+import os
 
 @MainActor
 final class LocationManagementViewModel: NSObject, ObservableObject {
@@ -53,6 +53,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     // MARK: - Initialization
     
     override init() {
+        super.init()
         setupLocationManager()
         setupSearchCompleter()
         setupBindings()
@@ -183,42 +184,18 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     private func processLocationUpdate(_ location: CLLocation) {
         currentLocation = location
         updateLocationAccuracy(location)
-        
-        // Reverse geocode to get readable name
-        if #available(iOS 26.0, *) {
-            let request = MKReverseGeocodeRequest(coordinate: location.coordinate)
-            let geocoder = MKGeocoder()
-            geocoder.reverseGeocode(with: request) { [weak self] placemarks, error in
-                guard let self = self else { return }
-                DispatchQueue.main.async {
-                    if let error = error {
-                        self.logger.error("Reverse geocoding failed (MapKit): \(error.localizedDescription)")
-                        self.currentLocationName = "Unknown Location"
-                        return
-                    }
-                    if let placemark = placemarks?.first {
-                        self.currentLocationName = self.formatPlacemarkName(placemark)
-                    } else {
-                        self.currentLocationName = "Unknown Location"
-                    }
+
+        Task {
+            do {
+                let placemarks = try await CLGeocoder().reverseGeocodeLocation(location)
+                if let placemark = placemarks.first {
+                    self.currentLocationName = self.formatPlacemarkName(MKPlacemark(placemark: placemark))
+                } else {
+                    self.currentLocationName = "Unknown Location"
                 }
-            }
-        } else {
-            let geocoder = CLGeocoder()
-            geocoder.reverseGeocodeLocation(location) { [weak self] (placemarks: [CLPlacemark]?, error: Error?) in
-                guard let self = self else { return }
-                DispatchQueue.main.async {
-                    if let error = error {
-                        self.logger.error("Reverse geocoding failed: \(error.localizedDescription)")
-                        self.currentLocationName = "Unknown Location"
-                        return
-                    }
-                    if let placemark = placemarks?.first {
-                        self.currentLocationName = self.formatPlacemarkName(MKPlacemark(placemark: placemark))
-                    } else {
-                        self.currentLocationName = "Unknown Location"
-                    }
-                }
+            } catch {
+                self.logger.error("Reverse geocoding failed: \(error.localizedDescription)")
+                self.currentLocationName = "Unknown Location"
             }
         }
         
@@ -509,12 +486,11 @@ extension LocationManagementViewModel: CLLocationManagerDelegate {
         Task { @MainActor in
             guard let location = locations.last else { return }
             
-            self.logger.info("Location updated: \(location.coordinate)")
+            self.logger.info("Location updated: \(String(describing: location.coordinate))")
             
             // Stop location updates and timer
             self.locationManager.stopUpdatingLocation()
-            self.locationUpdateTimer?.invalidate()
-            self.locationUpdateTimer = nil
+            self.timer?.invalidate() // Corrected from locationUpdateTimer
             self.isLoadingCurrentLocation = false
             
             // Validate location accuracy
@@ -591,4 +567,3 @@ extension LocationManagementViewModel: MKLocalSearchCompleterDelegate {
         }
     }
 }
-

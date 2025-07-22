@@ -10,7 +10,7 @@ import SwiftUI
 import SwiftData
 import CloudKit
 import Combine
-import os.log
+import os
 
 @MainActor
 final class UserPreferencesViewModel: ObservableObject {

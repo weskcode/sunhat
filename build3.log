@@ -1,0 +1,657 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -project hatti.xcodeproj -scheme hatti -sdk iphonesimulator -destination "platform=iOS Simulator,name=iPhone 16,OS=26.0" -configuration Debug ONLY_ACTIVE_ARCH=YES ENABLE_PREVIEWS_BUILD=NO
+
+Build settings from command line:
+    ENABLE_PREVIEWS_BUILD = NO
+    ONLY_ACTIVE_ARCH = YES
+    SDKROOT = iphonesimulator18.5
+
+--- xcodebuild: WARNING: Using the first of multiple matching destinations:
+{ platform:iOS Simulator, arch:arm64, id:A7E33869-092A-4CF6-9122-3911E7C42DCC, OS:26.0, name:iPhone 16 }
+{ platform:iOS Simulator, arch:x86_64, id:A7E33869-092A-4CF6-9122-3911E7C42DCC, OS:26.0, name:iPhone 16 }
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'hatti' in project 'hatti' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 388a7bfc080713f0ccb59670a42f7544
+Build description path: /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/XCBuildData/388a7bfc080713f0ccb59670a42f7544.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.5-22F76-d5fc8ad4295d2ef488fb7d0f804ce0c4.sdkstatcache
+    cd /Users/wesleykeetch/Documents/Developer/hatti/hatti.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.5-22F76-d5fc8ad4295d2ef488fb7d0f804ce0c4.sdkstatcache
+
+WriteAuxiliaryFile /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/hatti.SwiftConstValuesFileList (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    write-file /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/hatti.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/hatti.LinkFileList (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    write-file /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/hatti.LinkFileList
+
+WriteAuxiliaryFile /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/hatti.SwiftFileList (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    write-file /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/hatti.SwiftFileList
+
+ProcessInfoPlistFile /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Products/Debug-iphonesimulator/hatti.app/Info.plist /Users/wesleykeetch/Documents/Developer/hatti/hatti/Info.plist (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    builtin-infoPlistUtility /Users/wesleykeetch/Documents/Developer/hatti/hatti/Info.plist -producttype com.apple.product-type.application -genpkginfo /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Products/Debug-iphonesimulator/hatti.app/PkgInfo -expandbuildsettings -format binary -platform iphonesimulator -additionalcontentfile /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/assetcatalog_generated_info.plist -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Products/Debug-iphonesimulator/hatti.app/Info.plist
+
+SwiftDriver hatti normal arm64 com.apple.xcode.tools.swift.compiler (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name hatti -Onone -enforce-exclusivity\=checked @/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/hatti.SwiftFileList -DDEBUG -enable-bare-slash-regex -enable-upcoming-feature MemberImportVisibility -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -target arm64-apple-ios26.0-simulator -g -module-cache-path /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Index.noindex/DataStore -swift-version 5 -I /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Products/Debug-iphonesimulator -F /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64 -c -j8 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.5-22F76-d5fc8ad4295d2ef488fb7d0f804ce0c4.sdkstatcache -output-file-map /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/hatti-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/hatti.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/hatti_const_extract_protocols.json -Xcc -iquote -Xcc /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/hatti-generated-files.hmap -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/hatti-own-target-headers.hmap -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/hatti-all-target-headers.hmap -Xcc -iquote -Xcc /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/hatti-project-headers.hmap -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources-normal/arm64 -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources/arm64 -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/hatti-Swift.h -working-directory /Users/wesleykeetch/Documents/Developer/hatti -experimental-emit-module-separately -disable-cmo
+
+SwiftCompile normal arm64 Compiling\ CelebrationView.swift,\ LocationData.swift,\ BackgroundWeatherManager.swift,\ AllRemindersView.swift,\ WeatherAlert.swift,\ DetailedReminderComponents.swift,\ ButtonStyles.swift,\ SettingsView.swift,\ ComprehensiveReminderCreationViewModel.swift,\ LocationManagementView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/CelebrationView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/LocationData.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/BackgroundWeatherManager.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/AllRemindersView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherAlert.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/DetailedReminderComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Utilities/Helpers/ButtonStyles.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/SettingsView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationManagementView.swift (in target 'hatti' from project 'hatti')
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/CelebrationView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/LocationData.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/BackgroundWeatherManager.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/AllRemindersView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherAlert.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/DetailedReminderComponents.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Utilities/Helpers/ButtonStyles.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/SettingsView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:63:15: error: type 'TriggerType' has no member 'exact'
+        case .exact:
+             ~^~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:65:15: error: type 'TriggerType' has no member 'range'
+        case .range:
+             ~^~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:67:15: error: type 'TriggerType' has no member 'trend'
+        case .trend, .seasonal:
+             ~^~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:67:23: error: type 'TriggerType' has no member 'seasonal'
+        case .trend, .seasonal:
+                     ~^~~~~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:79:9: error: cannot convert value of type 'ActivityInterest' to expected argument type 'Int'
+        selectedCategory != .none
+        ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:91:15: error: type 'TriggerType' has no member 'exact'
+        case .exact:
+             ~^~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:93:15: error: type 'TriggerType' has no member 'range'
+        case .range:
+             ~^~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:97:15: error: type 'TriggerType' has no member 'trend'
+        case .trend:
+             ~^~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:99:15: error: type 'TriggerType' has no member 'seasonal'
+        case .seasonal:
+             ~^~~~~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:168:34: error: type 'TriggerType' has no member 'range'
+                conditionType = .range
+                                ~^~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:208:15: error: type 'TriggerType' has no member 'exact'
+        case .exact:
+             ~^~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:212:15: error: type 'TriggerType' has no member 'range'
+        case .range:
+             ~^~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:217:15: error: type 'TriggerType' has no member 'trend'
+        case .trend:
+             ~^~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:222:15: error: type 'TriggerType' has no member 'seasonal'
+        case .seasonal:
+             ~^~~~~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:263:48: error: extra arguments at positions #3, #4 in call
+                let locationData = LocationData(
+                                               ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/LocationData.swift:53:5: note: 'init(latitude:longitude:city:timeZoneIdentifier:)' declared here
+    init(
+    ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:276:59: error: reference to property 'generatedTitle' in closure requires explicit use of 'self' to make capture semantics explicit
+            logger.info("Successfully created reminder: \(generatedTitle)")
+                                                          ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:276:59: note: reference 'self.' explicitly
+            logger.info("Successfully created reminder: \(generatedTitle)")
+                                                          ^
+                                                          self.
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:337:25: warning: comparing non-optional value of type 'Published<ActivityInterest>.Publisher.Output' (aka 'ActivityInterest') to 'Optional.none' always returns false
+            if category == .none {
+               ~~~~~~~~ ^  ~~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:349:46: warning: 'usesMetricSystem' was deprecated in iOS 16: Use `measurementSystem` instead
+            temperatureUnit = Locale.current.usesMetricSystem ? .celsius : .fahrenheit
+                                             ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:357:85: warning: 'usesMetricSystem' was deprecated in iOS 16: Use `measurementSystem` instead
+            temperatureUnit = preferences.first?.temperatureUnit ?? (Locale.current.usesMetricSystem ? .celsius : .fahrenheit)
+                                                                                    ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:359:46: warning: 'usesMetricSystem' was deprecated in iOS 16: Use `measurementSystem` instead
+            temperatureUnit = Locale.current.usesMetricSystem ? .celsius : .fahrenheit
+                                             ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:569:33: error: type 'TriggerType' has no member 'range'
+                conditionType: .range,
+                               ~^~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:579:28: error: type 'ActivityInterest' has no member 'outdoor'
+                category: .outdoor,
+                          ~^~~~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:581:33: error: type 'TriggerType' has no member 'exact'
+                conditionType: .exact,
+                               ~^~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:605:15: warning: 'catch' block is unreachable because no errors are thrown in 'do' block
+            } catch {
+              ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:654:37: error: extra argument 'totalDays' in call
+            totalDays: forecastData.count,
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift:653:26: error: cannot convert value of type 'Int' to expected argument type '[Date]'
+            triggerDays: triggerDays,
+                         ^
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationManagementView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+Failed frontend command:
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/CelebrationView.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/LocationData.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/BackgroundWeatherManager.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/AllRemindersView.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherAlert.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/DetailedReminderComponents.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Utilities/Helpers/ButtonStyles.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/SettingsView.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationManagementView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+SeasonalAnalysis.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/SettingsViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/NotificationPermissionView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/NotificationTiming.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherAPI.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/ComprehensiveReminderCreationView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherData.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherServiceConfiguration.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/FirstReminderCreationComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/DataExportOptionsView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Location/LocationPermissionManager.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/DashboardViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationPermissionView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+TrendAnalysis.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/UserPreferencesViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/UserPreferencesOnboardingView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/ReminderLocation.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/DetailedReminderView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherReminder.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ReminderCreationComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/DataPrivacyView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Resources/Configuration/NotificationConfig.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Dashboard/ContentView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/TemperatureTrendChart.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/DetailedReminderViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationPickerView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/hattiApp.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngineManager.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/WeatherViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/UserPreferencesView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/SavedLocation.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherError.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/FirstReminderCreationView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherTypes.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ReminderManagementComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/NotificationPreferencesView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Dashboard/DashboardView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/WeatherAlertsView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/FirstReminderCreationViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/ManualLocationEntryView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/WelcomeView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/TriggerCondition.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherForecastIntegration.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ComparisonCard.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/QuickCreateReminderView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ReminderSummaryCard.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/PrivacyContactView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/Settings/DataPrivacyViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/WeatherView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+ForecastAnalysis.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/LocationManagementViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/Item.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/UserPreferences.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherService.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ConditionBuilderView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/ReminderManagementView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/WelcomeViewComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/SettingsSubViews.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Background/OnboardingCoordinator.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/Settings/NotificationPreferencesViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationManagementComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/WeatherViewComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ReminderManagementViewModel.swift /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources/GeneratedAssetSymbols.swift -supplementary-output-file-map /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/supplementaryOutputs-1 -emit-localized-strings -emit-localized-strings-path /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64 -target arm64-apple-ios26.0-simulator -Xllvm -aarch64-use-tbi -enable-objc-interop -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -I /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Products/Debug-iphonesimulator -F /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Products/Debug-iphonesimulator -no-color-diagnostics -enable-testing -g -debug-info-format\=dwarf -dwarf-version\=5 -module-cache-path /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -profile-generate -profile-coverage-mapping -swift-version 5 -enforce-exclusivity\=checked -Onone -D DEBUG -serialize-debugging-options -const-gather-protocols-file /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/hatti_const_extract_protocols.json -enable-upcoming-feature MemberImportVisibility -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -empty-abi-descriptor -validate-clang-modules-once -clang-build-session-file /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -working-directory -Xcc /Users/wesleykeetch/Documents/Developer/hatti -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/wesleykeetch/Documents/Developer/hatti -Xcc -ivfsstatcache -Xcc /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.5-22F76-d5fc8ad4295d2ef488fb7d0f804ce0c4.sdkstatcache -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/swift-overrides.hmap -Xcc -iquote -Xcc /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/hatti-generated-files.hmap -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/hatti-own-target-headers.hmap -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/hatti-all-target-headers.hmap -Xcc -iquote -Xcc /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/hatti-project-headers.hmap -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources-normal/arm64 -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources/arm64 -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources -Xcc -DDEBUG\=1 -module-name hatti -frontend-parseable-output -disable-clang-spi -target-sdk-version 18.5 -target-sdk-name iphonesimulator18.5 -external-plugin-path /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/lib/swift/host/plugins\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/CelebrationView.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/LocationData.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/BackgroundWeatherManager.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/AllRemindersView.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/WeatherAlert.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/DetailedReminderComponents.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/ButtonStyles.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/SettingsView.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/ComprehensiveReminderCreationViewModel.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/LocationManagementView.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/CelebrationView.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/LocationData.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/BackgroundWeatherManager.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/AllRemindersView.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/WeatherAlert.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/DetailedReminderComponents.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/ButtonStyles.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/SettingsView.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/ComprehensiveReminderCreationViewModel.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/LocationManagementView.o -index-store-path /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Index.noindex/DataStore -index-system-modules
+SwiftCompile normal arm64 Compiling\ LocationPermissionManager.swift,\ DashboardViewModel.swift,\ LocationPermissionView.swift,\ TriggerEngine+TrendAnalysis.swift,\ UserPreferencesViewModel.swift,\ UserPreferencesOnboardingView.swift,\ ReminderLocation.swift,\ DetailedReminderView.swift,\ WeatherReminder.swift,\ ReminderCreationComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Location/LocationPermissionManager.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/DashboardViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationPermissionView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+TrendAnalysis.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/UserPreferencesViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/UserPreferencesOnboardingView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/ReminderLocation.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/DetailedReminderView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherReminder.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ReminderCreationComponents.swift (in target 'hatti' from project 'hatti')
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Location/LocationPermissionManager.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/DashboardViewModel.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationPermissionView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+TrendAnalysis.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/UserPreferencesViewModel.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/UserPreferencesOnboardingView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/ReminderLocation.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/DetailedReminderView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherReminder.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ReminderCreationComponents.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 Compiling\ TriggerEngine+SeasonalAnalysis.swift,\ SettingsViewModel.swift,\ NotificationPermissionView.swift,\ NotificationTiming.swift,\ WeatherAPI.swift,\ ComprehensiveReminderCreationView.swift,\ WeatherData.swift,\ WeatherServiceConfiguration.swift,\ FirstReminderCreationComponents.swift,\ DataExportOptionsView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+SeasonalAnalysis.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/SettingsViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/NotificationPermissionView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/NotificationTiming.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherAPI.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/ComprehensiveReminderCreationView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherData.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherServiceConfiguration.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/FirstReminderCreationComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/DataExportOptionsView.swift (in target 'hatti' from project 'hatti')
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+SeasonalAnalysis.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/SettingsViewModel.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/NotificationPermissionView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/NotificationTiming.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherAPI.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/ComprehensiveReminderCreationView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherData.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherServiceConfiguration.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/FirstReminderCreationComponents.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/DataExportOptionsView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 Compiling\ DataPrivacyView.swift,\ NotificationConfig.swift,\ ContentView.swift,\ TemperatureTrendChart.swift,\ DetailedReminderViewModel.swift,\ LocationPickerView.swift,\ hattiApp.swift,\ TriggerEngineManager.swift,\ WeatherViewModel.swift,\ UserPreferencesView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/DataPrivacyView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Resources/Configuration/NotificationConfig.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Dashboard/ContentView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/TemperatureTrendChart.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/DetailedReminderViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationPickerView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/hattiApp.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngineManager.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/WeatherViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/UserPreferencesView.swift (in target 'hatti' from project 'hatti')
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/DataPrivacyView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Resources/Configuration/NotificationConfig.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Dashboard/ContentView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/TemperatureTrendChart.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/DetailedReminderViewModel.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationPickerView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/hattiApp.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngineManager.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/WeatherViewModel.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/UserPreferencesView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 Compiling\ FirstReminderCreationViewModel.swift,\ ManualLocationEntryView.swift,\ WelcomeView.swift,\ TriggerCondition.swift,\ WeatherForecastIntegration.swift,\ ComparisonCard.swift,\ QuickCreateReminderView.swift,\ ReminderSummaryCard.swift,\ PrivacyContactView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/FirstReminderCreationViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/ManualLocationEntryView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/WelcomeView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/TriggerCondition.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherForecastIntegration.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ComparisonCard.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/QuickCreateReminderView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ReminderSummaryCard.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/PrivacyContactView.swift (in target 'hatti' from project 'hatti')
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/FirstReminderCreationViewModel.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/ManualLocationEntryView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/WelcomeView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/TriggerCondition.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherForecastIntegration.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ComparisonCard.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/QuickCreateReminderView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ReminderSummaryCard.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/PrivacyContactView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 Compiling\ SavedLocation.swift,\ WeatherError.swift,\ FirstReminderCreationView.swift,\ WeatherTypes.swift,\ ReminderManagementComponents.swift,\ NotificationPreferencesView.swift,\ DashboardView.swift,\ WeatherAlertsView.swift,\ TriggerEngine.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/SavedLocation.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherError.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/FirstReminderCreationView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherTypes.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ReminderManagementComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/NotificationPreferencesView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Dashboard/DashboardView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/WeatherAlertsView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift (in target 'hatti' from project 'hatti')
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/SavedLocation.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherError.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/FirstReminderCreationView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherTypes.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ReminderManagementComponents.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/NotificationPreferencesView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Dashboard/DashboardView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/WeatherAlertsView.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ hatti (in target 'hatti' from project 'hatti')
+
+EmitSwiftModule normal arm64 (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 Compiling\ WelcomeViewComponents.swift,\ SettingsSubViews.swift,\ OnboardingCoordinator.swift,\ NotificationPreferencesViewModel.swift,\ LocationManagementComponents.swift,\ WeatherViewComponents.swift,\ TriggerEngine+Performance.swift,\ ReminderManagementViewModel.swift,\ GeneratedAssetSymbols.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/WelcomeViewComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/SettingsSubViews.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Background/OnboardingCoordinator.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/Settings/NotificationPreferencesViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationManagementComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/WeatherViewComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ReminderManagementViewModel.swift /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'hatti' from project 'hatti')
+Failed frontend command:
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/CelebrationView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/LocationData.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/BackgroundWeatherManager.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/AllRemindersView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherAlert.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/DetailedReminderComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Utilities/Helpers/ButtonStyles.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/SettingsView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationManagementView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+SeasonalAnalysis.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/SettingsViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/NotificationPermissionView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/NotificationTiming.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherAPI.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/ComprehensiveReminderCreationView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherData.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherServiceConfiguration.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/FirstReminderCreationComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/DataExportOptionsView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Location/LocationPermissionManager.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/DashboardViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationPermissionView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+TrendAnalysis.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/UserPreferencesViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/UserPreferencesOnboardingView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/ReminderLocation.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/DetailedReminderView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherReminder.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ReminderCreationComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/DataPrivacyView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Resources/Configuration/NotificationConfig.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Dashboard/ContentView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/TemperatureTrendChart.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/DetailedReminderViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationPickerView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/hattiApp.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngineManager.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/WeatherViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/UserPreferencesView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/SavedLocation.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherError.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/FirstReminderCreationView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherTypes.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ReminderManagementComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/NotificationPreferencesView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Dashboard/DashboardView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/WeatherAlertsView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/FirstReminderCreationViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/ManualLocationEntryView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/WelcomeView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/TriggerCondition.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherForecastIntegration.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ComparisonCard.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/QuickCreateReminderView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ReminderSummaryCard.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/PrivacyContactView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/Settings/DataPrivacyViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/WeatherView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+ForecastAnalysis.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/LocationManagementViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/Item.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/UserPreferences.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherService.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ConditionBuilderView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/ReminderManagementView.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/WelcomeViewComponents.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/SettingsSubViews.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Background/OnboardingCoordinator.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/Settings/NotificationPreferencesViewModel.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationManagementComponents.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/WeatherViewComponents.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift -primary-file /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ReminderManagementViewModel.swift -primary-file /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources/GeneratedAssetSymbols.swift -supplementary-output-file-map /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/supplementaryOutputs-8 -emit-localized-strings -emit-localized-strings-path /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64 -target arm64-apple-ios26.0-simulator -Xllvm -aarch64-use-tbi -enable-objc-interop -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator18.5.sdk -I /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Products/Debug-iphonesimulator -F /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Products/Debug-iphonesimulator -no-color-diagnostics -enable-testing -g -debug-info-format\=dwarf -dwarf-version\=5 -module-cache-path /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -profile-generate -profile-coverage-mapping -swift-version 5 -enforce-exclusivity\=checked -Onone -D DEBUG -serialize-debugging-options -const-gather-protocols-file /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/hatti_const_extract_protocols.json -enable-upcoming-feature MemberImportVisibility -enable-experimental-feature DebugDescriptionMacro -enable-bare-slash-regex -empty-abi-descriptor -validate-clang-modules-once -clang-build-session-file /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -working-directory -Xcc /Users/wesleykeetch/Documents/Developer/hatti -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/wesleykeetch/Documents/Developer/hatti -Xcc -ivfsstatcache -Xcc /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator18.5-22F76-d5fc8ad4295d2ef488fb7d0f804ce0c4.sdkstatcache -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/swift-overrides.hmap -Xcc -iquote -Xcc /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/hatti-generated-files.hmap -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/hatti-own-target-headers.hmap -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/hatti-all-target-headers.hmap -Xcc -iquote -Xcc /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/hatti-project-headers.hmap -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources-normal/arm64 -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources/arm64 -Xcc -I/Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources -Xcc -DDEBUG\=1 -module-name hatti -frontend-parseable-output -disable-clang-spi -target-sdk-version 18.5 -target-sdk-name iphonesimulator18.5 -external-plugin-path /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/lib/swift/host/plugins\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/local/lib/swift/host/plugins\#/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/WelcomeViewComponents.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/SettingsSubViews.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/OnboardingCoordinator.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/NotificationPreferencesViewModel.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/LocationManagementComponents.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/WeatherViewComponents.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/TriggerEngine+Performance.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/ReminderManagementViewModel.o -o /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/GeneratedAssetSymbols.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/WelcomeViewComponents.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/SettingsSubViews.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/OnboardingCoordinator.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/NotificationPreferencesViewModel.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/LocationManagementComponents.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/WeatherViewComponents.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/TriggerEngine+Performance.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/ReminderManagementViewModel.o -index-unit-output-path /hatti.build/Debug-iphonesimulator/hatti.build/Objects-normal/arm64/GeneratedAssetSymbols.o -index-store-path /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Index.noindex/DataStore -index-system-modules
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/WelcomeViewComponents.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/SettingsSubViews.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Background/OnboardingCoordinator.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/Settings/NotificationPreferencesViewModel.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationManagementComponents.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationManagementComponents.swift:497:13: warning: 'init(coordinateRegion:interactionModes:showsUserLocation:userTrackingMode:annotationItems:annotationContent:)' was deprecated in iOS 17.0: Use Map initializers that take a MapContentBuilder instead.
+            Map(coordinateRegion: $region, annotationItems: mapAnnotations) { annotation in
+            ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationManagementComponents.swift:498:17: warning: 'MapAnnotation' was deprecated in iOS 17.0: Use Annotation along with Map initializers that take a MapContentBuilder instead.
+                MapAnnotation(coordinate: annotation.coordinate) {
+                ^
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/WeatherViewComponents.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:40:34: error: generic struct 'Dictionary' requires that 'CLLocationCoordinate2D' conform to 'Hashable'
+            let locationGroups = Dictionary(grouping: allReminders) { reminder in
+                                 ^
+Swift.Dictionary:1:23: note: where 'Key' = 'CLLocationCoordinate2D'
+@frozen public struct Dictionary<Key, Value> where Key : Hashable {
+                      ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:95:40: error: 'getHistoricalWeatherContext' is inaccessible due to 'private' protection level
+                    let _ = await self.getHistoricalWeatherContext(for: location)
+                                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+SeasonalAnalysis.swift:154:18: note: 'getHistoricalWeatherContext(for:)' declared here
+    private func getHistoricalWeatherContext(for location: CLLocation) async -> HistoricalWeatherContext {
+                 ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:109:32: error: 'evaluationCache' is inaccessible due to 'private' protection level
+        let initialCacheSize = evaluationCache.count + historicalDataCache.count + trendAnalysisCache.count
+                               ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:97:17: note: 'evaluationCache' declared here
+    private var evaluationCache: [UUID: TriggerEvaluationResult] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:109:56: error: 'historicalDataCache' is inaccessible due to 'private' protection level
+        let initialCacheSize = evaluationCache.count + historicalDataCache.count + trendAnalysisCache.count
+                                                       ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:98:17: note: 'historicalDataCache' declared here
+    private var historicalDataCache: [String: HistoricalWeatherContext] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:109:84: error: 'trendAnalysisCache' is inaccessible due to 'private' protection level
+        let initialCacheSize = evaluationCache.count + historicalDataCache.count + trendAnalysisCache.count
+                                                                                   ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:99:17: note: 'trendAnalysisCache' declared here
+    private var trendAnalysisCache: [String: TrendAnalysis] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:113:9: error: 'evaluationCache' is inaccessible due to 'private' protection level
+        evaluationCache = evaluationCache.filter { $0.value.evaluationTime > cacheExpiration }
+        ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:97:17: note: 'evaluationCache' declared here
+    private var evaluationCache: [UUID: TriggerEvaluationResult] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:113:27: error: 'evaluationCache' is inaccessible due to 'private' protection level
+        evaluationCache = evaluationCache.filter { $0.value.evaluationTime > cacheExpiration }
+                          ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:97:17: note: 'evaluationCache' declared here
+    private var evaluationCache: [UUID: TriggerEvaluationResult] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:116:12: error: 'historicalDataCache' is inaccessible due to 'private' protection level
+        if historicalDataCache.count > 50 {
+           ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:98:17: note: 'historicalDataCache' declared here
+    private var historicalDataCache: [String: HistoricalWeatherContext] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:117:33: error: 'historicalDataCache' is inaccessible due to 'private' protection level
+            let sortedEntries = historicalDataCache.sorted { $0.value.currentDate > $1.value.currentDate }
+                                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:98:17: note: 'historicalDataCache' declared here
+    private var historicalDataCache: [String: HistoricalWeatherContext] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:118:13: error: 'historicalDataCache' is inaccessible due to 'private' protection level
+            historicalDataCache = Dictionary(uniqueKeysWithValues: sortedEntries.prefix(30))
+            ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:98:17: note: 'historicalDataCache' declared here
+    private var historicalDataCache: [String: HistoricalWeatherContext] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:118:35: error: generic parameter 'Key' could not be inferred
+            historicalDataCache = Dictionary(uniqueKeysWithValues: sortedEntries.prefix(30))
+                                  ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:118:35: error: generic parameter 'Value' could not be inferred
+            historicalDataCache = Dictionary(uniqueKeysWithValues: sortedEntries.prefix(30))
+                                  ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:118:35: note: explicitly specify the generic arguments to fix this issue
+            historicalDataCache = Dictionary(uniqueKeysWithValues: sortedEntries.prefix(30))
+                                  ^
+                                            <<#Key: Hashable#>, Any>
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:122:12: error: 'trendAnalysisCache' is inaccessible due to 'private' protection level
+        if trendAnalysisCache.count > 100 {
+           ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:99:17: note: 'trendAnalysisCache' declared here
+    private var trendAnalysisCache: [String: TrendAnalysis] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:123:38: error: 'trendAnalysisCache' is inaccessible due to 'private' protection level
+            let keysToRemove = Array(trendAnalysisCache.keys.prefix(trendAnalysisCache.count - 50))
+                                     ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:99:17: note: 'trendAnalysisCache' declared here
+    private var trendAnalysisCache: [String: TrendAnalysis] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:123:69: error: 'trendAnalysisCache' is inaccessible due to 'private' protection level
+            let keysToRemove = Array(trendAnalysisCache.keys.prefix(trendAnalysisCache.count - 50))
+                                                                    ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:99:17: note: 'trendAnalysisCache' declared here
+    private var trendAnalysisCache: [String: TrendAnalysis] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:129:30: error: 'evaluationCache' is inaccessible due to 'private' protection level
+        let finalCacheSize = evaluationCache.count + historicalDataCache.count + trendAnalysisCache.count
+                             ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:97:17: note: 'evaluationCache' declared here
+    private var evaluationCache: [UUID: TriggerEvaluationResult] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:129:54: error: 'historicalDataCache' is inaccessible due to 'private' protection level
+        let finalCacheSize = evaluationCache.count + historicalDataCache.count + trendAnalysisCache.count
+                                                     ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:98:17: note: 'historicalDataCache' declared here
+    private var historicalDataCache: [String: HistoricalWeatherContext] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:129:82: error: 'trendAnalysisCache' is inaccessible due to 'private' protection level
+        let finalCacheSize = evaluationCache.count + historicalDataCache.count + trendAnalysisCache.count
+                                                                                 ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:99:17: note: 'trendAnalysisCache' declared here
+    private var trendAnalysisCache: [String: TrendAnalysis] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:195:34: error: generic parameter 'Element' could not be inferred
+            let locationGroups = Set(activeReminders.compactMap { reminder in
+                                 ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:195:34: note: explicitly specify the generic arguments to fix this issue
+            let locationGroups = Set(activeReminders.compactMap { reminder in
+                                 ^
+                                    <<#Element: Hashable#>>
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:272:9: error: 'evaluationCache' is inaccessible due to 'private' protection level
+        evaluationCache.reserveCapacity(evaluationCache.count)
+        ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:97:17: note: 'evaluationCache' declared here
+    private var evaluationCache: [UUID: TriggerEvaluationResult] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:272:41: error: 'evaluationCache' is inaccessible due to 'private' protection level
+        evaluationCache.reserveCapacity(evaluationCache.count)
+                                        ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:97:17: note: 'evaluationCache' declared here
+    private var evaluationCache: [UUID: TriggerEvaluationResult] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:273:9: error: 'historicalDataCache' is inaccessible due to 'private' protection level
+        historicalDataCache.reserveCapacity(historicalDataCache.count)
+        ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:98:17: note: 'historicalDataCache' declared here
+    private var historicalDataCache: [String: HistoricalWeatherContext] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:273:45: error: 'historicalDataCache' is inaccessible due to 'private' protection level
+        historicalDataCache.reserveCapacity(historicalDataCache.count)
+                                            ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:98:17: note: 'historicalDataCache' declared here
+    private var historicalDataCache: [String: HistoricalWeatherContext] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:274:9: error: 'trendAnalysisCache' is inaccessible due to 'private' protection level
+        trendAnalysisCache.reserveCapacity(trendAnalysisCache.count)
+        ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:99:17: note: 'trendAnalysisCache' declared here
+    private var trendAnalysisCache: [String: TrendAnalysis] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:274:44: error: 'trendAnalysisCache' is inaccessible due to 'private' protection level
+        trendAnalysisCache.reserveCapacity(trendAnalysisCache.count)
+                                           ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:99:17: note: 'trendAnalysisCache' declared here
+    private var trendAnalysisCache: [String: TrendAnalysis] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:286:34: error: 'evaluationCache' is inaccessible due to 'private' protection level
+            evaluationCacheSize: evaluationCache.count,
+                                 ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:97:17: note: 'evaluationCache' declared here
+    private var evaluationCache: [UUID: TriggerEvaluationResult] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:287:34: error: 'historicalDataCache' is inaccessible due to 'private' protection level
+            historicalCacheSize: historicalDataCache.count,
+                                 ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:98:17: note: 'historicalDataCache' declared here
+    private var historicalDataCache: [String: HistoricalWeatherContext] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:288:29: error: 'trendAnalysisCache' is inaccessible due to 'private' protection level
+            trendCacheSize: trendAnalysisCache.count,
+                            ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:99:17: note: 'trendAnalysisCache' declared here
+    private var trendAnalysisCache: [String: TrendAnalysis] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:304:37: error: 'evaluationCache' is inaccessible due to 'private' protection level
+        let evaluationCacheMemory = evaluationCache.count * 500 // ~500 bytes per result
+                                    ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:97:17: note: 'evaluationCache' declared here
+    private var evaluationCache: [UUID: TriggerEvaluationResult] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:305:37: error: 'historicalDataCache' is inaccessible due to 'private' protection level
+        let historicalCacheMemory = historicalDataCache.count * 2000 // ~2KB per context
+                                    ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:98:17: note: 'historicalDataCache' declared here
+    private var historicalDataCache: [String: HistoricalWeatherContext] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:306:32: error: 'trendAnalysisCache' is inaccessible due to 'private' protection level
+        let trendCacheMemory = trendAnalysisCache.count * 300 // ~300 bytes per analysis
+                               ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine.swift:99:17: note: 'trendAnalysisCache' declared here
+    private var trendAnalysisCache: [String: TrendAnalysis] = [:]
+                ^
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:308:62: error: cannot convert return expression of type 'String' to return type 'Int'
+        return evaluationCacheMemory + historicalCacheMemory + trendCacheMemory
+               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift:321:100: error: extra argument 'specifier' in call
+            recommendations.append("Average evaluation time (\(metrics.averageDuration, specifier: "%.1f")s) is high. Consider batch processing.")
+                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ReminderManagementViewModel.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+/Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ReminderManagementViewModel.swift:129:49: warning: immutable value 'modelContext' was never used; consider replacing with '_' or removing it
+        guard currentSection == .triggered, let modelContext = modelContext else { return }
+                                            ~~~~^~~~~~~~~~~~
+                                            _
+
+SwiftCompile normal arm64 /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'hatti' from project 'hatti')
+    cd /Users/wesleykeetch/Documents/Developer/hatti
+    
+
+SwiftCompile normal arm64 Compiling\ DataPrivacyViewModel.swift,\ WeatherView.swift,\ TriggerEngine+ForecastAnalysis.swift,\ LocationManagementViewModel.swift,\ Item.swift,\ UserPreferences.swift,\ WeatherService.swift,\ ConditionBuilderView.swift,\ ReminderManagementView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/Settings/DataPrivacyViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/WeatherView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+ForecastAnalysis.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/LocationManagementViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/Item.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/UserPreferences.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherService.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ConditionBuilderView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/ReminderManagementView.swift (in target 'hatti' from project 'hatti')
+Command SwiftCompile failed with a nonzero exit code
+
+/Users/wesleykeetch/Documents/Developer/hatti/hatti.xcodeproj: warning: The iOS Simulator deployment target 'IPHONEOS_DEPLOYMENT_TARGET' is set to 26.0, but the range of supported deployment target versions is 12.0 to 18.5.99. (in target 'hatti' from project 'hatti')
+** BUILD FAILED **
+
+
+The following build commands failed:
+	SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift (in target 'hatti' from project 'hatti')
+	SwiftCompile normal arm64 Compiling\ CelebrationView.swift,\ LocationData.swift,\ BackgroundWeatherManager.swift,\ AllRemindersView.swift,\ WeatherAlert.swift,\ DetailedReminderComponents.swift,\ ButtonStyles.swift,\ SettingsView.swift,\ ComprehensiveReminderCreationViewModel.swift,\ LocationManagementView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Onboarding/CelebrationView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/LocationData.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/BackgroundWeatherManager.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/AllRemindersView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/WeatherAlert.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/DetailedReminderComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Utilities/Helpers/ButtonStyles.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/SettingsView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ComprehensiveReminderCreationViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationManagementView.swift (in target 'hatti' from project 'hatti')
+	SwiftCompile normal arm64 Compiling\ WelcomeViewComponents.swift,\ SettingsSubViews.swift,\ OnboardingCoordinator.swift,\ NotificationPreferencesViewModel.swift,\ LocationManagementComponents.swift,\ WeatherViewComponents.swift,\ TriggerEngine+Performance.swift,\ ReminderManagementViewModel.swift,\ GeneratedAssetSymbols.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/WelcomeViewComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Settings/SettingsSubViews.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Background/OnboardingCoordinator.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/Settings/NotificationPreferencesViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Location/LocationManagementComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/WeatherViewComponents.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/ReminderManagementViewModel.swift /Users/wesleykeetch/Library/Developer/Xcode/DerivedData/hatti-bvbyepqcuvplcsgfasreddgzbiti/Build/Intermediates.noindex/hatti.build/Debug-iphonesimulator/hatti.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'hatti' from project 'hatti')
+	SwiftCompile normal arm64 /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+Performance.swift (in target 'hatti' from project 'hatti')
+	SwiftCompile normal arm64 Compiling\ DataPrivacyViewModel.swift,\ WeatherView.swift,\ TriggerEngine+ForecastAnalysis.swift,\ LocationManagementViewModel.swift,\ Item.swift,\ UserPreferences.swift,\ WeatherService.swift,\ ConditionBuilderView.swift,\ ReminderManagementView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/Settings/DataPrivacyViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Weather/WeatherView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Trigger/TriggerEngine+ForecastAnalysis.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/ViewModels/LocationManagementViewModel.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/Item.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Models/UserPreferences.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Services/Weather/WeatherService.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Components/ConditionBuilderView.swift /Users/wesleykeetch/Documents/Developer/hatti/hatti/Views/Reminders/ReminderManagementView.swift (in target 'hatti' from project 'hatti')
+	Building project hatti with scheme hatti and configuration Debug
+(6 failures)

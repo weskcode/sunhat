@@ -274,7 +274,7 @@ struct ReminderManagementView: View {
             if selectedSection == .archive {
                 // Seasonal archive organization
                 ForEach(viewModel.seasonalSections, id: \.season) { section in
-                    Section(section.season.displayName) {
+                    SwiftUI.Section(section.season.displayName) {
                         ForEach(section.reminders, id: \.id) { reminder in
                             ReminderManagementRow(
                                 reminder: reminder,

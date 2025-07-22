@@ -12,7 +12,7 @@ import SwiftData
 import CoreLocation
 import UserNotifications
 import Combine
-import os.log
+import os
 
 @MainActor
 final class BackgroundWeatherManager: ObservableObject {
@@ -244,4 +244,3 @@ final class BackgroundWeatherManager: ObservableObject {
 // MARK: - Background Refresh Status Extension
 
 // Note: BGBackgroundRefreshStatus extension removed - use UIApplication.backgroundRefreshStatus instead
-

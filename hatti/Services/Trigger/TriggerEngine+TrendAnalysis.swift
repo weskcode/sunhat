@@ -192,7 +192,7 @@ extension TriggerEngine {
     
     // MARK: - Helper Methods
     
-    private func getTrendAnalysis(
+    func getTrendAnalysis(
         for location: CLLocation,
         days: Int,
         useFeelsLike: Bool = false

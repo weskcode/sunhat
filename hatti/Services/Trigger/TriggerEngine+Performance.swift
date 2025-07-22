@@ -8,7 +8,19 @@
 import Foundation
 import SwiftData
 import CoreLocation
-import os.log
+import os
+
+// Allow grouping by CLLocationCoordinate2D in this file
+extension CLLocationCoordinate2D: Hashable {
+    public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
+        lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(latitude)
+        hasher.combine(longitude)
+    }
+}
 
 // MARK: - Performance Optimizations Extension
 
@@ -115,7 +127,9 @@ extension TriggerEngine {
         // Remove old historical cache entries (keep only recent ones)
         if historicalDataCache.count > 50 {
             let sortedEntries = historicalDataCache.sorted { $0.value.currentDate > $1.value.currentDate }
-            historicalDataCache = Dictionary(uniqueKeysWithValues: sortedEntries.prefix(30))
+            historicalDataCache = Dictionary(uniqueKeysWithValues:
+                sortedEntries.prefix(30).map { ($0.key, $0.value) }
+            )
         }
         
         // Remove old trend analysis cache entries
@@ -318,7 +332,8 @@ extension TriggerEngine {
         
         // Duration recommendations
         if metrics.averageDuration > 10.0 {
-            recommendations.append("Average evaluation time (\(metrics.averageDuration, specifier: "%.1f")s) is high. Consider batch processing.")
+            let formatted = String(format: "%.1f", metrics.averageDuration)
+            recommendations.append("Average evaluation time (\(formatted)s) is high. Consider batch processing.")
         }
         
         // Cache recommendations

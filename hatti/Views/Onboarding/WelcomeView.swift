@@ -81,20 +81,32 @@ struct WelcomeView: View {
                 Text("Smart reminders")
                     .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 28 : 36, relativeTo: .largeTitle))
                     .fontWeight(.bold)
-                    .foregroundStyle(differentiateWithoutColor ? Color.primary : primaryTextGradient)
+                    .foregroundStyle(
+                        differentiateWithoutColor
+                            ? AnyShapeStyle(Color.primary)
+                            : AnyShapeStyle(primaryTextGradient)
+                    )
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 
                 Text("triggered by weather,")
                     .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 28 : 36, relativeTo: .largeTitle))
                     .fontWeight(.bold)
-                    .foregroundStyle(differentiateWithoutColor ? Color.primary : primaryTextGradient)
+                    .foregroundStyle(
+                        differentiateWithoutColor
+                            ? AnyShapeStyle(Color.primary)
+                            : AnyShapeStyle(primaryTextGradient)
+                    )
                     .multilineTextAlignment(.center)
                 
                 Text("not time")
                     .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 28 : 36, relativeTo: .largeTitle))
                     .fontWeight(.bold)
-                    .foregroundStyle(differentiateWithoutColor ? Color.blue : accentGradient)
+                    .foregroundStyle(
+                        differentiateWithoutColor
+                            ? AnyShapeStyle(Color.blue)
+                            : AnyShapeStyle(accentGradient)
+                    )
                     .multilineTextAlignment(.center)
             }
             .opacity(showHeroText ? 1.0 : 0.0)
@@ -175,7 +187,6 @@ struct WelcomeView: View {
         }
         .accessibilityLabel("Weather icon")
         .accessibilityHidden(true) // Decorative element
-        .accessibilityRespondsToInversion(false)
     }
     
     // MARK: - Comparison Section

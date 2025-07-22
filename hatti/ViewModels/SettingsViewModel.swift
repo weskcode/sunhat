@@ -13,7 +13,7 @@ import CoreLocation
 import CloudKit
 import StoreKit
 import Combine
-import os.log
+import os
 
 @MainActor
 final class SettingsViewModel: NSObject, ObservableObject {

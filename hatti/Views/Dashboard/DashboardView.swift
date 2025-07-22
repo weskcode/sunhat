@@ -316,21 +316,21 @@ struct DashboardView: View {
             QuickStatCard(
                 icon: "wind",
                 title: "Wind",
-                value: "\(viewModel.windSpeed, specifier: "%.0f") mph",
+                value: "\(String(format: "%.0f", viewModel.windSpeed)) mph",
                 color: .green
             )
             
             QuickStatCard(
                 icon: "eye.fill",
                 title: "Visibility",
-                value: "\(viewModel.visibility, specifier: "%.1f") mi",
+                value: "\(String(format: "%.1f", viewModel.visibility)) mi",
                 color: .purple
             )
             
             QuickStatCard(
                 icon: "sun.max.fill",
                 title: "UV Index",
-                value: "\(viewModel.uvIndex, specifier: "%.0f")",
+                value: "\(String(format: "%.0f", viewModel.uvIndex))",
                 color: .orange
             )
         }

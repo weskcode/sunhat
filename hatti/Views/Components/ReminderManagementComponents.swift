@@ -86,7 +86,7 @@ struct ReminderManagementRow: View {
                     // Last triggered or created date
                     Text(dateDescription)
                         .font(.caption2)
-                        .foregroundColor(.tertiary)
+                        .foregroundColor(.secondary)
                 }
             }
             

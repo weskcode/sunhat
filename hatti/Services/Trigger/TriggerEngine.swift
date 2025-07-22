@@ -10,7 +10,7 @@ import SwiftData
 import CoreLocation
 import UserNotifications
 import BackgroundTasks
-import os.log
+import os
 
 // MARK: - Trigger Evaluation Result
 
@@ -90,13 +90,13 @@ struct TrendAnalysis: Sendable {
 actor TriggerEngine {
     static let shared = TriggerEngine()
     
-    private var modelContext: ModelContext?
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "TriggerEngine")
+    var modelContext: ModelContext?
+    let logger = Logger(subsystem: "com.temptrigger.hatti", category: "TriggerEngine")
     
     // Evaluation caches
-    private var evaluationCache: [UUID: TriggerEvaluationResult] = [:]
-    private var historicalDataCache: [String: HistoricalWeatherContext] = [:]
-    private var trendAnalysisCache: [String: TrendAnalysis] = [:]
+    var evaluationCache: [UUID: TriggerEvaluationResult] = [:]
+    var historicalDataCache: [String: HistoricalWeatherContext] = [:]
+    var trendAnalysisCache: [String: TrendAnalysis] = [:]
     
     // Performance metrics
     private var evaluationCount = 0
@@ -180,7 +180,7 @@ actor TriggerEngine {
         return await evaluateCondition(condition, for: reminder.id, at: location)
     }
     
-    private func evaluateRemindersForLocation(_ reminders: [WeatherReminder], at location: CLLocation) async -> [TriggerEvaluationResult] {
+    func evaluateRemindersForLocation(_ reminders: [WeatherReminder], at location: CLLocation) async -> [TriggerEvaluationResult] {
         do {
             // Fetch current weather data for the location
             let weatherData = try await WeatherService.shared.fetchWeatherData(for: location)

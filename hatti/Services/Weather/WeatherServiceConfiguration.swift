@@ -8,7 +8,7 @@
 import Foundation
 import SwiftData
 import Combine
-import os.log
+import os
 
 struct WeatherServiceConfiguration: Sendable {
     let openWeatherMapAPIKey: String?

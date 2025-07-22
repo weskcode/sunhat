@@ -10,7 +10,7 @@ import SwiftUI
 import SwiftData
 import CoreLocation
 import Combine
-import os.log
+import os
 
 @MainActor
 final class DetailedReminderViewModel: ObservableObject {
@@ -67,8 +67,8 @@ final class DetailedReminderViewModel: ObservableObject {
         )
         
         do {
-            triggerHistory = try modelContext.fetch(descriptor)
-            logger.info("Loaded \(triggerHistory.count) history entries")
+            self.triggerHistory = try modelContext.fetch(descriptor)
+            logger.info("Loaded \(self.triggerHistory.count) history entries")
         } catch {
             logger.error("Failed to load trigger history: \(error.localizedDescription)")
             errorMessage = "Failed to load history"
@@ -134,8 +134,6 @@ final class DetailedReminderViewModel: ObservableObject {
                 config.title = editedReminder.notificationConfig.title
                 config.message = editedReminder.notificationConfig.message
                 config.cooldownPeriodHours = editedReminder.notificationConfig.cooldownPeriodHours
-                config.enableBadge = editedReminder.notificationConfig.enableBadge
-                config.enableSound = editedReminder.notificationConfig.enableSound
             }
             
             // Update location if changed
@@ -143,9 +141,9 @@ final class DetailedReminderViewModel: ObservableObject {
                 let locationData = LocationData(
                     latitude: editedReminder.location.coordinate.latitude,
                     longitude: editedReminder.location.coordinate.longitude,
-                    name: editedReminder.location.displayName,
-                    address: editedReminder.location.fullAddress
+                    city: editedReminder.location.displayName
                 )
+                locationData.displayName = editedReminder.location.displayName
                 reminder.location = locationData
             }
             
@@ -172,13 +170,14 @@ final class DetailedReminderViewModel: ObservableObject {
     // MARK: - Private Methods
     
     private func setupBindings() {
-        // Reload weather data when reminder changes
-        reminder.objectWillChange
-            .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
-            .sink { [weak self] in
+        // Since WeatherReminder is a SwiftData @Model and not an ObservableObject,
+        // we need to use a different approach to observe changes
+        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            DispatchQueue.main.async {
                 self?.loadCurrentWeather()
             }
-            .store(in: &cancellables)
+        }
+        .fire() // Trigger immediately on setup
     }
     
     private func loadUserPreferences() {
@@ -413,8 +412,8 @@ struct EditableNotificationConfig {
         self.title = config?.title ?? ""
         self.message = config?.message ?? ""
         self.cooldownPeriodHours = config?.cooldownPeriodHours ?? 2
-        self.enableBadge = config?.enableBadge ?? true
-        self.enableSound = config?.enableSound ?? true
+        self.enableBadge = true // Default value since NotificationConfig doesn't have this property
+        self.enableSound = config?.customSound != nil // Use presence of customSound to determine if sound is enabled
     }
 }
 
@@ -431,8 +430,8 @@ struct EditableLocation {
                 latitude: location.latitude,
                 longitude: location.longitude
             )
-            self.displayName = location.name ?? "Unknown Location"
-            self.fullAddress = location.address
+            self.displayName = location.displayName.isEmpty ? location.city : location.displayName
+            self.fullAddress = [location.city, location.state, location.country].filter { !$0.isEmpty }.joined(separator: ", ")
             self.isCurrentLocation = false
         } else {
             self.coordinate = CLLocationCoordinate2D(latitude: 0, longitude: 0)

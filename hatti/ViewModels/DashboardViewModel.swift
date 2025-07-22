@@ -9,8 +9,9 @@ import Foundation
 import SwiftUI
 import SwiftData
 import CoreLocation
+import CoreData
 import Combine
-import os.log
+import os
 
 @MainActor
 final class DashboardViewModel: NSObject, ObservableObject {
@@ -238,17 +239,13 @@ final class DashboardViewModel: NSObject, ObservableObject {
             return ("cloud.fill", .gray)
         case .overcast:
             return ("smoke.fill", .gray)
-        case .rain, .lightRain:
+        case .rain:
             return ("cloud.rain.fill", .blue)
-        case .heavyRain:
-            return ("cloud.heavyrain.fill", .blue)
         case .thunderstorm:
             return ("cloud.bolt.rain.fill", .purple)
-        case .snow, .lightSnow:
+        case .snow:
             return ("cloud.snow.fill", .white)
-        case .heavySnow:
-            return ("snow", .white)
-        case .fog, .mist:
+        case .fog:
             return ("cloud.fog.fill", .gray)
         case .sleet:
             return ("cloud.sleet.fill", .cyan)
@@ -291,8 +288,8 @@ final class DashboardViewModel: NSObject, ObservableObject {
         )
         
         do {
-            activeReminders = try modelContext.fetch(descriptor)
-            logger.debug("Loaded \(activeReminders.count) active reminders")
+            self.activeReminders = try modelContext.fetch(descriptor)
+            logger.debug("Loaded \(self.activeReminders.count) active reminders")
         } catch {
             logger.error("Failed to load active reminders: \(error.localizedDescription)")
             activeReminders = []
@@ -406,16 +403,18 @@ extension DashboardViewModel: CLLocationManagerDelegate {
     }
     
     nonisolated func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        switch status {
-        case .authorizedWhenInUse, .authorizedAlways:
-            locationManager.requestLocation()
-        case .denied, .restricted:
-            logger.warning("Location access denied")
-            currentLocationName = "Location Access Denied"
-        case .notDetermined:
-            locationManager.requestWhenInUseAuthorization()
-        @unknown default:
-            logger.warning("Unknown location authorization status")
+        Task { @MainActor in
+            switch status {
+            case .authorizedWhenInUse, .authorizedAlways:
+                locationManager.requestLocation()
+            case .denied, .restricted:
+                logger.warning("Location access denied")
+                currentLocationName = "Location Access Denied"
+            case .notDetermined:
+                locationManager.requestWhenInUseAuthorization()
+            @unknown default:
+                logger.warning("Unknown location authorization status")
+            }
         }
     }
 }

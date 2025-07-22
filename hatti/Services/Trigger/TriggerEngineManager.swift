@@ -11,7 +11,7 @@ import BackgroundTasks
 import UserNotifications
 import CoreLocation
 import Combine
-import os.log
+import os
 
 @MainActor
 final class TriggerEngineManager: ObservableObject {

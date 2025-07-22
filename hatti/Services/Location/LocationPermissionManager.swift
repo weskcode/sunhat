@@ -9,7 +9,7 @@ import Foundation
 import CoreLocation
 import SwiftUI
 import Combine
-import os.log
+import os
 
 @MainActor
 final class LocationPermissionManager: NSObject, ObservableObject {

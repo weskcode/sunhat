@@ -10,7 +10,7 @@ import SwiftData
 import CoreLocation
 import BackgroundTasks
 import Combine
-import os.log
+import os
 
 @MainActor
 final class WeatherService: ObservableObject {
@@ -400,4 +400,3 @@ private actor RateLimiter {
         return nil
     }
 }
-

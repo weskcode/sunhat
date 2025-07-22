@@ -17,7 +17,7 @@ import SwiftUI
 import SwiftData
 import CoreLocation
 import Combine
-import os.log
+import os
 
 // MARK: - WeatherCondition Icon & Color Extension
 extension WeatherCondition {

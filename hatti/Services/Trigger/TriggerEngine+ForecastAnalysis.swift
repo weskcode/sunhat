@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 import CoreLocation
+import os
 
 // MARK: - Forecast Analysis Extension
 

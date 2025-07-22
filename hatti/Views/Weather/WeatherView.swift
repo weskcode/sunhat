@@ -152,7 +152,7 @@ struct WeatherView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     // Current temperature with large display
                     HStack(alignment: .top, spacing: 4) {
-                        Text("\(viewModel.currentTemperature, specifier: "%.1f")")
+                        Text(String(format: "%.1f", viewModel.currentTemperature))
                             .font(.system(size: dynamicTypeSize.isAccessibilitySize ? 68 : 80, weight: .ultraLight, design: .rounded))
                             .foregroundColor(.primary)
                         
@@ -168,7 +168,7 @@ struct WeatherView: View {
                             .font(.caption)
                             .foregroundColor(.orange)
                         
-                        Text("Feels like \(viewModel.feelsLikeTemperature, specifier: "%.1f")°")
+                        Text("Feels like \(String(format: "%.1f", viewModel.feelsLikeTemperature))°")
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundColor(.primary)
@@ -182,7 +182,7 @@ struct WeatherView: View {
                                 .font(.caption2)
                                 .foregroundColor(tempDifference > 0 ? .red : .blue)
                             
-                            Text("\(abs(tempDifference), specifier: "%.1f")° \(tempDifference > 0 ? "warmer" : "cooler")")
+                            Text("\(String(format: "%.1f", abs(tempDifference)))° \(tempDifference > 0 ? "warmer" : "cooler")")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -212,7 +212,7 @@ struct WeatherView: View {
                             Image(systemName: "arrow.up")
                                 .font(.caption2)
                                 .foregroundColor(.red)
-                            Text("\(viewModel.highTemperature, specifier: "%.0f")°")
+                            Text("\(String(format: "%.0f", viewModel.highTemperature))°")
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundColor(.primary)
@@ -222,7 +222,7 @@ struct WeatherView: View {
                             Image(systemName: "arrow.down")
                                 .font(.caption2)
                                 .foregroundColor(.blue)
-                            Text("\(viewModel.lowTemperature, specifier: "%.0f")°")
+                            Text("\(String(format: "%.0f", viewModel.lowTemperature))°")
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
@@ -237,7 +237,9 @@ struct WeatherView: View {
                 .shadow(color: .black.opacity(0.1), radius: 12, x: 0, y: 6)
         )
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Current weather: \(viewModel.currentTemperature, specifier: "%.1f") degrees, feels like \(viewModel.feelsLikeTemperature, specifier: "%.1f") degrees, \(viewModel.weatherDescription). High \(viewModel.highTemperature, specifier: "%.0f"), low \(viewModel.lowTemperature, specifier: "%.0f") degrees")
+        .accessibilityLabel(
+            "Current weather: \(String(format: "%.1f", viewModel.currentTemperature)) degrees, feels like \(String(format: "%.1f", viewModel.feelsLikeTemperature)) degrees, \(viewModel.weatherDescription). High \(String(format: "%.0f", viewModel.highTemperature)), low \(String(format: "%.0f", viewModel.lowTemperature)) degrees"
+        )
     }
     
     private var detailedCurrentMetricsGrid: some View {
@@ -288,7 +290,7 @@ struct WeatherView: View {
             DetailedMetricCard(
                 icon: "thermometer.snowflake",
                 title: "Dew Point",
-                value: "\(viewModel.dewPoint, specifier: "%.0f")°",
+                value: "\(String(format: "%.0f", viewModel.dewPoint))°",
                 description: dewPointDescription,
                 color: .mint
             )

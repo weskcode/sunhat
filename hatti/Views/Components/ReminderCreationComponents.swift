@@ -282,11 +282,13 @@ struct ConditionTypeCard: View {
     let onTap: () -> Void
     
     var body: some View {
-        Button(action: onTap) {
+        Button {
+            onTap()
+        } label: {
             VStack(spacing: 8) {
-                Image(systemName: type.icon)
+                Image(systemName: type.iconName)
                     .font(.title2)
-                    .foregroundColor(isSelected ? .white : type == .exact ? .blue : type == .range ? .green : type == .trend ? .orange : .purple)
+                    .foregroundColor(isSelected ? .white : type.iconColor)
                 
                 Text(type.displayName)
                     .font(.caption)
@@ -294,7 +296,7 @@ struct ConditionTypeCard: View {
                     .foregroundColor(isSelected ? .white : .primary)
                     .multilineTextAlignment(.center)
                 
-                Text(type.description)
+                Text(type.descriptionText)
                     .font(.caption2)
                     .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
                     .multilineTextAlignment(.center)
@@ -365,7 +367,7 @@ struct NotificationTimingRow: View {
                         .fontWeight(.medium)
                         .foregroundColor(.primary)
                     
-                    Text(timing.description)
+                    Text(timing.displayName)
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .lineLimit(2)
@@ -474,7 +476,7 @@ struct TriggerLikelihoodView: View {
                             .fontWeight(.bold)
                             .foregroundColor(likelihood.color)
                         
-                        Text("\(likelihood.triggerDays)/\(likelihood.totalDays) days")
+                        Text("\(likelihood.triggerDays.count) trigger days")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
@@ -660,6 +662,10 @@ extension NotificationTiming {
         case .thirtyMinutes: return 2
         case .oneHour: return 3
         case .twoHours: return 4
+        case .fourHours: return 5
+        case .sixHours: return 6
+        case .twelveHours: return 8
+        case .oneDayBefore: return 24
         }
     }
 }

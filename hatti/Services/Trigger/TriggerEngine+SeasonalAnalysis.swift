@@ -151,7 +151,7 @@ extension TriggerEngine {
     
     // MARK: - Seasonal Analysis Helper Methods
     
-    private func getHistoricalWeatherContext(for location: CLLocation) async -> HistoricalWeatherContext {
+    func getHistoricalWeatherContext(for location: CLLocation) async -> HistoricalWeatherContext {
         let cacheKey = "\(location.coordinate.latitude),\(location.coordinate.longitude)_historical"
         
         // Check cache first

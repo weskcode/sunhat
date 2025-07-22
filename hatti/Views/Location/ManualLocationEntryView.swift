@@ -375,31 +375,31 @@ struct ManualLocationEntryView: View {
         guard !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             return
         }
-        
+
         isSearching = true
         searchError = nil
-        
+
         Task {
             do {
-                let request = MKGeocodingRequest(address: searchText)
-                let placemarks = try await MKGeocoder().geocode(request)
-                
+                let geocoder = CLGeocoder()
+                let placemarks = try await geocoder.geocodeAddressString(searchText)
+
                 await MainActor.run {
                     isSearching = false
-                    
+
                     guard !placemarks.isEmpty else {
                         searchError = "No results found for '\(searchText)'"
                         searchResults = []
                         return
                     }
-                    
+
                     // Convert placemarks to search results
                     searchResults = placemarks.compactMap { placemark in
                         guard let location = placemark.location,
                               let city = placemark.locality ?? placemark.name else {
                             return nil
                         }
-                        
+
                         return LocationSearchResult(
                             city: city,
                             state: placemark.administrativeArea,
@@ -637,3 +637,4 @@ private let popularCities: [PopularCity] = [
         Text("Manual Location Entry View")
     }
 }
+

@@ -10,7 +10,7 @@ import SwiftUI
 import SwiftData
 import CoreLocation
 import Combine
-import os.log
+import os
 
 @MainActor
 final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
@@ -60,11 +60,11 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
     
     var displayTemperature: Double {
         switch conditionType {
-        case .exact:
+        case .exactTemperature:
             return convertTemperatureForDisplay(targetTemperature)
-        case .range:
+        case .temperatureRange:
             return convertTemperatureForDisplay((temperatureRange.lowerBound + temperatureRange.upperBound) / 2)
-        case .trend, .seasonal:
+        default:
             return convertTemperatureForDisplay(targetTemperature)
         }
     }
@@ -75,8 +75,7 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
     
     var isValidForSave: Bool {
         !naturalLanguageInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        selectedLocation.isValid &&
-        selectedCategory != .none
+        selectedLocation.isValid
     }
     
     var generatedTitle: String {
@@ -88,16 +87,18 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         let temp = Int(displayTemperature)
         
         switch conditionType {
-        case .exact:
+        case .exactTemperature:
             return "Perfect \(activity) weather at \(temp)°"
-        case .range:
+        case .temperatureRange:
             let low = Int(convertTemperatureForDisplay(temperatureRange.lowerBound))
             let high = Int(convertTemperatureForDisplay(temperatureRange.upperBound))
             return "Great \(activity) weather (\(low)°-\(high)°)"
-        case .trend:
+        case .averageTemperature:
             return "\(trendType.displayName) temperatures for \(activity)"
-        case .seasonal:
+        case .seasonalMarker:
             return "\(seasonalType.displayName) \(activity) reminder"
+        default:
+            return "Current conditions are perfect for your \(activity) activity!"
         }
     }
     
@@ -165,18 +166,14 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
             
             if let range = info.extractedTemperatureRange {
                 temperatureRange = range
-                conditionType = .range
+                conditionType = .temperatureRange
             } else if info.extractedTemperature != nil {
-                conditionType = .exact
+                conditionType = .exactTemperature
             }
             
-            if let category = info.suggestedCategory {
-                selectedCategory = category
-            }
-            
-            if let timing = info.suggestedTiming {
-                notificationTiming = timing
-            }
+            // Apply parsed suggestion
+            selectedCategory = info.suggestedCategory
+            notificationTiming = info.suggestedTiming
         }
         
         // Clear the parsed info after applying
@@ -205,23 +202,30 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         let condition = TriggerCondition()
         
         switch conditionType {
-        case .exact:
+        case .exactTemperature:
             condition.triggerType = .exactTemperature
             condition.targetTemperature = targetTemperature
             condition.comparisonType = .equals
-        case .range:
+        case .temperatureRange:
             condition.triggerType = .temperatureRange
             condition.minTemperature = temperatureRange.lowerBound
             condition.maxTemperature = temperatureRange.upperBound
             condition.comparisonType = .between
-        case .trend:
+        case .consecutiveDays:
             condition.triggerType = .consecutiveDays
             condition.targetTemperature = targetTemperature
             condition.consecutiveDays = trendDuration
             condition.comparisonType = trendType == .rising ? .above : .below
-        case .seasonal:
+        case .averageTemperature:
+            condition.triggerType = .historicalComparison
+            condition.targetTemperature = targetTemperature
+            condition.consecutiveDays = trendDuration
+            condition.comparisonType = trendType == .rising ? .above : .below
+        case .seasonalMarker:
             condition.triggerType = .seasonalMarker
             condition.seasonalType = SeasonalType(rawValue: seasonalType.rawValue) ?? .springTransition
+        default:
+            break
         }
         
         condition.useFeelsLike = useFeelsLike
@@ -317,27 +321,22 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         .store(in: &cancellables)
         
         // Validate form when inputs change
-        Publishers.CombineLatest4(
+        Publishers.CombineLatest3(
             $naturalLanguageInput,
             $selectedLocation,
-            $selectedCategory,
             $isSaving
         )
-        .map { input, location, category, saving in
+        .map { input, location, saving in
             if saving { return nil }
-            
+
             if input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 return "Please describe what you'd like to be reminded about"
             }
-            
+
             if !location.isValid {
                 return "Please select a valid location"
             }
-            
-            if category == .none {
-                return "Please select an activity category"
-            }
-            
+
             return nil
         }
         .assign(to: \.validationError, on: self)
@@ -576,9 +575,9 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
                 title: "Outdoor Lunch",
                 description: "Great weather for eating outside",
                 naturalLanguageText: "Remind me to eat lunch outside when it's sunny and 75°F",
-                category: .outdoor,
+                category: .outdoorDining,
                 temperature: 75.0,
-                conditionType: .exact,
+                conditionType: .exactTemperature,
                 timing: .thirtyMinutes,
                 icon: "sun.max.fill",
                 color: .orange
