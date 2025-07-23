@@ -20,7 +20,7 @@ struct DashboardView: View {
     @State private var showingWeatherAlerts = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             GeometryReader { geometry in
                 ZStack {
                     // Background

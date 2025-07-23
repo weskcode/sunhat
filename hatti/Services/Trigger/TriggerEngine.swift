@@ -91,9 +91,13 @@ struct TrendAnalysis: Sendable {
 // MARK: - Main Trigger Engine Actor
 
 actor TriggerEngine {
+    private static let _lock = NSLock()
     private static var _shared: TriggerEngine?
     
     static func shared(modelContainer: ModelContainer) -> TriggerEngine {
+        _lock.lock()
+        defer { _lock.unlock() }
+        
         if let existing = _shared {
             return existing
         }

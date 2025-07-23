@@ -598,7 +598,9 @@ struct WeatherSourceCard: View {
             
             Button("View Privacy Policy") {
                 if let url = URL(string: privacyPolicy) {
-                    UIApplication.shared.open(url)
+                    Task { @MainActor in
+                        UIApplication.shared.open(url)
+                    }
                 }
             }
             .font(.caption)
@@ -632,7 +634,9 @@ struct ThirdPartyServiceCard: View {
             
             Button("Privacy Policy") {
                 if let url = URL(string: privacyPolicy) {
-                    UIApplication.shared.open(url)
+                    Task { @MainActor in
+                        UIApplication.shared.open(url)
+                    }
                 }
             }
             .font(.caption)

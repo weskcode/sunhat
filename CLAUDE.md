@@ -27,7 +27,7 @@ open hatti.xcodeproj
 xcodebuild -scheme hatti -configuration Debug build
 
 # Run tests
-xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' test
+xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.0' test
 
 # Build for release
 xcodebuild -scheme hatti -configuration Release build
@@ -36,13 +36,13 @@ xcodebuild -scheme hatti -configuration Release build
 ### Testing Commands
 ```bash
 # Run unit tests only
-xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' -only-testing:hattiTests test
+xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.0' -only-testing:hattiTests test
 
 # Run UI tests only  
-xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' -only-testing:hattiUITests test
+xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.0' -only-testing:hattiUITests test
 
 # Run specific test
-xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' -only-testing:hattiTests/hattiTests/testExample test
+xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.0' -only-testing:hattiTests/hattiTests/testExample test
 ```
 
 ## Project Architecture

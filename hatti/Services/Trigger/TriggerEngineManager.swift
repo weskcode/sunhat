@@ -8,7 +8,7 @@
 import Foundation
 import SwiftData
 import BackgroundTasks
-import UserNotifications
+@preconcurrency import UserNotifications
 import CoreLocation
 import Combine
 import os

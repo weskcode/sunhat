@@ -26,7 +26,7 @@ struct WeatherView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 backgroundGradient
                     .ignoresSafeArea()
@@ -347,7 +347,7 @@ struct WeatherView: View {
             
             LazyVStack(spacing: 12) {
                 ForEach(viewModel.weatherAlerts, id: \.id) { alert in
-                    WeatherAlertDetailCard(alert: alert.toWeatherAlertDisplay())
+                    WeatherAlertDetailCard(alert: WeatherAlertDisplay.from(weatherAlert: alert))
                 }
             }
             .padding(.horizontal, 20)

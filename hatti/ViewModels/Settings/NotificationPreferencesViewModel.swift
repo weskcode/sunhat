@@ -441,7 +441,9 @@ extension NotificationPreferencesViewModel {
     
     func openNotificationSettings() {
         if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
-            UIApplication.shared.open(settingsUrl)
+            Task { @MainActor in
+                UIApplication.shared.open(settingsUrl)
+            }
         }
     }
 }

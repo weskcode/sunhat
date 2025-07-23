@@ -8,7 +8,7 @@
 import Foundation
 import CoreLocation
 
-struct CodableCoordinate: Codable {
+struct CodableCoordinate: Sendable, @MainActor Codable {
     let latitude: Double
     let longitude: Double
 
@@ -22,7 +22,9 @@ struct CodableCoordinate: Codable {
     }
 }
 
-struct ReminderLocation: Codable, Identifiable {
+
+
+struct ReminderLocation: Sendable, Identifiable, @MainActor Codable {
     let id: UUID
     let coordinate: CodableCoordinate
     let displayName: String

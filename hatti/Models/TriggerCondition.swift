@@ -9,7 +9,7 @@ import Foundation
 import SwiftData
 
 @Model
-final class TriggerCondition {
+class TriggerCondition {
     @Attribute(.unique) var id: UUID = UUID()
     
     // Temperature trigger types

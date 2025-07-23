@@ -77,7 +77,7 @@ final class SettingsViewModel: NSObject, ObservableObject {
     
     private func setupInitialValues() {
         // Set default values based on system locale
-        temperatureUnit = Locale.current.usesMetricSystem ? .celsius : .fahrenheit
+        temperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
         
         // Load appearance preference from UserDefaults
         if let savedAppearance = UserDefaults.standard.object(forKey: "AppAppearance") as? String,
@@ -262,16 +262,18 @@ final class SettingsViewModel: NSObject, ObservableObject {
     func applyAppearance() {
         UserDefaults.standard.set(selectedAppearance.rawValue, forKey: "AppAppearance")
         
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first else { return }
-        
-        switch selectedAppearance {
-        case .system:
-            window.overrideUserInterfaceStyle = .unspecified
-        case .light:
-            window.overrideUserInterfaceStyle = .light
-        case .dark:
-            window.overrideUserInterfaceStyle = .dark
+        Task { @MainActor in
+            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let window = windowScene.windows.first else { return }
+            
+            switch selectedAppearance {
+            case .system:
+                window.overrideUserInterfaceStyle = .unspecified
+            case .light:
+                window.overrideUserInterfaceStyle = .light
+            case .dark:
+                window.overrideUserInterfaceStyle = .dark
+            }
         }
     }
     
@@ -281,7 +283,7 @@ final class SettingsViewModel: NSObject, ObservableObject {
         guard let preferences = userPreferences else { return }
         
         // Reset to defaults
-        preferences.temperatureUnit = Locale.current.usesMetricSystem ? .celsius : .fahrenheit
+        preferences.temperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
         preferences.defaultNotificationTiming = .immediate
         preferences.quietHoursEnabled = true
         preferences.quietHoursStart = Calendar.current.date(from: DateComponents(hour: 22, minute: 0)) ?? Date()
@@ -316,7 +318,9 @@ final class SettingsViewModel: NSObject, ObservableObject {
         """
         
         if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&body=\(body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
-            UIApplication.shared.open(url)
+            Task { @MainActor in
+                UIApplication.shared.open(url)
+            }
         }
     }
     
@@ -325,25 +329,37 @@ final class SettingsViewModel: NSObject, ObservableObject {
         let subject = "hatti Support Request"
         
         if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
-            UIApplication.shared.open(url)
+            Task { @MainActor in
+                UIApplication.shared.open(url)
+            }
         }
     }
     
     func rateApp() {
-        if let scene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
-            SKStoreReviewController.requestReview(in: scene)
+        Task { @MainActor in
+            if let scene = UIApplication.shared.connectedScenes.first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
+                if #available(iOS 18.0, *) {
+                    AppStore.requestReview(in: scene)
+                } else {
+                    SKStoreReviewController.requestReview(in: scene)
+                }
+            }
         }
     }
     
     func openTermsOfService() {
         if let url = URL(string: "https://hatti.app/terms") {
-            UIApplication.shared.open(url)
+            Task { @MainActor in
+                UIApplication.shared.open(url)
+            }
         }
     }
     
     func openAppSettings() {
         if let url = URL(string: UIApplication.openSettingsURLString) {
-            UIApplication.shared.open(url)
+            Task { @MainActor in
+                UIApplication.shared.open(url)
+            }
         }
     }
     
@@ -473,3 +489,4 @@ extension SettingsViewModel {
         applyAppearance()
     }
 }
+

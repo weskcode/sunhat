@@ -68,7 +68,7 @@ protocol LocationManaging {
 }
 
 final class DefaultLocationManager: LocationManaging {
-    static let shared = DefaultLocationManager()
+    nonisolated(unsafe) static let shared = DefaultLocationManager()
     private var cached: (CLLocation, String)?
 
     func currentLocation() async -> (location: CLLocation, name: String)? {

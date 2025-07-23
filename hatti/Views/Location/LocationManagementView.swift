@@ -23,7 +23,7 @@ struct LocationManagementView: View {
     @State private var newLocationName = ""
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 // Background
                 backgroundGradient

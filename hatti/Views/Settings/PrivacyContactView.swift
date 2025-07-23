@@ -282,7 +282,9 @@ struct PrivacyContactView: View {
         if let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let url = URL(string: "mailto:privacy@hatti.app?subject=\(encodedSubject)&body=\(encodedBody)") {
-            UIApplication.shared.open(url)
+            Task { @MainActor in
+                UIApplication.shared.open(url)
+            }
         }
     }
     
@@ -321,7 +323,9 @@ struct PrivacyContactView: View {
     
     private func openPrivacyPolicy() {
         if let url = URL(string: "https://hatti.app/privacy") {
-            UIApplication.shared.open(url)
+            Task { @MainActor in
+                UIApplication.shared.open(url)
+            }
         }
     }
 }
@@ -472,6 +476,7 @@ struct MailComposeView: UIViewControllerRepresentable {
             self.parent = parent
         }
         
+        @MainActor
         func mailComposeController(_ controller: MFMailComposeViewController, didFinishWith result: MFMailComposeResult, error: Error?) {
             parent.dismiss()
         }

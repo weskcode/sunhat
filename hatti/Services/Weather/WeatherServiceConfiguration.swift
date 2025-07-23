@@ -252,7 +252,7 @@ final class WeatherServiceManager: ObservableObject {
 
 // MARK: - Configuration Data Model
 
-private struct ConfigurationData: Codable {
+private struct ConfigurationData: Codable, Sendable {
     let openWeatherMapAPIKey: String?
     let cacheExpirationMinutes: Int
     let backgroundRefreshIntervalMinutes: Int

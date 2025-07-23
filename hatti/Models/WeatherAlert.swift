@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-struct WeatherAlert: Identifiable, Codable, Sendable {
+struct WeatherAlert: Identifiable, Sendable {
     let id: UUID
     let title: String
     let description: String
@@ -45,7 +45,7 @@ struct WeatherAlert: Identifiable, Codable, Sendable {
     }
 }
 
-enum WeatherAlertSeverity: String, Codable, CaseIterable, Sendable {
+enum WeatherAlertSeverity: String, CaseIterable, Sendable {
     case minor = "minor"
     case moderate = "moderate"
     case severe = "severe"
@@ -55,7 +55,7 @@ enum WeatherAlertSeverity: String, Codable, CaseIterable, Sendable {
     case watch = "watch"
 }
 
-enum WeatherAlertType: String, Codable, CaseIterable, Sendable {
+enum WeatherAlertType: String, CaseIterable, Sendable {
     case general = "general"
     case temperature = "temperature"
     case precipitation = "precipitation"
@@ -129,18 +129,7 @@ extension WeatherAlert {
         }
     }
     
-    /// Converts WeatherAlert to WeatherAlertDisplay for UI display
-    func toWeatherAlertDisplay() -> WeatherAlertDisplay {
-        return WeatherAlertDisplay(
-            id: self.id,
-            title: self.title,
-            description: self.description,
-            severity: self.severity,
-            type: self.type,
-            area: self.area,
-            instructions: self.instructions,
-            expiresAt: self.expiresAt,
-            isActive: self.isActive
-        )
-    }
+    /// Creates a display version of this alert for UI presentation
+    /// Note: This method is moved to avoid circular reference issues
+    /// Use WeatherAlertDisplay.from(weatherAlert:) instead
 }

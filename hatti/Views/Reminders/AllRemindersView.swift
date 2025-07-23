@@ -14,7 +14,7 @@ struct AllRemindersView: View {
     @Query private var reminders: [WeatherReminder]
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 ForEach(reminders.map { reminder in
                     let desc = reminder.triggerCondition?.formatDescription() ?? "No condition set"

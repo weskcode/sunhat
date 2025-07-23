@@ -26,7 +26,7 @@ struct SettingsView: View {
     @State private var selectedLocation = ReminderLocation.currentLocation
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 // Account Section
                 accountSection

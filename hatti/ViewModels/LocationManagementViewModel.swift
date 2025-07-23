@@ -126,7 +126,9 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         }
         
         logger.info("Opening app settings")
-        UIApplication.shared.open(settingsURL)
+        Task { @MainActor in
+            UIApplication.shared.open(settingsURL)
+        }
     }
     
     // MARK: - Current Location Methods

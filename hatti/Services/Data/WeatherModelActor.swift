@@ -22,40 +22,67 @@ actor WeatherModelActor {
     /// Fetches active reminders for evaluation (returns Sendable data)
     func fetchActiveRemindersData() async throws -> [ReminderEvaluationData] {
         let descriptor = FetchDescriptor<WeatherReminder>(
-            predicate: #Predicate { $0.isActive && !$0.isCompleted && !$0.isPaused }
+            predicate: #Predicate { reminder in
+                reminder.isActive == true && 
+                reminder.isCompleted == false && 
+                reminder.isPaused == false
+            }
         )
         
         let reminders = try modelContext.fetch(descriptor)
         
-        // Convert to Sendable data transfer objects
-        return try await withThrowingTaskGroup(of: ReminderEvaluationData?.self) { group in
-            for reminder in reminders {
-                group.addTask {
-                    guard let condition = reminder.triggerCondition,
-                          let location = reminder.location else { return nil }
-                    
-                    return await ReminderEvaluationData(
-                        reminderId: reminder.id,
-                        triggerCondition: condition.toSendableData(),
-                        locationData: location.toSendableData()
-                    )
-                }
-            }
+        // Convert to Sendable data transfer objects synchronously within the ModelActor
+        var results: [ReminderEvaluationData] = []
+        
+        for reminder in reminders {
+            guard let condition = reminder.triggerCondition,
+                  let location = reminder.location else { continue }
             
-            var results: [ReminderEvaluationData] = []
-            for try await result in group {
-                if let result = result {
-                    results.append(result)
-                }
-            }
-            return results
+            let conditionData = TriggerConditionData(
+                id: condition.id,
+                triggerType: condition.triggerType,
+                targetTemperature: condition.targetTemperature,
+                temperatureTolerance: condition.temperatureTolerance,
+                useFeelsLike: condition.useFeelsLike,
+                minTemperature: condition.minTemperature,
+                maxTemperature: condition.maxTemperature,
+                consecutiveDays: condition.consecutiveDays,
+                averagingPeriod: condition.averagingPeriod,
+                comparisonType: condition.comparisonType,
+                isEnabled: condition.isEnabled,
+                lastEvaluated: condition.lastEvaluated,
+                evaluationCount: condition.evaluationCount,
+                successfulTriggers: condition.successfulTriggers
+            )
+            
+            let locationData = LocationDataTransfer(
+                id: location.id,
+                latitude: location.latitude,
+                longitude: location.longitude,
+                altitude: location.altitude,
+                city: location.city,
+                state: location.state,
+                country: location.country,
+                displayName: location.displayName,
+                timeZoneIdentifier: location.timeZoneIdentifier,
+                lastUpdated: location.lastUpdated
+            )
+            
+            results.append(ReminderEvaluationData(
+                reminderId: reminder.id,
+                triggerCondition: conditionData,
+                locationData: locationData
+            ))
         }
+        return results
     }
     
     /// Fetches evaluation data for a specific reminder
     func fetchReminderEvaluationData(for reminderId: UUID) async throws -> ReminderEvaluationData? {
         let descriptor = FetchDescriptor<WeatherReminder>(
-            predicate: #Predicate<WeatherReminder> { $0.id == reminderId }
+            predicate: #Predicate<WeatherReminder> { reminder in
+                reminder.id == reminderId
+            }
         )
         
         guard let reminder = try modelContext.fetch(descriptor).first,
@@ -64,24 +91,78 @@ actor WeatherModelActor {
             return nil
         }
         
-        return await ReminderEvaluationData(
+        let conditionData = TriggerConditionData(
+            id: condition.id,
+            triggerType: condition.triggerType,
+            targetTemperature: condition.targetTemperature,
+            temperatureTolerance: condition.temperatureTolerance,
+            useFeelsLike: condition.useFeelsLike,
+            minTemperature: condition.minTemperature,
+            maxTemperature: condition.maxTemperature,
+            consecutiveDays: condition.consecutiveDays,
+            averagingPeriod: condition.averagingPeriod,
+            comparisonType: condition.comparisonType,
+            isEnabled: condition.isEnabled,
+            lastEvaluated: condition.lastEvaluated,
+            evaluationCount: condition.evaluationCount,
+            successfulTriggers: condition.successfulTriggers
+        )
+        
+        let locationData = LocationDataTransfer(
+            id: location.id,
+            latitude: location.latitude,
+            longitude: location.longitude,
+            altitude: location.altitude,
+            city: location.city,
+            state: location.state,
+            country: location.country,
+            displayName: location.displayName,
+            timeZoneIdentifier: location.timeZoneIdentifier,
+            lastUpdated: location.lastUpdated
+        )
+        
+        return ReminderEvaluationData(
             reminderId: reminder.id,
-            triggerCondition: condition.toSendableData(),
-            locationData: location.toSendableData()
+            triggerCondition: conditionData,
+            locationData: locationData
         )
     }
     
     /// Fetches active reminders for dashboard display
     func fetchActiveRemindersForDisplay() throws -> [WeatherReminderDisplay] {
         let descriptor = FetchDescriptor<WeatherReminder>(
-            predicate: #Predicate { $0.isActive && !$0.isCompleted && !$0.isPaused },
-            sortBy: [SortDescriptor(\WeatherReminder.createdDate, order: .reverse)]
+            predicate: #Predicate { reminder in
+                reminder.isActive == true && 
+                reminder.isCompleted == false && 
+                reminder.isPaused == false
+            }
         )
         
         let reminders = try modelContext.fetch(descriptor)
         
-        return reminders.map { reminder in
-            let conditionDescription = reminder.triggerCondition?.formatDescription() ?? "No condition set"
+        // Sort manually since we can't use key paths in Swift 6 strict mode
+        let sortedReminders = reminders.sorted { $0.createdDate > $1.createdDate }
+        
+        return sortedReminders.map { reminder in
+            let conditionDescription: String
+            if let condition = reminder.triggerCondition {
+                switch condition.comparisonType {
+                case .above:
+                    conditionDescription = "When temp > \(String(format: "%.0f", condition.targetTemperature))°"
+                case .below:
+                    conditionDescription = "When temp < \(String(format: "%.0f", condition.targetTemperature))°"
+                case .equals:
+                    conditionDescription = "When temp ≈ \(String(format: "%.0f", condition.targetTemperature))°"
+                case .between:
+                    if let min = condition.minTemperature, let max = condition.maxTemperature {
+                        conditionDescription = "When temp \(String(format: "%.0f", min))°-\(String(format: "%.0f", max))°"
+                    } else {
+                        conditionDescription = "Temperature range"
+                    }
+                }
+            } else {
+                conditionDescription = "No condition set"
+            }
             
             return WeatherReminderDisplay(
                 id: reminder.id,
@@ -108,7 +189,9 @@ actor WeatherModelActor {
         triggerTime: Date? = nil
     ) throws {
         let descriptor = FetchDescriptor<WeatherReminder>(
-            predicate: #Predicate { $0.id == reminderId }
+            predicate: #Predicate { reminder in
+                reminder.id == reminderId
+            }
         )
         
         guard let reminder = try modelContext.fetch(descriptor).first else {
@@ -183,8 +266,7 @@ actor WeatherModelActor {
                 data.timestamp >= startDate &&
                 data.locationLatitude != 0.0 &&
                 data.locationLongitude != 0.0
-            },
-            sortBy: [SortDescriptor(\WeatherData.timestamp, order: .reverse)]
+            }
         )
         
         let weatherDataResults = try modelContext.fetch(descriptor)
@@ -196,19 +278,23 @@ actor WeatherModelActor {
             return latDiff < 0.01 && lonDiff < 0.01
         }
         
-        return locationFilteredResults.map { $0.toSendableData() }
+        // Sort manually since we can't use key paths in Swift 6 strict mode
+        let sortedResults = locationFilteredResults.sorted { $0.timestamp > $1.timestamp }
+        
+        return sortedResults.map { $0.toSendableData() }
     }
     
     // MARK: - Forecast Operations
     
     /// Fetches forecast days for weekly display
     func fetchForecastDays() throws -> [ForecastDayDisplay] {
-        let descriptor = FetchDescriptor<ForecastDay>(
-            sortBy: [SortDescriptor(\ForecastDay.date)]
-        )
+        let descriptor = FetchDescriptor<ForecastDay>()
         
         let forecastDays = try modelContext.fetch(descriptor)
-        return forecastDays.map { forecast in
+        // Sort manually since we can't use key paths in Swift 6 strict mode
+        let sortedForecastDays = forecastDays.sorted { $0.date < $1.date }
+        
+        return sortedForecastDays.map { forecast in
             ForecastDayDisplay(
                 date: forecast.date,
                 highTemperature: forecast.highTemperature,
@@ -232,13 +318,12 @@ actor WeatherModelActor {
             data.timestamp >= startOfDay && data.timestamp < endOfDay
         }
         
-        let descriptor = FetchDescriptor<WeatherData>(
-            predicate: predicate,
-            sortBy: [SortDescriptor(\WeatherData.timestamp, order: .reverse)]
-        )
+        let descriptor = FetchDescriptor<WeatherData>(predicate: predicate)
         
         let results = try modelContext.fetch(descriptor)
-        return results.first?.temperature
+        // Sort manually since we can't use key paths in Swift 6 strict mode
+        let sortedResults = results.sorted { $0.timestamp > $1.timestamp }
+        return sortedResults.first?.temperature
     }
     
     // MARK: - Cleanup Operations
@@ -248,7 +333,9 @@ actor WeatherModelActor {
         let cutoffDate = Calendar.current.date(byAdding: .day, value: -olderThanDays, to: Date()) ?? Date()
         
         let descriptor = FetchDescriptor<WeatherData>(
-            predicate: #Predicate { $0.timestamp < cutoffDate }
+            predicate: #Predicate { data in
+                data.timestamp < cutoffDate
+            }
         )
         
         let oldData = try modelContext.fetch(descriptor)
@@ -336,6 +423,22 @@ struct WeatherAlertDisplay: Sendable, Identifiable {
     let instructions: String?
     let expiresAt: Date?
     let isActive: Bool
+    
+    /// Creates a WeatherAlertDisplay from a WeatherAlert
+    static func from(weatherAlert: WeatherAlert) -> WeatherAlertDisplay {
+        return WeatherAlertDisplay(
+            id: weatherAlert.id,
+            timestamp: weatherAlert.timestamp,
+            title: weatherAlert.title,
+            description: weatherAlert.description,
+            severity: weatherAlert.severity,
+            type: weatherAlert.type,
+            area: weatherAlert.area,
+            instructions: weatherAlert.instructions,
+            expiresAt: weatherAlert.expiresAt,
+            isActive: weatherAlert.isActive
+        )
+    }
 }
 
 /// Sendable version of ForecastDay for UI display
@@ -398,7 +501,6 @@ struct WeatherDataTransfer: Sendable {
 
 extension LocationData {
     /// Converts LocationData to Sendable data
-    @MainActor
     func toSendableData() -> LocationDataTransfer {
         return LocationDataTransfer(
             id: self.id,
@@ -417,7 +519,6 @@ extension LocationData {
 
 extension TriggerCondition {
     /// Converts TriggerCondition to Sendable data
-    @MainActor
     func toSendableData() -> TriggerConditionData {
         return TriggerConditionData(
             id: self.id,

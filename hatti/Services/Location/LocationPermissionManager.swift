@@ -156,7 +156,9 @@ final class LocationPermissionManager: NSObject, ObservableObject {
         }
         
         logger.info("Opening app settings")
-        UIApplication.shared.open(settingsURL)
+        Task { @MainActor in
+            UIApplication.shared.open(settingsURL)
+        }
     }
     
     func hasValidLocation() -> Bool {
@@ -300,7 +302,7 @@ enum LocationError: LocalizedError, Sendable {
     case locationUnavailable
     case unknown
     
-    var errorDescription: String? {
+    nonisolated var errorDescription: String? {
         switch self {
         case .permissionDenied:
             return "Location permission denied"
@@ -399,20 +401,20 @@ struct ManualLocationData: Codable, Identifiable, Sendable {
 // This extension is only needed for iOS 16 and earlier
 @available(iOS, deprecated: 17.0, message: "CLLocationCoordinate2D now conforms to Codable natively")
 extension CLLocationCoordinate2D: @retroactive Codable {
-    public func encode(to encoder: Encoder) throws {
+    nonisolated public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(latitude, forKey: .latitude)
         try container.encode(longitude, forKey: .longitude)
     }
     
-    public init(from decoder: Decoder) throws {
+    nonisolated public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         let latitude = try container.decode(Double.self, forKey: .latitude)
         let longitude = try container.decode(Double.self, forKey: .longitude)
         self.init(latitude: latitude, longitude: longitude)
     }
     
-    private enum CodingKeys: String, CodingKey {
+    nonisolated private enum CodingKeys: String, CodingKey {
         case latitude
         case longitude
     }

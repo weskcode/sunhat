@@ -379,7 +379,7 @@ final class DashboardViewModel: NSObject, ObservableObject {
     private func loadTemperatureUnit() {
         // Load from user preferences
         guard let modelContext = modelContext else {
-            temperatureUnit = Locale.current.usesMetricSystem ? .celsius : .fahrenheit
+            temperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
             return
         }
         
@@ -387,9 +387,9 @@ final class DashboardViewModel: NSObject, ObservableObject {
         
         do {
             let preferences = try modelContext.fetch(descriptor)
-            temperatureUnit = preferences.first?.temperatureUnit ?? (Locale.current.usesMetricSystem ? .celsius : .fahrenheit)
+            temperatureUnit = preferences.first?.temperatureUnit ?? (Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit)
         } catch {
-            temperatureUnit = Locale.current.usesMetricSystem ? .celsius : .fahrenheit
+            temperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
         }
     }
     

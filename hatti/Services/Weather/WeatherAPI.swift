@@ -8,6 +8,7 @@
 import Foundation
 import WeatherKit
 import CoreLocation
+import SwiftData
 
 // Use DTOs for protocol and async boundaries
 protocol WeatherAPI: Sendable {
@@ -433,7 +434,7 @@ private struct OpenWeatherCurrentResponse: Codable, Sendable {
         let pressure: Double
         let humidity: Int
         
-        private enum CodingKeys: String, CodingKey {
+        nonisolated private enum CodingKeys: String, CodingKey {
             case temp
             case feelsLike = "feels_like"
             case pressure

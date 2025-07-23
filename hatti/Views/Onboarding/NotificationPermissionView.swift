@@ -739,7 +739,9 @@ final class NotificationPermissionManager: NSObject, ObservableObject {
             return
         }
         
-        UIApplication.shared.open(settingsURL)
+        Task { @MainActor in
+            UIApplication.shared.open(settingsURL)
+        }
     }
 }
 

@@ -23,7 +23,7 @@ enum WeatherError: LocalizedError, Sendable {
     case backgroundRefreshDisabled
     case unknown(Error)
     
-    var errorDescription: String? {
+    nonisolated var errorDescription: String? {
         switch self {
         case .invalidLocation:
             return "Invalid location provided"
