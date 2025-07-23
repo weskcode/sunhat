@@ -49,7 +49,7 @@ extension TriggerEngine {
         let comparisonDays = 30 // Default to 30 days of historical data
         let historicalComparison = await performHistoricalComparison(
             location: location,
-            currentWeather: currentWeather,
+            currentWeather: currentWeather.toWeatherData(),
             comparisonDays: comparisonDays,
             useFeelsLike: useFeelsLike
         )
@@ -93,16 +93,16 @@ extension TriggerEngine {
                 "Current temperature is outside typical range for this date (percentile: \(String(format: "%.0f", percentileRange.0 * 100))-\(String(format: "%.0f", percentileRange.1 * 100))%)"
         }
         
-        let metadata = [
-            "comparison_days": String(comparisonDays),
-            "historical_average": String(historicalComparison.historicalAverage),
-            "temperature_difference": String(historicalComparison.temperatureDifference),
-            "percentile_rank": String(historicalComparison.percentileRank),
-            "data_points": String(historicalComparison.dataPoints),
-            "warmest_on_record": String(historicalComparison.isWarmestOnRecord),
-            "coldest_on_record": String(historicalComparison.isColdestOnRecord),
-            "uses_feels_like": String(useFeelsLike)
-        ]
+        // Build metadata dictionary in parts to avoid compiler timeout
+        var metadata: [String: String] = [:]
+        metadata["comparison_days"] = String(comparisonDays)
+        metadata["historical_average"] = String(historicalComparison.historicalAverage)
+        metadata["temperature_difference"] = String(historicalComparison.temperatureDifference)
+        metadata["percentile_rank"] = String(historicalComparison.percentileRank)
+        metadata["data_points"] = String(historicalComparison.dataPoints)
+        metadata["warmest_on_record"] = String(historicalComparison.isWarmestOnRecord)
+        metadata["coldest_on_record"] = String(historicalComparison.isColdestOnRecord)
+        metadata["uses_feels_like"] = String(useFeelsLike)
         
         return TriggerEvaluationResult(
             reminderId: reminderId,
@@ -125,37 +125,18 @@ extension TriggerEngine {
             return cachedContext
         }
         
-        guard let modelContext = modelContext else {
-            return createEmptyHistoricalContext(location: location)
-        }
-        
-        // Fetch historical data for the past few years
+        // Fetch historical data for the past few years using modelActor
         let endDate = Date()
         let startDate = Calendar.current.date(byAdding: .year, value: -3, to: endDate) ?? endDate
         
-        let searchRadius: CLLocationDistance = 25000 // 25km for historical context
-        let minLat = location.coordinate.latitude - (searchRadius / 111000)
-        let maxLat = location.coordinate.latitude + (searchRadius / 111000)
-        let minLon = location.coordinate.longitude - (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
-        let maxLon = location.coordinate.longitude + (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
-        
-        let timePredicate = #Predicate<WeatherData> { weather in
-            weather.timestamp >= startDate && weather.timestamp <= endDate
-        }
-        
-        let descriptor = FetchDescriptor<WeatherData>(
-            predicate: timePredicate,
-            sortBy: [SortDescriptor(\WeatherData.timestamp, order: .forward)]
-        )
-        
         do {
-            let allData = try modelContext.fetch(descriptor)
-            // Filter by location in code to avoid complex predicates
-            let historicalData = allData.filter { weather in
-                guard let lat = weather.location?.latitude,
-                      let lon = weather.location?.longitude else { return false }
-                return lat >= minLat && lat <= maxLat && lon >= minLon && lon <= maxLon
-            }
+            let historicalDataTransfers = try await modelActor.fetchHistoricalWeatherData(
+                for: location,
+                daysBack: 1095  // Approximately 3 years
+            )
+            
+            // Convert to WeatherData for processing
+            let historicalData = historicalDataTransfers.map { $0.toWeatherData() }
             let context: HistoricalWeatherContext = buildHistoricalContext(
                 location: location,
                 historicalData: historicalData
@@ -721,8 +702,7 @@ extension TriggerEngine {
         years: Int
     ) async -> [WeatherData] {
         
-        guard let modelContext = modelContext,
-              let month = monthDay.month,
+        guard let month = monthDay.month,
               let day = monthDay.day else {
             return []
         }
@@ -758,13 +738,17 @@ extension TriggerEngine {
             )
             
             do {
-                let allYearData = try modelContext.fetch(descriptor)
-                // Filter by location in code to avoid complex predicates
-                let yearData = allYearData.filter { weather in
-                    guard let lat = weather.location?.latitude,
-                          let lon = weather.location?.longitude else { return false }
-                    return lat >= minLat && lat <= maxLat && lon >= minLon && lon <= maxLon
+                // Use modelActor to fetch historical data for this year
+                let yearDataTransfers = try await modelActor.fetchHistoricalWeatherData(
+                    for: location,
+                    daysBack: Int(Date().timeIntervalSince(startDate) / 86400) // Convert to days
+                )
+                
+                // Convert to WeatherData and filter by date proximity
+                let yearData = yearDataTransfers.map { $0.toWeatherData() }.filter { weather in
+                    abs(weather.timestamp.timeIntervalSince(targetDate)) <= 86400 // Within 1 day
                 }
+                
                 if let closestData = yearData.min(by: { (data1: WeatherData, data2: WeatherData) in
                     abs(data1.timestamp.timeIntervalSince(targetDate)) < abs(data2.timestamp.timeIntervalSince(targetDate))
                 }) {

@@ -39,6 +39,11 @@ final class LocationData {
     var displayName: String = ""
     var customName: String?
     
+    // Location key for grouping/caching (computed property)
+    var locationKey: String {
+        return "\(latitude),\(longitude)"
+    }
+    
     // Weather service metadata
     var weatherServiceLocationID: String?
     var elevationMeters: Double?

@@ -52,6 +52,8 @@ final class TriggerCondition {
     var isEnabled: Bool = true
     var createdAt: Date = Date()
     var lastEvaluated: Date?
+    var evaluationCount: Int = 0
+    var successfulTriggers: Int = 0
     
     // CloudKit compatibility
     @Attribute(.externalStorage) var customConditionData: Data?

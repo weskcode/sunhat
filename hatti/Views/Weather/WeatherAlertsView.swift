@@ -91,20 +91,26 @@ struct WeatherAlertDetailCard: View {
 
 #Preview {
     WeatherAlertsView(alerts: [
-        WeatherAlert(
+        WeatherAlertDisplay(
             id: UUID(),
             title: "High Temperature Warning",
             description: "Temperatures will exceed 95°F today. Stay hydrated and avoid prolonged outdoor activities.",
             severity: .severe,
             type: .temperature,
+            area: "Local Area",
+            instructions: nil,
+            expiresAt: nil,
             isActive: true
         ),
-        WeatherAlert(
+        WeatherAlertDisplay(
             id: UUID(),
             title: "UV Index Advisory",
             description: "UV index will be very high. Use sunscreen and protective clothing.",
             severity: .moderate,
             type: .uv,
+            area: "Local Area",
+            instructions: nil,
+            expiresAt: nil,
             isActive: true
         )
     ])

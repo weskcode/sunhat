@@ -128,4 +128,19 @@ extension WeatherAlert {
         case .extreme: return 7
         }
     }
+    
+    /// Converts WeatherAlert to WeatherAlertDisplay for UI display
+    func toWeatherAlertDisplay() -> WeatherAlertDisplay {
+        return WeatherAlertDisplay(
+            id: self.id,
+            title: self.title,
+            description: self.description,
+            severity: self.severity,
+            type: self.type,
+            area: self.area,
+            instructions: self.instructions,
+            expiresAt: self.expiresAt,
+            isActive: self.isActive
+        )
+    }
 }

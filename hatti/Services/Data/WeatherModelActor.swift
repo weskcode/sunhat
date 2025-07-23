@@ -28,7 +28,7 @@ actor WeatherModelActor {
         let reminders = try modelContext.fetch(descriptor)
         
         // Convert to Sendable data transfer objects
-        return reminders.compactMap { reminder in
+        return reminders.compactMap { reminder -> ReminderEvaluationData? in
             guard let condition = reminder.triggerCondition else { return nil }
             
             return ReminderEvaluationData(
@@ -100,10 +100,14 @@ actor WeatherModelActor {
     
     /// Saves weather data safely
     func saveWeatherData(_ data: WeatherDataTransfer) throws {
-        let weatherData = WeatherData()
+        let weatherData = WeatherData(
+            temperature: data.temperature,
+            feelsLike: data.apparentTemperature,
+            humidity: data.humidity
+        )
         weatherData.timestamp = data.timestamp
         weatherData.temperature = data.temperature
-        weatherData.apparentTemperature = data.apparentTemperature
+        weatherData.feelsLike = data.apparentTemperature
         weatherData.humidity = data.humidity
         weatherData.windSpeed = data.windSpeed
         weatherData.pressure = data.pressure
@@ -111,10 +115,12 @@ actor WeatherModelActor {
         weatherData.uvIndex = data.uvIndex
         weatherData.dewPoint = data.dewPoint
         weatherData.windDirectionDegrees = data.windDirectionDegrees
+        weatherData.windDirection = Int(data.windDirectionDegrees)
         weatherData.windGust = data.windGust
         weatherData.precipitationAmount = data.precipitationAmount
         weatherData.precipitationProbability = data.precipitationProbability
         weatherData.cloudCoverage = data.cloudCoverage
+        weatherData.cloudCover = data.cloudCoverage
         weatherData.airQualityIndex = data.airQualityIndex
         weatherData.pm25 = data.pm25
         weatherData.sunrise = data.sunrise
@@ -137,17 +143,20 @@ actor WeatherModelActor {
     ) throws -> [WeatherDataTransfer] {
         let startDate = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date()) ?? Date()
         
+        let latitude = location.coordinate.latitude
+        let longitude = location.coordinate.longitude
+        
         let descriptor = FetchDescriptor<WeatherData>(
             predicate: #Predicate<WeatherData> { data in
                 data.timestamp >= startDate &&
-                abs(data.locationLatitude - location.coordinate.latitude) < 0.01 &&
-                abs(data.locationLongitude - location.coordinate.longitude) < 0.01
+                (data.location?.latitude != nil ? abs((data.location?.latitude ?? 0.0) - latitude) < 0.01 : false) &&
+                (data.location?.longitude != nil ? abs((data.location?.longitude ?? 0.0) - longitude) < 0.01 : false)
             },
             sortBy: [SortDescriptor(\WeatherData.timestamp, order: .reverse)]
         )
         
-        let weatherData = try modelContext.fetch(descriptor)
-        return weatherData.map { $0.toSendableData() }
+        let weatherDataResults = try modelContext.fetch(descriptor)
+        return weatherDataResults.map { $0.toSendableData() }
     }
     
     // MARK: - Forecast Operations
@@ -240,8 +249,10 @@ struct WeatherReminderDisplay: Sendable {
 }
 
 /// Sendable version of WeatherAlert for UI display
-struct WeatherAlertDisplay: Sendable {
+struct WeatherAlertDisplay: Sendable, Identifiable {
     let id: UUID
+    /// The timestamp when the alert was issued
+    let timestamp: Date = Date()
     let title: String
     let description: String
     let severity: WeatherAlertSeverity
@@ -378,6 +389,44 @@ extension WeatherData {
             locationLatitude: self.locationLatitude,
             locationLongitude: self.locationLongitude
         )
+    }
+}
+
+// MARK: - WeatherDataTransfer Extensions
+
+extension WeatherDataTransfer {
+    /// Converts WeatherDataTransfer to WeatherData for internal processing
+    func toWeatherData() -> WeatherData {
+        let weatherData = WeatherData(
+            temperature: self.temperature,
+            feelsLike: self.apparentTemperature,
+            humidity: self.humidity
+        )
+        
+        // Set all additional properties
+        weatherData.timestamp = self.timestamp
+        weatherData.dewPoint = self.dewPoint
+        weatherData.windSpeed = self.windSpeed
+        weatherData.windDirectionDegrees = self.windDirectionDegrees
+        weatherData.windDirection = Int(self.windDirectionDegrees)
+        weatherData.windGust = self.windGust
+        weatherData.pressure = self.pressure
+        weatherData.visibility = self.visibility
+        weatherData.uvIndex = self.uvIndex
+        weatherData.precipitationAmount = self.precipitationAmount
+        weatherData.precipitationProbability = self.precipitationProbability
+        weatherData.cloudCoverage = self.cloudCoverage
+        weatherData.cloudCover = self.cloudCoverage
+        weatherData.airQualityIndex = self.airQualityIndex
+        weatherData.pm25 = self.pm25
+        weatherData.sunrise = self.sunrise
+        weatherData.sunset = self.sunset
+        weatherData.weatherCondition = self.weatherCondition
+        weatherData.weatherDescription = self.weatherDescription
+        weatherData.locationLatitude = self.locationLatitude
+        weatherData.locationLongitude = self.locationLongitude
+        
+        return weatherData
     }
 }
 

@@ -31,10 +31,12 @@ class WeatherData {
     var visibility: Double = 0.0
     var uvIndex: Double = 0.0
     var cloudCover: Int = 0
+    var cloudCoverage: Int = 0
     
     // Wind data
     var windSpeed: Double = 0.0
     var windDirection: Int = 0
+    var windDirectionDegrees: Double = 0.0
     var windGust: Double?
     
     // Precipitation
@@ -67,6 +69,10 @@ class WeatherData {
     // CloudKit optimization
     @Attribute(.externalStorage) var rawWeatherData: Data?
     
+    // Location coordinates (for backward compatibility)
+    var locationLatitude: Double = 0.0
+    var locationLongitude: Double = 0.0
+    
     // Relationships
     var location: LocationData?
     var forecastDays: [ForecastDay] = []
@@ -81,6 +87,13 @@ class WeatherData {
         self.feelsLike = feelsLike
         self.humidity = humidity
         self.location = location
+        
+        // Set location coordinates if location is provided
+        if let location = location {
+            self.locationLatitude = location.latitude
+            self.locationLongitude = location.longitude
+        }
+        
         self.precipitationType = .none
         self.weatherCondition = .clear
         self.dataSource = .unknown

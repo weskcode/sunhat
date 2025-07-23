@@ -102,7 +102,7 @@ actor TriggerEngine {
         return new
     }
     
-    private let modelActor: WeatherModelActor
+    internal let modelActor: WeatherModelActor
     let logger = Logger(subsystem: "com.temptrigger.hatti", category: "TriggerEngine")
     
     // Evaluation caches

@@ -16,8 +16,25 @@ struct AllRemindersView: View {
     var body: some View {
         NavigationView {
             List {
-                ForEach(reminders) { reminder in
-                    ActiveReminderCard(reminder: reminder, weatherData: nil)
+                ForEach(reminders.map { reminder in
+                    let desc = reminder.triggerCondition?.formatDescription() ?? "No condition set"
+                    return WeatherReminderDisplay(
+                        id: reminder.id,
+                        title: reminder.title,
+                        reminderDescription: reminder.reminderDescription,
+                        category: reminder.category,
+                        priority: reminder.priority,
+                        isActive: reminder.isActive,
+                        isCompleted: reminder.isCompleted,
+                        isPaused: reminder.isPaused,
+                        createdDate: reminder.createdDate,
+                        lastTriggered: reminder.lastTriggered,
+                        triggerCount: reminder.triggerCount,
+                        nextEvaluationDate: reminder.nextEvaluationDate,
+                        conditionDescription: desc
+                    )
+                }, id: \.id) { display in
+                    ActiveReminderCard(reminder: display, weatherData: nil)
                 }
                 .onDelete(perform: deleteReminders)
             }
