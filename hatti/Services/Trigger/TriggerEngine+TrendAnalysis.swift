@@ -193,7 +193,7 @@ extension TriggerEngine {
     
     // MARK: - Helper Methods
     
-    func getTrendAnalysis(
+    public func getTrendAnalysis(
         for location: CLLocation,
         days: Int,
         useFeelsLike: Bool = false
@@ -206,38 +206,15 @@ extension TriggerEngine {
             return cachedAnalysis
         }
         
-        guard let modelContext = modelContext else {
-            return createEmptyTrendAnalysis()
-        }
-        
-        // Fetch historical weather data
-        let endDate = Date()
-        let startDate = Calendar.current.date(byAdding: .day, value: -days, to: endDate) ?? endDate
-        
-        let searchRadius: CLLocationDistance = 10000 // 10km radius
-        let minLat = location.coordinate.latitude - (searchRadius / 111000)
-        let maxLat = location.coordinate.latitude + (searchRadius / 111000)
-        let minLon = location.coordinate.longitude - (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
-        let maxLon = location.coordinate.longitude + (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
-        
-        let predicate = #Predicate<WeatherData> { weather in
-            weather.timestamp >= startDate &&
-            weather.timestamp <= endDate &&
-            weather.location?.latitude != nil &&
-            weather.location?.longitude != nil &&
-            weather.location!.latitude >= minLat &&
-            weather.location!.latitude <= maxLat &&
-            weather.location!.longitude >= minLon &&
-            weather.location!.longitude <= maxLon
-        }
-        
-        let descriptor = FetchDescriptor<WeatherData>(
-            predicate: predicate,
-            sortBy: [SortDescriptor(\WeatherData.timestamp, order: .forward)]
-        )
-        
         do {
-            let weatherData = try modelContext.fetch(descriptor)
+            // Use modelActor to fetch historical weather data
+            let weatherDataTransfers = try await modelActor.fetchHistoricalWeatherData(
+                for: location,
+                daysBack: days
+            )
+            
+            // Convert to WeatherData for analysis
+            let weatherData = weatherDataTransfers.map { $0.toWeatherData() }
             let analysis = analyzeTrend(weatherData: weatherData, useFeelsLike: useFeelsLike)
             
             // Cache the result

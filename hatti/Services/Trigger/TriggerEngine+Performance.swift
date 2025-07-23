@@ -10,15 +10,24 @@ import SwiftData
 import CoreLocation
 import os
 
-// Allow grouping by CLLocationCoordinate2D in this file
-extension CLLocationCoordinate2D: Hashable {
-    public static func == (lhs: CLLocationCoordinate2D, rhs: CLLocationCoordinate2D) -> Bool {
-        lhs.latitude == rhs.latitude && lhs.longitude == rhs.longitude
+// MARK: - Hashable Location Wrapper
+// Wrapper to avoid extending imported types with protocol conformance
+private struct HashableLocation: Hashable {
+    let coordinate: CLLocationCoordinate2D
+    
+    init(_ coordinate: CLLocationCoordinate2D) {
+        self.coordinate = coordinate
     }
-
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(latitude)
-        hasher.combine(longitude)
+    
+    static func == (lhs: HashableLocation, rhs: HashableLocation) -> Bool {
+        abs(lhs.coordinate.latitude - rhs.coordinate.latitude) < 1e-8 && 
+        abs(lhs.coordinate.longitude - rhs.coordinate.longitude) < 1e-8
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        // Use a small epsilon for floating point comparison
+        hasher.combine(Double(round(coordinate.latitude * 1e8)) / 1e8)
+        hasher.combine(Double(round(coordinate.longitude * 1e8)) / 1e8)
     }
 }
 
@@ -56,7 +65,7 @@ extension TriggerEngine {
                     var results: [TriggerEvaluationResult] = []
                     var activeTasks = 0
                     
-                    for (locationKey, reminderDataList) in batch {
+                    for (_, reminderDataList) in batch {
                         if activeTasks < maxConcurrentBatches {
                             // Get location from first reminder data
                             guard let location = reminderDataList.first?.clLocation else { continue }
@@ -136,8 +145,8 @@ extension TriggerEngine {
     
     // MARK: - Smart Evaluation Scheduling
     
-    func calculateOptimalEvaluationInterval(for condition: TriggerCondition) -> TimeInterval {
-        switch condition.triggerType {
+    func calculateOptimalEvaluationInterval(for conditionData: TriggerConditionData) -> TimeInterval {
+        switch conditionData.triggerType {
         case .exactTemperature, .temperatureRange:
             // Fast evaluation for simple temperature checks
             return 15 * 60 // 15 minutes
@@ -148,7 +157,7 @@ extension TriggerEngine {
             
         case .averageTemperature:
             // Evaluation based on averaging period
-            let averagingHours = Double(condition.averagingPeriod * 24)
+            let averagingHours = Double(conditionData.averagingPeriod * 24)
             return min(averagingHours / 4, 24 * 3600) // Quarter of averaging period, max 24h
             
         case .seasonalMarker:
@@ -156,15 +165,14 @@ extension TriggerEngine {
             let calendar = Calendar.current
             let currentMonth = calendar.component(.month, from: Date())
             
-            switch condition.seasonalType {
-            case .firstFrost, .growingSeasonEnd:
-                return (currentMonth >= 9 && currentMonth <= 11) ? 12 * 3600 : 24 * 3600
-            case .lastFrost, .growingSeasonStart:
-                return (currentMonth >= 2 && currentMonth <= 5) ? 12 * 3600 : 24 * 3600
-            case .springTransition, .fallTransition:
-                return (currentMonth >= 3 && currentMonth <= 5) || (currentMonth >= 9 && currentMonth <= 11) ? 8 * 3600 : 24 * 3600
+            // Use month-based seasonal evaluation frequency
+            switch currentMonth {
+            case 3...5: // Spring
+                return 8 * 3600 // 8 hours during spring transition
+            case 9...11: // Fall
+                return 12 * 3600 // 12 hours during fall transition
             default:
-                return 24 * 3600
+                return 24 * 3600 // Daily for other months
             }
             
         case .composite:
@@ -363,8 +371,8 @@ struct TriggerEnginePerformanceReport: Sendable {
 
 // MARK: - Array Extension for Chunking
 
-private extension Array {
-    func chunked(into size: Int) -> [[Element]] {
+extension Array {
+    fileprivate func chunked(into size: Int) -> [[Element]] {
         return stride(from: 0, to: count, by: size).map {
             Array(self[$0..<Swift.min($0 + size, count)])
         }

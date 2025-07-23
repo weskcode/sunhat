@@ -189,7 +189,7 @@ final class DetailedReminderViewModel: ObservableObject {
             let preferences = try modelContext.fetch(descriptor)
             temperatureUnit = preferences.first?.temperatureUnit ?? .fahrenheit
         } catch {
-            temperatureUnit = Locale.current.usesMetricSystem ? .celsius : .fahrenheit
+            temperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
         }
     }
     
