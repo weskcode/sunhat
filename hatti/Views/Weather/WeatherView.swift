@@ -20,9 +20,9 @@ struct WeatherView: View {
     @State private var selectedLocation: ReminderLocation = .currentLocation
     
     init() {
-        // Initialize with a dummy modelContext - will be configured in onAppear
+        // Initialize with a dummy modelContainer
         let container = try! ModelContainer(for: WeatherData.self, WeatherReminder.self, LocationData.self, TriggerCondition.self)
-        self._viewModel = StateObject(wrappedValue: WeatherViewModel(modelContext: container.mainContext))
+        self._viewModel = StateObject(wrappedValue: WeatherViewModel(modelContainer: container))
     }
     
     var body: some View {

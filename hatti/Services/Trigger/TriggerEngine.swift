@@ -16,27 +16,27 @@ import os
 
 struct TriggerEvaluationResult: Sendable {
     let reminderId: UUID
-    let condition: TriggerCondition
+    let conditionData: TriggerConditionData  // Changed to Sendable version
     let triggered: Bool
     let confidence: Double
     let evaluationTime: Date
-    let weatherData: WeatherData?
+    let weatherData: WeatherDataTransfer?    // Changed to Sendable version
     let triggerReason: String
     let nextEvaluationTime: Date?
     let metadata: [String: String]
     
     init(
         reminderId: UUID,
-        condition: TriggerCondition,
+        conditionData: TriggerConditionData,
         triggered: Bool,
         confidence: Double = 1.0,
-        weatherData: WeatherData? = nil,
+        weatherData: WeatherDataTransfer? = nil,
         triggerReason: String = "",
         nextEvaluationTime: Date? = nil,
         metadata: [String: String] = [:]
     ) {
         self.reminderId = reminderId
-        self.condition = condition
+        self.conditionData = conditionData
         self.triggered = triggered
         self.confidence = confidence
         self.evaluationTime = Date()
@@ -85,21 +85,24 @@ struct TrendAnalysis: Sendable {
     }
 }
 
-// MARK: - Reminder Evaluation Data
-
-struct ReminderEvaluationData: Sendable {
-    let reminderId: UUID
-    let triggerCondition: TriggerCondition
-    let locationKey: String
-    let clLocation: CLLocation?
-}
+// MARK: - Import Sendable Data Types
+// ReminderEvaluationData is now defined in WeatherModelActor.swift
 
 // MARK: - Main Trigger Engine Actor
 
 actor TriggerEngine {
-    static let shared = TriggerEngine()
+    private static var _shared: TriggerEngine?
     
-    var modelContext: ModelContext?
+    static func shared(modelContainer: ModelContainer) -> TriggerEngine {
+        if let existing = _shared {
+            return existing
+        }
+        let new = TriggerEngine(modelContainer: modelContainer)
+        _shared = new
+        return new
+    }
+    
+    private let modelActor: WeatherModelActor
     let logger = Logger(subsystem: "com.temptrigger.hatti", category: "TriggerEngine")
     
     // Evaluation caches
@@ -112,11 +115,9 @@ actor TriggerEngine {
     private var lastEvaluationTime: Date?
     private var averageEvaluationDuration: TimeInterval = 0
     
-    private init() {}
-    
-    func configure(modelContext: ModelContext) {
-        self.modelContext = modelContext
-        logger.info("TriggerEngine configured")
+    private init(modelContainer: ModelContainer) {
+        self.modelActor = WeatherModelActor(modelContainer: modelContainer)
+        logger.info("TriggerEngine initialized with ModelActor")
     }
     
     // MARK: - Main Evaluation Methods
@@ -125,49 +126,28 @@ actor TriggerEngine {
         let startTime = Date()
         evaluationCount += 1
         
-        guard let modelContext = modelContext else {
-            logger.error("TriggerEngine not configured with ModelContext")
-            return []
-        }
-        
         logger.debug("Starting evaluation of all active reminders")
         
-        // Fetch all reminders and filter in code to avoid main actor predicate issues
-        let descriptor = FetchDescriptor<WeatherReminder>()
-        
         do {
-            let allReminders = try modelContext.fetch(descriptor)
-            // Filter on main actor to access isolated properties
-            let activeReminders = await MainActor.run {
-                allReminders.filter { reminder in
-                    reminder.isCurrentlyActive && reminder.canTrigger
-                }
-            }
-            logger.debug("Found \(activeReminders.count) active reminders to evaluate")
+            // Fetch reminder data through ModelActor to avoid concurrency issues
+            let reminderData = try await modelActor.fetchActiveRemindersData()
+            logger.debug("Found \(reminderData.count) active reminders to evaluate")
             
             // Group reminders by location to optimize weather data fetching
-            let locationGroups = await MainActor.run {
-                Dictionary(grouping: activeReminders) { reminder in
-                    if let location = reminder.location {
-                        return "\(location.latitude),\(location.longitude)"
-                    } else {
-                        return "0.0,0.0"
-                    }
-                }
+            let locationGroups = Dictionary(grouping: reminderData) { data in
+                data.locationKey
             }
             
             var allResults: [TriggerEvaluationResult] = []
             
             // Evaluate each location group
-            for (coordinateString, reminders) in locationGroups {
-                let components = coordinateString.split(separator: ",")
-                guard components.count == 2,
-                      let latitude = Double(components[0]),
-                      let longitude = Double(components[1]) else {
+            for (locationKey, dataList) in locationGroups {
+                guard let firstData = dataList.first,
+                      let location = firstData.clLocation else {
                     continue
                 }
-                let location = CLLocation(latitude: latitude, longitude: longitude)
-                let results = await evaluateRemindersForLocation(reminders, at: location)
+                
+                let results = await evaluateRemindersForLocation(dataList, at: location)
                 allResults.append(contentsOf: results)
             }
             
@@ -177,7 +157,7 @@ actor TriggerEngine {
                 await self?.updatePerformanceMetrics(duration: duration)
             }
             
-            logger.info("Completed evaluation of \(activeReminders.count) reminders in \(duration)s")
+            logger.info("Completed evaluation of \(reminderData.count) reminders in \(duration)s")
             return allResults
             
         } catch {
@@ -192,26 +172,25 @@ actor TriggerEngine {
             return nil
         }
         
-        return await evaluateCondition(condition, for: reminder.id, at: location)
+        let conditionData = condition.toSendableData()
+        return await evaluateCondition(conditionData, for: reminder.id, at: location)
     }
     
-    func evaluateRemindersForLocation(_ reminders: [WeatherReminder], at location: CLLocation) async -> [TriggerEvaluationResult] {
+    func evaluateRemindersForLocation(_ reminderDataList: [ReminderEvaluationData], at location: CLLocation) async -> [TriggerEvaluationResult] {
         do {
             // Fetch current weather data for the location
             let weatherData = try await WeatherService.shared.fetchWeatherData(for: location)
+            let weatherTransfer = weatherData.toSendableData()
             
             var results: [TriggerEvaluationResult] = []
             
-            // Extract needed data on main actor
-            let reminderData: [(id: UUID, condition: TriggerCondition)] = await MainActor.run {
-                reminders.compactMap { reminder in
-                    guard let condition = reminder.triggerCondition else { return nil }
-                    return (id: reminder.id, condition: condition)
-                }
-            }
-            
-            for data in reminderData {
-                if let result = await evaluateCondition(data.condition, for: data.id, at: location, with: weatherData) {
+            for reminderData in reminderDataList {
+                if let result = await evaluateCondition(
+                    reminderData.triggerCondition, 
+                    for: reminderData.reminderId, 
+                    at: location, 
+                    with: weatherTransfer
+                ) {
                     results.append(result)
                 }
             }
@@ -227,10 +206,10 @@ actor TriggerEngine {
     // MARK: - Condition Evaluation Logic
     
     private func evaluateCondition(
-        _ condition: TriggerCondition,
+        _ conditionData: TriggerConditionData,
         for reminderId: UUID,
         at location: CLLocation,
-        with weatherData: WeatherData? = nil
+        with weatherData: WeatherDataTransfer? = nil
     ) async -> TriggerEvaluationResult? {
         
         // Check cache first
@@ -238,12 +217,13 @@ actor TriggerEngine {
             return cachedResult
         }
         
-        let currentWeatherData: WeatherData
+        let currentWeatherData: WeatherDataTransfer
         if let providedData = weatherData {
             currentWeatherData = providedData
         } else {
             do {
-                currentWeatherData = try await WeatherService.shared.fetchWeatherData(for: location)
+                let weather = try await WeatherService.shared.fetchWeatherData(for: location)
+                currentWeatherData = weather.toSendableData()
             } catch {
                 logger.warning("Failed to fetch weather data for evaluation: \(error)")
                 return nil
@@ -252,27 +232,27 @@ actor TriggerEngine {
         
         let result: TriggerEvaluationResult
         
-        switch condition.triggerType {
+        switch conditionData.triggerType {
         case .exactTemperature:
-            result = await evaluateExactTemperature(condition, reminderId: reminderId, weatherData: currentWeatherData)
+            result = await evaluateExactTemperature(conditionData, reminderId: reminderId, weatherData: currentWeatherData)
             
         case .temperatureRange:
-            result = await evaluateTemperatureRange(condition, reminderId: reminderId, weatherData: currentWeatherData)
+            result = await evaluateTemperatureRange(conditionData, reminderId: reminderId, weatherData: currentWeatherData)
             
         case .consecutiveDays:
-            result = await evaluateConsecutiveDays(condition, reminderId: reminderId, location: location, currentWeather: currentWeatherData)
+            result = await evaluateConsecutiveDays(conditionData, reminderId: reminderId, location: location, currentWeather: currentWeatherData)
             
         case .averageTemperature:
-            result = await evaluateAverageTemperature(condition, reminderId: reminderId, location: location, currentWeather: currentWeatherData)
+            result = await evaluateAverageTemperature(conditionData, reminderId: reminderId, location: location, currentWeather: currentWeatherData)
             
         case .seasonalMarker:
-            result = await evaluateSeasonalMarker(condition, reminderId: reminderId, location: location, currentWeather: currentWeatherData)
+            result = await evaluateSeasonalMarker(conditionData, reminderId: reminderId, location: location, currentWeather: currentWeatherData)
             
         case .composite:
-            result = await evaluateComposite(condition, reminderId: reminderId, location: location, weatherData: currentWeatherData)
+            result = await evaluateComposite(conditionData, reminderId: reminderId, location: location, weatherData: currentWeatherData)
             
         case .historicalComparison:
-            result = await evaluateHistoricalComparison(condition, reminderId: reminderId, location: location, currentWeather: currentWeatherData)
+            result = await evaluateHistoricalComparison(conditionData, reminderId: reminderId, location: location, currentWeather: currentWeatherData)
         }
         
         // Cache the result
@@ -301,20 +281,20 @@ actor TriggerEngine {
 extension TriggerEngine {
     
     private func evaluateExactTemperature(
-        _ condition: TriggerCondition,
+        _ conditionData: TriggerConditionData,
         reminderId: UUID,
-        weatherData: WeatherData
+        weatherData: WeatherDataTransfer
     ) async -> TriggerEvaluationResult {
         
-        let currentTemp = condition.useFeelsLike ? weatherData.apparentTemperature : weatherData.temperature
-        let targetTemp = condition.targetTemperature
-        let tolerance = condition.temperatureTolerance
+        let currentTemp = conditionData.useFeelsLike ? weatherData.apparentTemperature : weatherData.temperature
+        let targetTemp = conditionData.targetTemperature
+        let tolerance = conditionData.temperatureTolerance
         
         let triggered: Bool
         let confidence: Double
         let triggerReason: String
         
-        switch condition.comparisonType {
+        switch conditionData.comparisonType {
         case .above:
             triggered = currentTemp > targetTemp
             confidence = min(1.0, max(0.0, (currentTemp - targetTemp) / 10.0))
@@ -338,7 +318,7 @@ extension TriggerEngine {
                 "Temperature \(String(format: "%.1f", currentTemp))° differs from target \(String(format: "%.1f", targetTemp))° by \(String(format: "%.1f", difference))°"
             
         case .between:
-            if let minTemp = condition.minTemperature, let maxTemp = condition.maxTemperature {
+            if let minTemp = conditionData.minTemperature, let maxTemp = conditionData.maxTemperature {
                 triggered = currentTemp >= minTemp && currentTemp <= maxTemp
                 confidence = triggered ? 1.0 : 0.0
                 triggerReason = triggered ?
@@ -354,13 +334,13 @@ extension TriggerEngine {
         let metadata = [
             "current_temperature": String(currentTemp),
             "target_temperature": String(targetTemp),
-            "comparison_type": condition.comparisonType.rawValue,
-            "uses_feels_like": String(condition.useFeelsLike)
+            "comparison_type": conditionData.comparisonType.rawValue,
+            "uses_feels_like": String(conditionData.useFeelsLike)
         ]
         
         return TriggerEvaluationResult(
             reminderId: reminderId,
-            condition: condition,
+            conditionData: conditionData,
             triggered: triggered,
             confidence: confidence,
             weatherData: weatherData,
@@ -370,16 +350,16 @@ extension TriggerEngine {
     }
     
     private func evaluateTemperatureRange(
-        _ condition: TriggerCondition,
+        _ conditionData: TriggerConditionData,
         reminderId: UUID,
-        weatherData: WeatherData
+        weatherData: WeatherDataTransfer
     ) async -> TriggerEvaluationResult {
         
-        guard let minTemp = condition.minTemperature,
-              let maxTemp = condition.maxTemperature else {
+        guard let minTemp = conditionData.minTemperature,
+              let maxTemp = conditionData.maxTemperature else {
             return TriggerEvaluationResult(
                 reminderId: reminderId,
-                condition: condition,
+                conditionData: conditionData,
                 triggered: false,
                 confidence: 0.0,
                 weatherData: weatherData,
@@ -387,7 +367,7 @@ extension TriggerEngine {
             )
         }
         
-        let currentTemp = condition.useFeelsLike ? weatherData.apparentTemperature : weatherData.temperature
+        let currentTemp = conditionData.useFeelsLike ? weatherData.apparentTemperature : weatherData.temperature
         let triggered = currentTemp >= minTemp && currentTemp <= maxTemp
         
         let confidence: Double
@@ -410,12 +390,12 @@ extension TriggerEngine {
             "current_temperature": String(currentTemp),
             "min_temperature": String(minTemp),
             "max_temperature": String(maxTemp),
-            "uses_feels_like": String(condition.useFeelsLike)
+            "uses_feels_like": String(conditionData.useFeelsLike)
         ]
         
         return TriggerEvaluationResult(
             reminderId: reminderId,
-            condition: condition,
+            conditionData: conditionData,
             triggered: triggered,
             confidence: confidence,
             weatherData: weatherData,
@@ -423,6 +403,61 @@ extension TriggerEngine {
             metadata: metadata
         )
     }
+    
+    // MARK: - Stub Implementations for Missing Evaluation Methods
+    
+    private func evaluateConsecutiveDays(
+        _ conditionData: TriggerConditionData,
+        reminderId: UUID,
+        location: CLLocation,
+        currentWeather: WeatherDataTransfer
+    ) async -> TriggerEvaluationResult {
+        // TODO: Implement consecutive days evaluation logic
+        return TriggerEvaluationResult(
+            reminderId: reminderId,
+            conditionData: conditionData,
+            triggered: false,
+            confidence: 0.0,
+            weatherData: currentWeather,
+            triggerReason: "Consecutive days evaluation not yet implemented"
+        )
+    }
+    
+    private func evaluateAverageTemperature(
+        _ conditionData: TriggerConditionData,
+        reminderId: UUID,
+        location: CLLocation,
+        currentWeather: WeatherDataTransfer
+    ) async -> TriggerEvaluationResult {
+        // TODO: Implement average temperature evaluation logic
+        return TriggerEvaluationResult(
+            reminderId: reminderId,
+            conditionData: conditionData,
+            triggered: false,
+            confidence: 0.0,
+            weatherData: currentWeather,
+            triggerReason: "Average temperature evaluation not yet implemented"
+        )
+    }
+    
+    
+    private func evaluateComposite(
+        _ conditionData: TriggerConditionData,
+        reminderId: UUID,
+        location: CLLocation,
+        weatherData: WeatherDataTransfer
+    ) async -> TriggerEvaluationResult {
+        // TODO: Implement composite evaluation logic
+        return TriggerEvaluationResult(
+            reminderId: reminderId,
+            conditionData: conditionData,
+            triggered: false,
+            confidence: 0.0,
+            weatherData: weatherData,
+            triggerReason: "Composite evaluation not yet implemented"
+        )
+    }
+    
 }
 
 // MARK: - Performance Metrics

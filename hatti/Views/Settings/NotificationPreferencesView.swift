@@ -143,7 +143,7 @@ struct NotificationPreferencesView: View {
     private var notificationOrganizationSection: some View {
         Section {
             Picker("Grouping", selection: $viewModel.notificationGrouping) {
-                ForEach(NotificationGrouping.allCases, id: \.self) { grouping in
+                SwiftUI.ForEach(NotificationGrouping.allCases, id: \.self) { grouping in
                     VStack(alignment: .leading) {
                         Text(grouping.displayName)
                             .font(.body)
@@ -182,7 +182,7 @@ struct NotificationPreferencesView: View {
         Section {
             // Vibration Pattern
             Picker("Vibration Pattern", selection: $viewModel.vibrationPattern) {
-                ForEach(VibrationPattern.allCases, id: \.self) { pattern in
+                SwiftUI.ForEach(VibrationPattern.allCases, id: \.self) { pattern in
                     HStack {
                         Image(systemName: pattern.icon)
                             .foregroundColor(.blue)
@@ -202,7 +202,7 @@ struct NotificationPreferencesView: View {
             
             // Sound Settings per Reminder Type
             Group {
-                ForEach(["general", "exercise", "gardening", "maintenance"], id: \.self) { type in
+                SwiftUI.ForEach(["general", "exercise", "gardening", "maintenance"], id: \.self) { type in
                     HStack {
                         VStack(alignment: .leading) {
                             Text(type.capitalized)
@@ -235,7 +235,7 @@ struct NotificationPreferencesView: View {
     private var lockScreenBehaviorSection: some View {
         Section {
             Picker("Lock Screen Behavior", selection: $viewModel.lockScreenBehavior) {
-                ForEach(LockScreenBehavior.allCases, id: \.self) { behavior in
+                SwiftUI.ForEach(LockScreenBehavior.allCases, id: \.self) { behavior in
                     VStack(alignment: .leading, spacing: 2) {
                         HStack {
                             Image(systemName: behavior.icon)
@@ -417,7 +417,7 @@ struct SoundPickerView: View {
     var body: some View {
         NavigationView {
             List {
-                ForEach(NotificationSound.allCases, id: \.self) { sound in
+                SwiftUI.ForEach(NotificationSound.allCases, id: \.self) { sound in
                     HStack {
                         Image(systemName: sound.icon)
                             .foregroundColor(.blue)

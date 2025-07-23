@@ -30,10 +30,10 @@ final class DashboardViewModel: NSObject, ObservableObject {
     @Published var weatherIconColor: Color = .gray
     
     @Published var currentLocationName: String = "Unknown Location"
-    @Published var currentWeatherData: WeatherData?
+    @Published var currentWeatherData: WeatherDataTransfer?
     @Published var forecastData: [ForecastDay] = []
-    @Published var activeReminders: [WeatherReminder] = []
-    @Published var activeAlerts: [WeatherAlert] = []
+    @Published var activeReminders: [WeatherReminderDisplay] = []
+    @Published var activeAlerts: [WeatherAlertDisplay] = []
     
     @Published var isLoading: Bool = false
     @Published var lastUpdateTime: Date?
@@ -45,6 +45,7 @@ final class DashboardViewModel: NSObject, ObservableObject {
     // MARK: - Private Properties
     
     private var modelContext: ModelContext?
+    private var weatherModelActor: WeatherModelActor?
     private var locationManager = CLLocationManager()
     private var weatherService = WeatherService.shared
     private var cancellables = Set<AnyCancellable>()
@@ -72,6 +73,7 @@ final class DashboardViewModel: NSObject, ObservableObject {
     
     func configure(modelContext: ModelContext) {
         self.modelContext = modelContext
+        self.weatherModelActor = WeatherModelActor(modelContainer: modelContext.container)
         
         Task {
             await weatherService.configure(modelContext: modelContext)
@@ -209,7 +211,7 @@ final class DashboardViewModel: NSObject, ObservableObject {
     }
     
     private func updateWeatherData(_ weatherData: WeatherData) {
-        currentWeatherData = weatherData
+        currentWeatherData = weatherData.toSendableData()
         currentTemperature = convertTemperature(weatherData.temperature)
         feelsLikeTemperature = convertTemperature(weatherData.feelsLike)
         humidity = weatherData.humidity
@@ -273,26 +275,35 @@ final class DashboardViewModel: NSObject, ObservableObject {
     }
     
     private func loadActiveReminders() {
-        guard let modelContext = modelContext else { return }
-        
-        let predicate = #Predicate<WeatherReminder> { reminder in
-            reminder.isActive && !reminder.isCompleted && !reminder.isPaused
+        guard let weatherModelActor = weatherModelActor else { 
+            logger.error("WeatherModelActor not available")
+            return 
         }
         
-        let descriptor = FetchDescriptor<WeatherReminder>(
-            predicate: predicate,
-            sortBy: [
-                SortDescriptor(\WeatherReminder.priority.sortOrder),
-                SortDescriptor(\WeatherReminder.createdDate, order: .reverse)
-            ]
-        )
-        
-        do {
-            self.activeReminders = try modelContext.fetch(descriptor)
-            logger.debug("Loaded \(self.activeReminders.count) active reminders")
-        } catch {
-            logger.error("Failed to load active reminders: \(error.localizedDescription)")
-            activeReminders = []
+        Task {
+            do {
+                let reminderDisplays = try await weatherModelActor.fetchActiveRemindersForDisplay()
+                
+                await MainActor.run {
+                    // Sort by priority first (urgent -> high -> normal -> low), then by creation date
+                    self.activeReminders = reminderDisplays.sorted { first, second in
+                        let firstPriorityOrder = first.priority.sortOrder
+                        let secondPriorityOrder = second.priority.sortOrder
+                        
+                        if firstPriorityOrder != secondPriorityOrder {
+                            return firstPriorityOrder < secondPriorityOrder
+                        } else {
+                            return first.createdDate > second.createdDate
+                        }
+                    }
+                    logger.debug("Loaded \(self.activeReminders.count) active reminders")
+                }
+            } catch {
+                await MainActor.run {
+                    logger.error("Failed to load active reminders: \(error.localizedDescription)")
+                    activeReminders = []
+                }
+            }
         }
     }
     
@@ -301,51 +312,63 @@ final class DashboardViewModel: NSObject, ObservableObject {
         // For now, we'll check for severe weather conditions
         guard let weatherData = currentWeatherData else { return }
         
-        var alerts: [WeatherAlert] = []
+        var alerts: [WeatherAlertDisplay] = []
         
         // Temperature alerts
         if weatherData.temperature < 32 {
-            alerts.append(WeatherAlert(
+            alerts.append(WeatherAlertDisplay(
                 id: UUID(),
                 title: "Freezing Temperature Alert",
                 description: "Temperature has dropped below freezing. Protect plants and pets.",
-                severity: .moderate,
-                type: .temperature,
+                severity: WeatherAlertSeverity.moderate,
+                type: .frost,
+                area: "Local Area",
+                instructions: "Protect plants and pets from freezing temperatures",
+                expiresAt: Calendar.current.date(byAdding: .hour, value: 6, to: Date()),
                 isActive: true
             ))
         }
         
         if weatherData.temperature > 95 {
-            alerts.append(WeatherAlert(
+            alerts.append(WeatherAlertDisplay(
                 id: UUID(),
                 title: "Extreme Heat Warning",
                 description: "Temperature is dangerously high. Stay hydrated and avoid outdoor activities.",
-                severity: .severe,
-                type: .temperature,
+                severity: WeatherAlertSeverity.severe,
+                type: .heat,
+                area: "Local Area",
+                instructions: "Stay hydrated and avoid prolonged outdoor activities",
+                expiresAt: Calendar.current.date(byAdding: .hour, value: 8, to: Date()),
                 isActive: true
             ))
         }
         
         // Wind alerts
         if weatherData.windSpeed > 25 {
-            alerts.append(WeatherAlert(
+            alerts.append(WeatherAlertDisplay(
                 id: UUID(),
                 title: "High Wind Advisory",
                 description: "Sustained winds exceed 25 mph. Secure outdoor objects.",
-                severity: .moderate,
+                severity: WeatherAlertSeverity.moderate,
                 type: .wind,
+                area: "Local Area",
+                instructions: "Secure outdoor objects and avoid driving high-profile vehicles",
+                expiresAt: Calendar.current.date(byAdding: .hour, value: 4, to: Date()),
                 isActive: true
             ))
         }
         
         // UV alerts
         if weatherData.uvIndex > 7 {
-            alerts.append(WeatherAlert(
+            alerts.append(WeatherAlertDisplay(
                 id: UUID(),
                 title: "High UV Index",
                 description: "UV index is very high. Use sun protection when outdoors.",
-                severity: .moderate,
+                severity: WeatherAlertSeverity.moderate,
                 type: .uv,
+                area: "Local Area",
+                instructions: "Use SPF 30+ sunscreen, wear protective clothing, and seek shade",
+                expiresAt: Calendar.current.date(byAdding: .hour, value: 6, to: Date()),
                 isActive: true
             ))
         }

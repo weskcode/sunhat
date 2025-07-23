@@ -33,27 +33,16 @@ extension TriggerEngine {
         maxConcurrentBatches: Int = 3
     ) async -> [TriggerEvaluationResult] {
         
-        guard let modelContext = modelContext else {
-            logger.error("TriggerEngine not configured")
-            return []
-        }
-        
-        // Fetch all active reminders
-        let descriptor = FetchDescriptor<WeatherReminder>(
-            predicate: #Predicate { reminder in
-                reminder.isCurrentlyActive && reminder.canTrigger
-            }
-        )
-        
         do {
-            let allReminders = try modelContext.fetch(descriptor)
+            // Use the ModelActor to fetch active reminders data
+            let reminderDataList = try await modelActor.fetchActiveRemindersData()
             
             // Group by location for batch processing
-            let locationGroups = Dictionary(grouping: allReminders) { reminder in
-                reminder.location?.coordinate ?? CLLocationCoordinate2D()
+            let locationGroups = Dictionary(grouping: reminderDataList) { reminderData in
+                reminderData.locationKey
             }
             
-            logger.info("Processing \(allReminders.count) reminders in \(locationGroups.count) location groups")
+            logger.info("Processing \(reminderDataList.count) reminders in \(locationGroups.count) location groups")
             
             var allResults: [TriggerEvaluationResult] = []
             
@@ -67,11 +56,12 @@ extension TriggerEngine {
                     var results: [TriggerEvaluationResult] = []
                     var activeTasks = 0
                     
-                    for (coordinate, reminders) in batch {
+                    for (locationKey, reminderDataList) in batch {
                         if activeTasks < maxConcurrentBatches {
-                            let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+                            // Get location from first reminder data
+                            guard let location = reminderDataList.first?.clLocation else { continue }
                             group.addTask {
-                                await self.evaluateRemindersForLocation(reminders, at: location)
+                                await self.evaluateRemindersForLocation(reminderDataList, at: location)
                             }
                             activeTasks += 1
                         }
@@ -188,27 +178,12 @@ extension TriggerEngine {
     }
     
     func predictEvaluationLoad() async -> EvaluationLoadPrediction {
-        guard let modelContext = modelContext else {
-            return EvaluationLoadPrediction(
-                activeReminders: 0,
-                locationGroups: 0,
-                estimatedDuration: 0,
-                complexity: .low,
-                recommendations: ["Configure TriggerEngine with ModelContext"]
-            )
-        }
-        
-        let descriptor = FetchDescriptor<WeatherReminder>(
-            predicate: #Predicate { reminder in
-                reminder.isCurrentlyActive && reminder.canTrigger
-            }
-        )
-        
         do {
-            let activeReminders = try modelContext.fetch(descriptor)
-            let locationStrings: [String] = activeReminders.compactMap { reminder in
-                guard let location = reminder.location else { return nil }
-                return "\(location.latitude),\(location.longitude)"
+            // Use ModelActor to get reminder data
+            let reminderDataList = try await modelActor.fetchActiveRemindersData()
+            let locationStrings: [String] = reminderDataList.compactMap { reminderData in
+                guard let location = reminderData.clLocation else { return nil }
+                return "\(location.coordinate.latitude),\(location.coordinate.longitude)"
             }
             let locationGroups = Set(locationStrings).count
             
@@ -216,8 +191,8 @@ extension TriggerEngine {
             var complexityScore = 0
             var recommendations: [String] = []
             
-            for reminder in activeReminders {
-                guard let condition = reminder.triggerCondition else { continue }
+            for reminderData in reminderDataList {
+                let condition = reminderData.triggerCondition
                 
                 switch condition.triggerType {
                 case .exactTemperature, .temperatureRange:
@@ -231,7 +206,7 @@ extension TriggerEngine {
                 }
             }
             
-            let averageComplexity = activeReminders.count > 0 ? Double(complexityScore) / Double(activeReminders.count) : 0
+            let averageComplexity = reminderDataList.count > 0 ? Double(complexityScore) / Double(reminderDataList.count) : 0
             
             let complexity: EvaluationComplexity
             if averageComplexity < 2 {
@@ -251,12 +226,12 @@ extension TriggerEngine {
                 recommendations.append("Consider batch processing for \(locationGroups) location groups")
             }
             
-            if activeReminders.count > 100 {
-                recommendations.append("Large number of reminders (\(activeReminders.count)) may impact performance")
+            if reminderDataList.count > 100 {
+                recommendations.append("Large number of reminders (\(reminderDataList.count)) may impact performance")
             }
             
             return EvaluationLoadPrediction(
-                activeReminders: activeReminders.count,
+                activeReminders: reminderDataList.count,
                 locationGroups: locationGroups,
                 estimatedDuration: estimatedDuration,
                 complexity: complexity,

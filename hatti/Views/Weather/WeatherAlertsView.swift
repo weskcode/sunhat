@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct WeatherAlertsView: View {
-    let alerts: [WeatherAlert]
+    let alerts: [WeatherAlertDisplay]
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -51,7 +51,7 @@ struct WeatherAlertsView: View {
 }
 
 struct WeatherAlertDetailCard: View {
-    let alert: WeatherAlert
+    let alert: WeatherAlertDisplay
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {

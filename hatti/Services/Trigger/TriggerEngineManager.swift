@@ -22,7 +22,7 @@ final class TriggerEngineManager: ObservableObject {
     @Published var triggeredReminders: [UUID] = []
     @Published var evaluationResults: [TriggerEvaluationResult] = []
     
-    private let triggerEngine = TriggerEngine.shared
+    private var triggerEngine: TriggerEngine?
     private let notificationManager = TriggerNotificationManager.shared
     private let backgroundTaskIdentifier = "com.temptrigger.hatti.trigger-evaluation"
     private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "TriggerEngineManager")
@@ -36,8 +36,8 @@ final class TriggerEngineManager: ObservableObject {
         registerBackgroundTask()
     }
     
-    func configure(modelContext: ModelContext) async {
-        await triggerEngine.configure(modelContext: modelContext)
+    func configure(modelContainer: ModelContainer) async {
+        self.triggerEngine = TriggerEngine.shared(modelContainer: modelContainer)
         await notificationManager.configure()
         logger.info("TriggerEngineManager configured")
     }
@@ -47,6 +47,11 @@ final class TriggerEngineManager: ObservableObject {
     func evaluateAllReminders() async {
         guard !isEvaluating else {
             logger.warning("Evaluation already in progress")
+            return
+        }
+        
+        guard let triggerEngine = triggerEngine else {
+            logger.error("TriggerEngine not configured")
             return
         }
         
@@ -76,6 +81,11 @@ final class TriggerEngineManager: ObservableObject {
     
     func evaluateSpecificReminder(_ reminder: WeatherReminder) async -> TriggerEvaluationResult? {
         logger.debug("Evaluating specific reminder: \(reminder.displayTitle)")
+        
+        guard let triggerEngine = triggerEngine else {
+            logger.error("TriggerEngine not configured")
+            return nil
+        }
         
         let result = await triggerEngine.evaluateReminder(reminder)
         
@@ -125,6 +135,12 @@ final class TriggerEngineManager: ObservableObject {
         task.expirationHandler = {
             self.logger.warning("Background evaluation task expired")
             task.setTaskCompleted(success: false)
+        }
+        
+        guard let triggerEngine = triggerEngine else {
+            logger.error("TriggerEngine not configured for background evaluation")
+            task.setTaskCompleted(success: false)
+            return
         }
         
         do {

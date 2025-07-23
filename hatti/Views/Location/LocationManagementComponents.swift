@@ -487,14 +487,16 @@ struct LocationMapView: View {
     @ObservedObject var viewModel: LocationManagementViewModel
     @Environment(\.dismiss) private var dismiss
     
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-        span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+    @State private var cameraPosition = MapCameraPosition.region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+            span: MKCoordinateSpan(latitudeDelta: 0.1, longitudeDelta: 0.1)
+        )
     )
     
     var body: some View {
         NavigationView {
-            Map(position: .automatic) {
+            Map(position: $cameraPosition) {
                 ForEach(mapAnnotations) { annotation in
                     Annotation(annotation.title, coordinate: annotation.coordinate) {
                         VStack {
@@ -585,7 +587,8 @@ struct LocationMapView: View {
                 longitudeDelta: max(maxLon - minLon, 0.01) * 1.2
             )
             
-            region = MKCoordinateRegion(center: center, span: span)
+            let newRegion = MKCoordinateRegion(center: center, span: span)
+            cameraPosition = MapCameraPosition.region(newRegion)
         }
     }
 }

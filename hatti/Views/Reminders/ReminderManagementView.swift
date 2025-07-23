@@ -119,7 +119,7 @@ struct ReminderManagementView: View {
     
     private var sectionSelector: some View {
         HStack(spacing: 0) {
-            ForEach(ManagementSection.allCases, id: \.self) { section in
+            SwiftUI.ForEach(ManagementSection.allCases, id: \.self) { section in
                 Button(action: {
                     withAnimation(.easeInOut(duration: 0.3)) {
                         selectedSection = section
@@ -273,9 +273,9 @@ struct ReminderManagementView: View {
             // Reminders sections
             if selectedSection == .archive {
                 // Seasonal archive organization
-                ForEach(viewModel.seasonalSections, id: \.season) { section in
+                SwiftUI.ForEach(viewModel.seasonalSections, id: \.season) { section in
                     SwiftUI.Section(section.season.displayName) {
-                        ForEach(section.reminders, id: \.id) { reminder in
+                        SwiftUI.ForEach(section.reminders, id: \.id) { reminder in
                             ReminderManagementRow(
                                 reminder: reminder,
                                 isSelected: selectedReminders.contains(reminder.id),
@@ -295,7 +295,7 @@ struct ReminderManagementView: View {
                 }
             } else {
                 // Regular list for active/triggered sections
-                ForEach(viewModel.displayedReminders, id: \.id) { reminder in
+                SwiftUI.ForEach(viewModel.displayedReminders, id: \.id) { reminder in
                     ReminderManagementRow(
                         reminder: reminder,
                         isSelected: selectedReminders.contains(reminder.id),
