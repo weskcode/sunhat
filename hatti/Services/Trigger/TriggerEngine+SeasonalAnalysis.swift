@@ -184,7 +184,7 @@ extension TriggerEngine {
         return HistoricalWeatherContext(
             location: location,
             currentDate: Date(),
-            historicalData: historicalData,
+            historicalData: historicalData.map { $0.toSendableData() },
             yearlyAverages: yearlyAverages,
             seasonalPatterns: seasonalPatterns
         )

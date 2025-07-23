@@ -346,7 +346,7 @@ final class ReminderManagementViewModel: ObservableObject {
         case .triggered:
             let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
             predicate = #Predicate { reminder in
-                reminder.lastTriggered != nil && reminder.lastTriggered! >= thirtyDaysAgo
+                reminder.lastTriggered != nil
             }
             sortDescriptors = [SortDescriptor(\WeatherReminder.lastTriggered, order: .reverse)]
             
@@ -362,7 +362,18 @@ final class ReminderManagementViewModel: ObservableObject {
             sortBy: sortDescriptors
         )
         
-        return try modelContext.fetch(descriptor)
+        let fetchedReminders = try modelContext.fetch(descriptor)
+        
+        // Apply date filtering programmatically for triggered section
+        if section == .triggered {
+            let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
+            return fetchedReminders.filter { reminder in
+                guard let lastTriggered = reminder.lastTriggered else { return false }
+                return lastTriggered >= thirtyDaysAgo
+            }
+        }
+        
+        return fetchedReminders
     }
     
     private func fetchTriggeredHistory(offset: Int, limit: Int) async throws -> [WeatherReminder] {
@@ -370,8 +381,9 @@ final class ReminderManagementViewModel: ObservableObject {
         
         let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
         
+        // Simplified predicate - filter date programmatically
         let predicate = #Predicate<WeatherReminder> { reminder in
-            reminder.lastTriggered != nil && reminder.lastTriggered! >= thirtyDaysAgo
+            reminder.lastTriggered != nil
         }
         
         var descriptor = FetchDescriptor(
@@ -382,7 +394,13 @@ final class ReminderManagementViewModel: ObservableObject {
         descriptor.fetchOffset = offset
         descriptor.fetchLimit = limit
         
-        return try modelContext.fetch(descriptor)
+        let fetchedReminders = try modelContext.fetch(descriptor)
+        
+        // Filter by date programmatically
+        return fetchedReminders.filter { reminder in
+            guard let lastTriggered = reminder.lastTriggered else { return false }
+            return lastTriggered >= thirtyDaysAgo
+        }
     }
     
     private func applyFiltersAndSearch() {
@@ -475,14 +493,19 @@ final class ReminderManagementViewModel: ObservableObject {
                 )
                 let activeCount = try modelContext.fetchCount(activeDescriptor)
                 
-                // Count triggered reminders (last 30 days)
+                // Count triggered reminders (last 30 days) - simplified predicate
                 let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
                 let triggeredDescriptor = FetchDescriptor<WeatherReminder>(
                     predicate: #Predicate { reminder in
-                        reminder.lastTriggered != nil && reminder.lastTriggered! >= thirtyDaysAgo
+                        reminder.lastTriggered != nil
                     }
                 )
-                let triggeredCount = try modelContext.fetchCount(triggeredDescriptor)
+                let allTriggeredReminders = try modelContext.fetch(triggeredDescriptor)
+                let recentTriggeredReminders = allTriggeredReminders.filter { reminder in
+                    guard let lastTriggered = reminder.lastTriggered else { return false }
+                    return lastTriggered >= thirtyDaysAgo
+                }
+                let triggeredCount = recentTriggeredReminders.count
                 
                 // Count archived reminders
                 let archivedDescriptor = FetchDescriptor<WeatherReminder>(

@@ -52,7 +52,7 @@ struct TriggerEvaluationResult: Sendable {
 struct HistoricalWeatherContext: Sendable {
     let location: CLLocation
     let currentDate: Date
-    let historicalData: [WeatherData]
+    let historicalData: [WeatherDataTransfer] // Changed to Sendable version
     let yearlyAverages: [String: Double] // Month-day key to average temp
     let seasonalPatterns: SeasonalPatterns
     
@@ -404,59 +404,10 @@ extension TriggerEngine {
         )
     }
     
-    // MARK: - Stub Implementations for Missing Evaluation Methods
+    // MARK: - Additional Evaluation Methods
+    // Note: evaluateConsecutiveDays and evaluateAverageTemperature are implemented in TriggerEngine+TrendAnalysis.swift
     
-    private func evaluateConsecutiveDays(
-        _ conditionData: TriggerConditionData,
-        reminderId: UUID,
-        location: CLLocation,
-        currentWeather: WeatherDataTransfer
-    ) async -> TriggerEvaluationResult {
-        // TODO: Implement consecutive days evaluation logic
-        return TriggerEvaluationResult(
-            reminderId: reminderId,
-            conditionData: conditionData,
-            triggered: false,
-            confidence: 0.0,
-            weatherData: currentWeather,
-            triggerReason: "Consecutive days evaluation not yet implemented"
-        )
-    }
-    
-    private func evaluateAverageTemperature(
-        _ conditionData: TriggerConditionData,
-        reminderId: UUID,
-        location: CLLocation,
-        currentWeather: WeatherDataTransfer
-    ) async -> TriggerEvaluationResult {
-        // TODO: Implement average temperature evaluation logic
-        return TriggerEvaluationResult(
-            reminderId: reminderId,
-            conditionData: conditionData,
-            triggered: false,
-            confidence: 0.0,
-            weatherData: currentWeather,
-            triggerReason: "Average temperature evaluation not yet implemented"
-        )
-    }
-    
-    
-    private func evaluateComposite(
-        _ conditionData: TriggerConditionData,
-        reminderId: UUID,
-        location: CLLocation,
-        weatherData: WeatherDataTransfer
-    ) async -> TriggerEvaluationResult {
-        // TODO: Implement composite evaluation logic
-        return TriggerEvaluationResult(
-            reminderId: reminderId,
-            conditionData: conditionData,
-            triggered: false,
-            confidence: 0.0,
-            weatherData: weatherData,
-            triggerReason: "Composite evaluation not yet implemented"
-        )
-    }
+
     
 }
 

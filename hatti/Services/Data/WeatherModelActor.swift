@@ -146,17 +146,26 @@ actor WeatherModelActor {
         let latitude = location.coordinate.latitude
         let longitude = location.coordinate.longitude
         
+        // Simplified predicate - filter location matches programmatically
         let descriptor = FetchDescriptor<WeatherData>(
             predicate: #Predicate<WeatherData> { data in
                 data.timestamp >= startDate &&
-                (data.location?.latitude != nil ? abs((data.location?.latitude ?? 0.0) - latitude) < 0.01 : false) &&
-                (data.location?.longitude != nil ? abs((data.location?.longitude ?? 0.0) - longitude) < 0.01 : false)
+                data.locationLatitude != 0.0 &&
+                data.locationLongitude != 0.0
             },
             sortBy: [SortDescriptor(\WeatherData.timestamp, order: .reverse)]
         )
         
         let weatherDataResults = try modelContext.fetch(descriptor)
-        return weatherDataResults.map { $0.toSendableData() }
+        
+        // Filter by location programmatically since SwiftData predicates can't handle complex location logic
+        let locationFilteredResults = weatherDataResults.filter { data in
+            let latDiff = abs(data.locationLatitude - latitude)
+            let lonDiff = abs(data.locationLongitude - longitude)
+            return latDiff < 0.01 && lonDiff < 0.01
+        }
+        
+        return locationFilteredResults.map { $0.toSendableData() }
     }
     
     // MARK: - Forecast Operations

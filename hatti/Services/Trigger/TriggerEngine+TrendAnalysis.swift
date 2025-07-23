@@ -15,10 +15,10 @@ import os
 extension TriggerEngine {
     
     func evaluateConsecutiveDays(
-        _ condition: TriggerCondition,
+        _ condition: TriggerConditionData,
         reminderId: UUID,
         location: CLLocation,
-        currentWeather: WeatherData
+        currentWeather: WeatherDataTransfer
     ) async -> TriggerEvaluationResult {
         
         let requiredConsecutiveDays = condition.consecutiveDays
@@ -99,7 +99,7 @@ extension TriggerEngine {
         
         return TriggerEvaluationResult(
             reminderId: reminderId,
-            condition: condition,
+            conditionData: condition,
             triggered: triggered,
             confidence: confidence,
             weatherData: currentWeather,
@@ -110,10 +110,10 @@ extension TriggerEngine {
     }
     
     func evaluateAverageTemperature(
-        _ condition: TriggerCondition,
+        _ condition: TriggerConditionData,
         reminderId: UUID,
         location: CLLocation,
-        currentWeather: WeatherData
+        currentWeather: WeatherDataTransfer
     ) async -> TriggerEvaluationResult {
         
         let averagingPeriod = condition.averagingPeriod
@@ -182,7 +182,7 @@ extension TriggerEngine {
         
         return TriggerEvaluationResult(
             reminderId: reminderId,
-            condition: condition,
+            conditionData: condition,
             triggered: triggered,
             confidence: confidence,
             weatherData: currentWeather,
@@ -313,44 +313,24 @@ extension TriggerEngine {
     
     private func calculateConsecutiveDaysInRange(
         location: CLLocation,
-        condition: TriggerCondition,
+        condition: TriggerConditionData,
         days: Int
     ) async -> Int {
         
-        guard let modelContext = modelContext,
-              let minTemp = condition.minTemperature,
+        guard let minTemp = condition.minTemperature,
               let maxTemp = condition.maxTemperature else {
             return 0
         }
         
-        // Similar to getTrendAnalysis but specifically for range checking
-        let endDate = Date()
-        let startDate = Calendar.current.date(byAdding: .day, value: -days, to: endDate) ?? endDate
-        
-        let searchRadius: CLLocationDistance = 10000
-        let minLat = location.coordinate.latitude - (searchRadius / 111000)
-        let maxLat = location.coordinate.latitude + (searchRadius / 111000)
-        let minLon = location.coordinate.longitude - (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
-        let maxLon = location.coordinate.longitude + (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
-        
-        let predicate = #Predicate<WeatherData> { weather in
-            weather.timestamp >= startDate &&
-            weather.timestamp <= endDate &&
-            weather.location?.latitude != nil &&
-            weather.location?.longitude != nil &&
-            weather.location!.latitude >= minLat &&
-            weather.location!.latitude <= maxLat &&
-            weather.location!.longitude >= minLon &&
-            weather.location!.longitude <= maxLon
-        }
-        
-        let descriptor = FetchDescriptor<WeatherData>(
-            predicate: predicate,
-            sortBy: [SortDescriptor(\WeatherData.timestamp, order: .reverse)]
-        )
-        
         do {
-            let weatherData = try modelContext.fetch(descriptor)
+            // Use modelActor to fetch historical weather data
+            let weatherDataTransfers = try await modelActor.fetchHistoricalWeatherData(
+                for: location,
+                daysBack: days
+            )
+            
+            // Convert to WeatherData for analysis
+            let weatherData = weatherDataTransfers.map { $0.toWeatherData() }
             var consecutiveDays = 0
             
             for data in weatherData {
@@ -403,7 +383,7 @@ extension TriggerEngine {
     private func calculateNextEvaluationTime(
         triggered: Bool,
         trendAnalysis: TrendAnalysis,
-        condition: TriggerCondition
+        condition: TriggerConditionData
     ) -> Date? {
         
         let calendar = Calendar.current

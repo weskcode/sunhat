@@ -95,15 +95,22 @@ final class BackgroundWeatherManager: ObservableObject {
         }
         
         // Fetch all active reminders
+        // Fetch basic active reminders - filter complex conditions programmatically
         let descriptor: FetchDescriptor<WeatherReminder> = FetchDescriptor<WeatherReminder>(
             predicate: #Predicate { reminder in
-                reminder.isCurrentlyActive && reminder.canTrigger
+                reminder.isActive && !reminder.isCompleted && !reminder.isPaused
             }
         )
         
         do {
-            let activeReminders: [WeatherReminder] = try modelContext.fetch(descriptor)
-            logger.debug("Checking \(activeReminders.count) active reminders")
+            let fetchedReminders: [WeatherReminder] = try modelContext.fetch(descriptor)
+            
+            // Filter reminders using computed properties that couldn't be used in predicate
+            let activeReminders = fetchedReminders.filter { reminder in
+                reminder.isCurrentlyActive && reminder.canTrigger
+            }
+            
+            logger.debug("Checking \(activeReminders.count) active reminders (filtered from \(fetchedReminders.count) total)")
             
             var triggeredCount = 0
             
