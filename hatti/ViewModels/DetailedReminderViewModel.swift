@@ -33,7 +33,7 @@ final class DetailedReminderViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var predictionTimer: Timer?
     
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "DetailedReminderViewModel")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "DetailedReminderViewModel")
     
     // MARK: - Initialization
     

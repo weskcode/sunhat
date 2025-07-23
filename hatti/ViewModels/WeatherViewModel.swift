@@ -124,7 +124,7 @@ final class WeatherViewModel: ObservableObject {
     private var weatherModelActor: WeatherModelActor?
     private var weatherService: WeatherService
     private var locationManager: LocationManaging
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "WeatherVM")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "WeatherVM")
     private var cancellables = Set<AnyCancellable>()
     private static let calendar = Calendar.current
     private static let dayFormatter: DateFormatter = {
@@ -543,7 +543,7 @@ private extension WeatherReminder {
 //    
 //    private var modelContext: ModelContext?
 //    private let weatherService = WeatherService.shared
-//    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "WeatherViewModel")
+//    private let logger = Logger(subsystem: "com.hatti.app", category: "WeatherViewModel")
 //    private var cancellables = Set<AnyCancellable>()
 //    private var currentLocation: CLLocation?
 //    

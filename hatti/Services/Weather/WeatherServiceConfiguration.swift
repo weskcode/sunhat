@@ -64,7 +64,7 @@ final class WeatherServiceManager: ObservableObject {
     @Published var isConfigured = false
     @Published var configurationError: WeatherError?
     
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "WeatherServiceManager")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "WeatherServiceManager")
     private let configurationKey = "weather_service_configuration"
     
     private init() {

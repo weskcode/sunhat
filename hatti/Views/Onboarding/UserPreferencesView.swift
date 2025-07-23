@@ -117,7 +117,7 @@ struct UserPreferencesView: View {
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 
-                Text("Customize TempTrigger to work perfectly for your lifestyle")
+                Text("Customize hatti to work perfectly for your lifestyle")
                     .font(.title3)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)

@@ -42,7 +42,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     private var modelContext: ModelContext?
     private let locationManager = CLLocationManager()
     private let searchCompleter = MKLocalSearchCompleter()
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "LocationManagementViewModel")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "LocationManagementViewModel")
     
     private var cancellables = Set<AnyCancellable>()
     private var locationUpdateTimer: Timer?
@@ -429,7 +429,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     
     var privacyExplanation: String {
         """
-        TempTrigger uses your location to:
+        hatti uses your location to:
         • Provide accurate weather data for your area
         • Send timely reminders based on local conditions
         • Ensure weather triggers work for your specific location

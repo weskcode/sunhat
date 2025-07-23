@@ -422,7 +422,7 @@ struct ReminderDetailsView: View {
                                 HowItWorksStep(
                                     number: 1,
                                     title: "Continuous Monitoring",
-                                    description: "TempTrigger checks weather conditions every 15 minutes"
+                                    description: "hatti checks weather conditions every 15 minutes"
                                 )
                                 
                                 HowItWorksStep(

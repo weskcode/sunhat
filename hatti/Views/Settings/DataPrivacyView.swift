@@ -110,7 +110,7 @@ struct DataPrivacyView: View {
                         .fontWeight(.semibold)
                 }
                 
-                Text("TempTrigger is designed with your privacy in mind. We collect minimal data necessary to provide weather-based reminders.")
+                Text("hatti is designed with your privacy in mind. We collect minimal data necessary to provide weather-based reminders.")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -493,7 +493,7 @@ struct DataPrivacyView: View {
             HStack {
                 Text("Data Protection Officer")
                 Spacer()
-                Text("privacy@temptrigger.app")
+                Text("privacy@hatti.app")
                     .font(.caption)
                     .foregroundColor(.blue)
             }

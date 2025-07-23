@@ -19,7 +19,7 @@ final class UserPreferencesViewModel: ObservableObject {
     @Published var isSaving = false
     @Published var saveError: String?
     
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "UserPreferencesViewModel")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "UserPreferencesViewModel")
     private let cloudKitManager = UserPreferencesCloudKitManager()
     
     init() {
@@ -152,7 +152,7 @@ final class UserPreferencesViewModel: ObservableObject {
 final class UserPreferencesCloudKitManager: ObservableObject {
     private let container: CKContainer
     private let database: CKDatabase
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "UserPreferencesCloudKitManager")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "UserPreferencesCloudKitManager")
     
     init() {
         container = CKContainer.default()
@@ -286,7 +286,7 @@ final class PreferencesSyncService: ObservableObject {
     @Published var syncError: String?
     
     private let cloudKitManager = UserPreferencesCloudKitManager()
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "PreferencesSyncService")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "PreferencesSyncService")
     
     func syncPreferences(modelContext: ModelContext) async {
         isSyncing = true

@@ -21,7 +21,7 @@ final class LocationPermissionManager: NSObject, ObservableObject {
     @Published var locationError: LocationError?
     
     private let locationManager = CLLocationManager()
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "LocationPermissionManager")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "LocationPermissionManager")
     private var permissionCompletionHandler: ((Bool) -> Void)?
     
     // Location accuracy and timeout settings
@@ -177,7 +177,7 @@ final class LocationPermissionManager: NSObject, ObservableObject {
     
     func getPrivacyExplanation() -> String {
         return """
-        TempTrigger uses your location to:
+        hatti uses your location to:
         • Provide accurate weather data for your area
         • Send timely reminders based on local conditions
         • Ensure weather triggers work for your specific location

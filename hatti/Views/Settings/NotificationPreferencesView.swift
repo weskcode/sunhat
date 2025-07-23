@@ -338,7 +338,7 @@ struct NotificationPreviewCard: View {
                     .foregroundColor(.blue)
                     .font(.caption)
                 
-                Text("TempTrigger")
+                Text("hatti")
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)

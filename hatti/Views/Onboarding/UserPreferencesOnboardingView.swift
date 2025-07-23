@@ -109,7 +109,7 @@ struct UserPreferencesOnboardingView: View {
             .accessibilityHidden(true)
             
             VStack(spacing: 8) {
-                Text("Personalize TempTrigger")
+                Text("Personalize hatti")
                     .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 24 : 28, relativeTo: .title2))
                     .fontWeight(.bold)
                     .foregroundColor(.primary)

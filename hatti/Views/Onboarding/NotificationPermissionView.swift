@@ -71,7 +71,7 @@ struct NotificationPermissionView: View {
                 coordinator.nextStep()
             }
         } message: {
-            Text("To receive timely weather reminders, TempTrigger needs notification access. You can enable this in Settings or continue without notifications.")
+            Text("To receive timely weather reminders, hatti needs notification access. You can enable this in Settings or continue without notifications.")
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Notification permission request")
@@ -464,7 +464,7 @@ struct MockNotificationCard: View {
             // Notification content
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text("TempTrigger")
+                    Text("hatti")
                         .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)

@@ -511,7 +511,7 @@ struct LivePreviewCard: View {
                 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack {
-                        Text("TempTrigger")
+                        Text("hatti")
                             .font(.caption2)
                             .fontWeight(.semibold)
                             .foregroundColor(.primary)

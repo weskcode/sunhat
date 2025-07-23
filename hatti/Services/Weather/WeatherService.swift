@@ -21,7 +21,7 @@ final class WeatherService: ObservableObject {
     @Published var connectionStatus: ConnectionStatus = .unknown
     
     private let weatherActor: WeatherServiceActor
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "WeatherService")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "WeatherService")
     
     private init() {
         self.weatherActor = WeatherServiceActor()
@@ -84,9 +84,9 @@ actor WeatherServiceActor {
     private var providers: [WeatherAPI] = []
     private let cacheExpirationInterval: TimeInterval = 15 * 60 // 15 minutes
     private let rateLimiter = RateLimiter()
-    private let backgroundTaskIdentifier = "com.temptrigger.hatti.weather-refresh"
+    private let backgroundTaskIdentifier = "com.hatti.app.weather-refresh"
     
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "WeatherServiceActor")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "WeatherServiceActor")
     
     func configure(modelContext: ModelContext, openWeatherMapKey: String? = nil) async {
         self.modelContext = modelContext

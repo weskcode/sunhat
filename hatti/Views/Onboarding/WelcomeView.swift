@@ -61,7 +61,7 @@ struct WelcomeView: View {
             }
         }
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("Welcome to TempTrigger")
+        .accessibilityLabel("Welcome to hatti")
         .accessibilityHint("Smart weather-based reminder app onboarding screen")
         .dynamicTypeSize(.large ... .accessibility5)
     }

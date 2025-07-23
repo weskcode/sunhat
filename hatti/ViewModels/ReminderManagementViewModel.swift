@@ -69,7 +69,7 @@ final class ReminderManagementViewModel: ObservableObject {
     private var triggeredHistoryOffset = 0
     private let triggeredHistoryLimit = 50
     
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "ReminderManagementViewModel")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "ReminderManagementViewModel")
     
     // MARK: - Computed Properties
     

@@ -28,7 +28,7 @@
 ## Build Configuration
 - **Xcode Project**: Standard iOS app project with entitlements
 - **Deployment Target**: iOS 18.0+
-- **Bundle ID**: com.temptrigger.hatti (inferred from entitlements)
+- **Bundle ID**: com.hatti.app (inferred from entitlements)
 - **Capabilities**: WeatherKit, CloudKit, Background Modes, Location Services
 
 ## Background Modes
@@ -41,7 +41,7 @@
 ### Building
 ```bash
 # Build for simulator
-xcodebuild -project hatti.xcodeproj -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 15' build
+xcodebuild -project hatti.xcodeproj -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' build
 
 # Build for device
 xcodebuild -project hatti.xcodeproj -scheme hatti -destination generic/platform=iOS build
@@ -50,10 +50,10 @@ xcodebuild -project hatti.xcodeproj -scheme hatti -destination generic/platform=
 ### Testing
 ```bash
 # Run unit tests
-xcodebuild test -project hatti.xcodeproj -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 15'
+xcodebuild test -project hatti.xcodeproj -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5'
 
 # Run specific test class
-xcodebuild test -project hatti.xcodeproj -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 15' -only-testing:hattiTests/WeatherServiceTests
+xcodebuild test -project hatti.xcodeproj -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' -only-testing:hattiTests/WeatherServiceTests
 ```
 
 ### Code Quality

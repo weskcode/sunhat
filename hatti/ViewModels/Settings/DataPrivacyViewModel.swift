@@ -10,6 +10,7 @@ import SwiftUI
 import SwiftData
 import CloudKit
 import UniformTypeIdentifiers
+import os.log
 
 @MainActor
 @Observable
@@ -97,7 +98,7 @@ final class DataPrivacyViewModel {
             let exportData = try await generateExportData()
             let jsonData = try JSONSerialization.data(withJSONObject: exportData, options: .prettyPrinted)
             
-            let fileName = "TempTrigger_Export_\(DateFormatter.exportFormat.string(from: Date())).json"
+            let fileName = "hatti_Export_\(DateFormatter.exportFormat.string(from: Date())).json"
             
             await saveAndShareFile(data: jsonData, fileName: fileName, contentType: .json)
             
@@ -114,7 +115,7 @@ final class DataPrivacyViewModel {
         
         do {
             let csvData = try await generateCSVExport()
-            let fileName = "TempTrigger_Export_\(DateFormatter.exportFormat.string(from: Date())).csv"
+            let fileName = "hatti_Export_\(DateFormatter.exportFormat.string(from: Date())).csv"
             
             await saveAndShareFile(data: csvData, fileName: fileName, contentType: .commaSeparatedText)
             
@@ -210,8 +211,8 @@ final class DataPrivacyViewModel {
     }
     
     func contactPrivacyOfficer() {
-        let email = "privacy@temptrigger.app"
-        let subject = "Privacy Inquiry - TempTrigger App"
+        let email = "privacy@hatti.app"
+        let subject = "Privacy Inquiry - hatti App"
         let body = """
         Hello,
         
@@ -268,7 +269,7 @@ final class DataPrivacyViewModel {
         
         // Export metadata
         exportData["export_info"] = [
-            "app": "TempTrigger",
+            "app": "hatti",
             "version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown",
             "exported_at": ISO8601DateFormatter().string(from: Date()),
             "format_version": "1.0"

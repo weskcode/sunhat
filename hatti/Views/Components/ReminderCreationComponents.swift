@@ -569,7 +569,7 @@ struct ExampleNotificationView: View {
                         .font(.caption)
                         .foregroundColor(.blue)
                     
-                    Text("TempTrigger")
+                    Text("hatti")
                         .font(.caption)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)

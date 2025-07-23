@@ -82,7 +82,7 @@ struct LocationPermissionView: View {
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("To provide accurate weather reminders, TempTrigger needs access to your location. You can enable this in Settings or enter your city manually.")
+            Text("To provide accurate weather reminders, hatti needs access to your location. You can enable this in Settings or enter your city manually.")
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Location permission request")

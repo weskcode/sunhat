@@ -402,7 +402,7 @@ struct SettingsView: View {
                 viewModel.contactSupport()
             }
             
-            Button("Rate TempTrigger") {
+            Button("Rate hatti") {
                 viewModel.rateApp()
             }
             
@@ -447,7 +447,7 @@ struct SettingsView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
-                Text("© 2025 TempTrigger. All rights reserved.")
+                Text("© 2025 hatti. All rights reserved.")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }

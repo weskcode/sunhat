@@ -51,7 +51,7 @@ final class SettingsViewModel: NSObject, ObservableObject {
     private var modelContext: ModelContext?
     private var userPreferences: UserPreferences?
     private let locationManager = CLLocationManager()
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "SettingsViewModel")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "SettingsViewModel")
     
     // MARK: - Initialization
     
@@ -304,8 +304,8 @@ final class SettingsViewModel: NSObject, ObservableObject {
     // MARK: - Support Methods
     
     func sendFeedback() {
-        let email = "feedback@temptrigger.app"
-        let subject = "TempTrigger Feedback"
+        let email = "feedback@hatti.app"
+        let subject = "hatti Feedback"
         let body = """
         
         ---
@@ -321,8 +321,8 @@ final class SettingsViewModel: NSObject, ObservableObject {
     }
     
     func contactSupport() {
-        let email = "support@temptrigger.app"
-        let subject = "TempTrigger Support Request"
+        let email = "support@hatti.app"
+        let subject = "hatti Support Request"
         
         if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
             UIApplication.shared.open(url)
@@ -336,7 +336,7 @@ final class SettingsViewModel: NSObject, ObservableObject {
     }
     
     func openTermsOfService() {
-        if let url = URL(string: "https://temptrigger.app/terms") {
+        if let url = URL(string: "https://hatti.app/terms") {
             UIApplication.shared.open(url)
         }
     }

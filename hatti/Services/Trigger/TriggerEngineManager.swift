@@ -24,8 +24,8 @@ final class TriggerEngineManager: ObservableObject {
     
     private var triggerEngine: TriggerEngine?
     private let notificationManager = TriggerNotificationManager.shared
-    private let backgroundTaskIdentifier = "com.temptrigger.hatti.trigger-evaluation"
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "TriggerEngineManager")
+    private let backgroundTaskIdentifier = "com.hatti.app.trigger-evaluation"
+    private let logger = Logger(subsystem: "com.hatti.app", category: "TriggerEngineManager")
     
     // Performance tracking
     @Published var evaluationCount = 0
@@ -286,7 +286,7 @@ final class TriggerEngineManager: ObservableObject {
 actor TriggerNotificationManager {
     static let shared = TriggerNotificationManager()
     
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "TriggerNotificationManager")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "TriggerNotificationManager")
     private var isConfigured = false
     
     private init() {}

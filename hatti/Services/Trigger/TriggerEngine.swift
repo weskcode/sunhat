@@ -25,7 +25,7 @@ struct TriggerEvaluationResult: Sendable {
     let nextEvaluationTime: Date?
     let metadata: [String: String]
     
-    init(
+    nonisolated init(
         reminderId: UUID,
         conditionData: TriggerConditionData,
         triggered: Bool,
@@ -103,7 +103,7 @@ actor TriggerEngine {
     }
     
     internal let modelActor: WeatherModelActor
-    let logger = Logger(subsystem: "com.temptrigger.hatti", category: "TriggerEngine")
+    let logger = Logger(subsystem: "com.hatti.app", category: "TriggerEngine")
     
     // Evaluation caches
     var evaluationCache: [UUID: TriggerEvaluationResult] = [:]
@@ -135,18 +135,18 @@ actor TriggerEngine {
             
             // Group reminders by location to optimize weather data fetching
             let locationGroups = Dictionary(grouping: reminderData) { data in
-                data.locationKey
+                "\(data.clLocation.coordinate.latitude),\(data.clLocation.coordinate.longitude)"
             }
             
             var allResults: [TriggerEvaluationResult] = []
             
             // Evaluate each location group
-            for (locationKey, dataList) in locationGroups {
-                guard let firstData = dataList.first,
-                      let location = firstData.clLocation else {
+            for (_, dataList) in locationGroups {
+                guard let firstData = dataList.first else {
                     continue
                 }
                 
+                let location = firstData.clLocation
                 let results = await evaluateRemindersForLocation(dataList, at: location)
                 allResults.append(contentsOf: results)
             }
@@ -167,20 +167,27 @@ actor TriggerEngine {
     }
     
     func evaluateReminder(_ reminder: WeatherReminder) async -> TriggerEvaluationResult? {
-        guard let location = reminder.location?.clLocation,
-              let condition = reminder.triggerCondition else {
+        // Use ModelActor to safely access SwiftData properties
+        do {
+            let reminderData = try await modelActor.fetchReminderEvaluationData(for: reminder.id)
+            guard let data = reminderData else { return nil }
+            
+            return await evaluateCondition(
+                data.triggerCondition,
+                for: data.reminderId,
+                at: data.clLocation
+            )
+        } catch {
+            logger.error("Failed to fetch reminder data for evaluation: \(error)")
             return nil
         }
-        
-        let conditionData = condition.toSendableData()
-        return await evaluateCondition(conditionData, for: reminder.id, at: location)
     }
     
     func evaluateRemindersForLocation(_ reminderDataList: [ReminderEvaluationData], at location: CLLocation) async -> [TriggerEvaluationResult] {
         do {
             // Fetch current weather data for the location
             let weatherData = try await WeatherService.shared.fetchWeatherData(for: location)
-            let weatherTransfer = weatherData.toSendableData()
+            let weatherTransfer = await weatherData.toSendableData()
             
             var results: [TriggerEvaluationResult] = []
             
@@ -223,7 +230,7 @@ actor TriggerEngine {
         } else {
             do {
                 let weather = try await WeatherService.shared.fetchWeatherData(for: location)
-                currentWeatherData = weather.toSendableData()
+                currentWeatherData = await weather.toSendableData()
             } catch {
                 logger.warning("Failed to fetch weather data for evaluation: \(error)")
                 return nil

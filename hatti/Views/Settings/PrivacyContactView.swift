@@ -76,7 +76,7 @@ struct PrivacyContactView: View {
                             .font(.headline)
                             .fontWeight(.semibold)
                         
-                        Text("TempTrigger Privacy Team")
+                        Text("hatti Privacy Team")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -86,7 +86,7 @@ struct PrivacyContactView: View {
                     ContactDetailRow(
                         icon: "envelope.fill",
                         title: "Email",
-                        value: "privacy@temptrigger.app",
+                        value: "privacy@hatti.app",
                         isLink: true
                     ) {
                         openEmailClient()
@@ -281,7 +281,7 @@ struct PrivacyContactView: View {
         
         if let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-           let url = URL(string: "mailto:privacy@temptrigger.app?subject=\(encodedSubject)&body=\(encodedBody)") {
+           let url = URL(string: "mailto:privacy@hatti.app?subject=\(encodedSubject)&body=\(encodedBody)") {
             UIApplication.shared.open(url)
         }
     }
@@ -310,7 +310,7 @@ struct PrivacyContactView: View {
         Email: \(userEmail.isEmpty ? "[Your email address]" : userEmail)
         
         App Information:
-        - App: TempTrigger
+        - App: hatti
         - Version: \(appVersion) (\(buildNumber))
         - Platform: iOS
         - Date: \(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))
@@ -320,7 +320,7 @@ struct PrivacyContactView: View {
     }
     
     private func openPrivacyPolicy() {
-        if let url = URL(string: "https://temptrigger.app/privacy") {
+        if let url = URL(string: "https://hatti.app/privacy") {
             UIApplication.shared.open(url)
         }
     }
@@ -425,7 +425,7 @@ struct MailComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> MFMailComposeViewController {
         let composer = MFMailComposeViewController()
         composer.mailComposeDelegate = context.coordinator
-        composer.setToRecipients(["privacy@temptrigger.app"])
+        composer.setToRecipients(["privacy@hatti.app"])
         composer.setSubject("Privacy Inquiry - \(inquiryType.displayName)")
         
         let body = generateEmailBody()
@@ -456,7 +456,7 @@ struct MailComposeView: UIViewControllerRepresentable {
         Email: \(userEmail.isEmpty ? "[Your email address]" : userEmail)
         
         App Information:
-        - App: TempTrigger
+        - App: hatti
         - Version: \(appVersion) (\(buildNumber))
         - Platform: iOS
         - Date: \(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))

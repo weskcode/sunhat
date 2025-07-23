@@ -15,7 +15,7 @@ import os
 /// This provides thread-safe access to SwiftData models without violating Swift 6 concurrency rules
 @ModelActor
 actor WeatherModelActor {
-    private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "WeatherModelActor")
+    private let logger = Logger(subsystem: "com.hatti.app", category: "WeatherModelActor")
     
     // MARK: - WeatherReminder Operations
     
@@ -28,16 +28,35 @@ actor WeatherModelActor {
         let reminders = try modelContext.fetch(descriptor)
         
         // Convert to Sendable data transfer objects
-        return reminders.compactMap { reminder -> ReminderEvaluationData? in
-            guard let condition = reminder.triggerCondition else { return nil }
+        return try reminders.compactMap { reminder -> ReminderEvaluationData? in
+            guard let condition = reminder.triggerCondition,
+                  let location = reminder.location else { return nil }
             
             return ReminderEvaluationData(
                 reminderId: reminder.id,
                 triggerCondition: condition.toSendableData(),
-                locationKey: reminder.location?.locationKey ?? "0.0,0.0",
-                clLocation: reminder.location?.clLocation
+                locationData: location.toSendableData()
             )
         }
+    }
+    
+    /// Fetches evaluation data for a specific reminder
+    func fetchReminderEvaluationData(for reminderId: UUID) throws -> ReminderEvaluationData? {
+        let descriptor = FetchDescriptor<WeatherReminder>(
+            predicate: #Predicate<WeatherReminder> { $0.id == reminderId }
+        )
+        
+        guard let reminder = try modelContext.fetch(descriptor).first,
+              let condition = reminder.triggerCondition,
+              let location = reminder.location else {
+            return nil
+        }
+        
+        return ReminderEvaluationData(
+            reminderId: reminder.id,
+            triggerCondition: condition.toSendableData(),
+            locationData: location.toSendableData()
+        )
     }
     
     /// Fetches active reminders for dashboard display
@@ -232,12 +251,47 @@ actor WeatherModelActor {
 
 // MARK: - Sendable Data Transfer Objects
 
+/// Sendable version of LocationData for cross-actor communication
+struct LocationDataTransfer: Sendable {
+    let id: UUID
+    let latitude: Double
+    let longitude: Double
+    let altitude: Double
+    let city: String
+    let state: String
+    let country: String
+    let displayName: String
+    let timeZoneIdentifier: String
+    let lastUpdated: Date
+    
+    var clLocation: CLLocation {
+        CLLocation(
+            coordinate: CLLocationCoordinate2D(latitude: latitude, longitude: longitude),
+            altitude: altitude,
+            horizontalAccuracy: 0,
+            verticalAccuracy: 0,
+            timestamp: lastUpdated
+        )
+    }
+    
+    var locationKey: String {
+        "\(latitude),\(longitude)"
+    }
+}
+
 /// Sendable version of ReminderEvaluationData for cross-actor communication
 struct ReminderEvaluationData: Sendable {
     let reminderId: UUID
     let triggerCondition: TriggerConditionData
-    let locationKey: String
-    let clLocation: CLLocation?
+    let locationData: LocationDataTransfer
+    
+    var locationKey: String {
+        locationData.locationKey
+    }
+    
+    var clLocation: CLLocation {
+        locationData.clLocation
+    }
 }
 
 /// Sendable version of WeatherReminder for UI display
@@ -330,8 +384,28 @@ struct WeatherDataTransfer: Sendable {
 
 // MARK: - Model Extensions for Sendable Conversion
 
+extension LocationData {
+    /// Converts LocationData to Sendable data
+    @MainActor
+    func toSendableData() -> LocationDataTransfer {
+        return LocationDataTransfer(
+            id: self.id,
+            latitude: self.latitude,
+            longitude: self.longitude,
+            altitude: self.altitude,
+            city: self.city,
+            state: self.state,
+            country: self.country,
+            displayName: self.displayName,
+            timeZoneIdentifier: self.timeZoneIdentifier,
+            lastUpdated: self.lastUpdated
+        )
+    }
+}
+
 extension TriggerCondition {
     /// Converts TriggerCondition to Sendable data
+    @MainActor
     func toSendableData() -> TriggerConditionData {
         return TriggerConditionData(
             id: self.id,

@@ -9,8 +9,8 @@
 		<string>background-processing</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>TempTrigger needs location access to provide weather-based reminders for your current area.</string>
+	<string>hatti needs location access to provide weather-based reminders for your current area.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>TempTrigger needs location access to provide weather-based reminders and background updates for your locations.</string>
+	<string>hatti needs location access to provide weather-based reminders and background updates for your locations.</string>
 </dict>
 </plist>

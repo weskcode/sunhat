@@ -34,7 +34,7 @@ final class OnboardingCoordinator: ObservableObject {
         var title: String {
             switch self {
             case .welcome:
-                return "Welcome to TempTrigger"
+                return "Welcome to hatti"
             case .location:
                 return "Location Access"
             case .permissions:
@@ -51,7 +51,7 @@ final class OnboardingCoordinator: ObservableObject {
         var accessibilityLabel: String {
             switch self {
             case .welcome:
-                return "Welcome screen for TempTrigger app"
+                return "Welcome screen for hatti app"
             case .location:
                 return "Location permission setup"
             case .permissions:
@@ -256,7 +256,7 @@ struct CompletionView: View {
                 .multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
             
-            Text("TempTrigger is ready to send you smart weather reminders")
+            Text("hatti is ready to send you smart weather reminders")
                 .font(.title3)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -281,7 +281,7 @@ extension WelcomeView {
     var accessibilityEnhancedBody: some View {
         body
             .accessibilityElement(children: .contain)
-            .accessibilityLabel("TempTrigger welcome screen")
+            .accessibilityLabel("hatti welcome screen")
             .accessibilityHint("Introduces smart weather-based reminders with comparison examples")
             .accessibilityAction(named: "Start onboarding") {
                 // This should be handled by the coordinator

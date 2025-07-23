@@ -38,7 +38,7 @@ struct PrivacyPolicyView: View {
                 .font(.title2)
                 .fontWeight(.bold)
             
-            Text("TempTrigger is designed with your privacy in mind. Here's how we handle your data:")
+            Text("hatti is designed with your privacy in mind. Here's how we handle your data:")
                 .font(.body)
             
             privacySection(
@@ -71,7 +71,7 @@ struct PrivacyPolicyView: View {
                 .fontWeight(.semibold)
                 .padding(.top, 20)
             
-            Text("If you have any questions about this privacy policy, please contact us at privacy@temptrigger.app")
+            Text("If you have any questions about this privacy policy, please contact us at privacy@hatti.app")
                 .font(.body)
             
             Text("Last updated: January 20, 2025")
@@ -110,7 +110,7 @@ struct DataAnalyticsView: View {
                         Text("Data Collection")
                             .font(.headline)
                         
-                        Text("TempTrigger respects your privacy. You have full control over what data is shared to help improve the app.")
+                        Text("hatti respects your privacy. You have full control over what data is shared to help improve the app.")
                             .font(.callout)
                             .foregroundColor(.secondary)
                     }
@@ -121,7 +121,7 @@ struct DataAnalyticsView: View {
                     Toggle("Share Analytics", isOn: $analyticsEnabled)
                     
                     if analyticsEnabled {
-                        Text("Help improve TempTrigger by sharing anonymous usage statistics.")
+                        Text("Help improve hatti by sharing anonymous usage statistics.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -203,7 +203,7 @@ struct AboutView: View {
                                 )
                             )
                         
-                        Text("TempTrigger")
+                        Text("hatti")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                         
@@ -217,7 +217,7 @@ struct AboutView: View {
                         Text("Our Mission")
                             .font(.headline)
                         
-                        Text("TempTrigger helps you plan your activities around the weather. Get reminded when conditions are perfect for gardening, exercise, outdoor dining, and more.")
+                        Text("hatti helps you plan your activities around the weather. Get reminded when conditions are perfect for gardening, exercise, outdoor dining, and more.")
                             .font(.body)
                             .foregroundColor(.secondary)
                     }
@@ -257,7 +257,7 @@ struct AboutView: View {
                         Text("Open Source")
                             .font(.headline)
                         
-                        Text("TempTrigger is built with love using Apple's open source Swift language and modern iOS frameworks.")
+                        Text("hatti is built with love using Apple's open source Swift language and modern iOS frameworks.")
                             .font(.body)
                             .foregroundColor(.secondary)
                     }
@@ -265,11 +265,11 @@ struct AboutView: View {
                     
                     // Contact
                     VStack(spacing: 12) {
-                        Text("Made with ❤️ by the TempTrigger Team")
+                        Text("Made with ❤️ by the hatti Team")
                             .font(.callout)
                             .foregroundColor(.secondary)
                         
-                        Text("© 2025 TempTrigger. All rights reserved.")
+                        Text("© 2025 hatti. All rights reserved.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -311,7 +311,7 @@ struct HelpFAQView: View {
     private let faqItems = [
         FAQItem(
             question: "How do weather-triggered reminders work?",
-            answer: "TempTrigger monitors weather conditions and sends you notifications when the temperature, humidity, or other conditions match your preferences. For example, you can set a reminder to water your garden when it hasn't rained and the temperature is above 70°F."
+            answer: "hatti monitors weather conditions and sends you notifications when the temperature, humidity, or other conditions match your preferences. For example, you can set a reminder to water your garden when it hasn't rained and the temperature is above 70°F."
         ),
         FAQItem(
             question: "Why isn't my reminder triggering?",
@@ -351,7 +351,7 @@ struct HelpFAQView: View {
                         Text("Frequently Asked Questions")
                             .font(.headline)
                         
-                        Text("Find answers to common questions about using TempTrigger.")
+                        Text("Find answers to common questions about using hatti.")
                             .font(.callout)
                             .foregroundColor(.secondary)
                     }
@@ -412,8 +412,8 @@ struct HelpFAQView: View {
     }
     
     private func sendSupportEmail() {
-        let email = "support@temptrigger.app"
-        let subject = "TempTrigger Support Request"
+        let email = "support@hatti.app"
+        let subject = "hatti Support Request"
         
         if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
             UIApplication.shared.open(url)

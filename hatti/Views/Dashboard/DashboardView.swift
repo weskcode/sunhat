@@ -66,7 +66,7 @@ struct DashboardView: View {
                     }
                 }
             }
-            .navigationTitle("TempTrigger")
+            .navigationTitle("hatti")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
