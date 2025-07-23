@@ -206,10 +206,11 @@ extension TriggerEngine {
         
         do {
             let activeReminders = try modelContext.fetch(descriptor)
-            let locationGroups = Set(activeReminders.compactMap { reminder in
+            let locationStrings: [String] = activeReminders.compactMap { reminder in
                 guard let location = reminder.location else { return nil }
                 return "\(location.latitude),\(location.longitude)"
-            }).count
+            }
+            let locationGroups = Set(locationStrings).count
             
             // Estimate complexity
             var complexityScore = 0

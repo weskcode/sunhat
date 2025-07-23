@@ -74,7 +74,7 @@ struct LegacyContentView: View {
                             
                             Text("Created: \(reminder.createdDate, format: Date.FormatStyle(date: .abbreviated, time: .shortened))")
                                 .font(.caption2)
-                                .foregroundColor(.tertiary)
+                                .foregroundColor(Color(.tertiaryLabel))
                             
                             Spacer()
                         }

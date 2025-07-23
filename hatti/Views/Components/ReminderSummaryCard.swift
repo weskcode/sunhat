@@ -552,14 +552,14 @@ struct HowItWorksStep: View {
 
 // MARK: - Preview
 
-#Preview {
-    ReminderSummaryCard(
-        reminder: CustomReminder(),
-        triggerLikelihood: TriggerLikelihood(
-            percentage: 75,
-            triggerDays: [Date()],
-            description: "Good chance"
-        )
-    )
-    .padding()
-}
+//#Preview {
+//    ReminderSummaryCard(
+//        reminder: CustomReminder(),
+//        triggerLikelihood: TriggerLikelihood(
+//            percentage: 75,
+//            triggerDays: [Date()],
+//            description: "Good chance"
+//        )
+//    )
+//    .padding()
+//}

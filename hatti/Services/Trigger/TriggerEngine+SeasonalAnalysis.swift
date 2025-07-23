@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 import CoreLocation
+import os
 
 // MARK: - Seasonal Analysis Extension
 
@@ -98,15 +99,15 @@ extension TriggerEngine {
             triggered = historicalComparison.isWarmerThanHistorical
             confidence = historicalComparison.temperatureDifferenceConfidence
             triggerReason = triggered ?
-                "Current temperature \(currentTemp, specifier: "%.1f")° is \(historicalComparison.temperatureDifference, specifier: "%.1f")° warmer than historical average \(historicalComparison.historicalAverage, specifier: "%.1f")° for this date" :
-                "Current temperature \(currentTemp, specifier: "%.1f")° is \(abs(historicalComparison.temperatureDifference), specifier: "%.1f")° cooler than historical average \(historicalComparison.historicalAverage, specifier: "%.1f")° for this date"
+                "Current temperature \(String(format: "%.1f", currentTemp))° is \(String(format: "%.1f", historicalComparison.temperatureDifference))° warmer than historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° for this date" :
+                "Current temperature \(String(format: "%.1f", currentTemp))° is \(String(format: "%.1f", abs(historicalComparison.temperatureDifference)))° cooler than historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° for this date"
             
         case .below:
             triggered = !historicalComparison.isWarmerThanHistorical
             confidence = historicalComparison.temperatureDifferenceConfidence
             triggerReason = triggered ?
-                "Current temperature \(currentTemp, specifier: "%.1f")° is \(abs(historicalComparison.temperatureDifference), specifier: "%.1f")° cooler than historical average \(historicalComparison.historicalAverage, specifier: "%.1f")° for this date" :
-                "Current temperature \(currentTemp, specifier: "%.1f")° is \(historicalComparison.temperatureDifference, specifier: "%.1f")° warmer than historical average \(historicalComparison.historicalAverage, specifier: "%.1f")° for this date"
+                "Current temperature \(String(format: "%.1f", currentTemp))° is \(String(format: "%.1f", abs(historicalComparison.temperatureDifference)))° cooler than historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° for this date" :
+                "Current temperature \(String(format: "%.1f", currentTemp))° is \(String(format: "%.1f", historicalComparison.temperatureDifference))° warmer than historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° for this date"
             
         case .equals:
             let difference = abs(historicalComparison.temperatureDifference)
@@ -114,8 +115,8 @@ extension TriggerEngine {
             triggered = difference <= tolerance
             confidence = max(0.0, 1.0 - (difference / (tolerance * 2)))
             triggerReason = triggered ?
-                "Current temperature \(currentTemp, specifier: "%.1f")° matches historical average \(historicalComparison.historicalAverage, specifier: "%.1f")° within \(tolerance, specifier: "%.1f")°" :
-                "Current temperature \(currentTemp, specifier: "%.1f")° differs from historical average by \(difference, specifier: "%.1f")° (tolerance: \(tolerance, specifier: "%.1f")°)"
+                "Current temperature \(String(format: "%.1f", currentTemp))° matches historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° within \(String(format: "%.1f", tolerance))°" :
+                "Current temperature \(String(format: "%.1f", currentTemp))° differs from historical average by \(String(format: "%.1f", difference))° (tolerance: \(String(format: "%.1f", tolerance))°)"
             
         case .between:
             // For historical comparison, "between" means within a certain percentile range
@@ -123,8 +124,8 @@ extension TriggerEngine {
             triggered = percentileRange.0 <= 0.25 && percentileRange.1 >= 0.75 // Middle 50%
             confidence = triggered ? 1.0 : 0.0
             triggerReason = triggered ?
-                "Current temperature is within typical range for this date (percentile: \(percentileRange.0 * 100, specifier: "%.0f")-\(percentileRange.1 * 100, specifier: "%.0f")%)" :
-                "Current temperature is outside typical range for this date (percentile: \(percentileRange.0 * 100, specifier: "%.0f")-\(percentileRange.1 * 100, specifier: "%.0f")%)"
+                "Current temperature is within typical range for this date (percentile: \(String(format: "%.0f", percentileRange.0 * 100))-\(String(format: "%.0f", percentileRange.1 * 100))%)" :
+                "Current temperature is outside typical range for this date (percentile: \(String(format: "%.0f", percentileRange.0 * 100))-\(String(format: "%.0f", percentileRange.1 * 100))%)"
         }
         
         let metadata = [
@@ -173,23 +174,24 @@ extension TriggerEngine {
         let minLon = location.coordinate.longitude - (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
         let maxLon = location.coordinate.longitude + (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
         
-        let predicate = #Predicate<WeatherData> { weather in
-            weather.timestamp >= startDate &&
-            weather.timestamp <= endDate &&
-            weather.location?.latitude >= minLat &&
-            weather.location?.latitude <= maxLat &&
-            weather.location?.longitude >= minLon &&
-            weather.location?.longitude <= maxLon
+        let timePredicate = #Predicate<WeatherData> { weather in
+            weather.timestamp >= startDate && weather.timestamp <= endDate
         }
         
         let descriptor = FetchDescriptor<WeatherData>(
-            predicate: predicate,
+            predicate: timePredicate,
             sortBy: [SortDescriptor(\WeatherData.timestamp, order: .forward)]
         )
         
         do {
-            let historicalData = try modelContext.fetch(descriptor)
-            let context = buildHistoricalContext(
+            let allData = try modelContext.fetch(descriptor)
+            // Filter by location in code to avoid complex predicates
+            let historicalData = allData.filter { weather in
+                guard let lat = weather.location?.latitude,
+                      let lon = weather.location?.longitude else { return false }
+                return lat >= minLat && lat <= maxLat && lon >= minLon && lon <= maxLon
+            }
+            let context: HistoricalWeatherContext = buildHistoricalContext(
                 location: location,
                 historicalData: historicalData
             )
@@ -466,8 +468,8 @@ extension TriggerEngine {
         let confidence = isFreezingCondition ? 1.0 : max(0.0, (40.0 - currentWeather.temperature) / 8.0)
         
         let description = isFreezingCondition ?
-            "First frost detected: temperature \(currentWeather.temperature, specifier: "%.1f")°F" :
-            "Frost conditions approaching: temperature \(currentWeather.temperature, specifier: "%.1f")°F"
+            "First frost detected: temperature \(String(format: "%.1f", currentWeather.temperature))°F" :
+            "Frost conditions approaching: temperature \(String(format: "%.1f", currentWeather.temperature))°F"
         
         return SeasonalTransitionAnalysis(
             isTransitionDetected: isFreezingCondition,
@@ -507,8 +509,8 @@ extension TriggerEngine {
         let confidence = isAboveFreezing ? min(1.0, (currentWeather.temperature - 32.0) / 15.0) : 0.0
         
         let description = isAboveFreezing ?
-            "Last frost may have passed: temperature \(currentWeather.temperature, specifier: "%.1f")°F" :
-            "Still in frost risk period: temperature \(currentWeather.temperature, specifier: "%.1f")°F"
+            "Last frost may have passed: temperature \(String(format: "%.1f", currentWeather.temperature))°F" :
+            "Still in frost risk period: temperature \(String(format: "%.1f", currentWeather.temperature))°F"
         
         return SeasonalTransitionAnalysis(
             isTransitionDetected: isAboveFreezing && currentWeather.temperature > 40.0,
@@ -532,8 +534,8 @@ extension TriggerEngine {
         let confidence = isSpringLike ? min(1.0, (currentWeather.temperature - springTemperatureThreshold) / 15.0) : 0.0
         
         let description = isSpringLike ?
-            "Spring transition detected: temperature \(currentWeather.temperature, specifier: "%.1f")°F" :
-            "Spring transition pending: temperature \(currentWeather.temperature, specifier: "%.1f")°F"
+            "Spring transition detected: temperature \(String(format: "%.1f", currentWeather.temperature))°F" :
+            "Spring transition pending: temperature \(String(format: "%.1f", currentWeather.temperature))°F"
         
         return SeasonalTransitionAnalysis(
             isTransitionDetected: isSpringLike,
@@ -557,8 +559,8 @@ extension TriggerEngine {
         let confidence = isFallLike ? min(1.0, (fallTemperatureThreshold - currentWeather.temperature) / 15.0) : 0.0
         
         let description = isFallLike ?
-            "Fall transition detected: temperature \(currentWeather.temperature, specifier: "%.1f")°F" :
-            "Fall transition pending: temperature \(currentWeather.temperature, specifier: "%.1f")°F"
+            "Fall transition detected: temperature \(String(format: "%.1f", currentWeather.temperature))°F" :
+            "Fall transition pending: temperature \(String(format: "%.1f", currentWeather.temperature))°F"
         
         return SeasonalTransitionAnalysis(
             isTransitionDetected: isFallLike,
@@ -582,8 +584,8 @@ extension TriggerEngine {
         let confidence = isSummerLike ? min(1.0, (currentWeather.temperature - summerTemperatureThreshold) / 15.0) : 0.0
         
         let description = isSummerLike ?
-            "Summer transition detected: temperature \(currentWeather.temperature, specifier: "%.1f")°F" :
-            "Summer transition pending: temperature \(currentWeather.temperature, specifier: "%.1f")°F"
+            "Summer transition detected: temperature \(String(format: "%.1f", currentWeather.temperature))°F" :
+            "Summer transition pending: temperature \(String(format: "%.1f", currentWeather.temperature))°F"
         
         return SeasonalTransitionAnalysis(
             isTransitionDetected: isSummerLike,
@@ -607,8 +609,8 @@ extension TriggerEngine {
         let confidence = isWinterLike ? min(1.0, (winterTemperatureThreshold - currentWeather.temperature) / 15.0) : 0.0
         
         let description = isWinterLike ?
-            "Winter transition detected: temperature \(currentWeather.temperature, specifier: "%.1f")°F" :
-            "Winter transition pending: temperature \(currentWeather.temperature, specifier: "%.1f")°F"
+            "Winter transition detected: temperature \(String(format: "%.1f", currentWeather.temperature))°F" :
+            "Winter transition pending: temperature \(String(format: "%.1f", currentWeather.temperature))°F"
         
         return SeasonalTransitionAnalysis(
             isTransitionDetected: isWinterLike,
@@ -781,23 +783,26 @@ extension TriggerEngine {
             let minLon = location.coordinate.longitude - (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
             let maxLon = location.coordinate.longitude + (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
             
-            let predicate = #Predicate<WeatherData> { weather in
-                weather.timestamp >= startDate &&
-                weather.timestamp <= endDate &&
-                weather.location?.latitude >= minLat &&
-                weather.location?.latitude <= maxLat &&
-                weather.location?.longitude >= minLon &&
-                weather.location?.longitude <= maxLon
+            let timePredicate = #Predicate<WeatherData> { weather in
+                weather.timestamp >= startDate && weather.timestamp <= endDate
             }
             
             let descriptor = FetchDescriptor<WeatherData>(
-                predicate: predicate,
+                predicate: timePredicate,
                 sortBy: [SortDescriptor(\WeatherData.timestamp, order: .forward)]
             )
             
             do {
-                let yearData = try modelContext.fetch(descriptor)
-                if let closestData = yearData.min(by: { abs($0.timestamp.timeIntervalSince(targetDate)) < abs($1.timestamp.timeIntervalSince(targetDate)) }) {
+                let allYearData = try modelContext.fetch(descriptor)
+                // Filter by location in code to avoid complex predicates
+                let yearData = allYearData.filter { weather in
+                    guard let lat = weather.location?.latitude,
+                          let lon = weather.location?.longitude else { return false }
+                    return lat >= minLat && lat <= maxLat && lon >= minLon && lon <= maxLon
+                }
+                if let closestData = yearData.min(by: { (data1: WeatherData, data2: WeatherData) in
+                    abs(data1.timestamp.timeIntervalSince(targetDate)) < abs(data2.timestamp.timeIntervalSince(targetDate))
+                }) {
                     historicalData.append(closestData)
                 }
             } catch {

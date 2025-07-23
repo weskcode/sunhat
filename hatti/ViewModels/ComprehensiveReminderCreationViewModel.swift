@@ -658,8 +658,8 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         
         triggerLikelihood = TriggerLikelihood(
             percentage: percentage,
-            triggerDays: triggerDates,
-            description: likelihoodDescription(for: percentage)
+            description: likelihoodDescription(for: percentage),
+            triggerDays: triggerDates
         )
         
         nextPossibleTriggerDate = nextTriggerDate
@@ -701,10 +701,11 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         if #available(iOS 26.0, *) {
             // Use MapKit for iOS 26+
             #if canImport(MapKit)
-            let request = MKLocalPointsOfInterestRequest(coordinate: location.coordinate, radius: 100)
+            let request = MKLocalPointsOfInterestRequest(center: location.coordinate, radius: 100)
             do {
-                let response = try await MKLocalSearch.shared.points(for: request)
-                if let item = response.pointsOfInterest.first {
+                let search = MKLocalSearch(request: request)
+                let response = try await search.start()
+                if let item = response.mapItems.first {
                     let city = item.placemark.locality ?? ""
                     let state = item.placemark.administrativeArea ?? ""
 
@@ -736,10 +737,12 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
     private func fallbackGeocoding(_ location: CLLocation) async {
         if #available(iOS 26.0, *) {
             // Use MapKit reverse geocoding for iOS 26+
-            let request = MKReverseGeocodingRequest(coordinate: location.coordinate)
+            let request = MKLocalSearch.Request()
+            request.region = MKCoordinateRegion(center: location.coordinate, span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01))
             do {
-                let response = try await MKLocalSearch.shared.reverse(for: request)
-                if let placemark = response.placemarks.first {
+                let search = MKLocalSearch(request: request)
+                let response = try await search.start()
+                if let placemark = response.mapItems.first?.placemark {
                     let city = placemark.locality ?? ""
                     let state = placemark.administrativeArea ?? ""
 

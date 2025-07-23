@@ -494,25 +494,27 @@ struct LocationMapView: View {
     
     var body: some View {
         NavigationView {
-            Map(coordinateRegion: $region, annotationItems: mapAnnotations) { annotation in
-                MapAnnotation(coordinate: annotation.coordinate) {
-                    VStack {
-                        Image(systemName: annotation.icon)
-                            .font(.title2)
-                            .foregroundColor(.white)
-                            .padding(8)
-                            .background(annotation.color)
-                            .clipShape(Circle())
-                            .shadow(radius: 4)
-                        
-                        Text(annotation.title)
-                            .font(.caption2)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.primary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(.regularMaterial)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
+            Map(position: .automatic) {
+                ForEach(mapAnnotations) { annotation in
+                    Annotation(annotation.title, coordinate: annotation.coordinate) {
+                        VStack {
+                            Image(systemName: annotation.icon)
+                                .font(.title2)
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(annotation.color)
+                                .clipShape(Circle())
+                                .shadow(radius: 4)
+                            
+                            Text(annotation.title)
+                                .font(.caption2)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primary)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(.regularMaterial)
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                        }
                     }
                 }
             }

@@ -23,7 +23,7 @@ struct CodableCoordinate: Codable {
 }
 
 struct ReminderLocation: Codable, Identifiable {
-    let id = UUID()
+    let id: UUID
     let coordinate: CodableCoordinate
     let displayName: String
     let fullAddress: String?
@@ -35,6 +35,7 @@ struct ReminderLocation: Codable, Identifiable {
         fullAddress: String? = nil,
         isCurrentLocation: Bool = false
     ) {
+        self.id = UUID()
         self.coordinate = CodableCoordinate(coordinate)
         self.displayName = displayName
         self.fullAddress = fullAddress

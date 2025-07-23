@@ -365,31 +365,40 @@ struct CompactTemperatureSelector: View {
     var body: some View {
         HStack(spacing: 8) {
             ForEach(TemperatureUnit.allCases, id: \.self) { unit in
-                Button(action: {
-                    selectedUnit = unit
-                }) {
-                    HStack(spacing: 6) {
-                        Text(unit.symbol)
-                            .font(.callout)
-                            .fontWeight(.medium)
-                            .foregroundColor(selectedUnit == unit ? .white : .primary)
-                        
-                        Text(unit.shortName)
-                            .font(.caption)
-                            .foregroundColor(selectedUnit == unit ? .white.opacity(0.9) : .secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 36)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(selectedUnit == unit ? Color.blue : Color(.tertiarySystemBackground))
-                    )
-                }
-                .buttonStyle(PlainButtonStyle())
-                .accessibilityLabel(unit.displayName)
-                .accessibilityAddTraits(selectedUnit == unit ? .isSelected : [])
+                temperatureUnitButton(for: unit)
             }
         }
+    }
+    
+    private func temperatureUnitButton(for unit: TemperatureUnit) -> some View {
+        let isSelected = selectedUnit == unit
+        let symbolColor: Color = isSelected ? .white : .primary
+        let textColor: Color = isSelected ? .white.opacity(0.9) : .secondary
+        let backgroundColor: Color = isSelected ? Color.blue : Color(.tertiarySystemBackground)
+        
+        return Button(action: {
+            selectedUnit = unit
+        }) {
+            HStack(spacing: 6) {
+                Text(unit.symbol)
+                    .font(.callout)
+                    .fontWeight(.medium)
+                    .foregroundColor(symbolColor)
+                
+                Text(unit.shortName)
+                    .font(.caption)
+                    .foregroundColor(textColor)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 36)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(backgroundColor)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel(unit.shortName)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 

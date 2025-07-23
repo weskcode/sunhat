@@ -49,7 +49,7 @@ final class FirstReminderCreationViewModel: ObservableObject {
         Task {
             do {
                 // Try to get real weather data first
-                if let realForecast = await fetchRealWeatherForecast() {
+                if let realForecast = try await fetchRealWeatherForecast() {
                     weatherForecast = realForecast
                 } else {
                     // Fall back to enhanced mock data
@@ -62,7 +62,7 @@ final class FirstReminderCreationViewModel: ObservableObject {
         }
     }
     
-    private func fetchRealWeatherForecast() async -> [WeatherForecastDay]? {
+    private func fetchRealWeatherForecast() async throws -> [WeatherForecastDay]? {
         // In a real implementation, this would use WeatherService
         // For now, return nil to use mock data
         return nil
@@ -79,8 +79,8 @@ final class FirstReminderCreationViewModel: ObservableObject {
         
         triggerLikelihood = TriggerLikelihood(
             percentage: percentage,
-            triggerDays: triggerDays.map { $0.date },
-            description: likelihoodDescription(for: percentage)
+            description: likelihoodDescription(for: percentage),
+            triggerDays: triggerDays.map { $0.date }
         )
     }
     

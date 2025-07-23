@@ -24,7 +24,7 @@ final class UserPreferencesViewModel: ObservableObject {
     
     init() {
         // Initialize with system defaults
-        preferences.temperatureUnit = Locale.current.usesMetricSystem ? .celsius : .fahrenheit
+        preferences.temperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
         
         // Set up activity interests binding
         syncActivityInterests()
@@ -357,7 +357,7 @@ extension UserDefaults {
         get {
             guard let rawValue = string(forKey: Keys.temperatureUnit),
                   let unit = TemperatureUnit(rawValue: rawValue) else {
-                return Locale.current.usesMetricSystem ? .celsius : .fahrenheit
+                return Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
             }
             return unit
         }

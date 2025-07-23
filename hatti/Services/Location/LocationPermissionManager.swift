@@ -32,7 +32,6 @@ final class LocationPermissionManager: NSObject, ObservableObject {
     override init() {
         super.init()
         setupLocationManager()
-        checkLocationServicesStatus()
     }
     
     // MARK: - Setup
@@ -41,17 +40,27 @@ final class LocationPermissionManager: NSObject, ObservableObject {
         locationManager.delegate = self
         locationManager.desiredAccuracy = desiredAccuracy
         authorizationStatus = locationManager.authorizationStatus
-        isLocationServicesEnabled = CLLocationManager.locationServicesEnabled()
+        
+        // Check location services status asynchronously to avoid main thread warning
+        Task {
+            await checkLocationServicesStatusAsync()
+        }
         
         logger.info("Location manager initialized with status: \(self.authorizationStatus.description)")
     }
     
-    private func checkLocationServicesStatus() {
-        isLocationServicesEnabled = CLLocationManager.locationServicesEnabled()
+    private func checkLocationServicesStatusAsync() async {
+        let servicesEnabled = await Task.detached {
+            CLLocationManager.locationServicesEnabled()
+        }.value
         
-        if !isLocationServicesEnabled {
-            locationError = .locationServicesDisabled
-            logger.warning("Location services are disabled system-wide")
+        await MainActor.run {
+            isLocationServicesEnabled = servicesEnabled
+            
+            if !servicesEnabled {
+                locationError = .locationServicesDisabled
+                logger.warning("Location services are disabled system-wide")
+            }
         }
     }
     
@@ -108,7 +117,9 @@ final class LocationPermissionManager: NSObject, ObservableObject {
         
         // Set timeout for location request
         locationTimer = Timer.scheduledTimer(withTimeInterval: locationTimeout, repeats: false) { [weak self] _ in
-            self?.handleLocationTimeout()
+            Task { @MainActor [weak self] in
+                self?.handleLocationTimeout()
+            }
         }
     }
     
@@ -191,6 +202,9 @@ extension LocationPermissionManager: CLLocationManagerDelegate {
             
             authorizationStatus = newStatus
             
+            // Check location services status whenever authorization changes
+            await checkLocationServicesStatusAsync()
+            
             switch newStatus {
             case .authorizedWhenInUse, .authorizedAlways:
                 locationError = nil
@@ -264,8 +278,6 @@ extension LocationPermissionManager: CLLocationManagerDelegate {
                     locationError = .networkError
                 case .locationUnknown:
                     locationError = .locationUnavailable
-                case .network:
-                    locationError = .timeout
                 default:
                     locationError = .unknown
                 }
@@ -355,13 +367,14 @@ enum LocationError: LocalizedError, Sendable {
 // MARK: - Manual Location Data
 
 struct ManualLocationData: Codable, Identifiable, Sendable {
-    let id = UUID()
+    let id: UUID
     let name: String
     let coordinate: CLLocationCoordinate2D
     let country: String?
     let administrativeArea: String? // State/Province
     
     init(name: String, coordinate: CLLocationCoordinate2D, country: String? = nil, administrativeArea: String? = nil) {
+        self.id = UUID()
         self.name = name
         self.coordinate = coordinate
         self.country = country

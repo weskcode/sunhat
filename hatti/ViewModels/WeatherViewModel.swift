@@ -121,9 +121,9 @@ final class WeatherViewModel: ObservableObject {
     @Published var triggerPredictions: [TriggerPrediction] = []
 
     // MARK: - Private Properties
-    private let modelContext: ModelContext
-    private let weatherService: WeatherService
-    private let locationManager: LocationManaging
+    private var modelContext: ModelContext
+    private var weatherService: WeatherService
+    private var locationManager: LocationManaging
     private let logger = Logger(subsystem: "com.temptrigger.hatti", category: "WeatherVM")
     private var cancellables = Set<AnyCancellable>()
     private static let calendar = Calendar.current
@@ -142,6 +142,7 @@ final class WeatherViewModel: ObservableObject {
         self.modelContext = modelContext
         self.weatherService = weatherService
         self.locationManager = locationManager
+        
         Task { @MainActor in
             bindService()
             await loadAllData(forceRefresh: false)

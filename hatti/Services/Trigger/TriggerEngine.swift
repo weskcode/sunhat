@@ -85,6 +85,15 @@ struct TrendAnalysis: Sendable {
     }
 }
 
+// MARK: - Reminder Evaluation Data
+
+struct ReminderEvaluationData: Sendable {
+    let reminderId: UUID
+    let triggerCondition: TriggerCondition
+    let locationKey: String
+    let clLocation: CLLocation?
+}
+
 // MARK: - Main Trigger Engine Actor
 
 actor TriggerEngine {
@@ -123,23 +132,27 @@ actor TriggerEngine {
         
         logger.debug("Starting evaluation of all active reminders")
         
-        // Fetch all active reminders
-        let descriptor = FetchDescriptor<WeatherReminder>(
-            predicate: #Predicate { reminder in
-                reminder.isCurrentlyActive && reminder.canTrigger
-            }
-        )
+        // Fetch all reminders and filter in code to avoid main actor predicate issues
+        let descriptor = FetchDescriptor<WeatherReminder>()
         
         do {
-            let activeReminders = try modelContext.fetch(descriptor)
+            let allReminders = try modelContext.fetch(descriptor)
+            // Filter on main actor to access isolated properties
+            let activeReminders = await MainActor.run {
+                allReminders.filter { reminder in
+                    reminder.isCurrentlyActive && reminder.canTrigger
+                }
+            }
             logger.debug("Found \(activeReminders.count) active reminders to evaluate")
             
             // Group reminders by location to optimize weather data fetching
-            let locationGroups = Dictionary(grouping: activeReminders) { reminder in
-                if let location = reminder.location {
-                    return "\(location.latitude),\(location.longitude)"
-                } else {
-                    return "0.0,0.0"
+            let locationGroups = await MainActor.run {
+                Dictionary(grouping: activeReminders) { reminder in
+                    if let location = reminder.location {
+                        return "\(location.latitude),\(location.longitude)"
+                    } else {
+                        return "0.0,0.0"
+                    }
                 }
             }
             
@@ -160,7 +173,9 @@ actor TriggerEngine {
             
             // Update performance metrics
             let duration = Date().timeIntervalSince(startTime)
-            updatePerformanceMetrics(duration: duration)
+            Task { [weak self] in
+                await self?.updatePerformanceMetrics(duration: duration)
+            }
             
             logger.info("Completed evaluation of \(activeReminders.count) reminders in \(duration)s")
             return allResults
@@ -187,10 +202,16 @@ actor TriggerEngine {
             
             var results: [TriggerEvaluationResult] = []
             
-            for reminder in reminders {
-                guard let condition = reminder.triggerCondition else { continue }
-                
-                if let result = await evaluateCondition(condition, for: reminder.id, at: location, with: weatherData) {
+            // Extract needed data on main actor
+            let reminderData: [(id: UUID, condition: TriggerCondition)] = await MainActor.run {
+                reminders.compactMap { reminder in
+                    guard let condition = reminder.triggerCondition else { return nil }
+                    return (id: reminder.id, condition: condition)
+                }
+            }
+            
+            for data in reminderData {
+                if let result = await evaluateCondition(data.condition, for: data.id, at: location, with: weatherData) {
                     results.append(result)
                 }
             }
@@ -213,8 +234,7 @@ actor TriggerEngine {
     ) async -> TriggerEvaluationResult? {
         
         // Check cache first
-        if let cachedResult = evaluationCache[reminderId],
-           Date().timeIntervalSince(cachedResult.evaluationTime) < 300 { // 5 min cache
+        if let cachedResult = getCachedResult(for: reminderId) {
             return cachedResult
         }
         
@@ -256,9 +276,23 @@ actor TriggerEngine {
         }
         
         // Cache the result
-        evaluationCache[reminderId] = result
+        setCachedResult(result, for: reminderId)
         
         return result
+    }
+    
+    // MARK: - Cache Helper Methods
+    
+    private func getCachedResult(for reminderId: UUID) -> TriggerEvaluationResult? {
+        if let cachedResult = evaluationCache[reminderId],
+           Date().timeIntervalSince(cachedResult.evaluationTime) < 300 { // 5 min cache
+            return cachedResult
+        }
+        return nil
+    }
+    
+    private func setCachedResult(_ result: TriggerEvaluationResult, for reminderId: UUID) {
+        evaluationCache[reminderId] = result
     }
 }
 

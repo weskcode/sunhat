@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 import CoreLocation
+import os
 
 // MARK: - Trend Analysis Extension
 
@@ -48,8 +49,8 @@ extension TriggerEngine {
                 isAbove: true
             )
             triggerReason = triggered ?
-                "Temperature has been above \(targetTemperature, specifier: "%.1f")° for \(trendAnalysis.consecutiveDaysAbove) consecutive days (required: \(requiredConsecutiveDays))" :
-                "Temperature has been above \(targetTemperature, specifier: "%.1f")° for only \(trendAnalysis.consecutiveDaysAbove) consecutive days (required: \(requiredConsecutiveDays))"
+                "Temperature has been above \(String(format: "%.1f", targetTemperature))° for \(trendAnalysis.consecutiveDaysAbove) consecutive days (required: \(requiredConsecutiveDays))" :
+                "Temperature has been above \(String(format: "%.1f", targetTemperature))° for only \(trendAnalysis.consecutiveDaysAbove) consecutive days (required: \(requiredConsecutiveDays))"
             
         case .below:
             triggered = trendAnalysis.consecutiveDaysBelow >= requiredConsecutiveDays
@@ -61,8 +62,8 @@ extension TriggerEngine {
                 isAbove: false
             )
             triggerReason = triggered ?
-                "Temperature has been below \(targetTemperature, specifier: "%.1f")° for \(trendAnalysis.consecutiveDaysBelow) consecutive days (required: \(requiredConsecutiveDays))" :
-                "Temperature has been below \(targetTemperature, specifier: "%.1f")° for only \(trendAnalysis.consecutiveDaysBelow) consecutive days (required: \(requiredConsecutiveDays))"
+                "Temperature has been below \(String(format: "%.1f", targetTemperature))° for \(trendAnalysis.consecutiveDaysBelow) consecutive days (required: \(requiredConsecutiveDays))" :
+                "Temperature has been below \(String(format: "%.1f", targetTemperature))° for only \(trendAnalysis.consecutiveDaysBelow) consecutive days (required: \(requiredConsecutiveDays))"
             
         case .equals, .between:
             // For equals/between, we need custom logic for consecutive days
@@ -137,15 +138,15 @@ extension TriggerEngine {
             triggered = averageTemp > targetTemperature
             confidence = min(1.0, max(0.0, (averageTemp - targetTemperature) / 5.0))
             triggerReason = triggered ?
-                "Average temperature \(averageTemp, specifier: "%.1f")° over \(averagingPeriod) days is above target \(targetTemperature, specifier: "%.1f")°" :
-                "Average temperature \(averageTemp, specifier: "%.1f")° over \(averagingPeriod) days is below target \(targetTemperature, specifier: "%.1f")°"
+                "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is above target \(String(format: "%.1f", targetTemperature))°" :
+                "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is below target \(String(format: "%.1f", targetTemperature))°"
             
         case .below:
             triggered = averageTemp < targetTemperature
             confidence = min(1.0, max(0.0, (targetTemperature - averageTemp) / 5.0))
             triggerReason = triggered ?
-                "Average temperature \(averageTemp, specifier: "%.1f")° over \(averagingPeriod) days is below target \(targetTemperature, specifier: "%.1f")°" :
-                "Average temperature \(averageTemp, specifier: "%.1f")° over \(averagingPeriod) days is above target \(targetTemperature, specifier: "%.1f")°"
+                "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is below target \(String(format: "%.1f", targetTemperature))°" :
+                "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is above target \(String(format: "%.1f", targetTemperature))°"
             
         case .equals:
             let difference = abs(averageTemp - targetTemperature)
@@ -153,16 +154,16 @@ extension TriggerEngine {
             triggered = difference <= tolerance
             confidence = max(0.0, 1.0 - (difference / tolerance))
             triggerReason = triggered ?
-                "Average temperature \(averageTemp, specifier: "%.1f")° over \(averagingPeriod) days matches target \(targetTemperature, specifier: "%.1f")° (±\(tolerance, specifier: "%.1f")°)" :
-                "Average temperature \(averageTemp, specifier: "%.1f")° over \(averagingPeriod) days differs from target by \(difference, specifier: "%.1f")°"
+                "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days matches target \(String(format: "%.1f", targetTemperature))° (±\(String(format: "%.1f", tolerance))°)" :
+                "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days differs from target by \(String(format: "%.1f", difference))°"
             
         case .between:
             if let minTemp = condition.minTemperature, let maxTemp = condition.maxTemperature {
                 triggered = averageTemp >= minTemp && averageTemp <= maxTemp
                 confidence = triggered ? 1.0 : 0.0
                 triggerReason = triggered ?
-                    "Average temperature \(averageTemp, specifier: "%.1f")° over \(averagingPeriod) days is within range \(minTemp, specifier: "%.1f")° - \(maxTemp, specifier: "%.1f")°" :
-                    "Average temperature \(averageTemp, specifier: "%.1f")° over \(averagingPeriod) days is outside range \(minTemp, specifier: "%.1f")° - \(maxTemp, specifier: "%.1f")°"
+                    "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is within range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°" :
+                    "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is outside range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°"
             } else {
                 triggered = false
                 confidence = 0.0

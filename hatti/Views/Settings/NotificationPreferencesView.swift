@@ -301,7 +301,7 @@ struct NotificationPreferencesView: View {
             VStack(spacing: 12) {
                 NotificationPreviewCard(
                     title: "Perfect Weather Alert",
-                    body: "Great conditions for your morning walk! 72°F with light breeze.",
+                    message: "Great conditions for your morning walk! 72°F with light breeze.",
                     time: "9:15 AM",
                     grouping: viewModel.notificationGrouping,
                     lockScreenBehavior: viewModel.lockScreenBehavior
@@ -309,7 +309,7 @@ struct NotificationPreferencesView: View {
                 
                 NotificationPreviewCard(
                     title: "Garden Watering Time",
-                    body: "Temperature dropped to 68°F - ideal for watering your plants.",
+                    message: "Temperature dropped to 68°F - ideal for watering your plants.",
                     time: "6:30 PM",
                     grouping: viewModel.notificationGrouping,
                     lockScreenBehavior: viewModel.lockScreenBehavior
@@ -375,7 +375,7 @@ struct NotificationPreviewCard: View {
                 if lockScreenBehavior != .hideDetails {
                     Text(lockScreenBehavior == .showPreviews ? message : "Notification content hidden")
                         .font(.caption)
-                        .foregroundColor(lockScreenBehavior == .showPreviews ? .secondary : .tertiary)
+                        .foregroundColor(lockScreenBehavior == .showPreviews ? .secondary : Color(.tertiaryLabel))
                         .lineLimit(2)
                 }
             }
@@ -483,7 +483,7 @@ struct SoundPickerView: View {
         } else {
             // Start playing
             playingSound = sound
-            if let soundFile = sound.fileName {
+            if sound.fileName != nil {
                 // Play custom sound file
                 AudioServicesPlaySystemSound(1007) // Placeholder system sound
             } else {

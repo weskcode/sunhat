@@ -368,35 +368,45 @@ struct TemperatureUnitSelector: View {
     var body: some View {
         HStack(spacing: 12) {
             ForEach(TemperatureUnit.allCases, id: \.self) { unit in
-                Button(action: {
-                    selectedUnit = unit
-                }) {
-                    VStack(spacing: 8) {
-                        Image(systemName: "thermometer.medium")
-                            .font(.title3)
-                            .foregroundColor(selectedUnit == unit ? .white : .blue)
-                        
-                        Text(unit.shortName)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(selectedUnit == unit ? .white : .primary)
-                        
-                        Text(unit.symbol)
-                            .font(.caption)
-                            .foregroundColor(selectedUnit == unit ? .white.opacity(0.8) : .secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 80)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(selectedUnit == unit ? Color.blue : Color(.tertiarySystemBackground))
-                    )
-                }
-                .buttonStyle(PlainButtonStyle())
-                .accessibilityLabel(unit.displayName)
-                .accessibilityAddTraits(selectedUnit == unit ? .isSelected : [])
+                temperatureUnitButton(for: unit)
             }
         }
+    }
+    
+    private func temperatureUnitButton(for unit: TemperatureUnit) -> some View {
+        let isSelected = selectedUnit == unit
+        let textColor: Color = isSelected ? .white : .primary
+        let iconColor: Color = isSelected ? .white : .blue
+        let captionColor: Color = isSelected ? .white.opacity(0.8) : .secondary
+        let backgroundColor: Color = isSelected ? .blue : Color(.tertiarySystemBackground)
+        
+        return Button(action: {
+            selectedUnit = unit
+        }) {
+            VStack(spacing: 8) {
+                Image(systemName: "thermometer.medium")
+                    .font(.title3)
+                    .foregroundColor(iconColor)
+                
+                Text(unit.shortName)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(textColor)
+                
+                Text(unit.symbol)
+                    .font(.caption)
+                    .foregroundColor(captionColor)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 80)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(backgroundColor)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel(unit.shortName)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
@@ -408,49 +418,52 @@ struct NotificationTimingSelector: View {
     var body: some View {
         VStack(spacing: 12) {
             ForEach(NotificationTiming.allCases, id: \.self) { timing in
-                Button(action: {
-                    selectedTiming = timing
-                }) {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(selectedTiming == timing ? Color.blue : Color.gray.opacity(0.2))
-                                .frame(width: 24, height: 24)
-                            
-                            if selectedTiming == timing {
-                                Image(systemName: "checkmark")
-                                    .font(.caption)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                            }
-                        }
-                        .accessibilityHidden(true)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(timing.displayName)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundColor(.primary)
-                            
-                            Text(timing.description)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .lineLimit(2)
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: timing.icon)
-                            .font(.body)
-                            .foregroundColor(selectedTiming == timing ? .blue : .gray)
-                    }
-                    .padding(.vertical, 8)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .accessibilityLabel("\(timing.displayName). \(timing.description)")
-                .accessibilityAddTraits(selectedTiming == timing ? .isSelected : [])
+                timingButton(for: timing)
             }
         }
+    }
+    
+    private func timingButton(for timing: NotificationTiming) -> some View {
+        let isSelected = selectedTiming == timing
+        let circleColor: Color = isSelected ? .blue : Color.gray.opacity(0.2)
+        let iconColor: Color = isSelected ? .blue : .gray
+        
+        return Button(action: {
+            selectedTiming = timing
+        }) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(circleColor)
+                        .frame(width: 24, height: 24)
+                    
+                    if isSelected {
+                        Image(systemName: "checkmark")
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                    }
+                }
+                .accessibilityHidden(true)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(timing.displayName)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: timing.icon)
+                    .font(.body)
+                    .foregroundColor(iconColor)
+            }
+            .padding(.vertical, 8)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel(timing.displayName)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 

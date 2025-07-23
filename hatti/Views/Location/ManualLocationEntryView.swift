@@ -381,30 +381,35 @@ struct ManualLocationEntryView: View {
 
         Task {
             do {
-                let geocoder = CLGeocoder()
-                let placemarks = try await geocoder.geocodeAddressString(searchText)
+                let request = MKLocalSearch.Request()
+                request.naturalLanguageQuery = searchText
+                request.resultTypes = [.address, .pointOfInterest]
+                
+                let search = MKLocalSearch(request: request)
+                let response = try await search.start()
 
                 await MainActor.run {
                     isSearching = false
 
-                    guard !placemarks.isEmpty else {
+                    guard !response.mapItems.isEmpty else {
                         searchError = "No results found for '\(searchText)'"
                         searchResults = []
                         return
                     }
 
-                    // Convert placemarks to search results
-                    searchResults = placemarks.compactMap { placemark in
-                        guard let location = placemark.location,
-                              let city = placemark.locality ?? placemark.name else {
+                    // Convert map items to search results
+                    searchResults = response.mapItems.compactMap { mapItem in
+                        guard let placemark = mapItem.placemark.location else {
                             return nil
                         }
+                        
+                        let city = mapItem.placemark.locality ?? mapItem.placemark.name ?? mapItem.name ?? "Unknown"
 
                         return LocationSearchResult(
                             city: city,
-                            state: placemark.administrativeArea,
-                            country: placemark.country,
-                            coordinate: location.coordinate
+                            state: mapItem.placemark.administrativeArea,
+                            country: mapItem.placemark.country,
+                            coordinate: placemark.coordinate
                         )
                     }
                     .prefix(10) // Limit to 10 results
