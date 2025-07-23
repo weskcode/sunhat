@@ -452,28 +452,6 @@ enum TimeRange: String, CaseIterable, Hashable {
     }
 }
 
-struct TriggerLikelihood {
-    let percentage: Double
-    let triggerDays: [Date]
-    let description: String
-    
-    var color: Color {
-        switch percentage {
-        case 0:
-            return .gray
-        case 1...25:
-            return .red
-        case 26...50:
-            return .orange
-        case 51...75:
-            return .yellow
-        case 76...100:
-            return .green
-        default:
-            return .gray
-        }
-    }
-}
 
 struct WeatherForecastDay: Identifiable {
     let id = UUID()

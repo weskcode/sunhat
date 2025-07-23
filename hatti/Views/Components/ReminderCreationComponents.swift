@@ -10,47 +10,11 @@ import CoreLocation
 
 // MARK: - Data Models
 
-struct ParsedLanguageInfo {
-    let originalInput: String
-    let extractedTemperature: Double?
-    let extractedTemperatureRange: ClosedRange<Double>?
-    let suggestedCategory: ActivityInterest
-    let suggestedTiming: NotificationTiming
-    let suggestedTitle: String
-    let suggestedMessage: String
-    let confidence: Double
-}
-
-struct SmartSuggestion: Identifiable {
-    let id: UUID
-    let title: String
-    let description: String
-    let naturalLanguageText: String
-    let category: ActivityInterest
-    let temperature: Double
-    let temperatureRange: ClosedRange<Double>?
-    let conditionType: TriggerType
-    let timing: NotificationTiming
-    let icon: String
-    let color: Color
-    
-    init(id: UUID, title: String, description: String, naturalLanguageText: String, category: ActivityInterest, temperature: Double, temperatureRange: ClosedRange<Double>? = nil, conditionType: TriggerType, timing: NotificationTiming, icon: String, color: Color) {
-        self.id = id
-        self.title = title
-        self.description = description
-        self.naturalLanguageText = naturalLanguageText
-        self.category = category
-        self.temperature = temperature
-        self.temperatureRange = temperatureRange
-        self.conditionType = conditionType
-        self.timing = timing
-        self.icon = icon
-        self.color = color
-    }
-}
-
-// Note: ReminderLocation struct moved to Models/ReminderLocation.swift to avoid duplication
-// Note: TriggerLikelihood moved to FirstReminderCreationViewModel.swift
+// Models have been moved to the Models folder to avoid duplication:
+// ParsedLanguageInfo -> Models/ParsedLanguageInfo.swift
+// SmartSuggestion     -> Models/SmartSuggestion.swift
+// ReminderLocation    -> Models/ReminderLocation.swift
+// TriggerLikelihood   -> Models/TriggerLikelihood.swift
 
 // MARK: - Enums
 // Note: ConditionType moved to TriggerCondition.swift as TriggerType to avoid redeclaration

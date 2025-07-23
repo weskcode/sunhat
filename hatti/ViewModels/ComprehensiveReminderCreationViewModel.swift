@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 import SwiftData
 import CoreLocation
+import MapKit
 import Combine
 import os
 
@@ -172,8 +173,8 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
             }
             
             // Apply parsed suggestion
-            selectedCategory = info.suggestedCategory
-            notificationTiming = info.suggestedTiming
+            selectedCategory = info.suggestedCategory ?? .exercise
+            notificationTiming = info.suggestedTiming ?? .immediate
         }
         
         // Clear the parsed info after applying
@@ -266,18 +267,23 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
             if !selectedLocation.isCurrentLocation {
                 let locationData = LocationData(
                     latitude: selectedLocation.coordinate.latitude,
-                    longitude: selectedLocation.coordinate.longitude,
-                    name: selectedLocation.displayName,
-                    address: selectedLocation.fullAddress
+                    longitude: selectedLocation.coordinate.longitude
                 )
+                locationData.city = selectedLocation.displayName.components(separatedBy: ", ").first ?? selectedLocation.displayName
+                locationData.state = selectedLocation.displayName.components(separatedBy: ", ").last ?? ""
+                locationData.displayName = selectedLocation.displayName
                 reminder.location = locationData
             }
             
             // Insert into context
             modelContext.insert(reminder)
-            try modelContext.save()
-            
-            logger.info("Successfully created reminder: \(generatedTitle)")
+            do {
+                try modelContext.save()
+                logger.info("Successfully created reminder: \(self.generatedTitle)")
+            } catch {
+                logger.error("Failed to save reminder: \(error.localizedDescription)")
+                throw error
+            }
             
             // Success haptic
             let notificationFeedback = UINotificationFeedbackGenerator()
@@ -285,7 +291,6 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
             
             isSaving = false
             return true
-            
         } catch {
             logger.error("Failed to save reminder: \(error.localizedDescription)")
             validationError = "Failed to save reminder. Please try again."
@@ -345,7 +350,7 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
     
     private func loadTemperatureUnit() {
         guard let modelContext = modelContext else {
-            temperatureUnit = Locale.current.usesMetricSystem ? .celsius : .fahrenheit
+            temperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
             return
         }
         
@@ -353,9 +358,9 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         
         do {
             let preferences = try modelContext.fetch(descriptor)
-            temperatureUnit = preferences.first?.temperatureUnit ?? (Locale.current.usesMetricSystem ? .celsius : .fahrenheit)
+            temperatureUnit = preferences.first?.temperatureUnit ?? (Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit)
         } catch {
-            temperatureUnit = Locale.current.usesMetricSystem ? .celsius : .fahrenheit
+            temperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
         }
     }
     
@@ -565,7 +570,7 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
                 category: .exercise,
                 temperature: 70.0,
                 temperatureRange: 65.0...75.0,
-                conditionType: .range,
+                conditionType: .temperatureRange,
                 timing: .immediate,
                 icon: "figure.walk",
                 color: .green
@@ -594,15 +599,11 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
     private func loadForecastData() {
         // Load forecast for trigger likelihood calculation
         Task {
-            do {
-                // In a real implementation, fetch from weather service
-                let forecast = generateMockForecast()
-                await MainActor.run {
-                    forecastData = forecast
-                    calculateTriggerLikelihood()
-                }
-            } catch {
-                logger.error("Failed to load forecast data: \(error.localizedDescription)")
+            // In a real implementation, fetch from weather service
+            let forecast = generateMockForecast()
+            await MainActor.run {
+                forecastData = forecast
+                calculateTriggerLikelihood()
             }
         }
     }
@@ -647,10 +648,17 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         
         let percentage = Double(triggerDays) / Double(forecastData.count) * 100
         
+        // Convert triggerDays count to an array of dates
+        var triggerDates: [Date] = []
+        for (_, day) in forecastData.enumerated() {
+            if evaluateCondition(condition, for: day) {
+                triggerDates.append(day.date)
+            }
+        }
+        
         triggerLikelihood = TriggerLikelihood(
             percentage: percentage,
-            triggerDays: triggerDays,
-            totalDays: forecastData.count,
+            triggerDays: triggerDates,
             description: likelihoodDescription(for: percentage)
         )
         
@@ -689,25 +697,88 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
     }
     
     private func updateLocationName(for location: CLLocation) async {
-        let geocoder = CLGeocoder()
-        
-        do {
-            let placemarks = try await geocoder.reverseGeocodeLocation(location)
-            if let placemark = placemarks.first {
-                let city = placemark.locality ?? ""
-                let state = placemark.administrativeArea ?? ""
-                
-                await MainActor.run {
-                    selectedLocation = ReminderLocation(
-                        coordinate: location.coordinate,
-                        displayName: "\(city), \(state)",
-                        fullAddress: placemark.compactAddress,
-                        isCurrentLocation: true
-                    )
+        // Handle geocoding based on iOS version
+        if #available(iOS 26.0, *) {
+            // Use MapKit for iOS 26+
+            #if canImport(MapKit)
+            let request = MKLocalPointsOfInterestRequest(coordinate: location.coordinate, radius: 100)
+            do {
+                let response = try await MKLocalSearch.shared.points(for: request)
+                if let item = response.pointsOfInterest.first {
+                    let city = item.placemark.locality ?? ""
+                    let state = item.placemark.administrativeArea ?? ""
+
+                    await MainActor.run {
+                        selectedLocation = ReminderLocation(
+                            coordinate: location.coordinate,
+                            displayName: "\(city), \(state)",
+                            fullAddress: [item.placemark.thoroughfare, item.placemark.locality, item.placemark.administrativeArea]
+                                .compactMap { $0 }
+                                .joined(separator: ", "),
+                            isCurrentLocation: true
+                        )
+                    }
                 }
+            } catch {
+                logger.warning("Failed to reverse geocode location: \(error.localizedDescription)")
+                await fallbackGeocoding(location)
             }
-        } catch {
-            logger.warning("Failed to reverse geocode location: \(error.localizedDescription)")
+            #else
+            // Fallback to CLGeocoder if MapKit is not available
+            await fallbackGeocoding(location)
+            #endif
+        } else {
+            // Use CLGeocoder for iOS 25 and below
+            await fallbackGeocoding(location)
+        }
+    }
+    
+    private func fallbackGeocoding(_ location: CLLocation) async {
+        if #available(iOS 26.0, *) {
+            // Use MapKit reverse geocoding for iOS 26+
+            let request = MKReverseGeocodingRequest(coordinate: location.coordinate)
+            do {
+                let response = try await MKLocalSearch.shared.reverse(for: request)
+                if let placemark = response.placemarks.first {
+                    let city = placemark.locality ?? ""
+                    let state = placemark.administrativeArea ?? ""
+
+                    await MainActor.run {
+                        selectedLocation = ReminderLocation(
+                            coordinate: location.coordinate,
+                            displayName: "\(city), \(state)",
+                            fullAddress: [placemark.thoroughfare, placemark.locality, placemark.administrativeArea]
+                                .compactMap { $0 }
+                                .joined(separator: ", "),
+                            isCurrentLocation: true
+                        )
+                    }
+                }
+            } catch {
+                logger.warning("Failed to reverse geocode location with MKReverseGeocodingRequest: \(error.localizedDescription)")
+            }
+        } else {
+            // Use CLGeocoder for earlier iOS versions
+            let geocoder = CLGeocoder()
+
+            do {
+                let placemarks = try await geocoder.reverseGeocodeLocation(location)
+                if let placemark = placemarks.first {
+                    let city = placemark.locality ?? ""
+                    let state = placemark.administrativeArea ?? ""
+
+                    await MainActor.run {
+                        selectedLocation = ReminderLocation(
+                            coordinate: location.coordinate,
+                            displayName: "\(city), \(state)",
+                            fullAddress: placemark.compactAddress,
+                            isCurrentLocation: true
+                        )
+                    }
+                }
+            } catch {
+                logger.warning("Failed to reverse geocode location with CLGeocoder: \(error.localizedDescription)")
+            }
         }
     }
 }
