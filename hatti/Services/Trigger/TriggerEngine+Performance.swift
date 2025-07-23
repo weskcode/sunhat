@@ -189,8 +189,8 @@ extension TriggerEngine {
         do {
             // Use ModelActor to get reminder data
             let reminderDataList = try await modelActor.fetchActiveRemindersData()
-            let locationStrings: [String] = reminderDataList.compactMap { reminderData in
-                guard let location = reminderData.clLocation else { return nil }
+            let locationStrings: [String] = reminderDataList.map { reminderData in
+                let location = reminderData.clLocation
                 return "\(location.coordinate.latitude),\(location.coordinate.longitude)"
             }
             let locationGroups = Set(locationStrings).count

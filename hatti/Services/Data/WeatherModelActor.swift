@@ -20,7 +20,7 @@ actor WeatherModelActor {
     // MARK: - WeatherReminder Operations
     
     /// Fetches active reminders for evaluation (returns Sendable data)
-    func fetchActiveRemindersData() throws -> [ReminderEvaluationData] {
+    func fetchActiveRemindersData() async throws -> [ReminderEvaluationData] {
         let descriptor = FetchDescriptor<WeatherReminder>(
             predicate: #Predicate { $0.isActive && !$0.isCompleted && !$0.isPaused }
         )
@@ -28,20 +28,32 @@ actor WeatherModelActor {
         let reminders = try modelContext.fetch(descriptor)
         
         // Convert to Sendable data transfer objects
-        return try reminders.compactMap { reminder -> ReminderEvaluationData? in
-            guard let condition = reminder.triggerCondition,
-                  let location = reminder.location else { return nil }
+        return try await withThrowingTaskGroup(of: ReminderEvaluationData?.self) { group in
+            for reminder in reminders {
+                group.addTask {
+                    guard let condition = reminder.triggerCondition,
+                          let location = reminder.location else { return nil }
+                    
+                    return await ReminderEvaluationData(
+                        reminderId: reminder.id,
+                        triggerCondition: condition.toSendableData(),
+                        locationData: location.toSendableData()
+                    )
+                }
+            }
             
-            return ReminderEvaluationData(
-                reminderId: reminder.id,
-                triggerCondition: condition.toSendableData(),
-                locationData: location.toSendableData()
-            )
+            var results: [ReminderEvaluationData] = []
+            for try await result in group {
+                if let result = result {
+                    results.append(result)
+                }
+            }
+            return results
         }
     }
     
     /// Fetches evaluation data for a specific reminder
-    func fetchReminderEvaluationData(for reminderId: UUID) throws -> ReminderEvaluationData? {
+    func fetchReminderEvaluationData(for reminderId: UUID) async throws -> ReminderEvaluationData? {
         let descriptor = FetchDescriptor<WeatherReminder>(
             predicate: #Predicate<WeatherReminder> { $0.id == reminderId }
         )
@@ -52,7 +64,7 @@ actor WeatherModelActor {
             return nil
         }
         
-        return ReminderEvaluationData(
+        return await ReminderEvaluationData(
             reminderId: reminder.id,
             triggerCondition: condition.toSendableData(),
             locationData: location.toSendableData()
