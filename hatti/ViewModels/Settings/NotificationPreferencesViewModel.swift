@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 import SwiftData
-import UserNotifications
+@preconcurrency import UserNotifications
 import Combine
 import UIKit
 
@@ -372,12 +372,12 @@ final class NotificationPreferencesViewModel {
 
 // MARK: - Error Types
 
-enum NotificationError: LocalizedError {
+enum NotificationError: LocalizedError, Sendable {
     case noModelContext
     case permissionDenied
     case invalidSettings
     
-    var errorDescription: String? {
+    nonisolated var errorDescription: String? {
         switch self {
         case .noModelContext:
             return "Unable to access app data"

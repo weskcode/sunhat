@@ -324,10 +324,9 @@ final class DataPrivacyViewModel {
         }
         
         // Export weather data (recent only, last 30 days)
-        let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
         let weatherDescriptor = FetchDescriptor<WeatherData>(
             predicate: #Predicate { data in
-                data.timestamp >= thirtyDaysAgo
+                data.timestamp >= Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
             }
         )
         let weatherRecords = try context.fetch(weatherDescriptor)
@@ -509,13 +508,13 @@ struct DataSummary {
     let totalDataSize: String
 }
 
-enum DataPrivacyError: LocalizedError {
+enum DataPrivacyError: LocalizedError, Sendable {
     case noModelContext
     case cloudKitUnavailable
     case exportFailed
     case deletionFailed
     
-    var errorDescription: String? {
+    nonisolated var errorDescription: String? {
         switch self {
         case .noModelContext:
             return "Unable to access app data"

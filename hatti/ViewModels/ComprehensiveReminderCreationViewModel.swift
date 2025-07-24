@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 import SwiftData
 import CoreLocation
-import MapKit
+@preconcurrency import MapKit
 import Combine
 import os
 
@@ -513,9 +513,9 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         guard let modelContext = modelContext else { return }
         
         // Fetch user's reminder history
-        let descriptor = FetchDescriptor<WeatherReminder>(
-            sortBy: [SortDescriptor(\WeatherReminder.createdDate, order: .reverse)]
-        )
+        var descriptor = FetchDescriptor<WeatherReminder>()
+        descriptor.sortBy = [SortDescriptor(\WeatherReminder.createdDate, order: .reverse)]
+        descriptor.includePendingChanges = true
         
         do {
             let reminders = try modelContext.fetch(descriptor)

@@ -363,7 +363,7 @@ struct LocationDataTransfer: Sendable {
     let timeZoneIdentifier: String
     let lastUpdated: Date
     
-    var clLocation: CLLocation {
+    nonisolated var clLocation: CLLocation {
         CLLocation(
             coordinate: CLLocationCoordinate2D(latitude: latitude, longitude: longitude),
             altitude: altitude,
@@ -373,7 +373,7 @@ struct LocationDataTransfer: Sendable {
         )
     }
     
-    var locationKey: String {
+    nonisolated var locationKey: String {
         "\(latitude),\(longitude)"
     }
 }
@@ -384,11 +384,11 @@ struct ReminderEvaluationData: Sendable {
     let triggerCondition: TriggerConditionData
     let locationData: LocationDataTransfer
     
-    var locationKey: String {
+    nonisolated var locationKey: String {
         locationData.locationKey
     }
     
-    var clLocation: CLLocation {
+    nonisolated var clLocation: CLLocation {
         locationData.clLocation
     }
 }

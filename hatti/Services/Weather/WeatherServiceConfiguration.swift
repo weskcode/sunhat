@@ -252,7 +252,8 @@ final class WeatherServiceManager: ObservableObject {
 
 // MARK: - Configuration Data Model
 
-private struct ConfigurationData: Codable, Sendable {
+private struct ConfigurationData: Sendable {
+    // Manual Codable implementation to avoid circular reference
     let openWeatherMapAPIKey: String?
     let cacheExpirationMinutes: Int
     let backgroundRefreshIntervalMinutes: Int
@@ -263,6 +264,50 @@ private struct ConfigurationData: Codable, Sendable {
     let enableBackgroundRefresh: Bool
     let enableNotifications: Bool
     
+    nonisolated func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeIfPresent(openWeatherMapAPIKey, forKey: .openWeatherMapAPIKey)
+        try container.encode(cacheExpirationMinutes, forKey: .cacheExpirationMinutes)
+        try container.encode(backgroundRefreshIntervalMinutes, forKey: .backgroundRefreshIntervalMinutes)
+        try container.encode(rateLimitRequestsPerMinute, forKey: .rateLimitRequestsPerMinute)
+        try container.encode(rateLimitRequestsPerHour, forKey: .rateLimitRequestsPerHour)
+        try container.encode(enabledProviders, forKey: .enabledProviders)
+        try container.encode(preferredProvider, forKey: .preferredProvider)
+        try container.encode(enableBackgroundRefresh, forKey: .enableBackgroundRefresh)
+        try container.encode(enableNotifications, forKey: .enableNotifications)
+    }
+    
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        openWeatherMapAPIKey = try container.decodeIfPresent(String.self, forKey: .openWeatherMapAPIKey)
+        cacheExpirationMinutes = try container.decode(Int.self, forKey: .cacheExpirationMinutes)
+        backgroundRefreshIntervalMinutes = try container.decode(Int.self, forKey: .backgroundRefreshIntervalMinutes)
+        rateLimitRequestsPerMinute = try container.decode(Int.self, forKey: .rateLimitRequestsPerMinute)
+        rateLimitRequestsPerHour = try container.decode(Int.self, forKey: .rateLimitRequestsPerHour)
+        enabledProviders = try container.decode([String].self, forKey: .enabledProviders)
+        preferredProvider = try container.decode(String.self, forKey: .preferredProvider)
+        enableBackgroundRefresh = try container.decode(Bool.self, forKey: .enableBackgroundRefresh)
+        enableNotifications = try container.decode(Bool.self, forKey: .enableNotifications)
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case openWeatherMapAPIKey
+        case cacheExpirationMinutes
+        case backgroundRefreshIntervalMinutes
+        case rateLimitRequestsPerMinute
+        case rateLimitRequestsPerHour
+        case enabledProviders
+        case preferredProvider
+        case enableBackgroundRefresh
+        case enableNotifications
+    }
+}
+
+extension ConfigurationData: Codable {
+    // Empty extension to satisfy Codable conformance
+}
+
+extension ConfigurationData {
     init(from configuration: WeatherServiceConfiguration) {
         self.openWeatherMapAPIKey = configuration.openWeatherMapAPIKey
         self.cacheExpirationMinutes = configuration.cacheExpirationMinutes

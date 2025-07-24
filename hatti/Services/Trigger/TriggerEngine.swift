@@ -94,7 +94,7 @@ actor TriggerEngine {
     private static let _lock = NSLock()
     private static var _shared: TriggerEngine?
     
-    static func shared(modelContainer: ModelContainer) -> TriggerEngine {
+    nonisolated static func shared(modelContainer: ModelContainer) -> TriggerEngine {
         _lock.lock()
         defer { _lock.unlock() }
         

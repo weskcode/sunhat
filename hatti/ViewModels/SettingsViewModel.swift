@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 import SwiftData
-import UserNotifications
+@preconcurrency import UserNotifications
 import CoreLocation
 import CloudKit
 import StoreKit

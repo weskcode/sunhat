@@ -61,10 +61,8 @@ final class DetailedReminderViewModel: ObservableObject {
             history.weatherReminder?.id == reminderID
         }
         
-        let descriptor = FetchDescriptor(
-            predicate: predicate,
-            sortBy: [SortDescriptor(\ReminderHistory.timestamp, order: .reverse)]
-        )
+        var descriptor = FetchDescriptor(predicate: predicate)
+        descriptor.sortBy = [SortDescriptor(\ReminderHistory.timestamp, order: .reverse)]
         
         do {
             let allHistory = try modelContext.fetch(descriptor)

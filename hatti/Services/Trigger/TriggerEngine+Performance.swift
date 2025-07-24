@@ -48,7 +48,7 @@ extension TriggerEngine {
             
             // Group by location for batch processing
             let locationGroups = Dictionary(grouping: reminderDataList) { reminderData in
-                reminderData.locationKey
+                reminderData.locationData.locationKey
             }
             
             logger.info("Processing \(reminderDataList.count) reminders in \(locationGroups.count) location groups")
@@ -57,7 +57,7 @@ extension TriggerEngine {
             
             // Process location groups in batches with controlled concurrency
             let locationGroupsArray = Array(locationGroups)
-            let batches = locationGroupsArray.chunked(into: batchSize)
+            let batches = Self.chunkedArray(locationGroupsArray, into: batchSize)
             
             for batch in batches {
                 // Process this batch with limited concurrency
@@ -68,7 +68,7 @@ extension TriggerEngine {
                     for (_, reminderDataList) in batch {
                         if activeTasks < maxConcurrentBatches {
                             // Get location from first reminder data
-                            guard let location = reminderDataList.first?.clLocation else { continue }
+                            guard let location = reminderDataList.first?.locationData.clLocation else { continue }
                             group.addTask {
                                 await self.evaluateRemindersForLocation(reminderDataList, at: location)
                             }
@@ -190,7 +190,7 @@ extension TriggerEngine {
             // Use ModelActor to get reminder data
             let reminderDataList = try await modelActor.fetchActiveRemindersData()
             let locationStrings: [String] = reminderDataList.map { reminderData in
-                let location = reminderData.clLocation
+                let location = reminderData.locationData.clLocation
                 return "\(location.coordinate.latitude),\(location.coordinate.longitude)"
             }
             let locationGroups = Set(locationStrings).count
@@ -369,12 +369,12 @@ struct TriggerEnginePerformanceReport: Sendable {
     let recommendations: [String]
 }
 
-// MARK: - Array Extension for Chunking
+// MARK: - Array Chunking Helper
 
-extension Array {
-    fileprivate func chunked(into size: Int) -> [[Element]] {
-        return stride(from: 0, to: count, by: size).map {
-            Array(self[$0..<Swift.min($0 + size, count)])
+extension TriggerEngine {
+    static func chunkedArray<T>(_ array: [T], into size: Int) -> [[T]] {
+        return stride(from: 0, to: array.count, by: size).map {
+            Array(array[$0..<Swift.min($0 + size, array.count)])
         }
     }
 }

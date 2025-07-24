@@ -323,7 +323,7 @@ enum LocationError: LocalizedError, Sendable {
         }
     }
     
-    var failureReason: String? {
+    nonisolated var failureReason: String? {
         switch self {
         case .permissionDenied:
             return "The app does not have permission to access your location"
@@ -344,7 +344,7 @@ enum LocationError: LocalizedError, Sendable {
         }
     }
     
-    var recoverySuggestion: String? {
+    nonisolated var recoverySuggestion: String? {
         switch self {
         case .permissionDenied:
             return "Go to Settings > Privacy & Security > Location Services to enable location access"
@@ -383,7 +383,7 @@ struct ManualLocationData: Codable, Identifiable, Sendable {
         self.administrativeArea = administrativeArea
     }
     
-    var displayName: String {
+    nonisolated var displayName: String {
         var components = [name]
         if let admin = administrativeArea {
             components.append(admin)
