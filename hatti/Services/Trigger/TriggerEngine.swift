@@ -91,19 +91,21 @@ struct TrendAnalysis: Sendable {
 // MARK: - Main Trigger Engine Actor
 
 actor TriggerEngine {
-    private static let _lock = NSLock()
-    private static var _shared: TriggerEngine?
     
-    nonisolated static func shared(modelContainer: ModelContainer) -> TriggerEngine {
-        _lock.lock()
-        defer { _lock.unlock() }
+    @MainActor private static var _instances: [ObjectIdentifier: TriggerEngine] = [:]
+    
+    static func shared(modelContainer: ModelContainer) async -> TriggerEngine {
+        let key = ObjectIdentifier(modelContainer)
         
-        if let existing = _shared {
-            return existing
+        return await MainActor.run {
+            if let existing = _instances[key] {
+                return existing
+            }
+            
+            let new = TriggerEngine(modelContainer: modelContainer)
+            _instances[key] = new
+            return new
         }
-        let new = TriggerEngine(modelContainer: modelContainer)
-        _shared = new
-        return new
     }
     
     internal let modelActor: WeatherModelActor
@@ -170,10 +172,10 @@ actor TriggerEngine {
         }
     }
     
-    func evaluateReminder(_ reminder: WeatherReminder) async -> TriggerEvaluationResult? {
+    func evaluateReminder(reminderId: UUID) async -> TriggerEvaluationResult? {
         // Use ModelActor to safely access SwiftData properties
         do {
-            let reminderData = try await modelActor.fetchReminderEvaluationData(for: reminder.id)
+            let reminderData = try await modelActor.fetchReminderEvaluationData(for: reminderId)
             guard let data = reminderData else { return nil }
             
             return await evaluateCondition(
@@ -189,9 +191,11 @@ actor TriggerEngine {
     
     func evaluateRemindersForLocation(_ reminderDataList: [ReminderEvaluationData], at location: CLLocation) async -> [TriggerEvaluationResult] {
         do {
-            // Fetch current weather data for the location
-            let weatherData = try await WeatherService.shared.fetchWeatherData(for: location)
-            let weatherTransfer = await weatherData.toSendableData()
+            // Fetch current weather data for the location using Task isolation
+            let weatherTransfer = try await Task { @MainActor in
+                let weatherData = try await WeatherService.shared.fetchWeatherData(for: location)
+                return ModelDataConverter.convertWeatherData(weatherData)
+            }.value
             
             var results: [TriggerEvaluationResult] = []
             
@@ -233,8 +237,10 @@ actor TriggerEngine {
             currentWeatherData = providedData
         } else {
             do {
-                let weather = try await WeatherService.shared.fetchWeatherData(for: location)
-                currentWeatherData = await weather.toSendableData()
+                currentWeatherData = try await Task { @MainActor in
+                    let weather = try await WeatherService.shared.fetchWeatherData(for: location)
+                    return ModelDataConverter.convertWeatherData(weather)
+                }.value
             } catch {
                 logger.warning("Failed to fetch weather data for evaluation: \(error)")
                 return nil

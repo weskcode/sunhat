@@ -56,20 +56,21 @@ final class DetailedReminderViewModel: ObservableObject {
         let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
         
         let reminderID = reminder.id
-        // Simplified predicate - filter date comparison programmatically
-        let predicate = #Predicate<ReminderHistory> { history in
-            history.weatherReminder?.id == reminderID
-        }
         
-        var descriptor = FetchDescriptor(predicate: predicate)
-        descriptor.sortBy = [SortDescriptor(\ReminderHistory.timestamp, order: .reverse)]
+        // Fetch all history entries without predicate to avoid Sendable keypath issues
+        var descriptor = FetchDescriptor<ReminderHistory>()
         
         do {
             let allHistory = try modelContext.fetch(descriptor)
-            // Filter by date programmatically
-            self.triggerHistory = allHistory.filter { history in
-                history.timestamp >= thirtyDaysAgo
-            }
+            // Filter by reminder ID and date programmatically
+            self.triggerHistory = allHistory
+                .filter { history in
+                    history.weatherReminder?.id == reminderID
+                }
+                .filter { history in
+                    history.timestamp >= thirtyDaysAgo
+                }
+                .sorted { $0.timestamp > $1.timestamp }
             logger.info("Loaded \(self.triggerHistory.count) history entries")
         } catch {
             logger.error("Failed to load trigger history: \(error.localizedDescription)")

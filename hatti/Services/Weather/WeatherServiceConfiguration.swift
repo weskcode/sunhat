@@ -290,7 +290,7 @@ private struct ConfigurationData: Sendable {
         enableNotifications = try container.decode(Bool.self, forKey: .enableNotifications)
     }
     
-    private enum CodingKeys: String, CodingKey {
+    private enum CodingKeys: String, CodingKey, Sendable {
         case openWeatherMapAPIKey
         case cacheExpirationMinutes
         case backgroundRefreshIntervalMinutes

@@ -514,11 +514,11 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         
         // Fetch user's reminder history
         var descriptor = FetchDescriptor<WeatherReminder>()
-        descriptor.sortBy = [SortDescriptor(\WeatherReminder.createdDate, order: .reverse)]
         descriptor.includePendingChanges = true
         
         do {
-            let reminders = try modelContext.fetch(descriptor)
+            let allReminders = try modelContext.fetch(descriptor)
+            let reminders = allReminders.sorted { $0.createdDate > $1.createdDate }
             let suggestions = await createSuggestionsFromHistory(reminders)
             
             await MainActor.run {

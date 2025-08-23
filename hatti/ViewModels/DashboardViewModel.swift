@@ -210,8 +210,9 @@ final class DashboardViewModel: NSObject, ObservableObject {
         }
     }
     
+    @MainActor
     private func updateWeatherData(_ weatherData: WeatherData) {
-        currentWeatherData = weatherData.toSendableData()
+        currentWeatherData = ModelDataConverter.convertWeatherData(weatherData)
         currentTemperature = convertTemperature(weatherData.temperature)
         feelsLikeTemperature = convertTemperature(weatherData.feelsLike)
         humidity = weatherData.humidity

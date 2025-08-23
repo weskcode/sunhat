@@ -324,12 +324,10 @@ final class DataPrivacyViewModel {
         }
         
         // Export weather data (recent only, last 30 days)
-        let weatherDescriptor = FetchDescriptor<WeatherData>(
-            predicate: #Predicate { data in
-                data.timestamp >= Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
-            }
-        )
-        let weatherRecords = try context.fetch(weatherDescriptor)
+        let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
+        let weatherDescriptor = FetchDescriptor<WeatherData>()
+        let allWeatherRecords = try context.fetch(weatherDescriptor)
+        let weatherRecords = allWeatherRecords.filter { $0.timestamp >= thirtyDaysAgo }
         
         exportData["weather_data"] = weatherRecords.map { weather in
             return weather.exportData

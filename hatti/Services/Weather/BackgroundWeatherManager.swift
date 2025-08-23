@@ -94,20 +94,34 @@ final class BackgroundWeatherManager: ObservableObject {
             return
         }
         
-        // Fetch all active reminders
-        // Fetch basic active reminders - filter complex conditions programmatically
-        let descriptor: FetchDescriptor<WeatherReminder> = FetchDescriptor<WeatherReminder>(
-            predicate: #Predicate { reminder in
-                reminder.isActive && !reminder.isCompleted && !reminder.isPaused
-            }
-        )
+        // Fetch all reminders and filter programmatically due to MainActor isolation
+        let descriptor: FetchDescriptor<WeatherReminder> = FetchDescriptor<WeatherReminder>()
         
         do {
             let fetchedReminders: [WeatherReminder] = try modelContext.fetch(descriptor)
             
-            // Filter reminders using computed properties that couldn't be used in predicate
-            let activeReminders = fetchedReminders.filter { reminder in
-                reminder.isCurrentlyActive && reminder.canTrigger
+            // Filter reminders using MainActor-isolated properties
+            let activeReminders = await withTaskGroup(of: WeatherReminder?.self) { group in
+                for reminder in fetchedReminders {
+                    group.addTask {
+                        let isActive = await MainActor.run { reminder.isActive }
+                        let isCompleted = await MainActor.run { reminder.isCompleted }
+                        let isPaused = await MainActor.run { reminder.isPaused }
+                        
+                        if isActive && !isCompleted && !isPaused {
+                            return reminder
+                        }
+                        return nil
+                    }
+                }
+                
+                var results: [WeatherReminder] = []
+                for await reminder in group {
+                    if let reminder = reminder {
+                        results.append(reminder)
+                    }
+                }
+                return results
             }
             
             logger.debug("Checking \(activeReminders.count) active reminders (filtered from \(fetchedReminders.count) total)")

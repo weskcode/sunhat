@@ -92,7 +92,9 @@ extension TriggerEngine {
         
         do {
             let weatherData = try await WeatherService.shared.fetchWeatherData(for: location)
-            let weatherTransfer = weatherData.toSendableData()
+            let weatherTransfer = await MainActor.run {
+                ModelDataConverter.convertWeatherData(weatherData)
+            }
             let forecastAnalysis = await analyzeForecastForCondition(
                 conditionData: conditionData,
                 weatherData: weatherTransfer,

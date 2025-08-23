@@ -469,7 +469,7 @@ struct MailComposeView: UIViewControllerRepresentable {
         """
     }
     
-    class Coordinator: NSObject, MFMailComposeViewControllerDelegate {
+    class Coordinator: NSObject, @preconcurrency MFMailComposeViewControllerDelegate {
         let parent: MailComposeView
         
         init(_ parent: MailComposeView) {

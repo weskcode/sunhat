@@ -49,7 +49,9 @@ extension TriggerEngine {
         let comparisonDays = 30 // Default to 30 days of historical data
         let historicalComparison = await performHistoricalComparison(
             location: location,
-            currentWeather: currentWeather.toWeatherData(),
+            currentWeather: await MainActor.run {
+                currentWeather.toWeatherData()
+            },
             comparisonDays: comparisonDays,
             useFeelsLike: useFeelsLike
         )
@@ -136,7 +138,21 @@ extension TriggerEngine {
             )
             
             // Convert to WeatherData for processing
-            let historicalData = historicalDataTransfers.map { $0.toWeatherData() }
+            let historicalData = await withTaskGroup(of: WeatherData.self) { group in
+                for transfer in historicalDataTransfers {
+                    group.addTask {
+                        await MainActor.run {
+                            transfer.toWeatherData()
+                        }
+                    }
+                }
+                
+                var results: [WeatherData] = []
+                for await result in group {
+                    results.append(result)
+                }
+                return results
+            }
             let context: HistoricalWeatherContext = buildHistoricalContext(
                 location: location,
                 historicalData: historicalData
@@ -184,7 +200,21 @@ extension TriggerEngine {
         return HistoricalWeatherContext(
             location: location,
             currentDate: Date(),
-            historicalData: historicalData.map { $0.toSendableData() },
+            historicalData: await withTaskGroup(of: WeatherDataTransfer.self) { group in
+                for data in historicalData {
+                    group.addTask {
+                        await MainActor.run {
+                            ModelDataConverter.convertWeatherData(data)
+                        }
+                    }
+                }
+                
+                var results: [WeatherDataTransfer] = []
+                for await result in group {
+                    results.append(result)
+                }
+                return results
+            },
             yearlyAverages: yearlyAverages,
             seasonalPatterns: seasonalPatterns
         )
@@ -733,8 +763,7 @@ extension TriggerEngine {
             }
             
             let descriptor = FetchDescriptor<WeatherData>(
-                predicate: timePredicate,
-                sortBy: [SortDescriptor(\WeatherData.timestamp, order: .forward)]
+                predicate: timePredicate
             )
             
             do {
@@ -745,13 +774,50 @@ extension TriggerEngine {
                 )
                 
                 // Convert to WeatherData and filter by date proximity
-                let yearData = yearDataTransfers.map { $0.toWeatherData() }.filter { weather in
-                    abs(weather.timestamp.timeIntervalSince(targetDate)) <= 86400 // Within 1 day
+                let yearData = await withTaskGroup(of: WeatherData?.self) { group in
+                    for transfer in yearDataTransfers {
+                        group.addTask {
+                            let weather = await MainActor.run {
+                                transfer.toWeatherData()
+                            }
+                            let timestamp = await MainActor.run { weather.timestamp }
+                            if abs(timestamp.timeIntervalSince(targetDate)) <= 86400 {
+                                return weather
+                            }
+                            return nil
+                        }
+                    }
+                    
+                    var results: [WeatherData] = []
+                    for await weather in group {
+                        if let weather = weather {
+                            results.append(weather)
+                        }
+                    }
+                    return results
                 }
                 
-                if let closestData = yearData.min(by: { (data1: WeatherData, data2: WeatherData) in
-                    abs(data1.timestamp.timeIntervalSince(targetDate)) < abs(data2.timestamp.timeIntervalSince(targetDate))
-                }) {
+                if let closestData = await withTaskGroup(of: (WeatherData, TimeInterval).self) { group in
+                    for data in yearData {
+                        group.addTask {
+                            let timestamp = await MainActor.run { data.timestamp }
+                            let interval = abs(timestamp.timeIntervalSince(targetDate))
+                            return (data, interval)
+                        }
+                    }
+                    
+                    var minData: WeatherData?
+                    var minInterval: TimeInterval = .infinity
+                    
+                    for await (data, interval) in group {
+                        if interval < minInterval {
+                            minInterval = interval
+                            minData = data
+                        }
+                    }
+                    
+                    return minData
+                }() {
                     historicalData.append(closestData)
                 }
             } catch {

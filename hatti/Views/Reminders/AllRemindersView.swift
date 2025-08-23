@@ -17,7 +17,13 @@ struct AllRemindersView: View {
         NavigationStack {
             List {
                 ForEach(reminders.map { reminder in
-                    let desc = reminder.triggerCondition?.formatDescription() ?? "No condition set"
+                    let desc: String
+                    if let condition = reminder.triggerCondition {
+                        let conditionData = ModelDataConverter.convertTriggerCondition(condition)
+                        desc = conditionData.formatDescription()
+                    } else {
+                        desc = "No condition set"
+                    }
                     return WeatherReminderDisplay(
                         id: reminder.id,
                         title: reminder.title,

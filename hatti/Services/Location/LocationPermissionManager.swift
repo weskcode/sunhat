@@ -368,7 +368,7 @@ enum LocationError: LocalizedError, Sendable {
 
 // MARK: - Manual Location Data
 
-struct ManualLocationData: Codable, Identifiable, Sendable {
+struct ManualLocationData: @unchecked Sendable, Identifiable {
     let id: UUID
     let name: String
     let coordinate: CLLocationCoordinate2D
@@ -392,6 +392,39 @@ struct ManualLocationData: Codable, Identifiable, Sendable {
             components.append(country)
         }
         return components.joined(separator: ", ")
+    }
+}
+
+// MARK: - Codable Implementation
+extension ManualLocationData: Codable {
+    nonisolated func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(coordinate.latitude, forKey: .latitude)
+        try container.encode(coordinate.longitude, forKey: .longitude)
+        try container.encode(country, forKey: .country)
+        try container.encode(administrativeArea, forKey: .administrativeArea)
+    }
+    
+    nonisolated init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        let latitude = try container.decode(Double.self, forKey: .latitude)
+        let longitude = try container.decode(Double.self, forKey: .longitude)
+        coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        country = try container.decodeIfPresent(String.self, forKey: .country)
+        administrativeArea = try container.decodeIfPresent(String.self, forKey: .administrativeArea)
+    }
+    
+    nonisolated private enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case latitude
+        case longitude
+        case country
+        case administrativeArea
     }
 }
 
