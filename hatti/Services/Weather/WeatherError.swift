@@ -98,7 +98,7 @@ enum WeatherProvider: String, CaseIterable, Sendable {
     case appleWeatherKit = "apple_weather_kit"
     case openWeatherMap = "open_weather_map"
     
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
         case .appleWeatherKit:
             return "Apple WeatherKit"
@@ -106,8 +106,8 @@ enum WeatherProvider: String, CaseIterable, Sendable {
             return "OpenWeatherMap"
         }
     }
-    
-    var priority: Int {
+
+    nonisolated var priority: Int {
         switch self {
         case .appleWeatherKit:
             return 0

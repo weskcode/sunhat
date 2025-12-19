@@ -341,7 +341,8 @@ final class SettingsViewModel: NSObject, ObservableObject {
                 if #available(iOS 18.0, *) {
                     AppStore.requestReview(in: scene)
                 } else {
-                    SKStoreReviewController.requestReview(in: scene)
+                    // For iOS versions below 18.0, use the older API
+                    SKStoreReviewController.requestReview()
                 }
             }
         }

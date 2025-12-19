@@ -15,28 +15,30 @@ import os
 @MainActor
 final class WeatherService: ObservableObject {
     static let shared = WeatherService()
-    
+
     @Published var isLoading = false
     @Published var lastUpdateTime: Date?
     @Published var connectionStatus: ConnectionStatus = .unknown
-    
-    private let weatherActor: WeatherServiceActor
+
+    private var weatherActor: WeatherServiceActor?
     private let logger = Logger(subsystem: "com.hatti.app", category: "WeatherService")
-    
-    private init() {
-        self.weatherActor = WeatherServiceActor()
+
+    nonisolated init() {
+        // Actor will be created in configure
     }
-    
-    func configure(modelContext: ModelContext, openWeatherMapKey: String? = nil) async {
-        await weatherActor.configure(modelContext: modelContext, openWeatherMapKey: openWeatherMapKey)
+
+    func configure(modelContainer: ModelContainer, openWeatherMapKey: String? = nil) async {
+        let modelContext = modelContainer.mainContext
+        self.weatherActor = WeatherServiceActor(modelContext: modelContext)
+        await weatherActor?.configure(openWeatherMapKey: openWeatherMapKey)
     }
     
     func fetchWeatherData(for location: CLLocation, forceRefresh: Bool = false) async throws -> WeatherData {
         isLoading = true
         defer { isLoading = false }
-        
+
         do {
-            let weatherData = try await weatherActor.fetchWeatherData(for: location, forceRefresh: forceRefresh)
+            let weatherData = try await self.weatherActor!.fetchWeatherData(for: location, forceRefresh: forceRefresh)
             lastUpdateTime = Date()
             connectionStatus = .connected
             return weatherData
@@ -53,20 +55,20 @@ final class WeatherService: ObservableObject {
     
     func scheduleBackgroundRefresh() {
         Task {
-            await weatherActor.scheduleBackgroundRefresh()
+            await self.weatherActor!.scheduleBackgroundRefresh()
         }
     }
-    
+
     func handleBackgroundRefresh() async {
-        await weatherActor.handleBackgroundRefresh()
+        await self.weatherActor!.handleBackgroundRefresh()
     }
-    
+
     func getCachedWeatherData(for location: CLLocation) async -> WeatherData? {
-        await weatherActor.getCachedWeatherData(for: location)
+        await self.weatherActor!.getCachedWeatherData(for: location)
     }
-    
+
     func clearCache() async {
-        await weatherActor.clearCache()
+        await self.weatherActor!.clearCache()
     }
 }
 
@@ -79,32 +81,41 @@ enum ConnectionStatus {
 
 // MARK: - Weather Service Actor
 
-actor WeatherServiceActor {
-    private var modelContext: ModelContext?
-    private var providers: [WeatherAPI] = []
+@MainActor
+class WeatherServiceActor {
+    private var modelContext: ModelContext
+    private var providers: [any WeatherAPI] = []
     private let cacheExpirationInterval: TimeInterval = 15 * 60 // 15 minutes
     private let rateLimiter = RateLimiter()
     private let backgroundTaskIdentifier = "com.hatti.app.weather-refresh"
-    
+
     private let logger = Logger(subsystem: "com.hatti.app", category: "WeatherServiceActor")
-    
-    func configure(modelContext: ModelContext, openWeatherMapKey: String? = nil) async {
+
+    init(modelContext: ModelContext) {
         self.modelContext = modelContext
-        
-        // Initialize providers in priority order on main actor, then assign to actor property
-        let newProviders = await MainActor.run {
-            return [
-                AppleWeatherKitAPI(),
-                OpenWeatherMapAPI(apiKey: openWeatherMapKey ?? "")
-            ]
+    }
+
+    func configure(openWeatherMapKey: String? = nil) async {
+
+        // Initialize providers in priority order
+        var newProviders: [any WeatherAPI] = []
+
+        // Add Apple WeatherKit (always available)
+        let appleWeatherKitAPI = await AppleWeatherKitAPI()
+        newProviders.append(appleWeatherKitAPI)
+
+        // Add OpenWeatherMap only if API key is provided
+        if let apiKey = openWeatherMapKey, !apiKey.isEmpty {
+            let openWeatherMapAPI = OpenWeatherMapAPI(apiKey: apiKey)
+            newProviders.append(openWeatherMapAPI)
         }
-        
-        self.providers = newProviders as! [any WeatherAPI]
-        
+
+        self.providers = newProviders
         logger.info("WeatherService configured with \(self.providers.count) providers")
     }
     
     func fetchWeatherData(for location: CLLocation, forceRefresh: Bool = false) async throws -> WeatherData {
+        logger.debug("Starting fetchWeatherData for location: \(location.coordinate.latitude), \(location.coordinate.longitude), forceRefresh: \(forceRefresh)")
         // Check cache first unless force refresh is requested
         if !forceRefresh, let cachedData = await getCachedWeatherData(for: location) {
             logger.debug("Returning cached weather data for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
@@ -123,29 +134,34 @@ actor WeatherServiceActor {
         // Try providers in order until one succeeds
         var lastError: WeatherError?
         
-        for provider in providers.sorted(by: { $0.provider.priority < $1.provider.priority }) {
+        // Sort providers by priority within the actor
+        let sortedProviders = providers.sorted { provider1, provider2 in
+            provider1.provider.priority < provider2.provider.priority
+        }
+        
+        for provider in sortedProviders {
             do {
+                let providerName = provider.provider.displayName
                 guard await provider.isAvailable else {
-                    logger.debug("Provider \(provider.provider.displayName) is not available")
+                    logger.debug("Provider \(providerName) is not available")
                     continue
                 }
                 
-                logger.debug("Attempting to fetch weather data from \(provider.provider.displayName)")
+                logger.debug("Attempting to fetch weather data from \(providerName)")
                 await rateLimiter.recordRequest()
                 
                 let weatherDataDTO = try await provider.fetchWeatherData(for: location)
                 
                 // Convert DTO to WeatherData and cache the result
-                let weatherData = await MainActor.run {
-                    return weatherDataDTO.toWeatherData()
-                }
+                let weatherData = weatherDataDTO.toWeatherData()
                 await cacheWeatherData(weatherData, for: location)
                 
-                logger.info("Successfully fetched weather data from \(provider.provider.displayName)")
+                logger.info("Successfully fetched weather data from \(providerName)")
                 return weatherData
                 
             } catch let error as WeatherError {
-                logger.warning("Provider \(provider.provider.displayName) failed: \(error.localizedDescription)")
+                let providerName = provider.provider.displayName
+                logger.warning("Provider \(providerName) failed: \(error.localizedDescription)")
                 lastError = error
                 
                 // If rate limited, wait before trying next provider
@@ -155,7 +171,8 @@ actor WeatherServiceActor {
                     }
                 }
             } catch {
-                logger.warning("Provider \(provider.provider.displayName) failed with unknown error: \(error)")
+                let providerName = provider.provider.displayName
+                logger.warning("Provider \(providerName) failed with unknown error: \(error)")
                 lastError = .unknown(error)
             }
         }
@@ -171,129 +188,121 @@ actor WeatherServiceActor {
     }
     
     func getCachedWeatherData(for location: CLLocation, allowExpired: Bool = false) async -> WeatherData? {
-        guard let modelContext = modelContext else { return nil }
-        
-        return await MainActor.run {
-            let searchRadius: CLLocationDistance = 10000 // 10km radius
-            let minLat = location.coordinate.latitude - (searchRadius / 111000)
-            let maxLat = location.coordinate.latitude + (searchRadius / 111000)
-            let minLon = location.coordinate.longitude - (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
-            let maxLon = location.coordinate.longitude + (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
-            
-            // Use simpler descriptor without key paths that cause issues
-            let descriptor = FetchDescriptor<WeatherData>(
-                sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
-            )
-            
-            do {
-                let results = try modelContext.fetch(descriptor)
-                
-                for weatherData in results {
-                    // Filter manually since Predicate key paths cause issues
-                    guard let weatherLocation = weatherData.location,
-                          weatherLocation.latitude >= minLat,
-                          weatherLocation.latitude <= maxLat,
-                          weatherLocation.longitude >= minLon,
-                          weatherLocation.longitude <= maxLon else {
-                        continue
-                    }
-                    
-                    let dataAge = Date().timeIntervalSince(weatherData.timestamp)
-                    
-                    if allowExpired || dataAge < cacheExpirationInterval {
-                        logger.debug("Found cached weather data, age: \(dataAge) seconds")
-                        return weatherData
-                    }
+        let searchRadius: CLLocationDistance = 10000 // 10km radius
+        let minLat = location.coordinate.latitude - (searchRadius / 111000)
+        let maxLat = location.coordinate.latitude + (searchRadius / 111000)
+        let minLon = location.coordinate.longitude - (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
+        let maxLon = location.coordinate.longitude + (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
+
+        // Use simpler descriptor without key paths that cause issues
+        let descriptor = FetchDescriptor<WeatherData>(
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+
+        do {
+            let results = try modelContext.fetch(descriptor)
+
+            for weatherData in results {
+                // Filter manually since Predicate key paths cause issues
+                guard let weatherLocation = weatherData.location,
+                      weatherLocation.latitude >= minLat,
+                      weatherLocation.latitude <= maxLat,
+                      weatherLocation.longitude >= minLon,
+                      weatherLocation.longitude <= maxLon else {
+                    continue
                 }
-            } catch {
-                logger.error("Failed to fetch cached weather data: \(error)")
+
+                let dataAge = Date().timeIntervalSince(weatherData.timestamp)
+
+                if allowExpired || dataAge < cacheExpirationInterval {
+                    logger.debug("Found cached weather data, age: \(dataAge) seconds")
+                    return weatherData
+                }
             }
-            
-            return nil
+        } catch {
+            logger.error("Failed to fetch cached weather data: \(error)")
         }
+
+        return nil
     }
     
     private func cacheWeatherData(_ weatherData: WeatherData, for location: CLLocation) async {
-        guard let modelContext = modelContext else { return }
-        
-        await MainActor.run {
-            // Create or update location data
-            let locationData = LocationData(
-                latitude: location.coordinate.latitude,
-                longitude: location.coordinate.longitude
-            )
-            
-            weatherData.location = locationData
-            weatherData.timestamp = Date()
-            weatherData.lastUpdated = Date()
-            weatherData.expiresAt = Calendar.current.date(byAdding: .minute, value: 15, to: Date())
-            
-            modelContext.insert(weatherData)
-            
-            do {
-                try modelContext.save()
-                logger.debug("Cached weather data for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
-            } catch {
-                logger.error("Failed to cache weather data: \(error)")
-            }
+        // Create or update location data
+        let locationData = LocationData(
+            latitude: location.coordinate.latitude,
+            longitude: location.coordinate.longitude
+        )
+
+        weatherData.location = locationData
+        weatherData.timestamp = Date()
+        weatherData.lastUpdated = Date()
+        weatherData.expiresAt = Calendar.current.date(byAdding: .minute, value: 15, to: Date())
+
+        modelContext.insert(weatherData)
+
+        do {
+            try modelContext.save()
+            logger.debug("Cached weather data for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+        } catch {
+            logger.error("Failed to cache weather data: \(error)")
         }
-        
+
         // Clean up old cache entries
         await cleanupOldCache()
     }
     
     private func cleanupOldCache() async {
-        guard let modelContext = modelContext else { return }
-        
-        await MainActor.run {
-            let cutoffDate = Calendar.current.date(byAdding: .hour, value: -24, to: Date()) ?? Date()
-            
-            // Use simple descriptor and filter manually
-            let descriptor = FetchDescriptor<WeatherData>(
-                sortBy: [SortDescriptor(\.timestamp, order: .forward)]
-            )
-            
-            do {
-                let allEntries = try modelContext.fetch(descriptor)
-                let oldEntries = allEntries.filter { $0.timestamp < cutoffDate }
-                
-                for entry in oldEntries {
-                    modelContext.delete(entry)
-                }
-                try modelContext.save()
-                logger.debug("Cleaned up \(oldEntries.count) old cache entries")
-            } catch {
-                logger.error("Failed to cleanup old cache: \(error)")
+        let cutoffDate = Calendar.current.date(byAdding: .hour, value: -24, to: Date()) ?? Date()
+
+        // Use simple descriptor and filter manually
+        let descriptor = FetchDescriptor<WeatherData>(
+            sortBy: [SortDescriptor(\.timestamp, order: .forward)]
+        )
+
+        do {
+            let allEntries = try modelContext.fetch(descriptor)
+            let oldEntries = allEntries.filter { $0.timestamp < cutoffDate }
+
+            for entry in oldEntries {
+                modelContext.delete(entry)
             }
+            try modelContext.save()
+            logger.debug("Cleaned up \(oldEntries.count) old cache entries")
+        } catch {
+            logger.error("Failed to cleanup old cache: \(error)")
         }
     }
     
     func clearCache() async {
-        guard let modelContext = modelContext else { return }
-        
-        await MainActor.run {
-            let descriptor = FetchDescriptor<WeatherData>()
-            
-            do {
-                let allEntries = try modelContext.fetch(descriptor)
-                for entry in allEntries {
-                    modelContext.delete(entry)
-                }
-                try modelContext.save()
-                logger.info("Cleared all cached weather data")
-            } catch {
-                logger.error("Failed to clear cache: \(error)")
+        let descriptor = FetchDescriptor<WeatherData>()
+
+        do {
+            let allEntries = try modelContext.fetch(descriptor)
+            for entry in allEntries {
+                modelContext.delete(entry)
             }
+            try modelContext.save()
+            logger.info("Cleared all cached weather data")
+        } catch {
+            logger.error("Failed to clear cache: \(error)")
         }
     }
     
     // MARK: - Background Refresh
-    
+
     func scheduleBackgroundRefresh() {
+        Task {
+            await scheduleBackgroundRefreshAsync()
+        }
+    }
+
+    private func scheduleBackgroundRefreshAsync() async {
+        // Use iOS 26+ background task scheduling
         let request = BGAppRefreshTaskRequest(identifier: backgroundTaskIdentifier)
         request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60) // 15 minutes
-        
+
         do {
+            // Submit the task using the standard API
             try BGTaskScheduler.shared.submit(request)
             logger.info("Scheduled background weather refresh")
         } catch {
@@ -301,51 +310,50 @@ actor WeatherServiceActor {
         }
     }
     
+    func performFetch(for location: CLLocation, forceRefresh: Bool) async throws {
+        _ = try await fetchWeatherData(for: location, forceRefresh: forceRefresh)
+    }
+
     func handleBackgroundRefresh() async {
         logger.info("Handling background weather refresh")
-        
-        guard let modelContext = modelContext else {
-            logger.error("No model context available for background refresh")
+
+        logger.debug("Fetching active reminders")
+        // Get all active weather reminders with locations
+        let descriptor = FetchDescriptor<WeatherReminder>()
+
+        let activeReminders: [WeatherReminder]
+        do {
+            let allReminders = try modelContext.fetch(descriptor)
+            // Filter manually to avoid Predicate key path issues
+            activeReminders = allReminders.filter { $0.isActive && $0.location != nil }
+        } catch {
+            logger.error("Failed to fetch active reminders for background refresh: \(error)")
             return
         }
-        
-        // Get all active weather reminders with locations
-        let activeReminders = await MainActor.run {
-            let descriptor = FetchDescriptor<WeatherReminder>()
-            
-            do {
-                let allReminders = try modelContext.fetch(descriptor)
-                // Filter manually to avoid Predicate key path issues
-                return allReminders.filter { $0.isActive && $0.location != nil }
-            } catch {
-                logger.error("Failed to fetch active reminders for background refresh: \(error)")
-                return []
-            }
-        }
-        
+
         logger.debug("Found \(activeReminders.count) active reminders to refresh")
-        
+
         // Group reminders by location to avoid duplicate requests
-        let locationGroups = await MainActor.run {
-            Dictionary(grouping: activeReminders) { reminder in
-                guard let location = reminder.location else { return "unknown" }
-                return "\(location.latitude),\(location.longitude)"
-            }
+        let locationGroups = Dictionary(grouping: activeReminders) { reminder in
+            guard let location = reminder.location else { return "unknown" }
+            return "\(location.latitude),\(location.longitude)"
         }
-        
+
+        // Convert location groups to coordinates
+        let locationCoordinates = locationGroups.compactMap { (key, reminders) -> (String, CLLocationCoordinate2D)? in
+            guard let reminder = reminders.first, let location = reminder.location else { return nil }
+            return (key, location.clLocation.coordinate)
+        }
+
         await withTaskGroup(of: Void.self) { group in
-            for (_, reminders) in locationGroups {
+            for (_, coordinate) in locationCoordinates {
                 group.addTask { [weak self] in
                     guard let self = self else { return }
-                    
-                    let location = await MainActor.run {
-                        reminders.first?.location?.clLocation
-                    }
-                    
-                    guard let location = location else { return }
-                    
+
+                    let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+
                     do {
-                        let _ = try await self.fetchWeatherData(for: location, forceRefresh: true)
+                        try await self.performFetch(for: location, forceRefresh: true)
                         self.logger.debug("Background refresh successful for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
                     } catch {
                         self.logger.warning("Background refresh failed for location: \(location.coordinate.latitude), \(location.coordinate.longitude), error: \(error)")
@@ -353,7 +361,7 @@ actor WeatherServiceActor {
                 }
             }
         }
-        
+
         // Schedule next refresh
         scheduleBackgroundRefresh()
     }

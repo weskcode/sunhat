@@ -7,10 +7,25 @@
 		<string>remote-notification</string>
 		<string>background-fetch</string>
 		<string>background-processing</string>
+		<string>weather-updates</string>
 	</array>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>hatti needs location access to provide weather-based reminders for your current area.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>hatti needs location access to provide weather-based reminders and background updates for your locations.</string>
+	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+	<dict>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>hatti needs temporary location access to set up weather-based reminders for your current location.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>hatti needs temporary location access to provide weather-based reminders while you're using the app.</string>
+	</dict>
+	<key>NSLocationAccuracyAuthorizationDescription</key>
+	<string>hatti requires precise location to provide accurate weather-based reminders for your exact location.</string>
+	<key>NSLocationDefaultAccuracyReduction</key>
+	<dict>
+		<key>NSLocationDefaultAccuracyReductionEnabled</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

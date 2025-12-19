@@ -65,7 +65,7 @@ final class LocationPermissionManager: NSObject, ObservableObject {
     }
     
     // MARK: - Permission Request
-    
+
     func requestLocationPermission(completion: @escaping (Bool) -> Void) {
         guard isLocationServicesEnabled else {
             locationError = .locationServicesDisabled
@@ -73,25 +73,61 @@ final class LocationPermissionManager: NSObject, ObservableObject {
             completion(false)
             return
         }
-        
+
         permissionCompletionHandler = completion
-        
+
         switch authorizationStatus {
         case .notDetermined:
             logger.info("Requesting location permission for the first time")
             locationManager.requestWhenInUseAuthorization()
-            
+
         case .denied, .restricted:
             logger.warning("Location permission denied or restricted")
             locationError = .permissionDenied
             showPermissionDeniedAlert = true
             completion(false)
-            
+
         case .authorizedWhenInUse, .authorizedAlways:
             logger.info("Location permission already granted")
             getCurrentLocation()
             completion(true)
-            
+
+        @unknown default:
+            logger.error("Unknown location authorization status")
+            locationError = .unknown
+            completion(false)
+        }
+    }
+
+    // MARK: - iOS 26+ Temporary Location Permission
+
+    @available(iOS 26, *)
+    func requestTemporaryLocationPermission(
+        purposeKey: String,
+        completion: @escaping (Bool) -> Void
+    ) {
+        guard isLocationServicesEnabled else {
+            locationError = .locationServicesDisabled
+            showPermissionDeniedAlert = true
+            completion(false)
+            return
+        }
+
+        permissionCompletionHandler = completion
+
+        switch authorizationStatus {
+        case .notDetermined, .authorizedWhenInUse, .authorizedAlways:
+            logger.info("Requesting temporary location permission for purpose: \(purposeKey)")
+            locationManager.requestTemporaryFullAccuracyAuthorization(
+                withPurposeKey: purposeKey
+            )
+
+        case .denied, .restricted:
+            logger.warning("Location permission denied or restricted")
+            locationError = .permissionDenied
+            showPermissionDeniedAlert = true
+            completion(false)
+
         @unknown default:
             logger.error("Unknown location authorization status")
             locationError = .unknown
@@ -428,30 +464,6 @@ extension ManualLocationData: Codable {
     }
 }
 
-// MARK: - CLLocationCoordinate2D Codable Extension
-
-// Note: CLLocationCoordinate2D already conforms to Codable in iOS 17+
-// This extension is only needed for iOS 16 and earlier
-@available(iOS, deprecated: 17.0, message: "CLLocationCoordinate2D now conforms to Codable natively")
-extension CLLocationCoordinate2D: @retroactive Codable {
-    nonisolated public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(latitude, forKey: .latitude)
-        try container.encode(longitude, forKey: .longitude)
-    }
-    
-    nonisolated public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let latitude = try container.decode(Double.self, forKey: .latitude)
-        let longitude = try container.decode(Double.self, forKey: .longitude)
-        self.init(latitude: latitude, longitude: longitude)
-    }
-    
-    nonisolated private enum CodingKeys: String, CodingKey {
-        case latitude
-        case longitude
-    }
-}
 
 // MARK: - CLAuthorizationStatus Description Extension
 

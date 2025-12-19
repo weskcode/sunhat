@@ -101,23 +101,24 @@ final class BackgroundWeatherManager: ObservableObject {
             let fetchedReminders: [WeatherReminder] = try modelContext.fetch(descriptor)
             
             // Filter reminders using MainActor-isolated properties
-            let activeReminders = await withTaskGroup(of: WeatherReminder?.self) { group in
+            let activeReminders = await withTaskGroup(of: (UUID, Bool)?.self) { group in
                 for reminder in fetchedReminders {
                     group.addTask {
                         let isActive = await MainActor.run { reminder.isActive }
                         let isCompleted = await MainActor.run { reminder.isCompleted }
                         let isPaused = await MainActor.run { reminder.isPaused }
-                        
+
                         if isActive && !isCompleted && !isPaused {
-                            return reminder
+                            return (reminder.persistentModelID, true)
                         }
                         return nil
                     }
                 }
-                
+
                 var results: [WeatherReminder] = []
-                for await reminder in group {
-                    if let reminder = reminder {
+                for await result in group {
+                    if let (modelID, _) = result,
+                       let reminder = try? modelContext.fetch(modelID) {
                         results.append(reminder)
                     }
                 }

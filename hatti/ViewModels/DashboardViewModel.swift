@@ -76,7 +76,7 @@ final class DashboardViewModel: NSObject, ObservableObject {
         self.weatherModelActor = WeatherModelActor(modelContainer: modelContext.container)
         
         Task {
-            await weatherService.configure(modelContext: modelContext)
+            await weatherService.configure(modelContainer: modelContext.container)
             await loadInitialData()
         }
         

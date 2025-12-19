@@ -27,6 +27,8 @@ struct hattiApp: App {
         let modelConfiguration = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: false,
+            allowsSave: true,
+            groupContainer: .identifier("group.com.hatti.app"),
             cloudKitDatabase: .automatic
         )
 

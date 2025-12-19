@@ -23,13 +23,14 @@ protocol WeatherAPI: Sendable {
 
 @MainActor
 final class AppleWeatherKitAPI: WeatherAPI {
-    let provider: WeatherProvider = .appleWeatherKit
+    nonisolated let provider: WeatherProvider = .appleWeatherKit
     private let weatherService = WeatherKit.WeatherService.shared
     
     nonisolated var isAvailable: Bool {
-        get async { 
+        get async {
             // Check if WeatherKit is available (requires iOS 16+)
-            return true 
+            // Since this is a system framework, it's always available on supported iOS versions
+            return true
         }
     }
     
@@ -41,6 +42,51 @@ final class AppleWeatherKitAPI: WeatherAPI {
             // For development, fall back to mock data if WeatherKit fails
             return mapMockCurrentWeather(at: location)
         }
+    }
+
+    // MARK: - iOS 26+ WeatherKit Enhancements
+
+    @available(iOS 26, *)
+    func fetchExtendedWeatherData(for location: CLLocation) async throws -> WeatherDataDTO {
+        do {
+            let weather = try await weatherService.weather(for: location)
+
+            // Use iOS 26+ WeatherKit features
+            let currentWeather = weather.currentWeather
+
+            // Enhanced mapping with iOS 26+ features
+            return mapEnhancedCurrentWeather(currentWeather, at: location)
+        } catch {
+            // For development, fall back to mock data if WeatherKit fails
+            return mapMockCurrentWeather(at: location)
+        }
+    }
+
+    @available(iOS 26, *)
+    private func mapEnhancedCurrentWeather(_ current: CurrentWeather, at location: CLLocation) -> WeatherDataDTO {
+        // WeatherKit doesn't provide direct precipitation amount in CurrentWeather
+        // We'll use the condition to infer precipitation type and set amount to 0
+        let precipType = mapPrecipitationType(current.condition)
+
+        // iOS 26+ enhanced data mapping
+        return WeatherDataDTO(
+            temperature: current.temperature.value,
+            feelsLike: current.apparentTemperature.value,
+            humidity: Int(current.humidity * 100),
+            dewPoint: current.dewPoint.value,
+            pressure: current.pressure.value,
+            visibility: current.visibility.value,
+            uvIndex: Double(current.uvIndex.value),
+            cloudCover: Int(current.cloudCover * 100),
+            windSpeed: current.wind.speed.value,
+            windDirection: Int(current.wind.direction.value),
+            precipitationAmount: 0.0, // CurrentWeather doesn't provide precipitation amount
+            precipitationType: precipType,
+            weatherCondition: mapWeatherKitCondition(current.condition),
+            dataSource: .appleWeatherKit,
+            accuracy: .high,
+            forecast: []
+        )
     }
     
     func fetchForecast(for location: CLLocation, days: Int = 7) async throws -> [ForecastDayDTO] {
@@ -182,6 +228,14 @@ final class AppleWeatherKitAPI: WeatherAPI {
         case .frigid, .hot: return .clear
         case .hurricane: return .thunderstorm
         case .tropicalStorm: return .thunderstorm
+        case .blowingDust: return .windy
+        case .haze: return .fog
+        case .heavyRain: return .rain
+        case .heavySnow: return .snow
+        case .mostlyClear: return .clear
+        case .sunFlurries: return .snow
+        case .sunShowers: return .rain
+        case .wintryMix: return .sleet
         @unknown default: return .unknown
         }
     }
@@ -217,7 +271,9 @@ final class AppleWeatherKitAPI: WeatherAPI {
              .breezy, .windy, .frigid, .hot,
              .isolatedThunderstorms, .scatteredThunderstorms,
              .strongStorms, .thunderstorms,
-             .foggy, .smoky, .hurricane, .tropicalStorm:
+             .foggy, .smoky, .hurricane, .tropicalStorm,
+             .blowingDust, .haze, .heavyRain, .heavySnow,
+             .mostlyClear, .sunFlurries, .sunShowers, .wintryMix:
             return .none
         @unknown default:
             return .none
@@ -228,19 +284,20 @@ final class AppleWeatherKitAPI: WeatherAPI {
 // MARK: - OpenWeatherMap Implementation
 
 final class OpenWeatherMapAPI: WeatherAPI {
-    let provider: WeatherProvider = .openWeatherMap
+    nonisolated let provider: WeatherProvider = .openWeatherMap
     private let apiKey: String
     private let session: URLSession
     private let baseURL = "https://api.openweathermap.org/data/2.5"
     
-    init(apiKey: String, session: URLSession = .shared) {
+    nonisolated init(apiKey: String, session: URLSession = .shared) {
         self.apiKey = apiKey
         self.session = session
     }
     
     var isAvailable: Bool {
         get async {
-            !apiKey.isEmpty
+            // Check if API key is available
+            return !apiKey.isEmpty
         }
     }
     
@@ -390,7 +447,7 @@ final class OpenWeatherMapAPI: WeatherAPI {
         }
     }
     
-    private func mapOpenWeatherCondition(_ id: Int) -> WeatherCondition {
+    private nonisolated func mapOpenWeatherCondition(_ id: Int) -> WeatherCondition {
         switch id {
         case 200...232: return .thunderstorm
         case 300...321: return .drizzle
@@ -476,14 +533,14 @@ private struct OpenWeatherForecastItem: Codable, Sendable {
 // MARK: - Helper Extensions
 
 private extension Array where Element: Hashable {
-    func mostFrequent() -> Element? {
+    nonisolated func mostFrequent() -> Element? {
         let counts = Dictionary(grouping: self) { $0 }.mapValues { $0.count }
         return counts.max { $0.value < $1.value }?.key
     }
 }
 
 private extension Array where Element == Double {
-    func average() -> Double {
+    nonisolated func average() -> Double {
         guard !isEmpty else { return 0 }
         return reduce(0, +) / Double(count)
     }

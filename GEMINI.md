@@ -8,12 +8,12 @@ This is "hatti" - a weather-triggered reminder iOS application. The app concept 
 
 ## Development Environment
 
-- **Platform**: iOS 18.0+ (targeting iOS 26 design language)
-- **Language**: Swift 6.0+
-- **UI Framework**: SwiftUI 6.0
-- **Architecture**: MVVM (Model-View-ViewModel) pattern
-- **Data Layer**: SwiftData for local persistence, CloudKit for sync
-- **Minimum Target**: iOS 18.0
+- **Platform**: iOS 26.0+ (fully upgraded to iOS 26)
+- **Language**: Swift 6.0+ (latest as of December 2025)
+- **UI Framework**: SwiftUI 6.0 with iOS 26 enhancements
+- **Architecture**: MVVM (Model-View-ViewModel) pattern with improved dependency injection
+- **Data Layer**: SwiftData for local persistence with iOS 26 optimizations, CloudKit for sync
+- **Minimum Target**: iOS 26.0
 - **Bundle ID**: org.wesley.hatti
 
 ## Common Development Commands
@@ -27,7 +27,7 @@ open hatti.xcodeproj
 xcodebuild -scheme hatti -configuration Debug build
 
 # Run tests
-xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' test
+xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' test
 
 # Build for release
 xcodebuild -scheme hatti -configuration Release build
@@ -36,13 +36,13 @@ xcodebuild -scheme hatti -configuration Release build
 ### Testing Commands
 ```bash
 # Run unit tests only
-xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' -only-testing:hattiTests test
+xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' -only-testing:hattiTests test
 
-# Run UI tests only  
-xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' -only-testing:hattiUITests test
+# Run UI tests only
+xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' -only-testing:hattiUITests test
 
 # Run specific test
-xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' -only-testing:hattiTests/hattiTests/testExample test
+xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' -only-testing:hattiTests/hattiTests/testExample test
 ```
 
 ## Project Architecture
@@ -53,14 +53,15 @@ xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 16,OS=
 - **Item.swift**: SwiftData model for basic timestamp storage
 - **Tests**: Standard XCTest setup for unit and UI testing
 
-### Planned Architecture (from hatti-plan.md)
-The app will evolve into a sophisticated weather-triggered reminder system with:
+### Current Architecture (iOS 26 Implementation)
+The app has evolved into a sophisticated weather-triggered reminder system with:
 
-- **MVVM Pattern**: SwiftUI Views + ViewModels + SwiftData Models
-- **SwiftData + CloudKit**: Automatic cross-device sync for reminders
-- **Weather Integration**: Apple WeatherKit (primary), OpenWeatherMap (backup)
-- **Background Processing**: BackgroundTasks framework for weather monitoring
-- **Modern Concurrency**: Swift 6.0 async/await, actors, structured concurrency
+- **MVVM Pattern**: SwiftUI Views + ViewModels + SwiftData Models with improved dependency injection
+- **SwiftData + CloudKit**: Automatic cross-device sync for reminders with iOS 26 optimizations
+- **Weather Integration**: Apple WeatherKit (primary) with iOS 26 APIs, OpenWeatherMap (backup)
+- **Background Processing**: iOS 26 BackgroundTasks framework for weather monitoring
+- **Modern Concurrency**: Swift 6.0 async/await, actors, structured concurrency with iOS 26 enhancements
+- **Location Services**: iOS 26 CoreLocation with temporary location permission support
 
 ### Key Data Models (Planned)
 ```swift
@@ -92,17 +93,20 @@ class WeatherData {
 - Leverage automatic CloudKit sync for cross-device functionality
 - Use `@Query` in views for reactive data binding
 
-### Modern Swift Patterns
+### Modern Swift Patterns (iOS 26)
 - **Concurrency**: Always use async/await, never completion handlers
-- **UI Safety**: Use `@MainActor` for UI-bound classes
-- **Actor Isolation**: Background actors for data processing
+- **UI Safety**: Use `@MainActor` for UI-bound classes with iOS 26 improvements
+- **Actor Isolation**: Background actors for data processing with iOS 26 actor enhancements
 - **Structured Concurrency**: TaskGroup and async let for parallel operations
+- **Observation Framework**: Use `@Observable` macro for state management
+- **Swift 6.0 Features**: Leverage macros, opaque types, and enhanced result builders
 
-### Weather Integration Architecture
-- Primary: Apple WeatherKit for native integration
-- Backup: OpenWeatherMap for reliability
-- Cache with SwiftData for offline capability
-- Background refresh using BackgroundTasks framework
+### Weather Integration Architecture (iOS 26)
+- Primary: Apple WeatherKit for native integration with iOS 26 APIs
+- Backup: OpenWeatherMap for reliability with updated API endpoints
+- Cache with SwiftData for offline capability with iOS 26 optimizations
+- Background refresh using iOS 26 BackgroundTasks framework
+- Support for new iOS 26 weather data types and condition mappings
 
 ### Testing Requirements
 - Unit tests in `hattiTests/` for business logic
@@ -133,4 +137,4 @@ The app will implement sophisticated weather triggers including:
 - **No Data Sharing**: Zero personal weather data shared externally
 - **Compliance**: GDPR and CCPA ready implementation
 
-This project represents the initial foundation that will evolve into a comprehensive weather-intelligent reminder system following modern iOS development patterns and Apple's design guidelines.
+This project represents a fully upgraded iOS 26 weather-intelligent reminder system following modern iOS development patterns and Apple's design guidelines as of December 2025. The app leverages the latest iOS 26 APIs, Swift 6.0 features, and enhanced architecture patterns for optimal performance and user experience.

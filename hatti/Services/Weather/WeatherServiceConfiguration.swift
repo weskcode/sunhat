@@ -77,7 +77,7 @@ final class WeatherServiceManager: ObservableObject {
         
         do {
             await WeatherService.shared.configure(
-                modelContext: modelContext,
+                modelContainer: modelContext.container,
                 openWeatherMapKey: newConfiguration.openWeatherMapAPIKey
             )
             

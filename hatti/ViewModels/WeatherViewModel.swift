@@ -67,13 +67,50 @@ protocol LocationManaging {
     func currentLocation() async -> (location: CLLocation, name: String)?
 }
 
+// MARK: - LocationPermissionManager Integration
+final class LocationPermissionManagerAdapter: LocationManaging {
+    private let locationPermissionManager: LocationPermissionManager
+
+    init(locationPermissionManager: LocationPermissionManager) {
+        self.locationPermissionManager = locationPermissionManager
+    }
+
+    func currentLocation() async -> (location: CLLocation, name: String)? {
+        // Request location permission if not already granted
+        if locationPermissionManager.authorizationStatus == .notDetermined {
+            await withCheckedContinuation { continuation in
+                locationPermissionManager.requestLocationPermission { success in
+                    continuation.resume()
+                }
+            }
+        }
+
+        // Check if we have a valid location
+        if let currentLocation = locationPermissionManager.currentLocation {
+            let locationName = locationPermissionManager.getDisplayLocation()
+            return (currentLocation, locationName)
+        } else if let manualLocation = locationPermissionManager.manualLocation {
+            let location = CLLocation(
+                latitude: manualLocation.coordinate.latitude,
+                longitude: manualLocation.coordinate.longitude
+            )
+            return (location, manualLocation.displayName)
+        }
+
+        // Fallback to default location if no permission or location available
+        let defaultLoc = CLLocation(latitude: 37.7749, longitude: -122.4194)
+        let name = "San Francisco, CA"
+        return (defaultLoc, name)
+    }
+}
+
+// MARK: - Default Location Manager (Legacy)
 final class DefaultLocationManager: LocationManaging {
-    nonisolated(unsafe) static let shared = DefaultLocationManager()
+    static let shared = DefaultLocationManager()
     private var cached: (CLLocation, String)?
 
     func currentLocation() async -> (location: CLLocation, name: String)? {
         if let loc = cached { return loc }
-        // TODO: Integrate with LocationPermissionManager
         let defaultLoc = CLLocation(latitude: 37.7749, longitude: -122.4194)
         let name = "San Francisco, CA"
         cached = (defaultLoc, name)
@@ -134,7 +171,7 @@ final class WeatherViewModel: ObservableObject {
     }()
 
     // MARK: - Initialization
-    nonisolated init(
+    init(
         modelContainer: ModelContainer,
         weatherService: WeatherService,
         locationManager: LocationManaging
@@ -142,19 +179,34 @@ final class WeatherViewModel: ObservableObject {
         self.weatherModelActor = WeatherModelActor(modelContainer: modelContainer)
         self.weatherService = weatherService
         self.locationManager = locationManager
-        
+
         Task { @MainActor in
             bindService()
             await loadAllData(forceRefresh: false)
         }
     }
-    
+
     // Convenience initializer that uses shared instances
     convenience init(modelContainer: ModelContainer) {
+        let locationPermissionManager = LocationPermissionManager()
+        let locationManager = LocationPermissionManagerAdapter(locationPermissionManager: locationPermissionManager)
         self.init(
             modelContainer: modelContainer,
             weatherService: WeatherService.shared,
-            locationManager: DefaultLocationManager.shared
+            locationManager: locationManager
+        )
+    }
+
+    // Initializer with LocationPermissionManager for better control
+    convenience init(
+        modelContainer: ModelContainer,
+        locationPermissionManager: LocationPermissionManager
+    ) {
+        let locationManager = LocationPermissionManagerAdapter(locationPermissionManager: locationPermissionManager)
+        self.init(
+            modelContainer: modelContainer,
+            weatherService: WeatherService.shared,
+            locationManager: locationManager
         )
     }
 
@@ -188,11 +240,10 @@ final class WeatherViewModel: ObservableObject {
             )
             updateCurrent(from: data)
             computeDayLength()
-            await withTaskGroup(of: Void.self) { group in
-                group.addTask { await self.loadForecasts() }
-                group.addTask { await self.loadHistorical() }
-                group.addTask { await self.loadTriggers(with: data) }
-            }
+            // Run these tasks sequentially to avoid Sendable issues with WeatherData
+            await loadForecasts()
+            await loadHistorical()
+            await loadTriggers(with: data)
             logger.info("Weather data loaded for \(locInfo.name)")
         } catch {
             logger.error("Error loading weather: \(error.localizedDescription)")
@@ -348,29 +399,22 @@ final class WeatherViewModel: ObservableObject {
             let reminderDisplays = try await weatherModelActor.fetchActiveRemindersForDisplay()
             var preds: [TriggerPrediction] = []
             
-            await withTaskGroup(of: TriggerPrediction?.self) { group in
-                for reminder in reminderDisplays {
-                    group.addTask { @MainActor in
-                        // Create a synthetic TriggerCondition from the display data for calculations
-                        // In a real implementation, you'd want to store this calculation logic in the ModelActor
-                        let likelihood = self.calculateLikelihoodFromDisplay(reminder: reminder, data: data)
-                        let eta = await self.estimateTimeFromDisplay(reminder: reminder, current: data)
-                        
-                        return TriggerPrediction(
-                            reminderId: reminder.id,
-                            reminderTitle: reminder.title,
-                            reminderIcon: reminder.category.iconName,
-                            conditionDescription: reminder.conditionDescription,
-                            currentTemperature: data.temperature,
-                            targetTemperature: 70.0, // Default - should be calculated from condition
-                            likelihood: likelihood,
-                            estimatedTriggerTime: eta
-                        )
-                    }
-                }
-                for await result in group {
-                    if let p = result { preds.append(p) }
-                }
+            // Process reminders sequentially to avoid Sendable issues with WeatherData
+            for reminder in reminderDisplays {
+                let likelihood = calculateLikelihoodFromDisplay(reminder: reminder, data: data)
+                let eta = await estimateTimeFromDisplay(reminder: reminder, current: data)
+    
+                let prediction = TriggerPrediction(
+                    reminderId: reminder.id,
+                    reminderTitle: reminder.title,
+                    reminderIcon: reminder.category.iconName,
+                    conditionDescription: reminder.conditionDescription,
+                    currentTemperature: data.temperature,
+                    targetTemperature: 70.0, // Default - should be calculated from condition
+                    likelihood: likelihood,
+                    estimatedTriggerTime: eta
+                )
+                preds.append(prediction)
             }
             triggerPredictions = preds.sorted { $0.likelihood > $1.likelihood }
         } catch {

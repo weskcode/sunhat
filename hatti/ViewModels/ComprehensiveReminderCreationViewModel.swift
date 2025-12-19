@@ -125,7 +125,7 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
     func configure(modelContext: ModelContext) {
         self.modelContext = modelContext
         Task {
-            await weatherService.configure(modelContext: modelContext)
+            await weatherService.configure(modelContainer: modelContext.container)
             loadForecastData()
         }
     }
