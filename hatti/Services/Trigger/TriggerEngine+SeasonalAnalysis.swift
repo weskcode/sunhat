@@ -49,9 +49,7 @@ extension TriggerEngine {
         let comparisonDays = 30 // Default to 30 days of historical data
         let historicalComparison = await performHistoricalComparison(
             location: location,
-            currentWeather: await MainActor.run {
-                currentWeather.toWeatherData()
-            },
+            currentWeather: currentWeather,
             comparisonDays: comparisonDays,
             useFeelsLike: useFeelsLike
         )
@@ -121,7 +119,7 @@ extension TriggerEngine {
     
     func getHistoricalWeatherContext(for location: CLLocation) async -> HistoricalWeatherContext {
         let cacheKey = "\(location.coordinate.latitude),\(location.coordinate.longitude)_historical"
-        
+         
         // Check cache first
         if let cachedContext = historicalDataCache[cacheKey] {
             return cachedContext
@@ -130,39 +128,23 @@ extension TriggerEngine {
         // Fetch historical data for the past few years using modelActor
         let endDate = Date()
         let startDate = Calendar.current.date(byAdding: .year, value: -3, to: endDate) ?? endDate
-        
+         
         do {
             let historicalDataTransfers = try await modelActor.fetchHistoricalWeatherData(
                 for: location,
                 daysBack: 1095  // Approximately 3 years
             )
-            
-            // Convert to WeatherData for processing
-            let historicalData = await withTaskGroup(of: WeatherData.self) { group in
-                for transfer in historicalDataTransfers {
-                    group.addTask {
-                        await MainActor.run {
-                            transfer.toWeatherData()
-                        }
-                    }
-                }
-                
-                var results: [WeatherData] = []
-                for await result in group {
-                    results.append(result)
-                }
-                return results
-            }
+             
             let context: HistoricalWeatherContext = buildHistoricalContext(
                 location: location,
-                historicalData: historicalData
+                historicalDataTransfers: historicalDataTransfers
             )
-            
+             
             // Cache the result
             historicalDataCache[cacheKey] = context
-            
+             
             return context
-            
+             
         } catch {
             logger.error("Failed to fetch historical weather data: \(error)")
             return createEmptyHistoricalContext(location: location)
@@ -171,86 +153,72 @@ extension TriggerEngine {
     
     private func buildHistoricalContext(
         location: CLLocation,
-        historicalData: [WeatherData]
+        historicalDataTransfers: [WeatherDataTransfer]
     ) -> HistoricalWeatherContext {
-        
+         
         let calendar = Calendar.current
         var yearlyAverages: [String: Double] = [:]
-        var yearlyData: [Int: [WeatherData]] = [:]
-        
+        var yearlyData: [Int: [WeatherDataTransfer]] = [:]
+         
         // Group data by year and calculate averages
-        for data in historicalData {
+        for data in historicalDataTransfers {
             let year = calendar.component(.year, from: data.timestamp)
             yearlyData[year, default: []].append(data)
-            
+             
             // Create month-day key
             let monthDay = calendar.dateComponents([.month, .day], from: data.timestamp)
             let key = "\(monthDay.month!)-\(monthDay.day!)"
-            
+             
             if yearlyAverages[key] == nil {
                 yearlyAverages[key] = data.temperature
             } else {
                 yearlyAverages[key] = (yearlyAverages[key]! + data.temperature) / 2
             }
         }
-        
+         
         // Analyze seasonal patterns
-        let seasonalPatterns = analyzeSeasonalPatterns(yearlyData: yearlyData)
-        
+        let seasonalPatterns = analyzeSeasonalPatterns(yearlyDataTransfers: yearlyData)
+         
         return HistoricalWeatherContext(
             location: location,
             currentDate: Date(),
-            historicalData: await withTaskGroup(of: WeatherDataTransfer.self) { group in
-                for data in historicalData {
-                    group.addTask {
-                        await MainActor.run {
-                            ModelDataConverter.convertWeatherData(data)
-                        }
-                    }
-                }
-                
-                var results: [WeatherDataTransfer] = []
-                for await result in group {
-                    results.append(result)
-                }
-                return results
-            },
+            historicalData: historicalDataTransfers,
             yearlyAverages: yearlyAverages,
             seasonalPatterns: seasonalPatterns
         )
     }
     
-    private func analyzeSeasonalPatterns(yearlyData: [Int: [WeatherData]]) -> HistoricalWeatherContext.SeasonalPatterns {
+    private func analyzeSeasonalPatterns(yearlyDataTransfers: [Int: [WeatherDataTransfer]]) -> HistoricalWeatherContext.SeasonalPatterns {
         let calendar = Calendar.current
-        
+         
         var firstFrostDates: [Date] = []
         var lastFrostDates: [Date] = []
         var springTransitions: [Date] = []
         var fallTransitions: [Date] = []
-        
-        for (year, data) in yearlyData {
+         
+        for (year, data) in yearlyDataTransfers {
             let sortedData = data.sorted { $0.timestamp < $1.timestamp }
-            
+             
             // Find first frost (first day below 32°F in fall/winter)
             if let firstFrost = findFirstFrost(in: sortedData, year: year) {
                 firstFrostDates.append(firstFrost)
             }
-            
+             
             // Find last frost (last day below 32°F in winter/spring)
             if let lastFrost = findLastFrost(in: sortedData, year: year) {
                 lastFrostDates.append(lastFrost)
             }
-            
+             
             // Find seasonal transitions based on temperature patterns
             if let springTransition = findSpringTransition(in: sortedData, year: year) {
                 springTransitions.append(springTransition)
             }
-            
+             
             if let fallTransition = findFallTransition(in: sortedData, year: year) {
                 fallTransitions.append(fallTransition)
             }
         }
-        
+         
         return HistoricalWeatherContext.SeasonalPatterns(
             averageFirstFrost: calculateAverageDate(firstFrostDates),
             averageLastFrost: calculateAverageDate(lastFrostDates),
@@ -261,10 +229,10 @@ extension TriggerEngine {
         )
     }
     
-    private func findFirstFrost(in data: [WeatherData], year: Int) -> Date? {
+    private func findFirstFrost(in data: [WeatherDataTransfer], year: Int) -> Date? {
         let calendar = Calendar.current
         let fallStart = calendar.date(from: DateComponents(year: year, month: 9, day: 1)) ?? Date()
-        
+         
         for weatherData in data {
             if weatherData.timestamp >= fallStart && weatherData.temperature <= 32.0 {
                 return weatherData.timestamp
@@ -273,10 +241,10 @@ extension TriggerEngine {
         return nil
     }
     
-    private func findLastFrost(in data: [WeatherData], year: Int) -> Date? {
+    private func findLastFrost(in data: [WeatherDataTransfer], year: Int) -> Date? {
         let calendar = Calendar.current
         let springEnd = calendar.date(from: DateComponents(year: year, month: 6, day: 1)) ?? Date()
-        
+         
         for weatherData in data.reversed() {
             if weatherData.timestamp <= springEnd && weatherData.temperature <= 32.0 {
                 return weatherData.timestamp
@@ -285,11 +253,11 @@ extension TriggerEngine {
         return nil
     }
     
-    private func findSpringTransition(in data: [WeatherData], year: Int) -> Date? {
+    private func findSpringTransition(in data: [WeatherDataTransfer], year: Int) -> Date? {
         // Spring transition: 7 consecutive days above 50°F after March 1
         let calendar = Calendar.current
         let springStart = calendar.date(from: DateComponents(year: year, month: 3, day: 1)) ?? Date()
-        
+         
         var consecutiveDays = 0
         for weatherData in data {
             if weatherData.timestamp >= springStart {
@@ -306,11 +274,11 @@ extension TriggerEngine {
         return nil
     }
     
-    private func findFallTransition(in data: [WeatherData], year: Int) -> Date? {
+    private func findFallTransition(in data: [WeatherDataTransfer], year: Int) -> Date? {
         // Fall transition: 7 consecutive days below 60°F after August 1
         let calendar = Calendar.current
         let fallStart = calendar.date(from: DateComponents(year: year, month: 8, day: 1)) ?? Date()
-        
+         
         var consecutiveDays = 0
         for weatherData in data {
             if weatherData.timestamp >= fallStart {
@@ -390,7 +358,7 @@ struct HistoricalComparisonResult: Sendable {
 extension TriggerEngine {
     
     private func analyzeSeasonalTransition(
-        currentWeather: WeatherData,
+        currentWeather: WeatherDataTransfer,
         historicalContext: HistoricalWeatherContext,
         seasonalType: SeasonalType
     ) -> SeasonalTransitionAnalysis {
@@ -419,14 +387,14 @@ extension TriggerEngine {
     }
     
     private func analyzeFirstFrostTransition(
-        currentWeather: WeatherData,
+        currentWeather: WeatherDataTransfer,
         historicalContext: HistoricalWeatherContext,
         currentDate: Date
     ) -> SeasonalTransitionAnalysis {
-        
+         
         let calendar = Calendar.current
         let currentMonth = calendar.component(.month, from: currentDate)
-        
+         
         // First frost typically occurs in fall (September-December)
         guard currentMonth >= 9 || currentMonth <= 12 else {
             return SeasonalTransitionAnalysis(
@@ -439,14 +407,14 @@ extension TriggerEngine {
                 temperatureTrend: .stable
             )
         }
-        
+         
         let isFreezingCondition = currentWeather.temperature <= 32.0
         let confidence = isFreezingCondition ? 1.0 : max(0.0, (40.0 - currentWeather.temperature) / 8.0)
-        
+         
         let description = isFreezingCondition ?
             "First frost detected: temperature \(String(format: "%.1f", currentWeather.temperature))°F" :
             "Frost conditions approaching: temperature \(String(format: "%.1f", currentWeather.temperature))°F"
-        
+         
         return SeasonalTransitionAnalysis(
             isTransitionDetected: isFreezingCondition,
             confidence: confidence,
@@ -459,7 +427,7 @@ extension TriggerEngine {
     }
     
     private func analyzeLastFrostTransition(
-        currentWeather: WeatherData,
+        currentWeather: WeatherDataTransfer,
         historicalContext: HistoricalWeatherContext,
         currentDate: Date
     ) -> SeasonalTransitionAnalysis {
@@ -500,7 +468,7 @@ extension TriggerEngine {
     }
     
     private func analyzeSpringTransition(
-        currentWeather: WeatherData,
+        currentWeather: WeatherDataTransfer,
         historicalContext: HistoricalWeatherContext,
         currentDate: Date
     ) -> SeasonalTransitionAnalysis {
@@ -525,7 +493,7 @@ extension TriggerEngine {
     }
     
     private func analyzeFallTransition(
-        currentWeather: WeatherData,
+        currentWeather: WeatherDataTransfer,
         historicalContext: HistoricalWeatherContext,
         currentDate: Date
     ) -> SeasonalTransitionAnalysis {
@@ -550,7 +518,7 @@ extension TriggerEngine {
     }
     
     private func analyzeSummerTransition(
-        currentWeather: WeatherData,
+        currentWeather: WeatherDataTransfer,
         historicalContext: HistoricalWeatherContext,
         currentDate: Date
     ) -> SeasonalTransitionAnalysis {
@@ -575,7 +543,7 @@ extension TriggerEngine {
     }
     
     private func analyzeWinterTransition(
-        currentWeather: WeatherData,
+        currentWeather: WeatherDataTransfer,
         historicalContext: HistoricalWeatherContext,
         currentDate: Date
     ) -> SeasonalTransitionAnalysis {
@@ -600,7 +568,7 @@ extension TriggerEngine {
     }
     
     private func analyzeGrowingSeasonStart(
-        currentWeather: WeatherData,
+        currentWeather: WeatherDataTransfer,
         historicalContext: HistoricalWeatherContext,
         currentDate: Date
     ) -> SeasonalTransitionAnalysis {
@@ -614,7 +582,7 @@ extension TriggerEngine {
     }
     
     private func analyzeGrowingSeasonEnd(
-        currentWeather: WeatherData,
+        currentWeather: WeatherDataTransfer,
         historicalContext: HistoricalWeatherContext,
         currentDate: Date
     ) -> SeasonalTransitionAnalysis {
@@ -661,25 +629,25 @@ extension TriggerEngine {
     
     private func performHistoricalComparison(
         location: CLLocation,
-        currentWeather: WeatherData,
+        currentWeather: WeatherDataTransfer,
         comparisonDays: Int,
         useFeelsLike: Bool
     ) async -> HistoricalComparisonResult {
-        
+         
         let calendar = Calendar.current
         let currentDate = Date()
         let currentMonthDay = calendar.dateComponents([.month, .day], from: currentDate)
-        
+         
         // Get historical data for this date across multiple years
         let historicalData = await getHistoricalDataForDate(
             location: location,
             monthDay: currentMonthDay,
             years: comparisonDays / 365 + 1
         )
-        
+         
         let currentTemp = useFeelsLike ? currentWeather.apparentTemperature : currentWeather.temperature
         let historicalTemps = historicalData.map { useFeelsLike ? $0.apparentTemperature : $0.temperature }
-        
+         
         guard !historicalTemps.isEmpty else {
             return HistoricalComparisonResult(
                 historicalAverage: currentTemp,
@@ -693,26 +661,26 @@ extension TriggerEngine {
                 temperatureDifferenceConfidence: 0.0
             )
         }
-        
+         
         let historicalAverage = historicalTemps.reduce(0, +) / Double(historicalTemps.count)
         let temperatureDifference = currentTemp - historicalAverage
         let sortedTemps = historicalTemps.sorted()
-        
+         
         // Calculate percentile rank
         let belowCurrent = historicalTemps.filter { $0 < currentTemp }.count
         let percentileRank = Double(belowCurrent) / Double(historicalTemps.count)
-        
+         
         // Determine percentile range (where current temp falls)
         let percentileRange = calculatePercentileRange(currentTemp: currentTemp, historicalTemps: sortedTemps)
-        
+         
         let isWarmestOnRecord = currentTemp > (sortedTemps.max() ?? currentTemp)
         let isColdestOnRecord = currentTemp < (sortedTemps.min() ?? currentTemp)
-        
+         
         // Calculate confidence based on sample size and difference magnitude
         let sampleSizeConfidence = min(1.0, Double(historicalTemps.count) / 10.0) // Full confidence with 10+ samples
         let differenceConfidence = min(1.0, abs(temperatureDifference) / 10.0) // Full confidence with 10°+ difference
         let temperatureDifferenceConfidence = (sampleSizeConfidence + differenceConfidence) / 2.0
-        
+         
         return HistoricalComparisonResult(
             historicalAverage: historicalAverage,
             temperatureDifference: temperatureDifference,
@@ -730,101 +698,57 @@ extension TriggerEngine {
         location: CLLocation,
         monthDay: DateComponents,
         years: Int
-    ) async -> [WeatherData] {
-        
+    ) async -> [WeatherDataTransfer] {
+         
         guard let month = monthDay.month,
               let day = monthDay.day else {
             return []
         }
-        
-        var historicalData: [WeatherData] = []
+         
+        var historicalData: [WeatherDataTransfer] = []
         let calendar = Calendar.current
         let currentYear = calendar.component(.year, from: Date())
-        
+         
         // Search for this date in previous years
         for yearOffset in 1...years {
             let targetYear = currentYear - yearOffset
             guard let targetDate = calendar.date(from: DateComponents(year: targetYear, month: month, day: day)) else {
                 continue
             }
-            
+             
             // Search for weather data within 1 day of the target date
             let startDate = calendar.date(byAdding: .day, value: -1, to: targetDate) ?? targetDate
             let endDate = calendar.date(byAdding: .day, value: 1, to: targetDate) ?? targetDate
-            
+             
             let searchRadius: CLLocationDistance = 15000 // 15km
             let minLat = location.coordinate.latitude - (searchRadius / 111000)
             let maxLat = location.coordinate.latitude + (searchRadius / 111000)
             let minLon = location.coordinate.longitude - (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
             let maxLon = location.coordinate.longitude + (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
-            
-            let timePredicate = #Predicate<WeatherData> { weather in
-                weather.timestamp >= startDate && weather.timestamp <= endDate
-            }
-            
-            let descriptor = FetchDescriptor<WeatherData>(
-                predicate: timePredicate
-            )
-            
+             
             do {
                 // Use modelActor to fetch historical data for this year
                 let yearDataTransfers = try await modelActor.fetchHistoricalWeatherData(
                     for: location,
                     daysBack: Int(Date().timeIntervalSince(startDate) / 86400) // Convert to days
                 )
-                
-                // Convert to WeatherData and filter by date proximity
-                let yearData = await withTaskGroup(of: WeatherData?.self) { group in
-                    for transfer in yearDataTransfers {
-                        group.addTask {
-                            let weather = await MainActor.run {
-                                transfer.toWeatherData()
-                            }
-                            let timestamp = await MainActor.run { weather.timestamp }
-                            if abs(timestamp.timeIntervalSince(targetDate)) <= 86400 {
-                                return weather
-                            }
-                            return nil
-                        }
-                    }
-                    
-                    var results: [WeatherData] = []
-                    for await weather in group {
-                        if let weather = weather {
-                            results.append(weather)
-                        }
-                    }
-                    return results
+                 
+                // Filter by date proximity
+                let filteredData = yearDataTransfers.filter { transfer in
+                    abs(transfer.timestamp.timeIntervalSince(targetDate)) <= 86400
                 }
-                
-                if let closestData = await withTaskGroup(of: (WeatherData, TimeInterval).self) { group in
-                    for data in yearData {
-                        group.addTask {
-                            let timestamp = await MainActor.run { data.timestamp }
-                            let interval = abs(timestamp.timeIntervalSince(targetDate))
-                            return (data, interval)
-                        }
-                    }
-                    
-                    var minData: WeatherData?
-                    var minInterval: TimeInterval = .infinity
-                    
-                    for await (data, interval) in group {
-                        if interval < minInterval {
-                            minInterval = interval
-                            minData = data
-                        }
-                    }
-                    
-                    return minData
-                }() {
+                 
+                // Find the closest data point
+                if let closestData = filteredData.min(by: {
+                    abs($0.timestamp.timeIntervalSince(targetDate)) < abs($1.timestamp.timeIntervalSince(targetDate))
+                }) {
                     historicalData.append(closestData)
                 }
             } catch {
                 logger.warning("Failed to fetch historical data for \(targetYear): \(error)")
             }
         }
-        
+         
         return historicalData
     }
     

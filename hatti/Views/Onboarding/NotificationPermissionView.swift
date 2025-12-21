@@ -712,14 +712,22 @@ final class NotificationPermissionManager: NSObject, ObservableObject {
     }
     
     func requestNotificationPermission(completion: @escaping (Bool) -> Void) {
-        notificationCenter.requestAuthorization(options: [.alert, .badge, .sound, .provisional]) { [weak self] granted, error in
-            DispatchQueue.main.async {
-                self?.checkNotificationStatus()
-                
-                if granted {
-                    completion(true)
-                } else {
-                    self?.showPermissionDeniedAlert = true
+        Task {
+            do {
+                let granted = try await notificationCenter.requestAuthorization(options: [.alert, .badge, .sound, .provisional])
+                await MainActor.run {
+                    checkNotificationStatus()
+                    
+                    if granted {
+                        completion(true)
+                    } else {
+                        showPermissionDeniedAlert = true
+                        completion(false)
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    showPermissionDeniedAlert = true
                     completion(false)
                 }
             }
@@ -727,9 +735,14 @@ final class NotificationPermissionManager: NSObject, ObservableObject {
     }
     
     func checkNotificationStatus() {
-        notificationCenter.getNotificationSettings { [weak self] settings in
-            DispatchQueue.main.async {
-                self?.notificationStatus = settings.authorizationStatus
+        Task {
+            do {
+                let settings = try await notificationCenter.notificationSettings()
+                await MainActor.run {
+                    notificationStatus = settings.authorizationStatus
+                }
+            } catch {
+                print("Error getting notification settings: \(error)")
             }
         }
     }

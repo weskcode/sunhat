@@ -339,7 +339,7 @@ final class ReminderManagementViewModel: ObservableObject {
                 reminder.isActive && !reminder.isCompleted
             }
             sortDescriptors = [
-                SortDescriptor(\WeatherReminder.priority.sortOrder),
+                SortDescriptor(\WeatherReminder.priority.rawValue),
                 SortDescriptor(\WeatherReminder.createdDate, order: .reverse)
             ]
             

@@ -101,28 +101,11 @@ final class BackgroundWeatherManager: ObservableObject {
             let fetchedReminders: [WeatherReminder] = try modelContext.fetch(descriptor)
             
             // Filter reminders using MainActor-isolated properties
-            let activeReminders = await withTaskGroup(of: (UUID, Bool)?.self) { group in
-                for reminder in fetchedReminders {
-                    group.addTask {
-                        let isActive = await MainActor.run { reminder.isActive }
-                        let isCompleted = await MainActor.run { reminder.isCompleted }
-                        let isPaused = await MainActor.run { reminder.isPaused }
-
-                        if isActive && !isCompleted && !isPaused {
-                            return (reminder.persistentModelID, true)
-                        }
-                        return nil
-                    }
+            var activeReminders: [WeatherReminder] = []
+            for reminder in fetchedReminders {
+                if reminder.isActive && !reminder.isCompleted && !reminder.isPaused {
+                    activeReminders.append(reminder)
                 }
-
-                var results: [WeatherReminder] = []
-                for await result in group {
-                    if let (modelID, _) = result,
-                       let reminder = try? modelContext.fetch(modelID) {
-                        results.append(reminder)
-                    }
-                }
-                return results
             }
             
             logger.debug("Checking \(activeReminders.count) active reminders (filtered from \(fetchedReminders.count) total)")
@@ -131,10 +114,10 @@ final class BackgroundWeatherManager: ObservableObject {
             
             for reminder in activeReminders {
                 if await evaluateReminderCondition(reminder) {
-                    await sendNotificationForReminder(reminder)
-                    reminder.trigger(with: nil)
-                    triggeredCount += 1
-                }
+                   await sendNotificationForReminder(reminder)
+                   reminder.trigger(with: nil)
+                   triggeredCount += 1
+               }
             }
             
             if triggeredCount > 0 {

@@ -246,14 +246,15 @@ extension LocationPickerViewModel: CLLocationManagerDelegate {
 }
 
 extension LocationPickerViewModel: MKLocalSearchCompleterDelegate {
-    nonisolated func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        let results = completer.results
         Task { @MainActor in
-            searchResults = completer.results
+            searchResults = results
             isSearching = false
         }
     }
     
-    nonisolated func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
         print("Search error: \(error.localizedDescription)")
         Task { @MainActor in
             isSearching = false

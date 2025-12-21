@@ -381,7 +381,7 @@ enum ReminderCategory: String, Codable, CaseIterable {
     }
 }
 
-enum ReminderPriority: String, Codable, CaseIterable {
+enum ReminderPriority: String, Codable, CaseIterable, Sendable {
     case low = "low"
     case normal = "normal"
     case high = "high"

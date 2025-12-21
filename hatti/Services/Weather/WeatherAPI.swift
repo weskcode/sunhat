@@ -421,7 +421,9 @@ final class OpenWeatherMapAPI: WeatherAPI {
                     let temps = items.map { $0.main.temp }
                     let highTemp = temps.max() ?? 0
                     let lowTemp = temps.min() ?? 0
-                    let mostCommonWeather = items.compactMap { $0.weather.first }.mostFrequent()
+                    let weatherItems = items.compactMap { $0.weather.first }
+                    let weatherFrequency = Dictionary(grouping: weatherItems) { $0.id }
+                    let mostCommonWeather = weatherFrequency.max { $0.value.count < $1.value.count }?.value.first
                     return ForecastDayDTO(
                         date: date,
                         highTemperature: highTemp,
@@ -516,7 +518,7 @@ private struct OpenWeatherCurrentResponse: Codable, Sendable {
     }
 }
 
-extension OpenWeatherCurrentResponse.WeatherInfo: Hashable {}
+
 
 private struct OpenWeatherForecastResponse: Codable, Sendable {
     let list: [OpenWeatherForecastItem]
@@ -532,12 +534,7 @@ private struct OpenWeatherForecastItem: Codable, Sendable {
 
 // MARK: - Helper Extensions
 
-private extension Array where Element: Hashable {
-    nonisolated func mostFrequent() -> Element? {
-        let counts = Dictionary(grouping: self) { $0 }.mapValues { $0.count }
-        return counts.max { $0.value < $1.value }?.key
-    }
-}
+
 
 private extension Array where Element == Double {
     nonisolated func average() -> Double {

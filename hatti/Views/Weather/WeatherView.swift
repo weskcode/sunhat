@@ -347,7 +347,7 @@ struct WeatherView: View {
             
             LazyVStack(spacing: 12) {
                 ForEach(viewModel.weatherAlerts, id: \.id) { alert in
-                    WeatherAlertDetailCard(alert: WeatherAlertDisplay.from(weatherAlert: alert))
+                    WeatherAlertDetailCard(alert: ModelDataConverter.createWeatherAlertDisplay(from: alert))
                 }
             }
             .padding(.horizontal, 20)

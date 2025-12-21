@@ -91,10 +91,36 @@ extension TriggerEngine {
     ) async -> TriggerEvaluationResult {
         
         do {
-            let weatherData = try await WeatherService.shared.fetchWeatherData(for: location)
-            let weatherTransfer = await MainActor.run {
-                ModelDataConverter.convertWeatherData(weatherData)
-            }
+            // Use Apple WeatherKit API directly to avoid non-Sendable WeatherData
+            let appleWeatherKitAPI = await AppleWeatherKitAPI()
+            let weatherDataDTO = try await appleWeatherKitAPI.fetchWeatherData(for: location)
+            
+            // Convert DTO to WeatherDataTransfer inline
+            let weatherTransfer = WeatherDataTransfer(
+                timestamp: Date(),
+                temperature: weatherDataDTO.temperature,
+                apparentTemperature: weatherDataDTO.feelsLike,
+                humidity: weatherDataDTO.humidity,
+                windSpeed: weatherDataDTO.windSpeed,
+                pressure: weatherDataDTO.pressure,
+                visibility: weatherDataDTO.visibility,
+                uvIndex: weatherDataDTO.uvIndex,
+                dewPoint: weatherDataDTO.dewPoint,
+                windDirectionDegrees: Double(weatherDataDTO.windDirection),
+                windGust: nil,
+                precipitationAmount: weatherDataDTO.precipitationAmount,
+                precipitationProbability: 0,
+                cloudCoverage: weatherDataDTO.cloudCover,
+                airQualityIndex: nil,
+                pm25: nil,
+                sunrise: nil,
+                sunset: nil,
+                weatherCondition: weatherDataDTO.weatherCondition,
+                weatherDescription: weatherDataDTO.weatherCondition.rawValue,
+                locationLatitude: 0,
+                locationLongitude: 0
+            )
+            
             let forecastAnalysis = await analyzeForecastForCondition(
                 conditionData: conditionData,
                 weatherData: weatherTransfer,

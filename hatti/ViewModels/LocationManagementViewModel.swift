@@ -455,9 +455,9 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
 
 extension LocationManagementViewModel: CLLocationManagerDelegate {
     
-    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let newStatus = manager.authorizationStatus
         Task { @MainActor in
-            let newStatus = manager.authorizationStatus
             self.logger.info("Location authorization changed to: \(newStatus.description)")
             
             self.authorizationStatus = newStatus
@@ -554,9 +554,10 @@ extension LocationManagementViewModel: CLLocationManagerDelegate {
 
 extension LocationManagementViewModel: MKLocalSearchCompleterDelegate {
     
-    nonisolated func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        let results = completer.results
         Task { @MainActor in
-            self.searchResults = completer.results
+            self.searchResults = results
             self.isSearching = false
         }
     }

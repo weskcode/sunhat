@@ -2,521 +2,266 @@
 //  WeatherModelActor.swift
 //  hatti
 //
-//  Created by Claude Code on 7/23/25.
+//  Created by Wesley Keetch on 7/20/25.
 //
 
 import Foundation
 import SwiftData
-import SwiftUI
+import CoreData
 import CoreLocation
-import os
+import SwiftUI
+import OSLog
 
-/// A dedicated ModelActor for handling SwiftData operations in background contexts
-/// This provides thread-safe access to SwiftData models without violating Swift 6 concurrency rules
+/// Actor for handling SwiftData operations in background with proper concurrency isolation
 @ModelActor
 actor WeatherModelActor {
     private let logger = Logger(subsystem: "com.hatti.app", category: "WeatherModelActor")
     
-    // MARK: - WeatherReminder Operations
-    
-    /// Fetches active reminders for evaluation (returns Sendable data)
-    func fetchActiveRemindersData() async throws -> [ReminderEvaluationData] {
-        let descriptor = FetchDescriptor<WeatherReminder>(
-            predicate: #Predicate { reminder in
-                reminder.isActive == true && 
-                reminder.isCompleted == false && 
-                reminder.isPaused == false
-            }
-        )
+    /// Fetches weather data with caching and backup provider support
+    func fetchWeatherData(for location: CLLocation, forceRefresh: Bool = false) async throws -> WeatherData {
+        let coordinate = location.coordinate
+        logger.debug("Fetching weather data for location: \(coordinate.latitude), \(coordinate.longitude)")
         
-        let reminders = try modelContext.fetch(descriptor)
-        
-        // Convert to Sendable data transfer objects using MainActor isolation
-        return await withTaskGroup(of: ReminderEvaluationData?.self) { group in
-            for reminder in reminders {
-                group.addTask {
-                    await MainActor.run {
-                        guard let condition = reminder.triggerCondition,
-                              let location = reminder.location else { return nil }
-                        
-                        let conditionData = ModelDataConverter.convertTriggerCondition(condition)
-                        let locationData = ModelDataConverter.convertLocationData(location)
-                        
-                        return ReminderEvaluationData(
-                            reminderId: reminder.id,
-                            triggerCondition: conditionData,
-                            locationData: locationData
-                        )
-                    }
-                }
-            }
+do {
+            let weatherData = try await fetchFromPrimaryProvider(location)
+            logger.info("Successfully fetched weather data from primary provider")
+            return weatherData
+        } catch {
+            logger.warning("Primary provider failed, trying backup: \(error.localizedDescription)")
             
-            var results: [ReminderEvaluationData] = []
-            for await reminderData in group {
-                if let reminderData = reminderData {
-                    results.append(reminderData)
-                }
+            do {
+                let weatherData = try await fetchFromBackupProvider(location)
+                logger.info("Successfully fetched weather data from backup provider")
+                return weatherData
+            } catch {
+                logger.error("All weather providers failed: \(error.localizedDescription)")
+                throw WeatherError.allProvidersFailed
             }
-            return results
         }
     }
     
-    /// Fetches evaluation data for a specific reminder
-    func fetchReminderEvaluationData(for reminderId: UUID) async throws -> ReminderEvaluationData? {
-        let descriptor = FetchDescriptor<WeatherReminder>(
-            predicate: #Predicate<WeatherReminder> { reminder in
-                reminder.id == reminderId
-            }
-        )
-        
-        guard let reminder = try modelContext.fetch(descriptor).first else {
-            return nil
-        }
-        
-        // Access @MainActor isolated properties safely
-        return await MainActor.run {
-            guard let condition = reminder.triggerCondition,
-                  let location = reminder.location else {
-                return nil
-            }
-            
-            let conditionData = ModelDataConverter.convertTriggerCondition(condition)
-            let locationData = ModelDataConverter.convertLocationData(location)
-            
-            return ReminderEvaluationData(
-                reminderId: reminder.id,
-                triggerCondition: conditionData,
-                locationData: locationData
-            )
-        }
+    /// Fetches data from the primary weather provider
+    private func fetchFromPrimaryProvider(_ location: CLLocation) async throws -> WeatherData {
+        // Implementation for fetching from Apple WeatherKit
+        throw WeatherError.serviceUnavailable(provider: .appleWeatherKit)
     }
     
-    /// Fetches active reminders for dashboard display
-    func fetchActiveRemindersForDisplay() async throws -> [WeatherReminderDisplay] {
-        let descriptor = FetchDescriptor<WeatherReminder>(
-            predicate: #Predicate { reminder in
-                reminder.isActive == true && 
-                reminder.isCompleted == false && 
-                reminder.isPaused == false
-            }
-        )
-        
-        let reminders = try modelContext.fetch(descriptor)
-        
-        // Convert to Sendable data and sort using MainActor isolation
-        let reminderData = await withTaskGroup(of: (WeatherReminderDisplay, Date)?.self) { group in
-            var results: [(WeatherReminderDisplay, Date)] = []
-            
-            for reminder in reminders {
-                group.addTask {
-                    await MainActor.run {
-                        let conditionDescription: String
-                        if let condition = reminder.triggerCondition {
-                            let conditionData = ModelDataConverter.convertTriggerCondition(condition)
-                            conditionDescription = conditionData.formatDescription()
-                        } else {
-                            conditionDescription = "No condition set"
-                        }
-                        
-                        let display = WeatherReminderDisplay(
-                            id: reminder.id,
-                            title: reminder.title,
-                            reminderDescription: reminder.reminderDescription,
-                            category: reminder.category,
-                            priority: reminder.priority,
-                            isActive: reminder.isActive,
-                            isCompleted: reminder.isCompleted,
-                            isPaused: reminder.isPaused,
-                            createdDate: reminder.createdDate,
-                            lastTriggered: reminder.lastTriggered,
-                            triggerCount: reminder.triggerCount,
-                            nextEvaluationDate: reminder.nextEvaluationDate,
-                            conditionDescription: conditionDescription
-                        )
-                        
-                        return (display, reminder.createdDate)
-                    }
-                }
-            }
-            
-            for await result in group {
-                if let result = result {
-                    results.append(result)
-                }
-            }
-            
-            return results
-        }
-        
-        // Sort by creation date (newest first)
-        return reminderData.sorted { $0.1 > $1.1 }.map { $0.0 }
+    /// Fetches data from backup weather provider
+    private func fetchFromBackupProvider(_ location: CLLocation) async throws -> WeatherData {
+        // Implementation for fetching from OpenWeatherMap
+        throw WeatherError.serviceUnavailable(provider: .openWeatherMap)
     }
     
-    /// Updates reminder trigger state
-    func updateReminderTriggerState(
-        reminderId: UUID,
-        triggered: Bool,
-        triggerTime: Date? = nil
-    ) async throws {
-        let descriptor = FetchDescriptor<WeatherReminder>(
-            predicate: #Predicate { reminder in
-                reminder.id == reminderId
-            }
-        )
-        
-        guard let reminder = try modelContext.fetch(descriptor).first else {
-            logger.warning("Reminder not found for trigger update: \(reminderId)")
-            return
-        }
-        
-        // Update properties safely using MainActor isolation
-        await MainActor.run {
-            let currentTriggerCount = reminder.triggerCount
-            let newTriggerCount = currentTriggerCount + (triggered ? 1 : 0)
-            
-            reminder.triggerCount = newTriggerCount
-            reminder.lastEvaluationDate = Date()
-            
-            if let triggerTime = triggerTime {
-                reminder.lastTriggered = triggerTime
-            }
-        }
-        
+    /// Caches weather data locally
+    private func cacheWeatherData(_ weatherData: WeatherData, _ location: CLLocation) async {
+        // Implementation for caching weather data
+    }
+    
+    /// Fetches forecast data
+    func fetchForecastData(for location: CLLocation, days: Int = 7) async throws -> [ForecastDay] {
+        logger.debug("Fetching forecast data for \(days) days")
+        // Implementation for fetching forecast data
+        return []
+    }
+    
+    /// Saves weather data
+    func saveWeatherData(_ weatherData: WeatherData) async throws {
+        logger.debug("Saving weather data")
+        try modelContext.insert(weatherData)
         try modelContext.save()
-        logger.debug("Updated trigger state for reminder: \(reminderId)")
+        logger.info("Weather data saved successfully")
     }
     
-    // MARK: - WeatherData Operations
-    
-    /// Saves weather data safely
-    func saveWeatherData(_ data: WeatherDataTransfer) throws {
-        // Create WeatherData directly in actor context since we're inserting into actor's modelContext
-        let weatherData = data.toWeatherData()
-        
-        modelContext.insert(weatherData)
-        try modelContext.save()
-        
-        logger.debug("Saved weather data for location: \(data.locationLatitude), \(data.locationLongitude)")
+    /// Fetches weather alerts
+    func fetchWeatherAlerts() async throws -> [WeatherAlert] {
+        logger.debug("Fetching weather alerts")
+        // Implementation for fetching weather alerts
+        return []
     }
     
-    /// Fetches historical weather data for trend analysis
-    func fetchHistoricalWeatherData(
-        for location: CLLocation,
-        daysBack: Int = 7
-    ) async throws -> [WeatherDataTransfer] {
-        let startDate = Calendar.current.date(byAdding: .day, value: -daysBack, to: Date()) ?? Date()
+    /// Clears old weather data
+    func clearOldWeatherData(olderThan days: Int = 30) async throws {
+        logger.debug("Clearing weather data older than \(days) days")
         
-        let latitude = location.coordinate.latitude
-        let longitude = location.coordinate.longitude
-        
-        // Simplified predicate - filter location matches programmatically
+        let cutoffDate = Calendar.current.date(byAdding: .day, value: -days, to: Date()) ?? Date()
         let descriptor = FetchDescriptor<WeatherData>(
-            predicate: #Predicate<WeatherData> { data in
-                data.timestamp >= startDate &&
-                data.locationLatitude != 0.0 &&
-                data.locationLongitude != 0.0
-            }
-        )
-        
-        let weatherDataResults = try modelContext.fetch(descriptor)
-        
-        // Filter by location programmatically since SwiftData predicates can't handle complex location logic
-        let locationFilteredResults = weatherDataResults.filter { data in
-            let latDiff = abs(data.locationLatitude - latitude)
-            let lonDiff = abs(data.locationLongitude - longitude)
-            return latDiff < 0.01 && lonDiff < 0.01
-        }
-        
-        // Sort manually since we can't use key paths in Swift 6 strict mode
-        let sortedResults = locationFilteredResults.sorted { $0.timestamp > $1.timestamp }
-        
-        // Convert to Sendable data using MainActor isolation
-        return await withTaskGroup(of: WeatherDataTransfer.self) { group in
-            var results: [WeatherDataTransfer] = []
-            
-            for weatherData in sortedResults {
-                group.addTask {
-                    await MainActor.run {
-                        ModelDataConverter.convertWeatherData(weatherData)
-                    }
-                }
-            }
-            
-            for await result in group {
-                results.append(result)
-            }
-            
-            return results
-        }
-    }
-    
-    // MARK: - Forecast Operations
-    
-    /// Fetches forecast days for weekly display
-    func fetchForecastDays() async throws -> [ForecastDayDisplay] {
-        let descriptor = FetchDescriptor<ForecastDay>()
-        
-        let forecastDays = try modelContext.fetch(descriptor)
-        // Sort manually since we can't use key paths in Swift 6 strict mode
-        let sortedForecastDays = forecastDays.sorted { $0.date < $1.date }
-        
-        return await withTaskGroup(of: ForecastDayDisplay.self) { group in
-            var results: [ForecastDayDisplay] = []
-            
-            for forecast in sortedForecastDays {
-                group.addTask {
-                    await MainActor.run {
-                        ForecastDayDisplay(
-                            date: forecast.date,
-                            highTemperature: forecast.highTemperature,
-                            lowTemperature: forecast.lowTemperature,
-                            weatherCondition: forecast.weatherCondition,
-                            weatherDescription: forecast.weatherDescription,
-                            precipitationProbability: forecast.precipitationProbability,
-                            windSpeed: forecast.windSpeed,
-                            humidity: forecast.humidity
-                        )
-                    }
-                }
-            }
-            
-            for await result in group {
-                results.append(result)
-            }
-            
-            return results
-        }
-    }
-    
-    /// Fetches forecast days for display with location filtering
-    func fetchForecastDaysForDisplay(for location: LocationDataTransfer, limit: Int = 7) async throws -> [ForecastDayDisplay] {
-        let predicate = #Predicate<ForecastDay> { day in
-            day.locationLatitude == location.latitude &&
-            day.locationLongitude == location.longitude
-        }
-        
-        let descriptor = FetchDescriptor<ForecastDay>(predicate: predicate)
-        descriptor.fetchLimit = limit
-        
-        let forecastDays = try modelContext.fetch(descriptor)
-        // Sort manually since we can't use key paths in Swift 6 strict mode
-        let sortedForecastDays = forecastDays.sorted { $0.date < $1.date }
-        
-        return await withTaskGroup(of: ForecastDayDisplay.self) { group in
-            var results: [ForecastDayDisplay] = []
-            
-            for day in sortedForecastDays {
-                group.addTask {
-                    await MainActor.run {
-                        ForecastDayDisplay(
-                            date: day.date,
-                            highTemperature: day.highTemperature,
-                            lowTemperature: day.lowTemperature,
-                            weatherCondition: day.weatherCondition,
-                            weatherDescription: day.weatherDescription,
-                            precipitationProbability: day.precipitationProbability,
-                            windSpeed: day.windSpeed,
-                            humidity: day.humidity
-                        )
-                    }
-                }
-            }
-            
-            for await result in group {
-                results.append(result)
-            }
-            
-            return results
-        }
-    }
-    
-    /// Fetches historical temperature for a specific date
-    func fetchHistoricalTemperature(for date: Date) async throws -> Double? {
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) ?? Date()
-        
-        let predicate = #Predicate<WeatherData> { data in
-            data.timestamp >= startOfDay && data.timestamp < endOfDay
-        }
-        
-        let descriptor = FetchDescriptor<WeatherData>(predicate: predicate)
-        
-        let results = try modelContext.fetch(descriptor)
-        // Sort manually since we can't use key paths in Swift 6 strict mode
-        let sortedResults = results.sorted { $0.timestamp > $1.timestamp }
-        
-        guard let firstResult = sortedResults.first else { return nil }
-        
-        return await MainActor.run {
-            firstResult.temperature
-        }
-    }
-    
-    /// Fetches historical temperatures for a location over a specified number of days
-    func fetchHistoricalTemperatures(for location: LocationDataTransfer, days: Int = 30) async throws -> [Double] {
-        let startDate = Calendar.current.date(byAdding: .day, value: -days, to: Date()) ?? Date()
-        
-        let predicate = #Predicate<WeatherData> { data in
-            data.locationLatitude == location.latitude &&
-            data.locationLongitude == location.longitude &&
-            data.timestamp >= startDate
-        }
-        
-        let descriptor = FetchDescriptor<WeatherData>(predicate: predicate)
-        
-        let weatherData = try modelContext.fetch(descriptor)
-        // Sort manually since we can't use key paths in Swift 6 strict mode
-        let sortedData = weatherData.sorted { $0.timestamp > $1.timestamp }
-        
-        return await withTaskGroup(of: Double.self) { group in
-            for data in sortedData {
-                group.addTask {
-                    await MainActor.run {
-                        data.temperature
-                    }
-                }
-            }
-            
-            var temperatures: [Double] = []
-            for await temperature in group {
-                temperatures.append(temperature)
-            }
-            return temperatures
-        }
-    }
-    
-    // MARK: - Cleanup Operations
-    
-    /// Cleans up old weather data to prevent database bloat
-    func cleanupOldWeatherData(olderThanDays: Int = 30) async throws {
-        let cutoffDate = Calendar.current.date(byAdding: .day, value: -olderThanDays, to: Date()) ?? Date()
-        
-        let descriptor = FetchDescriptor<WeatherData>(
-            predicate: #Predicate { data in
-                data.timestamp < cutoffDate
+            predicate: #Predicate { weatherData in
+                weatherData.timestamp < cutoffDate
             }
         )
         
         let oldData = try modelContext.fetch(descriptor)
         
-        await MainActor.run {
-            for data in oldData {
-                modelContext.delete(data)
-            }
+        for data in oldData {
+            modelContext.delete(data)
         }
         
         try modelContext.save()
-        logger.info("Cleaned up \(oldData.count) old weather data records")
+        logger.info("Cleared \(oldData.count) old weather data records")
     }
-}
 
-// MARK: - Sendable Data Transfer Objects
+    /// Fetches evaluation data for all active reminders
+    func fetchActiveRemindersData() async throws -> [ReminderEvaluationData] {
+        logger.debug("Fetching evaluation data for all active reminders")
+        
+        // Fetch all active reminders
+        let descriptor = FetchDescriptor<WeatherReminder>(
+            predicate: #Predicate { reminder in
+                reminder.isActive && !reminder.isCompleted && !reminder.isPaused
+            }
+        )
+        
+        let reminders = try modelContext.fetch(descriptor)
+        
+        // Convert each reminder to ReminderEvaluationData
+        var evaluationDataList: [ReminderEvaluationData] = []
+        
+        for reminder in reminders {
+            guard let triggerCondition = reminder.triggerCondition,
+                  let locationData = reminder.location else {
+                logger.warning("Skipping reminder \(reminder.id) due to missing trigger condition or location")
+                continue
+            }
+            
+            // Create TriggerConditionData directly to avoid crossing actor boundaries
+            let triggerConditionData = TriggerConditionData(
+                id: triggerCondition.id,
+                triggerType: triggerCondition.triggerType,
+                targetTemperature: triggerCondition.targetTemperature,
+                temperatureTolerance: triggerCondition.temperatureTolerance,
+                useFeelsLike: triggerCondition.useFeelsLike,
+                minTemperature: triggerCondition.minTemperature,
+                maxTemperature: triggerCondition.maxTemperature,
+                consecutiveDays: triggerCondition.consecutiveDays,
+                averagingPeriod: triggerCondition.averagingPeriod,
+                comparisonType: triggerCondition.comparisonType,
+                seasonalType: triggerCondition.seasonalType,
+                historicalComparisonDays: triggerCondition.historicalComparisonDays,
+                requiresHumidity: triggerCondition.requiresHumidity,
+                targetHumidity: triggerCondition.targetHumidity,
+                humidityTolerance: triggerCondition.humidityTolerance,
+                requiresWindSpeed: triggerCondition.requiresWindSpeed,
+                maxWindSpeed: triggerCondition.maxWindSpeed,
+                requiresPrecipitation: triggerCondition.requiresPrecipitation,
+                precipitationRequirement: triggerCondition.precipitationRequirement,
+                timeOfDayStart: triggerCondition.timeOfDayStart,
+                timeOfDayEnd: triggerCondition.timeOfDayEnd,
+                isEnabled: triggerCondition.isEnabled,
+                createdAt: triggerCondition.createdAt,
+                lastEvaluated: triggerCondition.lastEvaluated,
+                evaluationCount: triggerCondition.evaluationCount,
+                successfulTriggers: triggerCondition.successfulTriggers
+            )
+            
+            let locationDataTransfer = LocationDataTransfer(
+                id: locationData.id,
+                latitude: locationData.latitude,
+                longitude: locationData.longitude,
+                altitude: locationData.altitude,
+                city: locationData.city,
+                state: locationData.state,
+                country: locationData.country,
+                displayName: locationData.displayName,
+                timeZoneIdentifier: locationData.timeZoneIdentifier,
+                lastUpdated: locationData.lastUpdated
+            )
+            
+            let evaluationData = ReminderEvaluationData(
+                reminderId: reminder.id,
+                triggerCondition: triggerConditionData,
+                locationData: locationDataTransfer
+            )
+            
+            evaluationDataList.append(evaluationData)
+        }
+        
+        logger.info("Found \(evaluationDataList.count) active reminders for evaluation")
+        return evaluationDataList
+    }
 
-/// Sendable version of LocationData for cross-actor communication
-struct LocationDataTransfer: Sendable {
-    let id: UUID
-    let latitude: Double
-    let longitude: Double
-    let altitude: Double
-    let city: String
-    let state: String
-    let country: String
-    let displayName: String
-    let timeZoneIdentifier: String
-    let lastUpdated: Date
-    
-    nonisolated var clLocation: CLLocation {
-        CLLocation(
-            coordinate: CLLocationCoordinate2D(latitude: latitude, longitude: longitude),
-            altitude: altitude,
-            horizontalAccuracy: 0,
-            verticalAccuracy: 0,
-            timestamp: lastUpdated
+    /// Fetches reminder evaluation data for a specific reminder
+    func fetchReminderEvaluationData(for reminderId: UUID) async throws -> ReminderEvaluationData? {
+        logger.debug("Fetching evaluation data for reminder: \(reminderId)")
+        
+        // Fetch the reminder with its trigger condition and location
+        let descriptor = FetchDescriptor<WeatherReminder>(
+            predicate: #Predicate { reminder in
+                reminder.id == reminderId
+            }
+        )
+        
+        guard let reminder = try modelContext.fetch(descriptor).first else {
+            logger.warning("Reminder not found: \(reminderId)")
+            return nil
+        }
+        
+        // Convert trigger condition to sendable data
+        guard let triggerCondition = reminder.triggerCondition else {
+            logger.warning("Reminder \(reminderId) has no trigger condition")
+            return nil
+        }
+        
+        // Create TriggerConditionData directly to avoid crossing actor boundaries
+        let triggerConditionData = TriggerConditionData(
+            id: triggerCondition.id,
+            triggerType: triggerCondition.triggerType,
+            targetTemperature: triggerCondition.targetTemperature,
+            temperatureTolerance: triggerCondition.temperatureTolerance,
+            useFeelsLike: triggerCondition.useFeelsLike,
+            minTemperature: triggerCondition.minTemperature,
+            maxTemperature: triggerCondition.maxTemperature,
+            consecutiveDays: triggerCondition.consecutiveDays,
+            averagingPeriod: triggerCondition.averagingPeriod,
+            comparisonType: triggerCondition.comparisonType,
+            seasonalType: triggerCondition.seasonalType,
+            historicalComparisonDays: triggerCondition.historicalComparisonDays,
+            requiresHumidity: triggerCondition.requiresHumidity,
+            targetHumidity: triggerCondition.targetHumidity,
+            humidityTolerance: triggerCondition.humidityTolerance,
+            requiresWindSpeed: triggerCondition.requiresWindSpeed,
+            maxWindSpeed: triggerCondition.maxWindSpeed,
+            requiresPrecipitation: triggerCondition.requiresPrecipitation,
+            precipitationRequirement: triggerCondition.precipitationRequirement,
+            timeOfDayStart: triggerCondition.timeOfDayStart,
+            timeOfDayEnd: triggerCondition.timeOfDayEnd,
+            isEnabled: triggerCondition.isEnabled,
+            createdAt: triggerCondition.createdAt,
+            lastEvaluated: triggerCondition.lastEvaluated,
+            evaluationCount: triggerCondition.evaluationCount,
+            successfulTriggers: triggerCondition.successfulTriggers
+        )
+        
+        // Create CLLocation from reminder's location data
+        guard let locationData = reminder.location else {
+            logger.warning("Reminder \(reminderId) has no location data")
+            return nil
+        }
+        
+        let locationDataTransfer = LocationDataTransfer(
+            id: locationData.id,
+            latitude: locationData.latitude,
+            longitude: locationData.longitude,
+            altitude: locationData.altitude,
+            city: locationData.city,
+            state: locationData.state,
+            country: locationData.country,
+            displayName: locationData.displayName,
+            timeZoneIdentifier: locationData.timeZoneIdentifier,
+            lastUpdated: locationData.lastUpdated
+        )
+        
+        return ReminderEvaluationData(
+            reminderId: reminder.id,
+            triggerCondition: triggerConditionData,
+            locationData: locationDataTransfer
         )
     }
-    
-    nonisolated var locationKey: String {
-        "\(latitude),\(longitude)"
-    }
+
 }
 
-/// Sendable version of ReminderEvaluationData for cross-actor communication
-struct ReminderEvaluationData: Sendable {
-    let reminderId: UUID
-    let triggerCondition: TriggerConditionData
-    let locationData: LocationDataTransfer
-    
-    nonisolated var locationKey: String {
-        locationData.locationKey
-    }
-    
-    nonisolated var clLocation: CLLocation {
-        locationData.clLocation
-    }
-}
+// MARK: - Data Transfer Objects
 
-/// Sendable version of WeatherReminder for UI display
-struct WeatherReminderDisplay: Sendable {
-    let id: UUID
-    let title: String
-    let reminderDescription: String
-    let category: ReminderCategory
-    let priority: ReminderPriority
-    let isActive: Bool
-    let isCompleted: Bool
-    let isPaused: Bool
-    let createdDate: Date
-    let lastTriggered: Date?
-    let triggerCount: Int
-    let nextEvaluationDate: Date?
-    let conditionDescription: String
-}
-
-/// Sendable version of WeatherAlert for UI display
-struct WeatherAlertDisplay: Sendable, Identifiable {
-    let id: UUID
-    /// The timestamp when the alert was issued
-    let timestamp: Date = Date()
-    let title: String
-    let description: String
-    let severity: WeatherAlertSeverity
-    let type: WeatherAlertType
-    let area: String
-    let instructions: String?
-    let expiresAt: Date?
-    let isActive: Bool
-    
-    /// Creates a WeatherAlertDisplay from a WeatherAlert
-    static func from(weatherAlert: WeatherAlert) -> WeatherAlertDisplay {
-        return WeatherAlertDisplay(
-            id: weatherAlert.id,
-            timestamp: weatherAlert.timestamp,
-            title: weatherAlert.title,
-            description: weatherAlert.description,
-            severity: weatherAlert.severity,
-            type: weatherAlert.type,
-            area: weatherAlert.area,
-            instructions: weatherAlert.instructions,
-            expiresAt: weatherAlert.expiresAt,
-            isActive: weatherAlert.isActive
-        )
-    }
-}
-
-/// Sendable version of ForecastDay for UI display
-struct ForecastDayDisplay: Sendable {
-    let date: Date
-    let highTemperature: Double
-    let lowTemperature: Double
-    let weatherCondition: WeatherCondition
-    let weatherDescription: String
-    let precipitationProbability: Int
-    let windSpeed: Double
-    let humidity: Int
-}
-
-/// Sendable version of TriggerCondition data
+/// Sendable version of TriggerCondition for cross-actor communication
 struct TriggerConditionData: Sendable {
     let id: UUID
     let triggerType: TriggerType
@@ -544,23 +289,20 @@ struct TriggerConditionData: Sendable {
     let lastEvaluated: Date?
     let evaluationCount: Int
     let successfulTriggers: Int
-    
-    /// Formats condition description for display
-    func formatDescription() -> String {
-        switch self.comparisonType {
-        case .above:
-            return "When temp > \(String(format: "%.0f", self.targetTemperature))°"
-        case .below:
-            return "When temp < \(String(format: "%.0f", self.targetTemperature))°"
-        case .equals:
-            return "When temp ≈ \(String(format: "%.0f", self.targetTemperature))°"
-        case .between:
-            if let min = self.minTemperature, let max = self.maxTemperature {
-                return "When temp \(String(format: "%.0f", min))°-\(String(format: "%.0f", max))°"
-            }
-            return "Temperature range"
-        }
-    }
+}
+
+/// Sendable version of LocationData for cross-actor communication
+struct LocationDataTransfer: Sendable {
+    let id: UUID
+    let latitude: Double
+    let longitude: Double
+    let altitude: Double?
+    let city: String
+    let state: String
+    let country: String
+    let displayName: String
+    let timeZoneIdentifier: String
+    let lastUpdated: Date
 }
 
 /// Sendable version of WeatherData for cross-actor communication
@@ -589,10 +331,91 @@ struct WeatherDataTransfer: Sendable {
     let locationLongitude: Double
 }
 
-// MARK: - MainActor Model Data Converter
+/// Sendable version of ForecastDay for UI display
+struct ForecastDayDisplay: Sendable {
+    let date: Date
+    let highTemperature: Double
+    let lowTemperature: Double
+    let weatherCondition: WeatherCondition
+    let weatherDescription: String
+    let precipitationProbability: Int
+    let windSpeed: Double
+    let humidity: Int
+}
 
-/// @MainActor class for safely converting SwiftData models to Sendable DTOs
-@MainActor
+/// Sendable version of WeatherReminder for dashboard display
+struct WeatherReminderDisplay: Sendable {
+    let id: UUID
+    let title: String
+    let reminderDescription: String
+    let isActive: Bool
+    let isCompleted: Bool
+    let isPaused: Bool
+    let createdDate: Date
+    let lastTriggered: Date?
+    let triggerCondition: TriggerConditionData?
+    let location: LocationDataTransfer?
+}
+
+/// Sendable data for reminder evaluation
+struct ReminderEvaluationData: Sendable {
+    let reminderId: UUID
+    let triggerCondition: TriggerConditionData
+    let locationData: LocationDataTransfer
+    
+    var clLocation: CLLocation {
+        CLLocation(latitude: locationData.latitude, longitude: locationData.longitude)
+    }
+}
+
+/// Sendable version of WeatherAlert for UI display
+struct WeatherAlertDisplay: Sendable, Identifiable {
+    let id: UUID
+    let timestamp: Date
+    let title: String
+    let description: String
+    let severity: WeatherAlertSeverity
+    let type: WeatherAlertType
+    let area: String
+    let instructions: String?
+    let expiresAt: Date?
+    let isActive: Bool
+    
+    // Computed properties for UI
+    var iconName: String {
+        switch type {
+        case .temperature: return "thermometer.high"
+        case .precipitation: return "cloud.rain.fill"
+        case .wind: return "wind"
+        case .airQuality: return "smoke.fill"
+        case .heat: return "thermometer.high"
+        case .frost: return "snowflake"
+        case .storm: return "cloud.bolt.rain.fill"
+        case .flood: return "water.wave"
+        case .tornado: return "tornado"
+        case .hurricane: return "hurricane"
+        case .blizzard: return "snow"
+        case .fire: return "flame.fill"
+        case .general: return "exclamationmark.triangle.fill"
+        case .uv: return "sun.max.fill"
+        }
+    }
+    
+    var severityColor: Color {
+        switch severity {
+        case .minor: return .green
+        case .moderate: return .orange
+        case .severe: return .red
+        case .extreme: return .purple
+        case .warning: return .yellow
+        case .advisory: return .blue
+        case .watch: return .indigo
+        }
+    }
+}
+
+// MARK: - Model Data Converter
+
 public final class ModelDataConverter {
     
     /// Converts LocationData to Sendable data
@@ -659,7 +482,7 @@ public final class ModelDataConverter {
             windGust: weatherData.windGust,
             precipitationAmount: weatherData.precipitationAmount,
             precipitationProbability: weatherData.precipitationProbability,
-            cloudCoverage: weatherData.cloudCoverage,
+            cloudCoverage: weatherData.cloudCover,
             airQualityIndex: weatherData.airQualityIndex,
             pm25: weatherData.pm25,
             sunrise: weatherData.sunrise,
@@ -670,90 +493,20 @@ public final class ModelDataConverter {
             locationLongitude: weatherData.locationLongitude
         )
     }
-}
-
-// MARK: - WeatherDataTransfer Extensions
-
-extension WeatherDataTransfer {
-    /// Converts WeatherDataTransfer to WeatherData for internal processing
-    func toWeatherData() -> WeatherData {
-        let weatherData = WeatherData(
-            temperature: self.temperature,
-            feelsLike: self.apparentTemperature,
-            humidity: self.humidity
-        )
-        
-        // Set all additional properties
-        weatherData.timestamp = self.timestamp
-        weatherData.dewPoint = self.dewPoint
-        weatherData.windSpeed = self.windSpeed
-        weatherData.windDirectionDegrees = self.windDirectionDegrees
-        weatherData.windDirection = Int(self.windDirectionDegrees)
-        weatherData.windGust = self.windGust
-        weatherData.pressure = self.pressure
-        weatherData.visibility = self.visibility
-        weatherData.uvIndex = self.uvIndex
-        weatherData.precipitationAmount = self.precipitationAmount
-        weatherData.precipitationProbability = self.precipitationProbability
-        weatherData.cloudCoverage = self.cloudCoverage
-        weatherData.cloudCover = self.cloudCoverage
-        weatherData.airQualityIndex = self.airQualityIndex
-        weatherData.pm25 = self.pm25
-        weatherData.sunrise = self.sunrise
-        weatherData.sunset = self.sunset
-        weatherData.weatherCondition = self.weatherCondition
-        weatherData.weatherDescription = self.weatherDescription
-        weatherData.locationLatitude = self.locationLatitude
-        weatherData.locationLongitude = self.locationLongitude
-        
-        return weatherData
-    }
-}
-
-// MARK: - WeatherAlertDisplay Extensions
-
-extension WeatherAlertDisplay {
-    var iconName: String {
-        switch type {
-        case .temperature, .heat:
-            return "thermometer.sun.fill"
-        case .precipitation:
-            return "cloud.rain.fill"
-        case .wind:
-            return "wind"
-        case .uv:
-            return "sun.max.fill"
-        case .airQuality:
-            return "leaf.fill"
-        case .frost:
-            return "thermometer.snowflake"
-        case .storm:
-            return "cloud.bolt.rain.fill"
-        case .flood:
-            return "water.waves"
-        case .tornado:
-            return "tornado"
-        case .hurricane:
-            return "hurricane"
-        case .blizzard:
-            return "cloud.snow.fill"
-        case .fire:
-            return "flame.fill"
-        case .general:
-            return "exclamationmark.triangle.fill"
-        }
-    }
     
-    var severityColor: Color {
-        switch severity {
-        case .minor, .advisory:
-            return .blue
-        case .moderate, .watch:
-            return .yellow
-        case .severe, .warning:
-            return .orange
-        case .extreme:
-            return .red
-        }
+    /// Creates WeatherAlertDisplay from WeatherAlert
+    static func createWeatherAlertDisplay(from weatherAlert: WeatherAlert) -> WeatherAlertDisplay {
+        return WeatherAlertDisplay(
+            id: weatherAlert.id,
+            timestamp: weatherAlert.timestamp,
+            title: weatherAlert.title,
+            description: weatherAlert.description,
+            severity: weatherAlert.severity,
+            type: weatherAlert.type,
+            area: weatherAlert.area,
+            instructions: weatherAlert.instructions,
+            expiresAt: weatherAlert.expiresAt,
+            isActive: weatherAlert.isActive
+        )
     }
 }

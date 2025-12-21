@@ -37,7 +37,7 @@ final class TriggerEngineManager: ObservableObject {
     }
     
     func configure(modelContainer: ModelContainer) async {
-        self.triggerEngine = TriggerEngine.shared(modelContainer: modelContainer)
+        self.triggerEngine = await TriggerEngine.shared(modelContainer: modelContainer)
         await notificationManager.configure()
         logger.info("TriggerEngineManager configured")
     }
@@ -81,17 +81,17 @@ final class TriggerEngineManager: ObservableObject {
     
     func evaluateSpecificReminder(_ reminder: WeatherReminder) async -> TriggerEvaluationResult? {
         logger.debug("Evaluating specific reminder: \(reminder.displayTitle)")
-        
+         
         guard let triggerEngine = triggerEngine else {
             logger.error("TriggerEngine not configured")
             return nil
         }
-        
-        let result = await triggerEngine.evaluateReminder(reminder)
-        
+         
+        let result = await triggerEngine.evaluateReminder(reminderId: reminder.id)
+         
         if let result = result {
             await processEvaluationResults([result])
-            
+             
             // Update the specific reminder in our results
             if let index = evaluationResults.firstIndex(where: { $0.reminderId == reminder.id }) {
                 evaluationResults[index] = result
@@ -99,7 +99,7 @@ final class TriggerEngineManager: ObservableObject {
                 evaluationResults.append(result)
             }
         }
-        
+         
         return result
     }
     
