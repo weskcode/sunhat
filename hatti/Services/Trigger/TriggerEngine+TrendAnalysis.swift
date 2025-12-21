@@ -213,9 +213,8 @@ extension TriggerEngine {
                 daysBack: days
             )
             
-            // Convert to WeatherData for analysis
-            let weatherData = weatherDataTransfers.map { $0.toWeatherData() }
-            let analysis = analyzeTrend(weatherData: weatherData, useFeelsLike: useFeelsLike)
+            // Analyze the weather data transfers directly
+            let analysis = analyzeTrend(weatherData: weatherDataTransfers, useFeelsLike: useFeelsLike)
             
             // Cache the result
             trendAnalysisCache[cacheKey] = analysis
@@ -228,7 +227,7 @@ extension TriggerEngine {
         }
     }
     
-    private func analyzeTrend(weatherData: [WeatherData], useFeelsLike: Bool) -> TrendAnalysis {
+    private func analyzeTrend(weatherData: [WeatherDataTransfer], useFeelsLike: Bool) -> TrendAnalysis {
         guard !weatherData.isEmpty else {
             return createEmptyTrendAnalysis()
         }
@@ -329,11 +328,10 @@ extension TriggerEngine {
                 daysBack: days
             )
             
-            // Convert to WeatherData for analysis
-            let weatherData = weatherDataTransfers.map { $0.toWeatherData() }
+            // Analyze weather data transfers directly
             var consecutiveDays = 0
-            
-            for data in weatherData {
+
+            for data in weatherDataTransfers {
                 let temp = condition.useFeelsLike ? data.apparentTemperature : data.temperature
                 
                 if temp >= minTemp && temp <= maxTemp {

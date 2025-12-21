@@ -234,16 +234,19 @@ final class LocationPermissionManager: NSObject, ObservableObject {
 extension LocationPermissionManager: CLLocationManagerDelegate {
     
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        Task { @MainActor in
-            let newStatus = manager.authorizationStatus
-            logger.info("Location authorization changed to: \(newStatus.description)")
-            
-            authorizationStatus = newStatus
+        // Capture the status immediately in the nonisolated context
+        // to avoid sending manager across actor boundaries
+        let capturedStatus = manager.authorizationStatus
+
+        Task { @MainActor [capturedStatus] in
+            logger.info("Location authorization changed to: \(capturedStatus.description)")
+
+            authorizationStatus = capturedStatus
             
             // Check location services status whenever authorization changes
             await checkLocationServicesStatusAsync()
-            
-            switch newStatus {
+
+            switch capturedStatus {
             case .authorizedWhenInUse, .authorizedAlways:
                 locationError = nil
                 getCurrentLocation()

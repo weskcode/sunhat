@@ -66,7 +66,10 @@ final class DashboardViewModel: NSObject, ObservableObject {
     }
     
     deinit {
-        refreshTimer?.invalidate()
+        // deinit is nonisolated, but we know we're on MainActor since the class is @MainActor
+        MainActor.assumeIsolated {
+            refreshTimer?.invalidate()
+        }
     }
     
     // MARK: - Public Methods
@@ -319,6 +322,7 @@ final class DashboardViewModel: NSObject, ObservableObject {
         if weatherData.temperature < 32 {
             alerts.append(WeatherAlertDisplay(
                 id: UUID(),
+                timestamp: Date(),
                 title: "Freezing Temperature Alert",
                 description: "Temperature has dropped below freezing. Protect plants and pets.",
                 severity: WeatherAlertSeverity.moderate,
@@ -329,10 +333,11 @@ final class DashboardViewModel: NSObject, ObservableObject {
                 isActive: true
             ))
         }
-        
+
         if weatherData.temperature > 95 {
             alerts.append(WeatherAlertDisplay(
                 id: UUID(),
+                timestamp: Date(),
                 title: "Extreme Heat Warning",
                 description: "Temperature is dangerously high. Stay hydrated and avoid outdoor activities.",
                 severity: WeatherAlertSeverity.severe,
@@ -343,11 +348,12 @@ final class DashboardViewModel: NSObject, ObservableObject {
                 isActive: true
             ))
         }
-        
+
         // Wind alerts
         if weatherData.windSpeed > 25 {
             alerts.append(WeatherAlertDisplay(
                 id: UUID(),
+                timestamp: Date(),
                 title: "High Wind Advisory",
                 description: "Sustained winds exceed 25 mph. Secure outdoor objects.",
                 severity: WeatherAlertSeverity.moderate,
@@ -358,11 +364,12 @@ final class DashboardViewModel: NSObject, ObservableObject {
                 isActive: true
             ))
         }
-        
+
         // UV alerts
         if weatherData.uvIndex > 7 {
             alerts.append(WeatherAlertDisplay(
                 id: UUID(),
+                timestamp: Date(),
                 title: "High UV Index",
                 description: "UV index is very high. Use sun protection when outdoors.",
                 severity: WeatherAlertSeverity.moderate,

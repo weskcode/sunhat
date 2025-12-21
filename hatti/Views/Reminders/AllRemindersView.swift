@@ -16,31 +16,35 @@ struct AllRemindersView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(reminders.map { reminder in
-                    let desc: String
-                    if let condition = reminder.triggerCondition {
-                        let conditionData = ModelDataConverter.convertTriggerCondition(condition)
-                        desc = conditionData.formatDescription()
-                    } else {
-                        desc = "No condition set"
+                ForEach(reminders) { reminder in
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Image(systemName: reminder.category.iconName)
+                                .foregroundColor(.blue)
+
+                            Text(reminder.displayTitle)
+                                .font(.headline)
+
+                            Spacer()
+
+                            if reminder.isCurrentlyActive {
+                                Circle()
+                                    .fill(Color.green)
+                                    .frame(width: 8, height: 8)
+                            }
+                        }
+
+                        if let condition = reminder.triggerCondition {
+                            Text("When temperature is \(condition.comparisonType.rawValue) \(condition.targetTemperature, specifier: "%.1f")°")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        Text("Created: \(reminder.createdDate, format: .dateTime.month().day().hour().minute())")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
                     }
-                    return WeatherReminderDisplay(
-                        id: reminder.id,
-                        title: reminder.title,
-                        reminderDescription: reminder.reminderDescription,
-                        category: reminder.category,
-                        priority: reminder.priority,
-                        isActive: reminder.isActive,
-                        isCompleted: reminder.isCompleted,
-                        isPaused: reminder.isPaused,
-                        createdDate: reminder.createdDate,
-                        lastTriggered: reminder.lastTriggered,
-                        triggerCount: reminder.triggerCount,
-                        nextEvaluationDate: reminder.nextEvaluationDate,
-                        conditionDescription: desc
-                    )
-                }, id: \.id) { display in
-                    ActiveReminderCard(reminder: display, weatherData: nil)
+                    .padding(.vertical, 4)
                 }
                 .onDelete(perform: deleteReminders)
             }
@@ -52,7 +56,7 @@ struct AllRemindersView: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     EditButton()
                 }

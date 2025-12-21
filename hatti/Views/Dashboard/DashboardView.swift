@@ -460,9 +460,15 @@ struct ActiveReminderCard: View {
                     .foregroundColor(.primary)
                     .lineLimit(1)
                 
-                Text("Trigger: \(reminder.conditionDescription)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                if let condition = reminder.triggerCondition {
+                    Text("Trigger: When temperature is \(condition.comparisonType.rawValue) \(condition.targetTemperature, specifier: "%.1f")°")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    Text("Trigger: No condition set")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
                 
                 // Status indicator
                 HStack(spacing: 6) {

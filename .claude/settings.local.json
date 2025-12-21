@@ -9,7 +9,11 @@
       "Bash(grep:*)",
       "Bash(swift:*)",
       "Bash(xcrun swiftc:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(xargs -I {} sh -c 'echo \"\"\"\"File: {}\"\"\"\" && wc -l \"\"\"\"{}\"\"\"\"')",
+      "Bash(tree:*)",
+      "Bash(xcrun simctl list:*)",
+      "Bash(pkill:*)"
     ],
     "deny": []
   }

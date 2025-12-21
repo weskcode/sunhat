@@ -332,7 +332,7 @@ final class ReminderHistory {
 
 }
 
-enum ReminderCategory: String, Codable, CaseIterable {
+enum ReminderCategory: String, Codable, CaseIterable, Sendable {
     case general = "general"
     case outdoor = "outdoor"
     case gardening = "gardening"

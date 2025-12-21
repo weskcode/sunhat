@@ -177,16 +177,16 @@ struct FirstReminderCreationView: View {
                     .animation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.2), value: showStepAnimation)
                     .accessibilityHidden(true)
                     
-                    VStack(spacing: 12) {
-                        Text("Choose Your First Reminder")
-                            .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 28 : 32, relativeTo: .title))
+                    VStack(spacing: 8) {
+                        Text("Choose a Reminder")
+                            .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 26 : 30, relativeTo: .title))
                             .fontWeight(.bold)
                             .foregroundColor(.primary)
                             .multilineTextAlignment(.center)
                             .accessibilityAddTraits(.isHeader)
-                        
-                        Text("Pick a template to get started, or create your own")
-                            .font(.title3)
+
+                        Text("Pick a template")
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                     }
@@ -302,15 +302,15 @@ struct FirstReminderCreationView: View {
                         Spacer()
                     }
                     
-                    VStack(spacing: 12) {
-                        Text("Build Your Reminder")
+                    VStack(spacing: 6) {
+                        Text("Customize")
                             .font(.title)
                             .fontWeight(.bold)
                             .foregroundColor(.primary)
                             .accessibilityAddTraits(.isHeader)
-                        
-                        Text("Customize when and how you'll be reminded")
-                            .font(.subheadline)
+
+                        Text("Set conditions")
+                            .font(.caption)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                     }
@@ -437,15 +437,15 @@ struct FirstReminderCreationView: View {
                         Spacer()
                     }
                     
-                    VStack(spacing: 12) {
-                        Text("Your First Reminder")
+                    VStack(spacing: 6) {
+                        Text("Preview")
                             .font(.title)
                             .fontWeight(.bold)
                             .foregroundColor(.primary)
                             .accessibilityAddTraits(.isHeader)
-                        
-                        Text("Here's when it might trigger based on the forecast")
-                            .font(.subheadline)
+
+                        Text("Based on forecast")
+                            .font(.caption)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                     }
@@ -655,33 +655,27 @@ struct TemplateCard: View {
                 .accessibilityHidden(true)
                 
                 // Content
-                VStack(spacing: 8) {
+                VStack(spacing: 6) {
                     Text(template.title)
-                        .font(.headline)
+                        .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
                         .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                    
-                    Text(template.description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(3)
-                    
+                        .lineLimit(1)
+
                     // Example trigger
                     HStack {
                         Image(systemName: "thermometer.medium")
-                            .font(.caption)
-                            .foregroundColor(template.color)
-                        
-                        Text(template.exampleTrigger)
                             .font(.caption2)
+                            .foregroundColor(template.color)
+
+                        Text(template.exampleTrigger)
+                            .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(template.color)
                     }
                     .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 3)
                     .background(
                         Capsule()
                             .fill(template.color.opacity(0.1))
@@ -691,8 +685,8 @@ struct TemplateCard: View {
                 Spacer()
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 180)
-            .padding(16)
+            .frame(height: 140)
+            .padding(12)
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color(.secondarySystemBackground))
@@ -721,9 +715,9 @@ struct TemplateCard: View {
             }
         }, perform: {})
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(template.title). \(template.description). Example: \(template.exampleTrigger)")
+        .accessibilityLabel("\(template.title). \(template.exampleTrigger)")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .accessibilityHint(isSelected ? "Selected template" : "Tap to select this template")
+        .accessibilityHint(isSelected ? "Selected" : "Tap to select")
     }
 }
 

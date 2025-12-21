@@ -315,7 +315,12 @@ final class WeatherViewModel: ObservableObject {
         }
         
         do {
-            let forecastDays = try await weatherModelActor.fetchForecastDays()
+            // Use fetchForecastData which returns [ForecastDayDisplay]
+            guard let locInfo = await locationManager.currentLocation() else {
+                logger.warning("No current location for forecast")
+                return
+            }
+            let forecastDays = try await weatherModelActor.fetchForecastData(for: locInfo.location)
             var week: [DailyWeatherData] = []
             let start = Self.calendar.startOfDay(for: Date())
             
@@ -408,9 +413,9 @@ final class WeatherViewModel: ObservableObject {
                     reminderId: reminder.id,
                     reminderTitle: reminder.title,
                     reminderIcon: reminder.category.iconName,
-                    conditionDescription: reminder.conditionDescription,
+                    conditionDescription: formatConditionDescription(reminder.triggerCondition),
                     currentTemperature: data.temperature,
-                    targetTemperature: 70.0, // Default - should be calculated from condition
+                    targetTemperature: reminder.triggerCondition?.targetTemperature ?? 70.0,
                     likelihood: likelihood,
                     estimatedTriggerTime: eta
                 )
@@ -467,7 +472,23 @@ final class WeatherViewModel: ObservableObject {
         }
         
         do {
-            return try await weatherModelActor.fetchHistoricalTemperature(for: date)
+            // Fetch historical weather data for the past year to find this date
+            guard let locInfo = await locationManager.currentLocation() else { return nil }
+
+            let weatherData = try await weatherModelActor.fetchHistoricalWeatherData(for: locInfo.location, daysBack: 365)
+
+            // Find the weather data closest to the same day/month as the target date
+            let calendar = Calendar.current
+            let targetDay = calendar.component(.day, from: date)
+            let targetMonth = calendar.component(.month, from: date)
+
+            let matching = weatherData.first { data in
+                let dataDay = calendar.component(.day, from: data.timestamp)
+                let dataMonth = calendar.component(.month, from: data.timestamp)
+                return dataDay == targetDay && dataMonth == targetMonth
+            }
+
+            return matching?.temperature
         } catch {
             logger.error("Failed to fetch historical temperature: \(error)")
             return nil
@@ -485,25 +506,62 @@ final class WeatherViewModel: ObservableObject {
     }
     
     // MARK: - Display Calculation Helpers
-    
-    private func calculateLikelihoodFromDisplay(reminder: WeatherReminderDisplay, data: WeatherData) -> Double {
-        // Simple heuristic based on description parsing
-        // In a production app, this would be stored in the display object or calculated by ModelActor
-        if reminder.conditionDescription.contains(">") {
-            if data.temperature > 70 { return 0.8 } // Simple threshold
-        } else if reminder.conditionDescription.contains("<") {
-            if data.temperature < 50 { return 0.8 }
+
+    private func formatConditionDescription(_ condition: TriggerConditionData?) -> String {
+        guard let condition = condition else { return "No condition set" }
+
+        let tempStr = String(format: "%.1f°", condition.targetTemperature)
+
+        switch condition.comparisonType {
+        case .above:
+            return "When temp > \(tempStr)"
+        case .below:
+            return "When temp < \(tempStr)"
+        case .equals:
+            return "When temp = \(tempStr)"
+        case .between:
+            if let min = condition.minTemperature, let max = condition.maxTemperature {
+                return "When temp between \(String(format: "%.1f°", min)) and \(String(format: "%.1f°", max))"
+            }
+            return "When temp = \(tempStr)"
         }
-        return 0.3 // Default moderate likelihood
     }
-    
+
+    private func calculateLikelihoodFromDisplay(reminder: WeatherReminderDisplay, data: WeatherData) -> Double {
+        // Simple heuristic based on trigger condition
+        guard let condition = reminder.triggerCondition else { return 0.3 }
+
+        let targetTemp = condition.targetTemperature
+        let currentTemp = data.temperature
+
+        switch condition.comparisonType {
+        case .above:
+            if currentTemp > targetTemp { return 0.8 }
+            return max(0.3, 0.8 * (currentTemp / targetTemp))
+        case .below:
+            if currentTemp < targetTemp { return 0.8 }
+            return max(0.3, 0.8 * (targetTemp / currentTemp))
+        case .equals:
+            let diff = abs(currentTemp - targetTemp)
+            return diff < 2.0 ? 0.9 : max(0.2, 0.8 * (1.0 - diff / 10.0))
+        case .between:
+            if let min = condition.minTemperature, let max = condition.maxTemperature {
+                if currentTemp >= min && currentTemp <= max { return 0.9 }
+            }
+            return 0.3
+        }
+    }
+
     private func estimateTimeFromDisplay(reminder: WeatherReminderDisplay, current: WeatherData) async -> Date? {
         // Simple time estimation based on condition type
         let now = Date()
-        
-        if reminder.conditionDescription.contains(">") && current.temperature < 70 {
+        guard let condition = reminder.triggerCondition else { return nil }
+
+        let targetTemp = condition.targetTemperature
+
+        if condition.comparisonType == .above && current.temperature < targetTemp {
             return Calendar.current.date(bySettingHour: 15, minute: 0, second: 0, of: now)
-        } else if reminder.conditionDescription.contains("<") && current.temperature > 50 {
+        } else if condition.comparisonType == .below && current.temperature > targetTemp {
             return Calendar.current.date(bySettingHour: 6, minute: 0, second: 0, of: now)
         }
         
