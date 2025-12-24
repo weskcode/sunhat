@@ -15,7 +15,7 @@ struct ContentView: View {
     var body: some View {
         Group {
             if onboardingCoordinator.hasCompletedOnboarding {
-                DashboardView()
+                MainTabView()
             } else {
                 OnboardingContainerView()
                     .environmentObject(onboardingCoordinator)

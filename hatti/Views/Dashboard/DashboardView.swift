@@ -380,31 +380,6 @@ struct DashboardView: View {
     }
 }
 
-// MARK: - Refreshable Scroll View
-
-struct RefreshableScrollView<Content: View>: View {
-    let onRefresh: () async -> Void
-    let content: Content
-    
-    @State private var isRefreshing = false
-    
-    init(onRefresh: @escaping () async -> Void, @ViewBuilder content: () -> Content) {
-        self.onRefresh = onRefresh
-        self.content = content()
-    }
-    
-    var body: some View {
-        ScrollView {
-            content
-        }
-        .refreshable {
-            isRefreshing = true
-            await onRefresh()
-            isRefreshing = false
-        }
-    }
-}
-
 // MARK: - Weather Alert Card
 
 struct WeatherAlertCard: View {
@@ -577,6 +552,31 @@ struct QuickStatCard: View {
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value)")
+    }
+}
+
+// MARK: - Refreshable Scroll View
+
+struct RefreshableScrollView<Content: View>: View {
+    let onRefresh: () async -> Void
+    let content: Content
+
+    @State private var isRefreshing = false
+
+    init(onRefresh: @escaping () async -> Void, @ViewBuilder content: () -> Content) {
+        self.onRefresh = onRefresh
+        self.content = content()
+    }
+
+    var body: some View {
+        ScrollView {
+            content
+        }
+        .refreshable {
+            isRefreshing = true
+            await onRefresh()
+            isRefreshing = false
+        }
     }
 }
 
