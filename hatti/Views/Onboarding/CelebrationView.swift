@@ -25,9 +25,12 @@ struct CelebrationView: View {
             
             // Confetti particles
             if showConfetti {
-                ConfettiParticles()
-                    .opacity(confettiOpacity)
-                    .transition(.opacity)
+                GeometryReader { geometry in
+                    ConfettiParticles(screenWidth: geometry.size.width, screenHeight: geometry.size.height)
+                        .opacity(confettiOpacity)
+                        .transition(.opacity)
+                }
+                .ignoresSafeArea()
             }
             
             // Main celebration content
@@ -207,9 +210,12 @@ struct CelebrationView: View {
 // MARK: - Confetti Particles
 
 struct ConfettiParticles: View {
+    let screenWidth: CGFloat
+    let screenHeight: CGFloat
+
     @State private var particles: [ConfettiParticle] = []
     @State private var timer: Timer?
-    
+
     private let colors: [Color] = [
         .red, .blue, .green, .yellow, .orange, .purple, .pink, .cyan
     ]
@@ -234,7 +240,7 @@ struct ConfettiParticles: View {
     private func generateParticles() {
         particles = (0..<50).map { _ in
             ConfettiParticle(
-                x: CGFloat.random(in: 0...UIScreen.main.bounds.width),
+                x: CGFloat.random(in: 0...screenWidth),
                 y: -20,
                 color: colors.randomElement() ?? .blue,
                 rotation: Double.random(in: 0...360),
@@ -248,18 +254,21 @@ struct ConfettiParticles: View {
     
     private func startAnimation() {
         timer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { _ in
-            updateParticles()
+            Task { @MainActor [self] in
+                self.updateParticles()
+            }
         }
     }
     
+    @MainActor
     private func updateParticles() {
         for index in particles.indices {
             particles[index].update()
-            
+
             // Reset particle if it goes off screen
-            if particles[index].y > UIScreen.main.bounds.height + 50 {
+            if particles[index].y > screenHeight + 50 {
                 particles[index] = ConfettiParticle(
-                    x: CGFloat.random(in: 0...UIScreen.main.bounds.width),
+                    x: CGFloat.random(in: 0...screenWidth),
                     y: -20,
                     color: colors.randomElement() ?? .blue,
                     rotation: Double.random(in: 0...360),

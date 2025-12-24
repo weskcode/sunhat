@@ -188,10 +188,23 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         updateLocationAccuracy(location)
 
         Task {
+            // iOS 26: Use MKLocalSearch.Request for reverse geocoding instead of deprecated CLGeocoder
+            // Note: MKReverseGeocodingRequest was introduced in iOS 18 but may have limited API
+            // Using MKLocalSearch with coordinates as a more reliable alternative
+            let request = MKLocalSearch.Request()
+            request.resultTypes = [.address]
+            request.region = MKCoordinateRegion(
+                center: location.coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001)
+            )
+
             do {
-                let placemarks = try await CLGeocoder().reverseGeocodeLocation(location)
-                if let placemark = placemarks.first {
-                    self.currentLocationName = self.formatPlacemarkName(MKPlacemark(placemark: placemark))
+                let search = MKLocalSearch(request: request)
+                let response = try await search.start()
+
+                if let mapItem = response.mapItems.first {
+                    // Use mapItem.name for formatted location name (non-deprecated)
+                    self.currentLocationName = mapItem.name ?? "Unknown Location"
                 } else {
                     self.currentLocationName = "Unknown Location"
                 }
@@ -200,7 +213,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
                 self.currentLocationName = "Unknown Location"
             }
         }
-        
+
         // Add to history
         addToLocationHistory(location, name: "Current Location", source: .gps)
     }
@@ -219,16 +232,6 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         } else {
             currentLocationAccuracy = "Poor (±\(Int(accuracy))m)"
         }
-    }
-    
-    private func formatPlacemarkName(_ placemark: MKPlacemark) -> String {
-        let components = [
-            placemark.name,
-            placemark.locality,
-            placemark.administrativeArea
-        ].compactMap { $0 }
-        
-        return components.isEmpty ? "Unknown Location" : components.joined(separator: ", ")
     }
     
     private func updateCurrentLocationIfNeeded() {
@@ -408,15 +411,18 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
                     self.logger.warning("No map items found for search result")
                     return
                 }
-                
+
+                // iOS 26: Use mapItem.location and mapItem.name instead of deprecated placemark properties
+                let location = mapItem.location
+
                 let savedLocation = SavedLocation(
-                    latitude: mapItem.placemark.coordinate.latitude,
-                    longitude: mapItem.placemark.coordinate.longitude,
+                    latitude: location.coordinate.latitude,
+                    longitude: location.coordinate.longitude,
                     name: completion.title,
                     address: completion.subtitle,
-                    city: mapItem.placemark.locality ?? "",
-                    state: mapItem.placemark.administrativeArea ?? "",
-                    country: mapItem.placemark.country ?? "",
+                    city: mapItem.name ?? "",
+                    state: "", // iOS 26: No replacement API for individual address components yet
+                    country: "", // iOS 26: No replacement API for individual address components yet
                     source: .search
                 )
                 

@@ -736,13 +736,9 @@ final class NotificationPermissionManager: NSObject, ObservableObject {
     
     func checkNotificationStatus() {
         Task {
-            do {
-                let settings = try await notificationCenter.notificationSettings()
-                await MainActor.run {
-                    notificationStatus = settings.authorizationStatus
-                }
-            } catch {
-                print("Error getting notification settings: \(error)")
+            let settings = await notificationCenter.notificationSettings()
+            await MainActor.run {
+                notificationStatus = settings.authorizationStatus
             }
         }
     }

@@ -13,7 +13,9 @@
       "Bash(xargs -I {} sh -c 'echo \"\"\"\"File: {}\"\"\"\" && wc -l \"\"\"\"{}\"\"\"\"')",
       "Bash(tree:*)",
       "Bash(xcrun simctl list:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(xcrun swift:*)",
+      "Bash(1 <<'EOF'\nimport MapKit\nimport Contacts\n\nlet mapItem = MKMapItem()\nif let addressReps = mapItem.addressRepresentations {\n    // Print type\n    print(type(of: addressReps))\n}\nEOF)"
     ],
     "deny": []
   }
