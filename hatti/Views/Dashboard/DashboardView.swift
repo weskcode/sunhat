@@ -475,19 +475,19 @@ struct ActiveReminderCard: View {
     }
     
     private var statusColor: Color {
-        guard let weatherData = weatherData else {
+        guard weatherData != nil else {
             return .gray
         }
-        
+
         // Simplified status logic for Sendable types
         return .orange
     }
-    
+
     private var statusText: String {
-        guard let weatherData = weatherData else {
+        guard weatherData != nil else {
             return "Waiting for weather data"
         }
-        
+
         return "Monitoring"
     }
 }

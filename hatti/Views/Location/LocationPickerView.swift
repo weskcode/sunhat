@@ -207,12 +207,14 @@ final class LocationPickerViewModel: NSObject, ObservableObject {
     func resolveLocation(_ completion: MKLocalSearchCompletion, result: @escaping (ReminderLocation) -> Void) {
         let request = MKLocalSearch.Request(completion: completion)
         let search = MKLocalSearch(request: request)
-        
+
         search.start { response, error in
             DispatchQueue.main.async {
                 if let mapItem = response?.mapItems.first {
+                    // Use location property instead of deprecated placemark
+                    let coordinate = mapItem.location.coordinate
                     let location = ReminderLocation(
-                        coordinate: mapItem.placemark.coordinate,
+                        coordinate: coordinate,
                         displayName: completion.title,
                         fullAddress: completion.subtitle,
                         isCurrentLocation: false

@@ -365,7 +365,7 @@ extension TriggerEngine {
         let progressConfidence = Double(actual) / Double(required)
         
         // Bonus confidence if current temperature strongly supports the condition
-        let tempDifference = abs(currentTemp - targetTemp)
+        let _ = abs(currentTemp - targetTemp)
         let tempConfidence: Double
         
         if isAbove {

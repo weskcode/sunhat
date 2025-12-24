@@ -68,7 +68,7 @@ do {
     /// Saves weather data
     func saveWeatherData(_ weatherData: WeatherData) async throws {
         logger.debug("Saving weather data")
-        try modelContext.insert(weatherData)
+        modelContext.insert(weatherData)
         try modelContext.save()
         logger.info("Weather data saved successfully")
     }

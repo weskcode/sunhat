@@ -54,11 +54,11 @@ final class DetailedReminderViewModel: ObservableObject {
         guard let modelContext = modelContext else { return }
         
         let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
-        
+
         let reminderID = reminder.id
-        
+
         // Fetch all history entries without predicate to avoid Sendable keypath issues
-        var descriptor = FetchDescriptor<ReminderHistory>()
+        let descriptor = FetchDescriptor<ReminderHistory>()
         
         do {
             let allHistory = try modelContext.fetch(descriptor)

@@ -11,6 +11,7 @@ import SwiftData
 import CoreLocation
 import CoreData
 import Combine
+import MapKit
 import os
 
 @MainActor
@@ -88,8 +89,8 @@ final class DashboardViewModel: NSObject, ObservableObject {
     
     func refreshWeatherData() async {
         logger.info("Starting weather data refresh")
-        
-        guard let modelContext = modelContext else {
+
+        guard modelContext != nil else {
             logger.error("No model context available")
             return
         }
@@ -198,18 +199,39 @@ final class DashboardViewModel: NSObject, ObservableObject {
     }
     
     private func updateLocationName(for location: CLLocation) async {
-        let geocoder = CLGeocoder()
-        
-        do {
-            let placemarks = try await geocoder.reverseGeocodeLocation(location)
-            if let placemark = placemarks.first {
-                let city = placemark.locality ?? ""
-                let state = placemark.administrativeArea ?? ""
-                currentLocationName = "\(city), \(state)"
+        if #available(iOS 26.0, *) {
+            // Use MKReverseGeocodingRequest for iOS 26+
+            let request = MKLocalSearch.Request()
+            request.region = MKCoordinateRegion(
+                center: location.coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+            )
+
+            do {
+                let search = MKLocalSearch(request: request)
+                let response = try await search.start()
+                if let item = response.mapItems.first {
+                    currentLocationName = item.name ?? "Current Location"
+                }
+            } catch {
+                logger.warning("Failed to reverse geocode location: \(error.localizedDescription)")
+                currentLocationName = "Current Location"
             }
-        } catch {
-            logger.warning("Failed to reverse geocode location: \(error.localizedDescription)")
-            currentLocationName = "Current Location"
+        } else {
+            // Fallback to CLGeocoder for iOS 25 and below
+            let geocoder = CLGeocoder()
+
+            do {
+                let placemarks = try await geocoder.reverseGeocodeLocation(location)
+                if let placemark = placemarks.first {
+                    let city = placemark.locality ?? ""
+                    let state = placemark.administrativeArea ?? ""
+                    currentLocationName = "\(city), \(state)"
+                }
+            } catch {
+                logger.warning("Failed to reverse geocode location: \(error.localizedDescription)")
+                currentLocationName = "Current Location"
+            }
         }
     }
     

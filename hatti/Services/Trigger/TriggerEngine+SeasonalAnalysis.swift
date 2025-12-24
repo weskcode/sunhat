@@ -41,7 +41,7 @@ extension TriggerEngine {
     ) async -> TriggerEvaluationResult {
         
         // Simplified implementation using available TriggerConditionData properties
-        let targetTemperature = conditionData.targetTemperature
+        let _ = conditionData.targetTemperature
         let comparisonType = conditionData.comparisonType
         let useFeelsLike = conditionData.useFeelsLike
         
@@ -127,7 +127,7 @@ extension TriggerEngine {
         
         // Fetch historical data for the past few years using modelActor
         let endDate = Date()
-        let startDate = Calendar.current.date(byAdding: .year, value: -3, to: endDate) ?? endDate
+        let _ = Calendar.current.date(byAdding: .year, value: -3, to: endDate) ?? endDate
          
         do {
             let historicalDataTransfers = try await modelActor.fetchHistoricalWeatherData(
@@ -189,7 +189,7 @@ extension TriggerEngine {
     }
     
     private func analyzeSeasonalPatterns(yearlyDataTransfers: [Int: [WeatherDataTransfer]]) -> HistoricalWeatherContext.SeasonalPatterns {
-        let calendar = Calendar.current
+        let _ = Calendar.current
          
         var firstFrostDates: [Date] = []
         var lastFrostDates: [Date] = []
@@ -362,8 +362,8 @@ extension TriggerEngine {
         historicalContext: HistoricalWeatherContext,
         seasonalType: SeasonalType
     ) -> SeasonalTransitionAnalysis {
-        
-        let calendar = Calendar.current
+
+        let _ = Calendar.current
         let currentDate = Date()
         
         switch seasonalType {
@@ -718,13 +718,13 @@ extension TriggerEngine {
              
             // Search for weather data within 1 day of the target date
             let startDate = calendar.date(byAdding: .day, value: -1, to: targetDate) ?? targetDate
-            let endDate = calendar.date(byAdding: .day, value: 1, to: targetDate) ?? targetDate
-             
+            let _ = calendar.date(byAdding: .day, value: 1, to: targetDate) ?? targetDate
+
             let searchRadius: CLLocationDistance = 15000 // 15km
-            let minLat = location.coordinate.latitude - (searchRadius / 111000)
-            let maxLat = location.coordinate.latitude + (searchRadius / 111000)
-            let minLon = location.coordinate.longitude - (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
-            let maxLon = location.coordinate.longitude + (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
+            let _ = location.coordinate.latitude - (searchRadius / 111000)
+            let _ = location.coordinate.latitude + (searchRadius / 111000)
+            let _ = location.coordinate.longitude - (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
+            let _ = location.coordinate.longitude + (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
              
             do {
                 // Use modelActor to fetch historical data for this year

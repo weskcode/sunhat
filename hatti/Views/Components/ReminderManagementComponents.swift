@@ -94,7 +94,7 @@ struct ReminderManagementRow: View {
             if !isSelectionMode && reminder.canTrigger {
                 Toggle("", isOn: .init(
                     get: { reminder.isActive },
-                    set: onToggleActive
+                    set: { @Sendable newValue in onToggleActive(newValue) }
                 ))
                 .toggleStyle(SwitchToggleStyle())
                 .scaleEffect(0.8)

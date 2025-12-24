@@ -55,7 +55,7 @@ final class WeatherService: ObservableObject {
     
     func scheduleBackgroundRefresh() {
         Task {
-            await self.weatherActor!.scheduleBackgroundRefresh()
+            self.weatherActor!.scheduleBackgroundRefresh()
         }
     }
 
@@ -101,7 +101,7 @@ class WeatherServiceActor {
         var newProviders: [any WeatherAPI] = []
 
         // Add Apple WeatherKit (always available)
-        let appleWeatherKitAPI = await AppleWeatherKitAPI()
+        let appleWeatherKitAPI = AppleWeatherKitAPI()
         newProviders.append(appleWeatherKitAPI)
 
         // Add OpenWeatherMap only if API key is provided

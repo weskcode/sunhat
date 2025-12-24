@@ -126,7 +126,7 @@ final class ReminderManagementViewModel: ObservableObject {
     }
     
     func loadMoreTriggeredHistory() {
-        guard currentSection == .triggered, let modelContext = modelContext else { return }
+        guard currentSection == .triggered, modelContext != nil else { return }
         
         triggeredHistoryOffset += triggeredHistoryLimit
         
@@ -344,7 +344,7 @@ final class ReminderManagementViewModel: ObservableObject {
             ]
             
         case .triggered:
-            let thirtyDaysAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
+            let _ = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
             predicate = #Predicate { reminder in
                 reminder.lastTriggered != nil
             }

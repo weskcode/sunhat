@@ -80,31 +80,38 @@ struct AnimatedWeatherIcon: View {
 struct FloatingParticles: View {
     let particleCount: Int
     let colors: [Color]
-    
+
     @State private var particles: [Particle] = []
-    
+    @State private var screenSize: CGSize = .zero
+
     var body: some View {
-        ZStack {
-            ForEach(particles.indices, id: \.self) { index in
-                Circle()
-                    .fill(particles[index].color.opacity(particles[index].opacity))
-                    .frame(width: particles[index].size, height: particles[index].size)
-                    .position(particles[index].position)
-                    .blur(radius: particles[index].blur)
+        GeometryReader { geometry in
+            ZStack {
+                ForEach(particles.indices, id: \.self) { index in
+                    Circle()
+                        .fill(particles[index].color.opacity(particles[index].opacity))
+                        .frame(width: particles[index].size, height: particles[index].size)
+                        .position(particles[index].position)
+                        .blur(radius: particles[index].blur)
+                }
+            }
+            .onAppear {
+                screenSize = geometry.size
+                generateParticles()
+                startParticleAnimation()
+            }
+            .onChange(of: geometry.size) { _, newSize in
+                screenSize = newSize
             }
         }
-        .onAppear {
-            generateParticles()
-            startParticleAnimation()
-        }
     }
-    
+
     private func generateParticles() {
         particles = (0..<particleCount).map { _ in
             Particle(
                 position: CGPoint(
-                    x: CGFloat.random(in: 0...UIScreen.main.bounds.width),
-                    y: CGFloat.random(in: 0...UIScreen.main.bounds.height)
+                    x: CGFloat.random(in: 0...screenSize.width),
+                    y: CGFloat.random(in: 0...screenSize.height)
                 ),
                 color: colors.randomElement() ?? .blue,
                 size: CGFloat.random(in: 2...8),
@@ -113,18 +120,20 @@ struct FloatingParticles: View {
             )
         }
     }
-    
+
     private func startParticleAnimation() {
         Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            withAnimation(.linear(duration: 0.1)) {
-                for index in particles.indices {
-                    particles[index].position.y -= CGFloat.random(in: 0.5...2.0)
-                    particles[index].position.x += CGFloat.random(in: -0.5...0.5)
-                    
-                    // Reset particle if it goes off screen
-                    if particles[index].position.y < -10 {
-                        particles[index].position.y = UIScreen.main.bounds.height + 10
-                        particles[index].position.x = CGFloat.random(in: 0...UIScreen.main.bounds.width)
+            Task { @MainActor in
+                withAnimation(.linear(duration: 0.1)) {
+                    for index in particles.indices {
+                        particles[index].position.y -= CGFloat.random(in: 0.5...2.0)
+                        particles[index].position.x += CGFloat.random(in: -0.5...0.5)
+
+                        // Reset particle if it goes off screen
+                        if particles[index].position.y < -10 {
+                            particles[index].position.y = screenSize.height + 10
+                            particles[index].position.x = CGFloat.random(in: 0...screenSize.width)
+                        }
                     }
                 }
             }

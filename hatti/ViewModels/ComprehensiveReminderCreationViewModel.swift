@@ -706,16 +706,15 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
                 let search = MKLocalSearch(request: request)
                 let response = try await search.start()
                 if let item = response.mapItems.first {
-                    let city = item.placemark.locality ?? ""
-                    let state = item.placemark.administrativeArea ?? ""
+                    // Use location property (iOS 26+) instead of deprecated placemark
+                    let city = item.name ?? ""
+                    let coordinate = item.location.coordinate
 
                     await MainActor.run {
                         selectedLocation = ReminderLocation(
-                            coordinate: location.coordinate,
-                            displayName: "\(city), \(state)",
-                            fullAddress: [item.placemark.thoroughfare, item.placemark.locality, item.placemark.administrativeArea]
-                                .compactMap { $0 }
-                                .joined(separator: ", "),
+                            coordinate: coordinate,
+                            displayName: city,
+                            fullAddress: city,
                             isCurrentLocation: true
                         )
                     }
@@ -742,17 +741,16 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
             do {
                 let search = MKLocalSearch(request: request)
                 let response = try await search.start()
-                if let placemark = response.mapItems.first?.placemark {
-                    let city = placemark.locality ?? ""
-                    let state = placemark.administrativeArea ?? ""
+                if let item = response.mapItems.first {
+                    // Use location property (iOS 26+) instead of deprecated placemark
+                    let city = item.name ?? ""
+                    let coordinate = item.location.coordinate
 
                     await MainActor.run {
                         selectedLocation = ReminderLocation(
-                            coordinate: location.coordinate,
-                            displayName: "\(city), \(state)",
-                            fullAddress: [placemark.thoroughfare, placemark.locality, placemark.administrativeArea]
-                                .compactMap { $0 }
-                                .joined(separator: ", "),
+                            coordinate: coordinate,
+                            displayName: city,
+                            fullAddress: city,
                             isCurrentLocation: true
                         )
                     }

@@ -57,25 +57,20 @@ final class TriggerEngineManager: ObservableObject {
         
         isEvaluating = true
         let startTime = Date()
-        
-        do {
-            logger.info("Starting manual evaluation of all reminders")
-            
-            let results = await triggerEngine.evaluateAllActiveReminders()
-            await processEvaluationResults(results)
-            
-            let duration = Date().timeIntervalSince(startTime)
-            updatePerformanceMetrics(duration: duration)
-            
-            lastEvaluationTime = Date()
-            evaluationResults = results
-            
-            logger.info("Manual evaluation completed: \(results.count) reminders evaluated in \(duration)s")
-            
-        } catch {
-            logger.error("Manual evaluation failed: \(error)")
-        }
-        
+
+        logger.info("Starting manual evaluation of all reminders")
+
+        let results = await triggerEngine.evaluateAllActiveReminders()
+        await processEvaluationResults(results)
+
+        let duration = Date().timeIntervalSince(startTime)
+        updatePerformanceMetrics(duration: duration)
+
+        lastEvaluationTime = Date()
+        evaluationResults = results
+
+        logger.info("Manual evaluation completed: \(results.count) reminders evaluated in \(duration)s")
+
         isEvaluating = false
     }
     
@@ -142,33 +137,28 @@ final class TriggerEngineManager: ObservableObject {
             task.setTaskCompleted(success: false)
             return
         }
-        
-        do {
-            // Perform the evaluation
-            let results = await triggerEngine.evaluateAllActiveReminders()
-            
-            // Process results and send notifications
-            await processEvaluationResults(results, isBackground: true)
-            
-            let duration = Date().timeIntervalSince(startTime)
-            
-            await MainActor.run {
-                self.lastEvaluationTime = Date()
-                self.evaluationResults = results
-                self.updatePerformanceMetrics(duration: duration)
-            }
-            
-            logger.info("Background evaluation completed: \(results.count) reminders in \(duration)s")
-            
-            // Schedule next evaluation
-            scheduleBackgroundEvaluation()
-            
-            task.setTaskCompleted(success: true)
-            
-        } catch {
-            logger.error("Background evaluation failed: \(error)")
-            task.setTaskCompleted(success: false)
+
+
+        // Perform the evaluation
+        let results = await triggerEngine.evaluateAllActiveReminders()
+
+        // Process results and send notifications
+        await processEvaluationResults(results, isBackground: true)
+
+        let duration = Date().timeIntervalSince(startTime)
+
+        await MainActor.run {
+            self.lastEvaluationTime = Date()
+            self.evaluationResults = results
+            self.updatePerformanceMetrics(duration: duration)
         }
+
+        logger.info("Background evaluation completed: \(results.count) reminders in \(duration)s")
+
+        // Schedule next evaluation
+        scheduleBackgroundEvaluation()
+
+        task.setTaskCompleted(success: true)
     }
     
     // MARK: - Result Processing

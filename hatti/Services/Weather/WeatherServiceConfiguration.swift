@@ -74,29 +74,23 @@ final class WeatherServiceManager: ObservableObject {
     func configure(with newConfiguration: WeatherServiceConfiguration, modelContext: ModelContext) async {
         configuration = newConfiguration
         saveConfiguration()
-        
-        do {
-            await WeatherService.shared.configure(
-                modelContainer: modelContext.container,
-                openWeatherMapKey: newConfiguration.openWeatherMapAPIKey
-            )
-            
-            if newConfiguration.enableBackgroundRefresh {
-                let permissionGranted = await BackgroundWeatherManager.shared.requestBackgroundRefreshPermission()
-                if !permissionGranted {
-                    logger.warning("Background refresh permission not granted")
-                }
+
+        await WeatherService.shared.configure(
+            modelContainer: modelContext.container,
+            openWeatherMapKey: newConfiguration.openWeatherMapAPIKey
+        )
+
+        if newConfiguration.enableBackgroundRefresh {
+            let permissionGranted = await BackgroundWeatherManager.shared.requestBackgroundRefreshPermission()
+            if !permissionGranted {
+                logger.warning("Background refresh permission not granted")
             }
-            
-            isConfigured = true
-            configurationError = nil
-            
-            logger.info("Weather service configured successfully")
-            
-        } catch {
-            configurationError = WeatherError.unknown(error)
-            logger.error("Failed to configure weather service: \(error)")
         }
+
+        isConfigured = true
+        configurationError = nil
+
+        logger.info("Weather service configured successfully")
     }
     
     func updateAPIKey(_ apiKey: String) async {

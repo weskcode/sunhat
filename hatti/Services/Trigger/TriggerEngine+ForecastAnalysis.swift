@@ -54,7 +54,8 @@ extension TriggerEngine {
         
         // Calculate overall result
         let allConditionsMet = conditionsFailed.isEmpty
-        let averageConfidence = conditionCount > 0 ? totalConfidence / Double(conditionCount) : 0.0
+        // Note: conditionCount is always >= 1 since temperature condition is always evaluated
+        let averageConfidence = totalConfidence / Double(conditionCount)
         
         let triggerReason: String
         if allConditionsMet {
@@ -92,7 +93,7 @@ extension TriggerEngine {
         
         do {
             // Use Apple WeatherKit API directly to avoid non-Sendable WeatherData
-            let appleWeatherKitAPI = await AppleWeatherKitAPI()
+            let appleWeatherKitAPI = AppleWeatherKitAPI()
             let weatherDataDTO = try await appleWeatherKitAPI.fetchWeatherData(for: location)
             
             // Convert DTO to WeatherDataTransfer inline
