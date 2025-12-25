@@ -1,0 +1,85 @@
+<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#357ABD;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="cloudGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E8F4F8;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Rounded square background (iOS style) -->
+  <rect width="1024" height="1024" rx="226" fill="url(#bgGradient)"/>
+  
+  <!-- Clipboard/List background -->
+  <g filter="url(#shadow)">
+    <rect x="192" y="100" width="640" height="820" rx="40" fill="#FFFFFF"/>
+    
+    <!-- Clipboard clip at top -->
+    <rect x="392" y="80" width="240" height="70" rx="35" fill="#E0E0E0"/>
+    <rect x="412" y="90" width="200" height="50" rx="25" fill="#F5F5F5"/>
+  </g>
+  
+  <!-- Todo list items -->
+  <g>
+    <!-- First item - checked -->
+    <circle cx="280" cy="260" r="28" fill="none" stroke="#4A90E2" stroke-width="5"/>
+    <polyline points="270,260 277,270 292,250" fill="none" stroke="#4A90E2" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="340" y1="260" x2="720" y2="260" stroke="#D0D0D0" stroke-width="10" stroke-linecap="round"/>
+    
+    <!-- Second item - checked -->
+    <circle cx="280" cy="390" r="28" fill="none" stroke="#4A90E2" stroke-width="5"/>
+    <polyline points="270,390 277,400 292,380" fill="none" stroke="#4A90E2" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="340" y1="390" x2="680" y2="390" stroke="#D0D0D0" stroke-width="10" stroke-linecap="round"/>
+    
+    <!-- Weather item - SPECIAL with sun/cloud icon -->
+    <circle cx="280" cy="520" r="28" fill="none" stroke="#FFB84D" stroke-width="5"/>
+    
+    <!-- Weather icon inside the checkbox area -->
+    <g transform="translate(512, 520) scale(1.15)">
+      <!-- Sun rays -->
+      <g fill="#FFB84D">
+        <circle cx="0" cy="-45" r="6"/>
+        <circle cx="32" cy="-32" r="5"/>
+        <circle cx="45" cy="0" r="6"/>
+        <circle cx="32" cy="32" r="5"/>
+        <circle cx="0" cy="45" r="6"/>
+        <circle cx="-32" cy="32" r="5"/>
+        <circle cx="-45" cy="0" r="6"/>
+        <circle cx="-32" cy="-32" r="5"/>
+      </g>
+      
+      <!-- Sun center -->
+      <circle cx="0" cy="0" r="28" fill="#FFD93D"/>
+    </g>
+    
+    <!-- Line for weather item -->
+    <line x1="340" y1="520" x2="420" y2="520" stroke="#333333" stroke-width="10" stroke-linecap="round"/>
+    <line x1="610" y1="520" x2="720" y2="520" stroke="#333333" stroke-width="10" stroke-linecap="round"/>
+    
+    <!-- Fourth item - unchecked -->
+    <circle cx="280" cy="650" r="28" fill="none" stroke="#B0B0B0" stroke-width="5"/>
+    <line x1="340" y1="650" x2="750" y2="650" stroke="#E0E0E0" stroke-width="10" stroke-linecap="round"/>
+    
+    <!-- Fifth item - unchecked -->
+    <circle cx="280" cy="780" r="28" fill="none" stroke="#B0B0B0" stroke-width="5"/>
+    <line x1="340" y1="780" x2="700" y2="780" stroke="#E0E0E0" stroke-width="10" stroke-linecap="round"/>
+  </g>
+</svg>
