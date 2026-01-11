@@ -8,7 +8,6 @@
 import Foundation
 import SwiftUI
 import SwiftData
-import CloudKit
 import UniformTypeIdentifiers
 import os.log
 
@@ -17,8 +16,9 @@ import os.log
 final class DataPrivacyViewModel {
     
     // MARK: - Published Properties
-    
-    var cloudKitSyncEnabled: Bool = true
+
+    // Sync status (CloudKit disabled - prepared for future use)
+    var syncEnabled: Bool = false
     var isSyncing: Bool = false
     var deleteConfirmationText: String = ""
     var isExporting: Bool = false
@@ -37,12 +37,8 @@ final class DataPrivacyViewModel {
         deleteConfirmationText.uppercased() == "DELETE"
     }
     
-    var cloudKitStatusDescription: String {
-        if cloudKitSyncEnabled {
-            return "Your data syncs securely across all your Apple devices"
-        } else {
-            return "Data stays only on this device"
-        }
+    var syncStatusDescription: String {
+        "Your data is stored locally on this device. iCloud sync will be available in a future update."
     }
     
     // MARK: - Private Properties
@@ -128,86 +124,48 @@ final class DataPrivacyViewModel {
     
     func deleteAllUserData() async {
         guard deleteConfirmationValid else { return }
-        
+
         isDeleting = true
         errorMessage = nil
-        
+
         do {
             guard let context = getModelContext() else {
                 throw DataPrivacyError.noModelContext
             }
-            
+
             // Delete all data types
             try await deleteAllData(from: context)
-            
-            // Clear CloudKit data if enabled
-            if cloudKitSyncEnabled {
-                try await clearCloudKitData()
-            }
-            
+
             // Reset app to initial state
             await resetAppState()
-            
+
             statusMessage = "All data has been successfully deleted"
-            
+
         } catch {
             errorMessage = "Failed to delete data: \(error.localizedDescription)"
         }
-        
+
         isDeleting = false
         deleteConfirmationText = ""
     }
     
-    func enableCloudKitSync() async {
-        isSyncing = true
-        
-        do {
-            // Check CloudKit availability
-            let status = try await checkCloudKitStatus()
-            
-            guard status == .available else {
-                throw DataPrivacyError.cloudKitUnavailable
-            }
-            
-            // Enable sync in user preferences
-            _ = try await fetchUserPreferences()
-            // CloudKit sync would be handled by SwiftData automatically
-            cloudKitSyncEnabled = true
-            statusMessage = "iCloud sync enabled"
-            
-        } catch {
-            errorMessage = "Failed to enable iCloud sync: \(error.localizedDescription)"
-            cloudKitSyncEnabled = false
-        }
-        
-        isSyncing = false
+    // MARK: - Sync Methods (CloudKit disabled - prepared for future use)
+
+    func enableSync() async {
+        // CloudKit sync is currently disabled
+        // This method is preserved for future CloudKit integration
+        statusMessage = "iCloud sync will be available in a future update."
     }
-    
-    func disableCloudKitSync() async {
-        isSyncing = true
-        
-        // This would typically involve configuring the ModelContainer to not use CloudKit
-        // For now, we'll mark it as disabled
-        cloudKitSyncEnabled = false
-        statusMessage = "iCloud sync disabled. Data remains on this device."
-        
-        isSyncing = false
+
+    func disableSync() async {
+        // CloudKit sync is currently disabled
+        syncEnabled = false
+        statusMessage = "Data is stored locally on this device."
     }
-    
+
     func forceSyncNow() async {
-        isSyncing = true
-        
-        do {
-            // Trigger manual sync - this would be handled by the ModelContainer
-            // For now, simulate sync
-            try await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
-            statusMessage = "Sync completed successfully"
-            
-        } catch {
-            errorMessage = "Sync failed: \(error.localizedDescription)"
-        }
-        
-        isSyncing = false
+        // CloudKit sync is currently disabled
+        statusMessage = "Sync is currently unavailable. Data is stored locally."
     }
     
     func contactPrivacyOfficer() {
@@ -246,16 +204,15 @@ final class DataPrivacyViewModel {
                 NotificationConfig.self,
                 ReminderHistory.self
             ])
-            
+
             let modelConfiguration = ModelConfiguration(
                 schema: schema,
-                isStoredInMemoryOnly: false,
-                cloudKitDatabase: .automatic
+                isStoredInMemoryOnly: false
             )
-            
+
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
             return ModelContext(container)
-            
+
         } catch {
             print("Failed to create model context: \(error)")
             return nil
@@ -411,12 +368,6 @@ final class DataPrivacyViewModel {
         try context.save()
     }
     
-    private func clearCloudKitData() async throws {
-        // This would involve deleting CloudKit records
-        // For now, we'll simulate this operation
-        try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
-    }
-    
     private func resetAppState() async {
         // Reset app to initial onboarding state
         UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
@@ -434,11 +385,6 @@ final class DataPrivacyViewModel {
         let descriptor = FetchDescriptor<UserPreferences>()
         let preferences = try context.fetch(descriptor)
         return preferences.first
-    }
-    
-    private func checkCloudKitStatus() async throws -> CKAccountStatus {
-        let container = CKContainer.default()
-        return try await container.accountStatus()
     }
     
     private func saveAndShareFile(data: Data, fileName: String, contentType: UTType) async {

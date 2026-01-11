@@ -52,7 +52,7 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
     private var weatherService = WeatherService.shared
     private var cancellables = Set<AnyCancellable>()
     
-    private let logger = Logger(subsystem: "com.hatti.app", category: "ComprehensiveReminderCreationViewModel")
+    private let logger = Logger(subsystem: "com.sunhat.app", category: "ComprehensiveReminderCreationViewModel")
     
     // Natural language processing
     private var languageProcessingTask: Task<Void, Never>?

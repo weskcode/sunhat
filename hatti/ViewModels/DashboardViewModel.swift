@@ -51,7 +51,7 @@ final class DashboardViewModel: NSObject, ObservableObject {
     private var weatherService = WeatherService.shared
     private var cancellables = Set<AnyCancellable>()
     
-    private let logger = Logger(subsystem: "com.hatti.app", category: "DashboardViewModel")
+    private let logger = Logger(subsystem: "com.sunhat.app", category: "DashboardViewModel")
     
     // Timer for automatic refresh
     private var refreshTimer: Timer?

@@ -21,7 +21,7 @@ final class LocationPermissionManager: NSObject, ObservableObject {
     @Published var locationError: LocationError?
     
     private let locationManager = CLLocationManager()
-    private let logger = Logger(subsystem: "com.hatti.app", category: "LocationPermissionManager")
+    private let logger = Logger(subsystem: "com.sunhat.app", category: "LocationPermissionManager")
     private var permissionCompletionHandler: ((Bool) -> Void)?
     
     // Location accuracy and timeout settings

@@ -24,18 +24,18 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		64120D1C2E2D64CB0034CB20 /* hatti.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = hatti.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		64120D2D2E2D64CD0034CB20 /* hattiTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = hattiTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		64120D372E2D64CD0034CB20 /* hattiUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = hattiUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		64120D1C2E2D64CB0034CB20 /* SunHat.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SunHat.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		64120D2D2E2D64CD0034CB20 /* SunHatTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SunHatTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		64120D372E2D64CD0034CB20 /* SunHatUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SunHatUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		64120D3F2E2D64CD0034CB20 /* Exceptions for "hatti" folder in "hatti" target */ = {
+		64120D3F2E2D64CD0034CB20 /* Exceptions for "hatti" folder in "SunHat" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 64120D1B2E2D64CB0034CB20 /* hatti */;
+			target = 64120D1B2E2D64CB0034CB20 /* SunHat */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -43,7 +43,7 @@
 		64120D1E2E2D64CB0034CB20 /* hatti */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				64120D3F2E2D64CD0034CB20 /* Exceptions for "hatti" folder in "hatti" target */,
+				64120D3F2E2D64CD0034CB20 /* Exceptions for "hatti" folder in "SunHat" target */,
 			);
 			path = hatti;
 			sourceTree = "<group>";
@@ -98,9 +98,9 @@
 		64120D1D2E2D64CB0034CB20 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				64120D1C2E2D64CB0034CB20 /* hatti.app */,
-				64120D2D2E2D64CD0034CB20 /* hattiTests.xctest */,
-				64120D372E2D64CD0034CB20 /* hattiUITests.xctest */,
+				64120D1C2E2D64CB0034CB20 /* SunHat.app */,
+				64120D2D2E2D64CD0034CB20 /* SunHatTests.xctest */,
+				64120D372E2D64CD0034CB20 /* SunHatUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -108,9 +108,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		64120D1B2E2D64CB0034CB20 /* hatti */ = {
+		64120D1B2E2D64CB0034CB20 /* SunHat */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 64120D402E2D64CD0034CB20 /* Build configuration list for PBXNativeTarget "hatti" */;
+			buildConfigurationList = 64120D402E2D64CD0034CB20 /* Build configuration list for PBXNativeTarget "SunHat" */;
 			buildPhases = (
 				64120D182E2D64CB0034CB20 /* Sources */,
 				64120D192E2D64CB0034CB20 /* Frameworks */,
@@ -123,16 +123,16 @@
 			fileSystemSynchronizedGroups = (
 				64120D1E2E2D64CB0034CB20 /* hatti */,
 			);
-			name = hatti;
+			name = SunHat;
 			packageProductDependencies = (
 			);
 			productName = hatti;
-			productReference = 64120D1C2E2D64CB0034CB20 /* hatti.app */;
+			productReference = 64120D1C2E2D64CB0034CB20 /* SunHat.app */;
 			productType = "com.apple.product-type.application";
 		};
-		64120D2C2E2D64CD0034CB20 /* hattiTests */ = {
+		64120D2C2E2D64CD0034CB20 /* SunHatTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 64120D452E2D64CD0034CB20 /* Build configuration list for PBXNativeTarget "hattiTests" */;
+			buildConfigurationList = 64120D452E2D64CD0034CB20 /* Build configuration list for PBXNativeTarget "SunHatTests" */;
 			buildPhases = (
 				64120D292E2D64CD0034CB20 /* Sources */,
 				64120D2A2E2D64CD0034CB20 /* Frameworks */,
@@ -146,16 +146,16 @@
 			fileSystemSynchronizedGroups = (
 				64120D302E2D64CD0034CB20 /* hattiTests */,
 			);
-			name = hattiTests;
+			name = SunHatTests;
 			packageProductDependencies = (
 			);
 			productName = hattiTests;
-			productReference = 64120D2D2E2D64CD0034CB20 /* hattiTests.xctest */;
+			productReference = 64120D2D2E2D64CD0034CB20 /* SunHatTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		64120D362E2D64CD0034CB20 /* hattiUITests */ = {
+		64120D362E2D64CD0034CB20 /* SunHatUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 64120D482E2D64CD0034CB20 /* Build configuration list for PBXNativeTarget "hattiUITests" */;
+			buildConfigurationList = 64120D482E2D64CD0034CB20 /* Build configuration list for PBXNativeTarget "SunHatUITests" */;
 			buildPhases = (
 				64120D332E2D64CD0034CB20 /* Sources */,
 				64120D342E2D64CD0034CB20 /* Frameworks */,
@@ -169,11 +169,11 @@
 			fileSystemSynchronizedGroups = (
 				64120D3A2E2D64CD0034CB20 /* hattiUITests */,
 			);
-			name = hattiUITests;
+			name = SunHatUITests;
 			packageProductDependencies = (
 			);
 			productName = hattiUITests;
-			productReference = 64120D372E2D64CD0034CB20 /* hattiUITests.xctest */;
+			productReference = 64120D372E2D64CD0034CB20 /* SunHatUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -199,7 +199,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 64120D172E2D64CA0034CB20 /* Build configuration list for PBXProject "hatti" */;
+			buildConfigurationList = 64120D172E2D64CA0034CB20 /* Build configuration list for PBXProject "SunHat" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -213,9 +213,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				64120D1B2E2D64CB0034CB20 /* hatti */,
-				64120D2C2E2D64CD0034CB20 /* hattiTests */,
-				64120D362E2D64CD0034CB20 /* hattiUITests */,
+				64120D1B2E2D64CB0034CB20 /* SunHat */,
+				64120D2C2E2D64CD0034CB20 /* SunHatTests */,
+				64120D362E2D64CD0034CB20 /* SunHatUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -271,12 +271,12 @@
 /* Begin PBXTargetDependency section */
 		64120D2F2E2D64CD0034CB20 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 64120D1B2E2D64CB0034CB20 /* hatti */;
+			target = 64120D1B2E2D64CB0034CB20 /* SunHat */;
 			targetProxy = 64120D2E2E2D64CD0034CB20 /* PBXContainerItemProxy */;
 		};
 		64120D392E2D64CD0034CB20 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 64120D1B2E2D64CB0034CB20 /* hatti */;
+			target = 64120D1B2E2D64CB0034CB20 /* SunHat */;
 			targetProxy = 64120D382E2D64CD0034CB20 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -492,7 +492,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/hatti.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/hatti";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SunHat.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SunHat";
 			};
 			name = Debug;
 		};
@@ -513,7 +513,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/hatti.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/hatti";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SunHat.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SunHat";
 			};
 			name = Release;
 		};
@@ -558,7 +558,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		64120D172E2D64CA0034CB20 /* Build configuration list for PBXProject "hatti" */ = {
+		64120D172E2D64CA0034CB20 /* Build configuration list for PBXProject "SunHat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				64120D432E2D64CD0034CB20 /* Debug */,
@@ -567,7 +567,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		64120D402E2D64CD0034CB20 /* Build configuration list for PBXNativeTarget "hatti" */ = {
+		64120D402E2D64CD0034CB20 /* Build configuration list for PBXNativeTarget "SunHat" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				64120D412E2D64CD0034CB20 /* Debug */,
@@ -576,7 +576,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		64120D452E2D64CD0034CB20 /* Build configuration list for PBXNativeTarget "hattiTests" */ = {
+		64120D452E2D64CD0034CB20 /* Build configuration list for PBXNativeTarget "SunHatTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				64120D462E2D64CD0034CB20 /* Debug */,
@@ -585,7 +585,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		64120D482E2D64CD0034CB20 /* Build configuration list for PBXNativeTarget "hattiUITests" */ = {
+		64120D482E2D64CD0034CB20 /* Build configuration list for PBXNativeTarget "SunHatUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				64120D492E2D64CD0034CB20 /* Debug */,

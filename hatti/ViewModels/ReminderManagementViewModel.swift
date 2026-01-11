@@ -8,7 +8,6 @@
 import Foundation
 import SwiftUI
 import SwiftData
-import CloudKit
 import Combine
 import os
 
@@ -69,7 +68,7 @@ final class ReminderManagementViewModel: ObservableObject {
     private var triggeredHistoryOffset = 0
     private let triggeredHistoryLimit = 50
     
-    private let logger = Logger(subsystem: "com.hatti.app", category: "ReminderManagementViewModel")
+    private let logger = Logger(subsystem: "com.sunhat.app", category: "ReminderManagementViewModel")
     
     // MARK: - Computed Properties
     
@@ -106,8 +105,8 @@ final class ReminderManagementViewModel: ObservableObject {
                     isLoading = false
                 }
                 
-                // Sync with CloudKit in background
-                await syncWithCloudKit()
+                // Background sync is disabled for now
+                // Data is stored locally
                 
             } catch {
                 await MainActor.run {
@@ -120,8 +119,7 @@ final class ReminderManagementViewModel: ObservableObject {
     }
     
     func refreshReminders(for section: ManagementSection) async {
-        // Force refresh from CloudKit
-        await syncWithCloudKit()
+        // Reload reminders from local storage
         loadReminders(for: section)
     }
     
@@ -316,15 +314,8 @@ final class ReminderManagementViewModel: ObservableObject {
     // MARK: - Private Methods
     
     private func setupBindings() {
-        // Auto-refresh every 5 minutes to sync changes
-        Timer.publish(every: 300, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                Task {
-                    await self?.syncWithCloudKit()
-                }
-            }
-            .store(in: &cancellables)
+        // Auto-refresh disabled for now - sync is local only
+        // Can be re-enabled when CloudKit is added back
     }
     
     private func fetchReminders(for section: ManagementSection) async throws -> [WeatherReminder] {
@@ -562,15 +553,8 @@ final class ReminderManagementViewModel: ObservableObject {
         }
     }
     
-    private func syncWithCloudKit() async {
-        // CloudKit sync is handled automatically by SwiftData
-        // but we can implement custom sync logic here if needed
-        logger.info("Syncing reminders with CloudKit...")
-        
-        // Custom sync logic would go here
-        // For now, SwiftData handles the sync automatically
-    }
 }
+
 
 // MARK: - Supporting Enums
 

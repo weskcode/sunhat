@@ -9,10 +9,10 @@ import SwiftUI
 import SwiftData
 
 struct ReminderManagementView: View {
-    @StateObject private var viewModel = ReminderManagementViewModel()
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @StateObject private var viewModel = ReminderManagementViewModel()
     
     @State private var searchText = ""
     @State private var selectedReminders = Set<UUID>()
@@ -23,95 +23,93 @@ struct ReminderManagementView: View {
     @State private var selectedSection: ManagementSection = .active
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Custom segmented control for sections
-                sectionSelector
-                    .padding(.horizontal)
-                    .padding(.top, 8)
-                
-                // Search and filter bar
-                searchAndFilterBar
-                
-                // Main content
-                ZStack {
-                    if viewModel.isLoading {
-                        ProgressView("Loading reminders...")
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else {
-                        mainContent
+        VStack(spacing: 0) {
+            // Custom segmented control for sections
+            sectionSelector
+                .padding(.horizontal)
+                .padding(.top, 8)
+
+            // Search and filter bar
+            searchAndFilterBar
+
+            // Main content
+            ZStack {
+                if viewModel.isLoading {
+                    ProgressView("Loading reminders...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    mainContent
+                }
+            }
+        }
+        .navigationTitle("Manage Reminders")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if isSelectionMode {
+                    Button("Cancel") {
+                        exitSelectionMode()
+                    }
+                } else {
+                    Button("Done") {
+                        dismiss()
                     }
                 }
             }
-            .navigationTitle("Manage Reminders")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    if isSelectionMode {
-                        Button("Cancel") {
-                            exitSelectionMode()
-                        }
-                    } else {
-                        Button("Done") {
-                            dismiss()
-                        }
+
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if isSelectionMode {
+                    Menu {
+                        bulkActionMenu
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    if isSelectionMode {
-                        Menu {
-                            bulkActionMenu
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
+                    .disabled(selectedReminders.isEmpty)
+                } else {
+                    HStack(spacing: 16) {
+                        Button(action: {
+                            showingSortOptions = true
+                        }) {
+                            Image(systemName: "arrow.up.arrow.down")
                         }
-                        .disabled(selectedReminders.isEmpty)
-                    } else {
-                        HStack(spacing: 16) {
-                            Button(action: {
-                                showingSortOptions = true
-                            }) {
-                                Image(systemName: "arrow.up.arrow.down")
-                            }
-                            
-                            Button(action: {
-                                showingCreateReminder = true
-                            }) {
-                                Image(systemName: "plus")
-                            }
+
+                        Button(action: {
+                            showingCreateReminder = true
+                        }) {
+                            Image(systemName: "plus")
                         }
                     }
                 }
             }
-            .sheet(isPresented: $showingCreateReminder) {
-                ComprehensiveReminderCreationView()
-            }
-            .sheet(isPresented: $showingSortOptions) {
-                SortOptionsView(
-                    selectedSort: $viewModel.sortOption,
-                    selectedOrder: $viewModel.sortOrder
-                )
-                .presentationDetents([.medium])
-            }
-            .sheet(isPresented: $showingFilterOptions) {
-                FilterOptionsView(
-                    selectedCategories: $viewModel.selectedCategories,
-                    selectedStatuses: $viewModel.selectedStatuses,
-                    temperatureRange: $viewModel.temperatureRange
-                )
-                .presentationDetents([.large])
-            }
-            .onAppear {
-                viewModel.configure(modelContext: modelContext)
-                viewModel.loadReminders(for: selectedSection)
-            }
-            .onChange(of: selectedSection) { _, newSection in
-                viewModel.loadReminders(for: newSection)
-                exitSelectionMode()
-            }
-            .onChange(of: searchText) { _, newText in
-                viewModel.searchText = newText
-            }
+        }
+        .sheet(isPresented: $showingCreateReminder) {
+            ComprehensiveReminderCreationView()
+        }
+        .sheet(isPresented: $showingSortOptions) {
+            SortOptionsView(
+                selectedSort: $viewModel.sortOption,
+                selectedOrder: $viewModel.sortOrder
+            )
+            .presentationDetents([.medium])
+        }
+        .sheet(isPresented: $showingFilterOptions) {
+            FilterOptionsView(
+                selectedCategories: $viewModel.selectedCategories,
+                selectedStatuses: $viewModel.selectedStatuses,
+                temperatureRange: $viewModel.temperatureRange
+            )
+            .presentationDetents([.large])
+        }
+        .onAppear {
+            viewModel.configure(modelContext: modelContext)
+            viewModel.loadReminders(for: selectedSection)
+        }
+        .onChange(of: selectedSection) { _, newSection in
+            viewModel.loadReminders(for: newSection)
+            exitSelectionMode()
+        }
+        .onChange(of: searchText) { _, newText in
+            viewModel.searchText = newText
         }
     }
     

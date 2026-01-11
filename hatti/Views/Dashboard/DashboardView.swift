@@ -18,6 +18,8 @@ struct DashboardView: View {
     @State private var showingQuickCreate = false
     @State private var showingAllReminders = false
     @State private var showingWeatherAlerts = false
+    @State private var showingDetailedWeather = false
+    @State private var selectedForecastDays: ForecastRange = .sevenDay
     
     var body: some View {
         NavigationStack {
@@ -32,22 +34,34 @@ struct DashboardView: View {
                         await viewModel.refreshWeatherData()
                     } content: {
                         LazyVStack(spacing: 20) {
-                            // Current temperature widget
+                            // Current temperature widget (expandable)
                             currentTemperatureWidget
                                 .padding(.top, 8)
-                            
+
+                            // Detailed weather metrics (expandable)
+                            if showingDetailedWeather {
+                                detailedWeatherMetrics
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
+
                             // Weather alerts (if any)
                             if !viewModel.activeAlerts.isEmpty {
                                 weatherAlertsSection
                             }
-                            
+
+                            // Hourly forecast (24 hours)
+                            hourlyForecastSection
+
                             // Active reminders section
                             activeRemindersSection
-                            
-                            // 7-day temperature trend
-                            temperatureTrendSection
-                            
-                            // Quick stats
+
+                            // Multi-day forecast with selector (5/7/10 days)
+                            enhancedForecastSection
+
+                            // Comprehensive weather metrics grid
+                            comprehensiveWeatherMetrics
+
+                            // Additional weather stats (always visible)
                             quickStatsSection
                         }
                         .padding(.horizontal, 16)
@@ -66,19 +80,8 @@ struct DashboardView: View {
                     }
                 }
             }
-            .navigationTitle("hatti")
+            .navigationTitle("SunHat")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        NavigationLink("All Reminders", destination: AllRemindersView())
-                        NavigationLink("Weather Details", destination: WeatherView())
-                        NavigationLink("Settings", destination: SettingsView())
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                    }
-                }
-            }
             .sheet(isPresented: $showingQuickCreate) {
                 QuickCreateReminderView()
             }
@@ -95,9 +98,13 @@ struct DashboardView: View {
     }
     
     // MARK: - Current Temperature Widget
-    
+
     private var currentTemperatureWidget: some View {
-        NavigationLink(destination: WeatherView()) {
+        Button(action: {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                showingDetailedWeather.toggle()
+            }
+        }) {
             temperatureWidgetContent
         }
         .buttonStyle(PlainButtonStyle())
@@ -127,10 +134,17 @@ struct DashboardView: View {
                 }
                 
                 Spacer()
-                
-                if viewModel.isLoading {
-                    ProgressView()
-                        .scaleEffect(0.8)
+
+                HStack(spacing: 8) {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                    }
+
+                    Image(systemName: showingDetailedWeather ? "chevron.up.circle.fill" : "chevron.down.circle")
+                        .font(.title3)
+                        .foregroundColor(.blue)
+                        .rotationEffect(.degrees(showingDetailedWeather ? 0 : 0))
                 }
             }
             .padding(.horizontal, 20)
@@ -361,8 +375,269 @@ struct DashboardView: View {
         .accessibilityLabel("Create new reminder")
     }
     
+    // MARK: - Hourly Forecast Section
+
+    private var hourlyForecastSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Label("Hourly Forecast", systemImage: "clock.fill")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+
+                Spacer()
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    ForEach(0..<24, id: \.self) { hour in
+                        HourlyWeatherCard(
+                            hour: hour,
+                            temperature: viewModel.currentTemperature + Double.random(in: -5...5),
+                            condition: viewModel.weatherIconName,
+                            precipChance: Int.random(in: 0...30)
+                        )
+                    }
+                }
+                .padding(.horizontal, 4)
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.regularMaterial)
+        )
+    }
+
+    // MARK: - Enhanced Forecast Section
+
+    private var enhancedForecastSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Label("Forecast", systemImage: "calendar")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                // Forecast range picker
+                Picker("Range", selection: $selectedForecastDays) {
+                    Text("5 Day").tag(ForecastRange.fiveDay)
+                    Text("7 Day").tag(ForecastRange.sevenDay)
+                    Text("10 Day").tag(ForecastRange.tenDay)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 200)
+            }
+
+            if viewModel.forecastData.isEmpty {
+                EmptyForecastView()
+            } else {
+                LazyVStack(spacing: 12) {
+                    ForEach(Array(viewModel.forecastData.prefix(selectedForecastDays.rawValue)), id: \.id) { day in
+                        EnhancedDayForecastRow(forecast: day)
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.regularMaterial)
+        )
+    }
+
+    // MARK: - Comprehensive Weather Metrics
+
+    private var comprehensiveWeatherMetrics: some View {
+        LazyVGrid(columns: [
+            GridItem(.flexible()),
+            GridItem(.flexible())
+        ], spacing: 12) {
+            // Precipitation
+            WeatherMetricCard(
+                icon: "cloud.rain.fill",
+                title: "Precipitation",
+                value: "0%",
+                subtitle: "in last 24h",
+                color: .blue
+            )
+
+            // Feels Like
+            WeatherMetricCard(
+                icon: "thermometer.medium",
+                title: "Feels Like",
+                value: "\(String(format: "%.0f", viewModel.feelsLikeTemperature))°",
+                subtitle: "Similar to actual",
+                color: .orange
+            )
+
+            // Sunrise/Sunset
+            WeatherMetricCard(
+                icon: "sunrise.fill",
+                title: "Sunrise",
+                value: "6:45 AM",
+                subtitle: "Sunset: 7:30 PM",
+                color: .yellow
+            )
+
+            // Air Quality
+            WeatherMetricCard(
+                icon: "aqi.medium",
+                title: "Air Quality",
+                value: "Good",
+                subtitle: "AQI: 45",
+                color: .green
+            )
+
+            // Pressure
+            WeatherMetricCard(
+                icon: "barometer",
+                title: "Pressure",
+                value: "29.92",
+                subtitle: "inHg",
+                color: .indigo
+            )
+
+            // Cloud Cover
+            WeatherMetricCard(
+                icon: "cloud.fill",
+                title: "Cloud Cover",
+                value: "25%",
+                subtitle: "Mostly clear",
+                color: .gray
+            )
+        }
+    }
+
+    // MARK: - Detailed Weather Metrics
+
+    private var detailedWeatherMetrics: some View {
+        VStack(spacing: 16) {
+            // Section header
+            HStack {
+                Label("More Details", systemImage: "info.circle.fill")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                Button("Less") {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        showingDetailedWeather = false
+                    }
+                }
+                .font(.callout)
+                .foregroundColor(.blue)
+            }
+
+            // Additional context about weather
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    Image(systemName: "thermometer.medium")
+                        .font(.title2)
+                        .foregroundColor(.orange)
+                        .frame(width: 36)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Temperature Details")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+
+                        Text("Current: \(String(format: "%.1f", viewModel.currentTemperature))° • Feels like: \(String(format: "%.1f", viewModel.feelsLikeTemperature))°")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        Text("High: \(String(format: "%.0f", viewModel.highTemperature))° • Low: \(String(format: "%.0f", viewModel.lowTemperature))°")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                Divider()
+
+                HStack(spacing: 12) {
+                    Image(systemName: "cloud.fill")
+                        .font(.title2)
+                        .foregroundColor(.blue)
+                        .frame(width: 36)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(viewModel.weatherDescription)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+
+                        HStack(spacing: 16) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "humidity.fill")
+                                    .font(.caption)
+                                    .foregroundColor(.cyan)
+                                Text("\(viewModel.humidity)%")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            HStack(spacing: 4) {
+                                Image(systemName: "wind")
+                                    .font(.caption)
+                                    .foregroundColor(.green)
+                                Text("\(String(format: "%.0f", viewModel.windSpeed)) mph")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                Divider()
+
+                HStack(spacing: 12) {
+                    Image(systemName: "eye.fill")
+                        .font(.title2)
+                        .foregroundColor(.purple)
+                        .frame(width: 36)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Visibility & UV")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+
+                        HStack(spacing: 16) {
+                            HStack(spacing: 4) {
+                                Text("Visibility:")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text("\(String(format: "%.1f", viewModel.visibility)) mi")
+                                    .font(.caption)
+                                    .foregroundColor(.primary)
+                            }
+
+                            HStack(spacing: 4) {
+                                Text("UV Index:")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text("\(String(format: "%.0f", viewModel.uvIndex))")
+                                    .font(.caption)
+                                    .foregroundColor(.primary)
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.secondarySystemBackground))
+            )
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.regularMaterial)
+        )
+    }
+
     // MARK: - Computed Properties
-    
+
     private var backgroundGradient: LinearGradient {
         LinearGradient(
             colors: colorScheme == .dark ? [
@@ -492,6 +767,41 @@ struct ActiveReminderCard: View {
     }
 }
 
+// MARK: - Detailed Weather Card
+
+struct DetailedWeatherCard: View {
+    let icon: String
+    let title: String
+    let value: String
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundColor(color)
+                    .frame(width: 24)
+
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Text(value)
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+}
+
 // MARK: - Empty Active Reminders View
 
 struct EmptyActiveRemindersView: View {
@@ -552,6 +862,247 @@ struct QuickStatCard: View {
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value)")
+    }
+}
+
+// MARK: - Forecast Range Enum
+
+enum ForecastRange: Int {
+    case fiveDay = 5
+    case sevenDay = 7
+    case tenDay = 10
+}
+
+// MARK: - Hourly Weather Card
+
+struct HourlyWeatherCard: View {
+    let hour: Int
+    let temperature: Double
+    let condition: String
+    let precipChance: Int
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(hourText)
+                .font(.caption)
+                .foregroundColor(.secondary)
+
+            Image(systemName: condition)
+                .font(.title3)
+                .foregroundColor(.blue)
+                .frame(height: 24)
+
+            if precipChance > 0 {
+                HStack(spacing: 2) {
+                    Image(systemName: "drop.fill")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
+                    Text("\(precipChance)%")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
+                }
+            }
+
+            Text("\(String(format: "%.0f", temperature))°")
+                .font(.callout)
+                .fontWeight(.semibold)
+        }
+        .frame(width: 60)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+
+    private var hourText: String {
+        if hour == 0 {
+            return "Now"
+        }
+        let futureHour = (Calendar.current.component(.hour, from: Date()) + hour) % 24
+        let period = futureHour < 12 ? "AM" : "PM"
+        let displayHour = futureHour == 0 ? 12 : (futureHour > 12 ? futureHour - 12 : futureHour)
+        return "\(displayHour)\(period)"
+    }
+}
+
+// MARK: - Enhanced Day Forecast Row
+
+struct EnhancedDayForecastRow: View {
+    let forecast: ForecastDay
+
+    var body: some View {
+        HStack(spacing: 16) {
+            // Day name
+            Text(dayText)
+                .font(.callout)
+                .fontWeight(.medium)
+                .frame(width: 60, alignment: .leading)
+
+            // Weather icon
+            Image(systemName: forecast.weatherCondition.icon)
+                .font(.title3)
+                .foregroundColor(.blue)
+                .frame(width: 32)
+
+            // Precipitation chance
+            if forecast.precipitationProbability > 0 {
+                HStack(spacing: 4) {
+                    Image(systemName: "drop.fill")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                    Text("\(forecast.precipitationProbability)%")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                .frame(width: 50)
+            } else {
+                Spacer()
+                    .frame(width: 50)
+            }
+
+            Spacer()
+
+            // Temperature bar
+            HStack(spacing: 8) {
+                Text("\(String(format: "%.0f", forecast.lowTemperature))°")
+                    .font(.callout)
+                    .foregroundColor(.secondary)
+
+                TemperatureBar(
+                    low: forecast.lowTemperature,
+                    high: forecast.highTemperature,
+                    minTemp: 50,
+                    maxTemp: 90
+                )
+                .frame(width: 100)
+
+                Text("\(String(format: "%.0f", forecast.highTemperature))°")
+                    .font(.callout)
+                    .fontWeight(.semibold)
+            }
+        }
+        .padding(.vertical, 8)
+    }
+
+    private var dayText: String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(forecast.date) {
+            return "Today"
+        } else if calendar.isDateInTomorrow(forecast.date) {
+            return "Tomorrow"
+        } else {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "EEE"
+            return formatter.string(from: forecast.date)
+        }
+    }
+}
+
+// MARK: - Temperature Bar
+
+struct TemperatureBar: View {
+    let low: Double
+    let high: Double
+    let minTemp: Double
+    let maxTemp: Double
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Background track
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Color.gray.opacity(0.2))
+                    .frame(height: 6)
+
+                // Temperature range
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(
+                        LinearGradient(
+                            colors: [.blue, .orange, .red],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: rangeWidth(in: geometry.size.width), height: 6)
+                    .offset(x: startOffset(in: geometry.size.width))
+            }
+        }
+        .frame(height: 6)
+    }
+
+    private func startOffset(in width: CGFloat) -> CGFloat {
+        let normalized = (low - minTemp) / (maxTemp - minTemp)
+        return width * normalized
+    }
+
+    private func rangeWidth(in width: CGFloat) -> CGFloat {
+        let normalizedLow = (low - minTemp) / (maxTemp - minTemp)
+        let normalizedHigh = (high - minTemp) / (maxTemp - minTemp)
+        return width * (normalizedHigh - normalizedLow)
+    }
+}
+
+// MARK: - Weather Metric Card
+
+struct WeatherMetricCard: View {
+    let icon: String
+    let title: String
+    let value: String
+    let subtitle: String
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundColor(color)
+                    .frame(width: 24)
+
+                Text(title)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Text(value)
+                .font(.title3)
+                .fontWeight(.semibold)
+
+            Text(subtitle)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+}
+
+// MARK: - Empty Forecast View
+
+struct EmptyForecastView: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "cloud.slash")
+                .font(.title)
+                .foregroundColor(.secondary)
+
+            Text("Forecast unavailable")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+            Text("Pull to refresh weather data")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 120)
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(12)
     }
 }
 

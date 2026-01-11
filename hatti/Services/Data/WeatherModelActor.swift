@@ -15,7 +15,7 @@ import OSLog
 /// Actor for handling SwiftData operations in background with proper concurrency isolation
 @ModelActor
 actor WeatherModelActor {
-    private let logger = Logger(subsystem: "com.hatti.app", category: "WeatherModelActor")
+    private let logger = Logger(subsystem: "com.sunhat.app", category: "WeatherModelActor")
     
     /// Fetches weather data with caching and backup provider support
     func fetchWeatherData(for location: CLLocation, forceRefresh: Bool = false) async throws -> WeatherData {

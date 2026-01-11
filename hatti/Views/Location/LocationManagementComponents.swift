@@ -600,3 +600,243 @@ struct CustomMapAnnotation: Identifiable {
     let icon: String
     let color: Color
 }
+
+// MARK: - Manual Location Entry Sheet
+
+struct ManualLocationEntrySheet: View {
+    @ObservedObject var viewModel: LocationManagementViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var locationName: String = ""
+    @State private var latitudeText: String = ""
+    @State private var longitudeText: String = ""
+    @State private var showingError: Bool = false
+    @State private var errorMessage: String = ""
+
+    @FocusState private var focusedField: Field?
+
+    enum Field {
+        case name, latitude, longitude
+    }
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "pencil.circle.fill")
+                                .font(.title)
+                                .foregroundColor(.purple)
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Manual Location Entry")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
+
+                                Text("Enter coordinates for a custom location")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+
+                Section("Location Details") {
+                    TextField("Location Name", text: $locationName)
+                        .focused($focusedField, equals: .name)
+                        .textContentType(.addressCity)
+
+                    HStack {
+                        Text("Latitude")
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        TextField("e.g., 37.7749", text: $latitudeText)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .focused($focusedField, equals: .latitude)
+                    }
+
+                    HStack {
+                        Text("Longitude")
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        TextField("e.g., -122.4194", text: $longitudeText)
+                            .keyboardType(.numbersAndPunctuation)
+                            .multilineTextAlignment(.trailing)
+                            .focused($focusedField, equals: .longitude)
+                    }
+                }
+
+                Section {
+                    Button("Use Current Location") {
+                        useCurrentLocation()
+                    }
+                    .disabled(viewModel.currentLocation == nil)
+                } footer: {
+                    Text("Latitude ranges from -90 to 90. Longitude ranges from -180 to 180.")
+                }
+
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Examples")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.secondary)
+
+                        ExampleLocationRow(name: "San Francisco", lat: "37.7749", lon: "-122.4194") {
+                            fillExample(name: "San Francisco", lat: "37.7749", lon: "-122.4194")
+                        }
+
+                        ExampleLocationRow(name: "New York", lat: "40.7128", lon: "-74.0060") {
+                            fillExample(name: "New York", lat: "40.7128", lon: "-74.0060")
+                        }
+
+                        ExampleLocationRow(name: "London", lat: "51.5074", lon: "-0.1278") {
+                            fillExample(name: "London", lat: "51.5074", lon: "-0.1278")
+                        }
+
+                        ExampleLocationRow(name: "Tokyo", lat: "35.6762", lon: "139.6503") {
+                            fillExample(name: "Tokyo", lat: "35.6762", lon: "139.6503")
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            .navigationTitle("Enter Coordinates")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        saveLocation()
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(!isValidInput)
+                }
+
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        focusedField = nil
+                    }
+                }
+            }
+            .alert("Invalid Coordinates", isPresented: $showingError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorMessage)
+            }
+            .onAppear {
+                focusedField = .name
+            }
+        }
+    }
+
+    private var isValidInput: Bool {
+        guard !locationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return false
+        }
+
+        guard let lat = Double(latitudeText),
+              let lon = Double(longitudeText),
+              lat >= -90 && lat <= 90,
+              lon >= -180 && lon <= 180 else {
+            return false
+        }
+
+        return true
+    }
+
+    private func useCurrentLocation() {
+        guard let location = viewModel.currentLocation else { return }
+
+        latitudeText = String(format: "%.6f", location.coordinate.latitude)
+        longitudeText = String(format: "%.6f", location.coordinate.longitude)
+
+        if locationName.isEmpty {
+            locationName = viewModel.currentLocationName
+        }
+    }
+
+    private func fillExample(name: String, lat: String, lon: String) {
+        locationName = name
+        latitudeText = lat
+        longitudeText = lon
+    }
+
+    private func saveLocation() {
+        guard let lat = Double(latitudeText),
+              let lon = Double(longitudeText) else {
+            errorMessage = "Please enter valid numeric coordinates."
+            showingError = true
+            return
+        }
+
+        guard lat >= -90 && lat <= 90 else {
+            errorMessage = "Latitude must be between -90 and 90 degrees."
+            showingError = true
+            return
+        }
+
+        guard lon >= -180 && lon <= 180 else {
+            errorMessage = "Longitude must be between -180 and 180 degrees."
+            showingError = true
+            return
+        }
+
+        let trimmedName = locationName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else {
+            errorMessage = "Please enter a location name."
+            showingError = true
+            return
+        }
+
+        let savedLocation = SavedLocation(
+            latitude: lat,
+            longitude: lon,
+            name: trimmedName,
+            source: .manual
+        )
+
+        viewModel.addSavedLocation(savedLocation)
+        dismiss()
+    }
+}
+
+// MARK: - Example Location Row
+
+struct ExampleLocationRow: View {
+    let name: String
+    let lat: String
+    let lon: String
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack {
+                Text(name)
+                    .font(.caption)
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                Text("\(lat), \(lon)")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.caption)
+                    .foregroundColor(.blue)
+            }
+            .padding(.vertical, 4)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+}

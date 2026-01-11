@@ -13,7 +13,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Home Tab - Use existing DashboardView
+            // Home Tab - Consolidated home and weather view
             DashboardView()
                 .tabItem {
                     Label("Home", systemImage: selectedTab == 0 ? "house.fill" : "house")
@@ -29,23 +29,14 @@ struct MainTabView: View {
             }
             .tag(1)
 
-            // Weather Tab
-            NavigationStack {
-                WeatherView()
-            }
-            .tabItem {
-                Label("Weather", systemImage: selectedTab == 2 ? "cloud.sun.fill" : "cloud.sun")
-            }
-            .tag(2)
-
             // Settings Tab
             NavigationStack {
                 SettingsView()
             }
             .tabItem {
-                Label("Settings", systemImage: selectedTab == 3 ? "gearshape.fill" : "gearshape")
+                Label("Settings", systemImage: selectedTab == 2 ? "gearshape.fill" : "gearshape")
             }
-            .tag(3)
+            .tag(2)
         }
         .tint(.blue)
     }

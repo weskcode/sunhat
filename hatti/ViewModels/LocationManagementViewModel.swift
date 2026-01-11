@@ -21,6 +21,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     @Published var currentLocationName: String = "Getting location..."
     @Published var currentLocationAccuracy: String = "Unknown"
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
+    @Published var locationServicesEnabled: Bool = true
     
     @Published var savedLocations: [SavedLocation] = []
     @Published var locationHistory: [LocationHistory] = []
@@ -42,7 +43,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     private var modelContext: ModelContext?
     private let locationManager = CLLocationManager()
     private let searchCompleter = MKLocalSearchCompleter()
-    private let logger = Logger(subsystem: "com.hatti.app", category: "LocationManagementViewModel")
+    private let logger = Logger(subsystem: "com.sunhat.app", category: "LocationManagementViewModel")
     
     private var cancellables = Set<AnyCancellable>()
     private var locationUpdateTimer: Timer?
@@ -91,28 +92,30 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     }
     
     // MARK: - Location Permission Methods
-    
+
     func requestLocationPermission() {
-        guard CLLocationManager.locationServicesEnabled() else {
+        // Check location services status based on authorization
+        // If status is .denied or .restricted, location services may be disabled
+        guard locationServicesEnabled else {
             locationError = .locationServicesDisabled
             showingPermissionAlert = true
             return
         }
-        
+
         switch authorizationStatus {
         case .notDetermined:
             logger.info("Requesting location permission")
             locationManager.requestWhenInUseAuthorization()
-            
+
         case .denied, .restricted:
             logger.warning("Location permission denied or restricted")
             locationError = .permissionDenied
             showingPermissionAlert = true
-            
+
         case .authorizedWhenInUse, .authorizedAlways:
             logger.info("Location permission already granted")
             getCurrentLocation()
-            
+
         @unknown default:
             logger.error("Unknown location authorization status")
             locationError = .unknown
@@ -132,26 +135,26 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     }
     
     // MARK: - Current Location Methods
-    
+
     func getCurrentLocation() {
         guard authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways else {
             logger.warning("Attempted to get location without proper authorization")
             requestLocationPermission()
             return
         }
-        
-        guard CLLocationManager.locationServicesEnabled() else {
+
+        guard locationServicesEnabled else {
             locationError = .locationServicesDisabled
             return
         }
-        
+
         isLoadingCurrentLocation = true
         locationError = nil
         currentLocationName = "Getting location..."
-        
+
         logger.info("Starting location update")
         locationManager.startUpdatingLocation()
-        
+
         // Set timeout for location request
         startLocationTimeout()
     }
@@ -465,26 +468,45 @@ extension LocationManagementViewModel: CLLocationManagerDelegate {
         let newStatus = manager.authorizationStatus
         Task { @MainActor in
             self.logger.info("Location authorization changed to: \(newStatus.description)")
-            
+
             self.authorizationStatus = newStatus
-            
+
+            // Check location services availability asynchronously
+            await self.checkLocationServicesAsync()
+
             switch newStatus {
             case .authorizedWhenInUse, .authorizedAlways:
                 self.locationError = nil
                 self.getCurrentLocation()
-                
+
             case .denied, .restricted:
                 self.locationError = .permissionDenied
                 self.currentLocationName = "Location access denied"
                 self.currentLocationAccuracy = "Unknown"
-                
+
             case .notDetermined:
                 self.currentLocationName = "Location permission needed"
                 self.currentLocationAccuracy = "Unknown"
-                
+
             @unknown default:
                 self.locationError = .unknown
                 self.currentLocationName = "Location unavailable"
+                self.currentLocationAccuracy = "Unknown"
+            }
+        }
+    }
+
+    private func checkLocationServicesAsync() async {
+        // Perform the check off the main thread to avoid UI unresponsiveness
+        let isEnabled = await Task.detached {
+            CLLocationManager.locationServicesEnabled()
+        }.value
+
+        await MainActor.run {
+            self.locationServicesEnabled = isEnabled
+            if !isEnabled {
+                self.locationError = .locationServicesDisabled
+                self.currentLocationName = "Location services disabled"
                 self.currentLocationAccuracy = "Unknown"
             }
         }

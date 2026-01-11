@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct hattiApp: App {
+struct SunHatApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             WeatherReminder.self,
@@ -24,12 +24,13 @@ struct hattiApp: App {
             LocationHistory.self,
             Item.self,
         ])
+        // CloudKit sync is disabled for now - can be re-enabled in the future
         let modelConfiguration = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: false,
             allowsSave: true,
-            groupContainer: .identifier("group.com.hatti.app"),
-            cloudKitDatabase: .automatic
+            groupContainer: .identifier("group.com.sunhat.app"),
+            cloudKitDatabase: .none
         )
 
         do {

@@ -21,7 +21,7 @@ final class WeatherService: ObservableObject {
     @Published var connectionStatus: ConnectionStatus = .unknown
 
     private var weatherActor: WeatherServiceActor?
-    private let logger = Logger(subsystem: "com.hatti.app", category: "WeatherService")
+    private let logger = Logger(subsystem: "com.sunhat.app", category: "WeatherService")
 
     nonisolated init() {
         // Actor will be created in configure
@@ -87,9 +87,9 @@ class WeatherServiceActor {
     private var providers: [any WeatherAPI] = []
     private let cacheExpirationInterval: TimeInterval = 15 * 60 // 15 minutes
     private let rateLimiter = RateLimiter()
-    private let backgroundTaskIdentifier = "com.hatti.app.weather-refresh"
+    private let backgroundTaskIdentifier = "com.sunhat.app.weather-refresh"
 
-    private let logger = Logger(subsystem: "com.hatti.app", category: "WeatherServiceActor")
+    private let logger = Logger(subsystem: "com.sunhat.app", category: "WeatherServiceActor")
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext

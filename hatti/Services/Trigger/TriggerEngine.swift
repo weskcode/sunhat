@@ -109,7 +109,7 @@ actor TriggerEngine {
     }
     
     internal let modelActor: WeatherModelActor
-    let logger = Logger(subsystem: "com.hatti.app", category: "TriggerEngine")
+    let logger = Logger(subsystem: "com.sunhat.app", category: "TriggerEngine")
     
     // Evaluation caches
     var evaluationCache: [UUID: TriggerEvaluationResult] = [:]

@@ -7,7 +7,6 @@
 
 import SwiftUI
 import SwiftData
-import CloudKit
 
 struct DataPrivacyView: View {
     @Environment(\.dismiss) private var dismiss
@@ -15,7 +14,6 @@ struct DataPrivacyView: View {
     
     @State private var showingDeleteConfirmation = false
     @State private var showingExportOptions = false
-    @State private var showingCloudKitDisableConfirmation = false
     @State private var showingPrivacyPolicy = false
     @State private var showingContactOptions = false
     
@@ -24,25 +22,25 @@ struct DataPrivacyView: View {
             Form {
                 // Data Collection Overview
                 dataCollectionSection
-                
-                // CloudKit Sync Controls
-                cloudKitSection
-                
+
+                // Data Storage Info (CloudKit disabled)
+                storageSection
+
                 // Data Export
                 dataExportSection
-                
+
                 // Data Deletion
                 dataDeletionSection
-                
+
                 // Weather Data Sources
                 weatherDataSourcesSection
-                
+
                 // Third-Party Services
                 thirdPartyServicesSection
-                
+
                 // Privacy Rights (GDPR/CCPA)
                 privacyRightsSection
-                
+
                 // Contact & Support
                 contactSection
             }
@@ -71,17 +69,7 @@ struct DataPrivacyView: View {
                 .disabled(!viewModel.deleteConfirmationValid)
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("This action cannot be undone. All your reminders, preferences, and weather data will be permanently deleted from this device and iCloud.")
-            }
-            .alert("Disable iCloud Sync", isPresented: $showingCloudKitDisableConfirmation) {
-                Button("Disable", role: .destructive) {
-                    Task {
-                        await viewModel.disableCloudKitSync()
-                    }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Disabling iCloud sync will remove your data from iCloud but keep it on this device. You can re-enable sync later.")
+                Text("This action cannot be undone. All your reminders, preferences, and weather data will be permanently deleted from this device.")
             }
             .sheet(isPresented: $showingExportOptions) {
                 DataExportOptionsView(viewModel: viewModel)
@@ -208,83 +196,55 @@ struct DataPrivacyView: View {
         }
     }
     
-    // MARK: - CloudKit Section
-    
-    private var cloudKitSection: some View {
+    // MARK: - Storage Section
+
+    private var storageSection: some View {
         Section {
-            // CloudKit Status
+            // Storage Status
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("iCloud Sync")
+                    Text("Data Storage")
                         .font(.body)
                         .fontWeight(.medium)
-                    
-                    Text(viewModel.cloudKitStatusDescription)
+
+                    Text(viewModel.syncStatusDescription)
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
-                Toggle("", isOn: $viewModel.cloudKitSyncEnabled)
-                    .onChange(of: viewModel.cloudKitSyncEnabled) { _, newValue in
-                        if !newValue {
-                            showingCloudKitDisableConfirmation = true
-                        } else {
-                            Task {
-                                await viewModel.enableCloudKitSync()
-                            }
-                        }
-                    }
+
+                Image(systemName: "internaldrive.fill")
+                    .foregroundColor(.blue)
             }
-            
-            if viewModel.cloudKitSyncEnabled {
-                // Sync Information
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Image(systemName: "icloud.fill")
-                            .foregroundColor(.blue)
-                        Text("Sync Details")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("• Data is encrypted in transit and at rest")
-                        Text("• Apple cannot access your reminder content")
-                        Text("• Data stays within your iCloud account")
-                        Text("• Automatic sync across your signed-in devices")
-                    }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+
+            // Storage Information
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Image(systemName: "checkmark.shield.fill")
+                        .foregroundColor(.green)
+                    Text("Local Storage")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                 }
-                .padding(12)
-                .background(Color.blue.opacity(0.05))
-                .cornerRadius(8)
-                
-                // Force Sync Button
-                Button("Sync Now") {
-                    Task {
-                        await viewModel.forceSyncNow()
-                    }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("• Data is stored securely on this device")
+                    Text("• No data is shared with external servers")
+                    Text("• Full control over your information")
+                    Text("• iCloud sync coming in a future update")
                 }
-                .disabled(viewModel.isSyncing)
-                
-                if viewModel.isSyncing {
-                    HStack {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                        Text("Syncing...")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
+                .font(.caption)
+                .foregroundColor(.secondary)
             }
-            
+            .padding(12)
+            .background(Color.green.opacity(0.05))
+            .cornerRadius(8)
+
         } header: {
-            Label("iCloud Sync", systemImage: "icloud")
+            Label("Data Storage", systemImage: "internaldrive")
         } footer: {
-            Text("When enabled, your reminders and preferences sync securely across all your devices using Apple's CloudKit.")
+            Text("Your data is currently stored locally on this device. iCloud sync will be available in a future update.")
         }
     }
     

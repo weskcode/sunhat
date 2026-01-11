@@ -7,7 +7,6 @@
 
 import Foundation
 import SwiftData
-import CloudKit
 import SwiftUI
 
 @Model
@@ -31,11 +30,10 @@ final class UserPreferences {
     
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
-    
-    // CloudKit sync properties
-    var cloudKitRecordID: String?
+
+    // Sync properties (prepared for future CloudKit integration)
     var lastSyncedAt: Date?
-    
+
     init() {
         // Initialize with sensible defaults
         self.id = UUID()
@@ -236,62 +234,6 @@ enum ActivityInterest: String, CaseIterable, Codable {
         case .petCare:
             return "Pet grooming and outdoor pet activities"
         }
-    }
-}
-
-// MARK: - CloudKit Extensions
-
-extension UserPreferences {
-    var cloudKitRecord: CKRecord {
-        let recordID = CKRecord.ID(recordName: cloudKitRecordID ?? UUID().uuidString)
-        let record = CKRecord(recordType: "UserPreferences", recordID: recordID)
-        
-        record["temperatureUnit"] = temperatureUnit.rawValue
-        record["defaultNotificationTiming"] = defaultNotificationTiming.rawValue
-        record["selectedActivityInterests"] = selectedActivityInterests
-        record["quietHoursEnabled"] = quietHoursEnabled
-        record["quietHoursStart"] = quietHoursStart
-        record["quietHoursEnd"] = quietHoursEnd
-        record["allowWeekendNotifications"] = allowWeekendNotifications
-        record["maximumDailyNotifications"] = maximumDailyNotifications
-        record["notificationGrouping"] = notificationGrouping.rawValue
-        record["lockScreenBehavior"] = lockScreenBehavior.rawValue
-        record["criticalAlertsEnabled"] = criticalAlertsEnabled
-        record["vibrationPattern"] = vibrationPattern.rawValue
-        if let soundsData = try? JSONEncoder().encode(notificationSounds) {
-            record["notificationSounds"] = soundsData
-        }
-        record["createdAt"] = createdAt
-        record["updatedAt"] = updatedAt
-        
-        return record
-    }
-    
-    static func from(cloudKitRecord record: CKRecord) -> UserPreferences {
-        let preferences = UserPreferences()
-        
-        preferences.cloudKitRecordID = record.recordID.recordName
-        preferences.temperatureUnit = TemperatureUnit(rawValue: record["temperatureUnit"] as? String ?? "fahrenheit") ?? .fahrenheit
-        preferences.defaultNotificationTiming = NotificationTiming(rawValue: record["defaultNotificationTiming"] as? String ?? "immediate") ?? .immediate
-        preferences.selectedActivityInterests = record["selectedActivityInterests"] as? [String] ?? []
-        preferences.quietHoursEnabled = record["quietHoursEnabled"] as? Bool ?? true
-        preferences.quietHoursStart = record["quietHoursStart"] as? Date ?? Calendar.current.date(from: DateComponents(hour: 22, minute: 0)) ?? Date()
-        preferences.quietHoursEnd = record["quietHoursEnd"] as? Date ?? Calendar.current.date(from: DateComponents(hour: 7, minute: 0)) ?? Date()
-        preferences.allowWeekendNotifications = record["allowWeekendNotifications"] as? Bool ?? true
-        preferences.maximumDailyNotifications = record["maximumDailyNotifications"] as? Int ?? 5
-        preferences.notificationGrouping = NotificationGrouping(rawValue: record["notificationGrouping"] as? String ?? "byType") ?? .byType
-        preferences.lockScreenBehavior = LockScreenBehavior(rawValue: record["lockScreenBehavior"] as? String ?? "showPreviews") ?? .showPreviews
-        preferences.criticalAlertsEnabled = record["criticalAlertsEnabled"] as? Bool ?? false
-        preferences.vibrationPattern = VibrationPattern(rawValue: record["vibrationPattern"] as? String ?? "default") ?? .default
-        if let soundsData = record["notificationSounds"] as? Data,
-           let sounds = try? JSONDecoder().decode([String: String].self, from: soundsData) {
-            preferences.notificationSounds = sounds
-        }
-        preferences.createdAt = record["createdAt"] as? Date ?? Date()
-        preferences.updatedAt = record["updatedAt"] as? Date ?? Date()
-        preferences.lastSyncedAt = Date()
-        
-        return preferences
     }
 }
 

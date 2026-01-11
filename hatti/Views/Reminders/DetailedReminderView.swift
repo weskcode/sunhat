@@ -33,71 +33,69 @@ struct DetailedReminderView: View {
     }
     
     var body: some View {
-        NavigationView {
-            GeometryReader { geometry in
-                ZStack {
-                    // Background
-                    backgroundGradient
-                        .ignoresSafeArea()
-                    
-                    // Scroll view content
-                    ScrollViewReader { proxy in
-                        ScrollView(.vertical, showsIndicators: false) {
-                            LazyVStack(spacing: 0) {
-                                // Large weather condition display
-                                weatherConditionHeader
-                                    .id("header")
-                                
-                                // Main content
-                                VStack(spacing: 24) {
-                                    // Live prediction section
-                                    if !isEditMode {
-                                        livePredictionSection
-                                            .transition(.asymmetric(
-                                                insertion: .move(edge: .top).combined(with: .opacity),
-                                                removal: .move(edge: .top).combined(with: .opacity)
-                                            ))
-                                    }
-                                    
-                                    // Trigger conditions section
-                                    triggerConditionsSection
-                                    
-                                    // Notification settings section
-                                    notificationSettingsSection
-                                    
-                                    // Location settings section
-                                    locationSettingsSection
-                                    
-                                    // History timeline section
-                                    if !isEditMode && !viewModel.triggerHistory.isEmpty {
-                                        triggerHistorySection
-                                            .transition(.asymmetric(
-                                                insertion: .move(edge: .bottom).combined(with: .opacity),
-                                                removal: .move(edge: .bottom).combined(with: .opacity)
-                                            ))
-                                    }
-                                    
-                                    // Action buttons section
-                                    actionButtonsSection
-                                        .padding(.bottom, 40)
+        GeometryReader { geometry in
+            ZStack {
+                // Background
+                backgroundGradient
+                    .ignoresSafeArea()
+
+                // Scroll view content
+                ScrollViewReader { proxy in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        LazyVStack(spacing: 0) {
+                            // Large weather condition display
+                            weatherConditionHeader
+                                .id("header")
+
+                            // Main content
+                            VStack(spacing: 24) {
+                                // Live prediction section
+                                if !isEditMode {
+                                    livePredictionSection
+                                        .transition(.asymmetric(
+                                            insertion: .move(edge: .top).combined(with: .opacity),
+                                            removal: .move(edge: .top).combined(with: .opacity)
+                                        ))
                                 }
-                                .padding(.horizontal, 20)
-                                .padding(.top, 20)
+
+                                // Trigger conditions section
+                                triggerConditionsSection
+
+                                // Notification settings section
+                                notificationSettingsSection
+
+                                // Location settings section
+                                locationSettingsSection
+
+                                // History timeline section
+                                if !isEditMode && !viewModel.triggerHistory.isEmpty {
+                                    triggerHistorySection
+                                        .transition(.asymmetric(
+                                            insertion: .move(edge: .bottom).combined(with: .opacity),
+                                            removal: .move(edge: .bottom).combined(with: .opacity)
+                                        ))
+                                }
+
+                                // Action buttons section
+                                actionButtonsSection
+                                    .padding(.bottom, 40)
                             }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 20)
                         }
-                        .scrollTargetLayout()
-                        .coordinateSpace(name: "scroll")
-                        .onAppear {
-                            withAnimation(.easeInOut(duration: 0.8)) {
-                                proxy.scrollTo("header", anchor: .top)
-                            }
+                    }
+                    .scrollTargetLayout()
+                    .coordinateSpace(name: "scroll")
+                    .onAppear {
+                        withAnimation(.easeInOut(duration: 0.8)) {
+                            proxy.scrollTo("header", anchor: .top)
                         }
                     }
                 }
             }
-            .navigationBarHidden(true)
-            .animation(.smooth(duration: 0.5), value: isEditMode)
         }
+        .navigationBarHidden(true)
+        .animation(.smooth(duration: 0.5), value: isEditMode)
         .overlay(alignment: .topLeading) {
             // Custom navigation bar
             customNavigationBar

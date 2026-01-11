@@ -17,6 +17,7 @@ struct LocationManagementView: View {
     @Environment(\.colorScheme) private var colorScheme
     
     @State private var showingAddLocationSheet = false
+    @State private var showingManualEntrySheet = false
     @State private var showingMapView = false
     @State private var showingPrivacyInfo = false
     @State private var editingLocation: SavedLocation?
@@ -85,6 +86,9 @@ struct LocationManagementView: View {
             }
             .sheet(isPresented: $showingAddLocationSheet) {
                 AddLocationSheet(viewModel: viewModel)
+            }
+            .sheet(isPresented: $showingManualEntrySheet) {
+                ManualLocationEntrySheet(viewModel: viewModel)
             }
             .sheet(isPresented: $showingMapView) {
                 LocationMapView(viewModel: viewModel)
@@ -302,7 +306,7 @@ struct LocationManagementView: View {
                     icon: "pencil.circle.fill",
                     color: .purple
                 ) {
-                    // Show manual coordinate entry
+                    showingManualEntrySheet = true
                 }
                 
                 QuickActionCard(

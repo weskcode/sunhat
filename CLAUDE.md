@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is "hatti" - a weather-triggered reminder iOS application. The app concept is a location-aware reminder system that triggers notifications based on temperature conditions and weather patterns rather than traditional calendar scheduling.
+This is "SunHat" - a weather-triggered reminder iOS application. The app concept is a location-aware reminder system that triggers notifications based on temperature conditions and weather patterns rather than traditional calendar scheduling.
 
 ## Development Environment
 
@@ -14,35 +14,35 @@ This is "hatti" - a weather-triggered reminder iOS application. The app concept 
 - **Architecture**: MVVM (Model-View-ViewModel) pattern with improved dependency injection
 - **Data Layer**: SwiftData for local persistence with iOS 26 optimizations, CloudKit for sync
 - **Minimum Target**: iOS 26.0
-- **Bundle ID**: org.wesley.hatti
+- **Bundle ID**: org.wesley.sunhat
 
 ## Common Development Commands
 
 ### Building and Running
 ```bash
 # Open project in Xcode
-open hatti.xcodeproj
+open SunHat.xcodeproj
 
 # Build the project
-xcodebuild -scheme hatti -configuration Debug build
+xcodebuild -scheme SunHat -configuration Debug build
 
 # Run tests
-xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' test
 
 # Build for release
-xcodebuild -scheme hatti -configuration Release build
+xcodebuild -scheme SunHat -configuration Release build
 ```
 
 ### Testing Commands
 ```bash
 # Run unit tests only
-xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' -only-testing:hattiTests test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' -only-testing:SunHatTests test
 
 # Run UI tests only
-xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' -only-testing:hattiUITests test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' -only-testing:SunHatUITests test
 
 # Run specific test
-xcodebuild -scheme hatti -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' -only-testing:hattiTests/hattiTests/testExample test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' -only-testing:SunHatTests/SunHatTests/testExample test
 ```
 
 ## Project Architecture

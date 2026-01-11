@@ -9,7 +9,6 @@ import SwiftUI
 import SwiftData
 import UserNotifications
 import CoreLocation
-import CloudKit
 
 struct SettingsView: View {
     @StateObject private var viewModel = SettingsViewModel()
@@ -18,12 +17,14 @@ struct SettingsView: View {
     @Environment(\.colorScheme) private var colorScheme
     
     @State private var showingLocationPicker = false
+    @State private var showingManualLocationEntry = false
     @State private var showingNotificationInfo = false
     @State private var showingNotificationPreferences = false
     @State private var showingCloudKitInfo = false
     @State private var showingPrivacyPolicy = false
     @State private var showingAbout = false
     @State private var selectedLocation = ReminderLocation.currentLocation
+    @StateObject private var locationViewModel = LocationManagementViewModel()
     
     var body: some View {
         NavigationStack {
@@ -54,19 +55,15 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                }
-            }
             .onAppear {
                 viewModel.configure(modelContext: modelContext)
+                locationViewModel.configure(modelContext: modelContext)
             }
             .sheet(isPresented: $showingLocationPicker) {
                 LocationPickerView(selectedLocation: $selectedLocation)
+            }
+            .sheet(isPresented: $showingManualLocationEntry) {
+                ManualLocationEntrySheet(viewModel: locationViewModel)
             }
             .alert("Notification Settings", isPresented: $showingNotificationInfo) {
                 Button("Settings") {
@@ -76,10 +73,10 @@ struct SettingsView: View {
             } message: {
                 Text("To receive weather-based reminders, please enable notifications in Settings.")
             }
-            .alert("CloudKit Sync", isPresented: $showingCloudKitInfo) {
+            .alert("Sync Status", isPresented: $showingCloudKitInfo) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text(viewModel.cloudKitStatusMessage)
+                Text(viewModel.syncStatusMessage)
             }
             .sheet(isPresented: $showingPrivacyPolicy) {
                 PrivacyPolicyView()
@@ -93,28 +90,22 @@ struct SettingsView: View {
     // MARK: - Account Section
     
     private var accountSection: some View {
-        Section("Account") {
-            // CloudKit sync status
+        Section("Storage") {
+            // Sync status
             HStack {
-                Label("iCloud Sync", systemImage: "icloud.fill")
+                Label("Data Storage", systemImage: "internaldrive.fill")
                     .foregroundColor(.blue)
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .trailing, spacing: 2) {
                     HStack(spacing: 6) {
                         Circle()
-                            .fill(viewModel.cloudKitStatusColor)
+                            .fill(viewModel.syncStatusColor)
                             .frame(width: 8, height: 8)
-                        
-                        Text(viewModel.cloudKitStatusText)
+
+                        Text(viewModel.syncStatusText)
                             .font(.callout)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    if let lastSync = viewModel.lastSyncTime {
-                        Text("Last sync: \(lastSync, style: .relative) ago")
-                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
                 }
@@ -123,33 +114,14 @@ struct SettingsView: View {
             .onTapGesture {
                 showingCloudKitInfo = true
             }
-            
-            // Sync controls
-            if viewModel.cloudKitStatus == .available {
-                HStack {
-                    Button("Sync Now") {
-                        Task {
-                            await viewModel.forceSyncNow()
-                        }
-                    }
-                    .disabled(viewModel.isSyncing)
-                    
-                    Spacer()
-                    
-                    if viewModel.isSyncing {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    }
-                }
-            }
-            
-            // Account info
+
+            // Storage info
             HStack {
-                Label("Account", systemImage: "person.circle.fill")
+                Label("Storage Mode", systemImage: "doc.fill")
                     .foregroundColor(.green)
-                
+
                 Spacer()
-                
+
                 Text(viewModel.userAccountInfo)
                     .font(.callout)
                     .foregroundColor(.secondary)
@@ -286,12 +258,26 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
-                
+
+                // Set custom location
+                Button {
+                    showingManualLocationEntry = true
+                } label: {
+                    HStack {
+                        Label("Set Custom Location", systemImage: "pencil.circle.fill")
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .foregroundColor(.primary)
+
                 // Manage locations
                 NavigationLink("Manage Locations") {
                     LocationManagementView()
                 }
-                
+
                 // Background location updates
                 Toggle("Background Updates", isOn: $viewModel.backgroundLocationEnabled)
             }

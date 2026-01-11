@@ -18,8 +18,8 @@ import os
 final class BackgroundWeatherManager: ObservableObject {
     static let shared = BackgroundWeatherManager()
     
-    private let taskIdentifier = "com.hatti.app.weather-refresh"
-    private let logger = Logger(subsystem: "com.hatti.app", category: "BackgroundWeatherManager")
+    private let taskIdentifier = "com.sunhat.app.weather-refresh"
+    private let logger = Logger(subsystem: "com.sunhat.app", category: "BackgroundWeatherManager")
     
     @Published var isBackgroundRefreshEnabled = false
     @Published var lastBackgroundRefresh: Date?

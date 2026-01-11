@@ -10,7 +10,6 @@ import SwiftUI
 import SwiftData
 @preconcurrency import UserNotifications
 import CoreLocation
-import CloudKit
 import StoreKit
 import Combine
 import os
@@ -18,12 +17,12 @@ import os
 @MainActor
 final class SettingsViewModel: NSObject, ObservableObject {
     // MARK: - Published Properties
-    
-    // CloudKit sync
-    @Published var cloudKitStatus: CKAccountStatus = .couldNotDetermine
+
+    // Sync status (CloudKit disabled - prepared for future use)
+    @Published var syncEnabled: Bool = false
     @Published var lastSyncTime: Date?
     @Published var isSyncing = false
-    @Published var userAccountInfo = "Not signed in"
+    @Published var userAccountInfo = "Local storage only"
     
     // Notifications
     @Published var notificationsEnabled = false
@@ -51,7 +50,7 @@ final class SettingsViewModel: NSObject, ObservableObject {
     private var modelContext: ModelContext?
     private var userPreferences: UserPreferences?
     private let locationManager = CLLocationManager()
-    private let logger = Logger(subsystem: "com.hatti.app", category: "SettingsViewModel")
+    private let logger = Logger(subsystem: "com.sunhat.app", category: "SettingsViewModel")
     
     // MARK: - Initialization
     
@@ -65,7 +64,6 @@ final class SettingsViewModel: NSObject, ObservableObject {
         self.modelContext = modelContext
         loadUserPreferences()
         checkNotificationStatus()
-        checkCloudKitStatus()
         checkLocationStatus()
     }
     
@@ -154,57 +152,12 @@ final class SettingsViewModel: NSObject, ObservableObject {
         }
     }
     
-    // MARK: - CloudKit Methods
-    
-    private func checkCloudKitStatus() {
-        Task {
-            do {
-                let status = try await CKContainer.default().accountStatus()
-                await MainActor.run {
-                    self.cloudKitStatus = status
-                    self.updateUserAccountInfo()
-                }
-            } catch {
-                logger.error("Failed to check CloudKit status: \(error)")
-            }
-        }
-    }
-    
-    private func updateUserAccountInfo() {
-        switch cloudKitStatus {
-        case .available:
-            userAccountInfo = "Signed in to iCloud"
-        case .noAccount:
-            userAccountInfo = "Not signed in to iCloud"
-        case .restricted:
-            userAccountInfo = "iCloud restricted"
-        case .couldNotDetermine:
-            userAccountInfo = "iCloud status unknown"
-        case .temporarilyUnavailable:
-            userAccountInfo = "iCloud temporarily unavailable"
-        @unknown default:
-            userAccountInfo = "iCloud status unknown"
-        }
-    }
-    
+    // MARK: - Sync Methods (CloudKit disabled - prepared for future use)
+
     func forceSyncNow() async {
-        guard cloudKitStatus == .available else { return }
-        
-        isSyncing = true
-        defer { isSyncing = false }
-        
-        do {
-            // Simulate CloudKit sync operation
-            try await Task.sleep(for: .seconds(2))
-            
-            lastSyncTime = Date()
-            userPreferences?.lastSyncedAt = Date()
-            savePreferences()
-            
-            logger.info("CloudKit sync completed successfully")
-        } catch {
-            logger.error("CloudKit sync failed: \(error)")
-        }
+        // CloudKit sync is currently disabled
+        // This method is preserved for future CloudKit integration
+        logger.info("Sync is currently disabled - data is stored locally only")
     }
     
     // MARK: - Notification Methods
@@ -366,49 +319,16 @@ final class SettingsViewModel: NSObject, ObservableObject {
     
     // MARK: - Computed Properties
     
-    var cloudKitStatusText: String {
-        switch cloudKitStatus {
-        case .available:
-            return "Connected"
-        case .noAccount:
-            return "Not signed in"
-        case .restricted:
-            return "Restricted"
-        case .couldNotDetermine:
-            return "Unknown"
-        case .temporarilyUnavailable:
-            return "Unavailable"
-        @unknown default:
-            return "Unknown"
-        }
+    var syncStatusText: String {
+        syncEnabled ? "Enabled" : "Disabled"
     }
-    
-    var cloudKitStatusColor: Color {
-        switch cloudKitStatus {
-        case .available:
-            return .green
-        case .noAccount, .restricted, .temporarilyUnavailable:
-            return .orange
-        case .couldNotDetermine:
-            return .gray
-        @unknown default:
-            return .gray
-        }
+
+    var syncStatusColor: Color {
+        syncEnabled ? .green : .gray
     }
-    
-    var cloudKitStatusMessage: String {
-        switch cloudKitStatus {
-        case .available:
-            return "Your data is being synced across all your devices using iCloud."
-        case .noAccount:
-            return "Sign in to iCloud in Settings to sync your reminders across devices."
-        case .restricted:
-            return "iCloud sync is restricted on this device. Check your device restrictions."
-        case .temporarilyUnavailable:
-            return "iCloud is temporarily unavailable. Sync will resume when available."
-        default:
-            return "Unable to determine iCloud status. Please check your internet connection."
-        }
+
+    var syncStatusMessage: String {
+        "Your data is stored locally on this device. iCloud sync will be available in a future update."
     }
     
     var notificationStatusText: String {
