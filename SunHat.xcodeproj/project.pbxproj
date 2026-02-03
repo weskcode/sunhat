@@ -12,14 +12,14 @@
 			containerPortal = 64120D142E2D64CA0034CB20 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 64120D1B2E2D64CB0034CB20;
-			remoteInfo = hatti;
+			remoteInfo = SunHat;
 		};
 		64120D382E2D64CD0034CB20 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 64120D142E2D64CA0034CB20 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 64120D1B2E2D64CB0034CB20;
-			remoteInfo = hatti;
+			remoteInfo = SunHat;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -30,7 +30,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		64120D3F2E2D64CD0034CB20 /* Exceptions for "hatti" folder in "SunHat" target */ = {
+		64120D3F2E2D64CD0034CB20 /* Exceptions for "SunHat" folder in "SunHat" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -40,22 +40,22 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		64120D1E2E2D64CB0034CB20 /* hatti */ = {
+		64120D1E2E2D64CB0034CB20 /* SunHat */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				64120D3F2E2D64CD0034CB20 /* Exceptions for "hatti" folder in "SunHat" target */,
+				64120D3F2E2D64CD0034CB20 /* Exceptions for "SunHat" folder in "SunHat" target */,
 			);
-			path = hatti;
+			path = SunHat;
 			sourceTree = "<group>";
 		};
-		64120D302E2D64CD0034CB20 /* hattiTests */ = {
+		64120D302E2D64CD0034CB20 /* SunHatTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = hattiTests;
+			path = SunHatTests;
 			sourceTree = "<group>";
 		};
-		64120D3A2E2D64CD0034CB20 /* hattiUITests */ = {
+		64120D3A2E2D64CD0034CB20 /* SunHatUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = hattiUITests;
+			path = SunHatUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -88,9 +88,9 @@
 		64120D132E2D64CA0034CB20 = {
 			isa = PBXGroup;
 			children = (
-				64120D1E2E2D64CB0034CB20 /* hatti */,
-				64120D302E2D64CD0034CB20 /* hattiTests */,
-				64120D3A2E2D64CD0034CB20 /* hattiUITests */,
+				64120D1E2E2D64CB0034CB20 /* SunHat */,
+				64120D302E2D64CD0034CB20 /* SunHatTests */,
+				64120D3A2E2D64CD0034CB20 /* SunHatUITests */,
 				64120D1D2E2D64CB0034CB20 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -121,12 +121,12 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				64120D1E2E2D64CB0034CB20 /* hatti */,
+				64120D1E2E2D64CB0034CB20 /* SunHat */,
 			);
 			name = SunHat;
 			packageProductDependencies = (
 			);
-			productName = hatti;
+			productName = SunHat;
 			productReference = 64120D1C2E2D64CB0034CB20 /* SunHat.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -144,12 +144,12 @@
 				64120D2F2E2D64CD0034CB20 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				64120D302E2D64CD0034CB20 /* hattiTests */,
+				64120D302E2D64CD0034CB20 /* SunHatTests */,
 			);
 			name = SunHatTests;
 			packageProductDependencies = (
 			);
-			productName = hattiTests;
+			productName = SunHatTests;
 			productReference = 64120D2D2E2D64CD0034CB20 /* SunHatTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
@@ -167,12 +167,12 @@
 				64120D392E2D64CD0034CB20 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				64120D3A2E2D64CD0034CB20 /* hattiUITests */,
+				64120D3A2E2D64CD0034CB20 /* SunHatUITests */,
 			);
 			name = SunHatUITests;
 			packageProductDependencies = (
 			);
-			productName = hattiUITests;
+			productName = SunHatUITests;
 			productReference = 64120D372E2D64CD0034CB20 /* SunHatUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
@@ -288,13 +288,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = hatti/hatti.entitlements;
+				CODE_SIGN_ENTITLEMENTS = SunHat/SunHat.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = HD39MR492X;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = hatti/Info.plist;
+				INFOPLIST_FILE = SunHat/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -306,7 +307,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.wesley.hatti;
+				PRODUCT_BUNDLE_IDENTIFIER = org.wesley.sunhat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -323,13 +324,14 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
-				CODE_SIGN_ENTITLEMENTS = hatti/hatti.entitlements;
+				CODE_SIGN_ENTITLEMENTS = SunHat/SunHat.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = HD39MR492X;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = hatti/Info.plist;
+				INFOPLIST_FILE = SunHat/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -341,7 +343,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.wesley.hatti;
+				PRODUCT_BUNDLE_IDENTIFIER = org.wesley.sunhat;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
@@ -485,7 +487,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.wesley.hattiTests;
+				PRODUCT_BUNDLE_IDENTIFIER = org.wesley.sunhatTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -506,7 +508,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.wesley.hattiTests;
+				PRODUCT_BUNDLE_IDENTIFIER = org.wesley.sunhatTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
@@ -525,14 +527,14 @@
 				DEVELOPMENT_TEAM = HD39MR492X;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.wesley.hattiUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = org.wesley.sunhatUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = hatti;
+				TEST_TARGET_NAME = SunHat;
 			};
 			name = Debug;
 		};
@@ -544,14 +546,14 @@
 				DEVELOPMENT_TEAM = HD39MR492X;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = org.wesley.hattiUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = org.wesley.sunhatUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = hatti;
+				TEST_TARGET_NAME = SunHat;
 			};
 			name = Release;
 		};

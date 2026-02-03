@@ -1,20 +1,20 @@
 #!/bin/bash
 
-# Test build script for hatti app
+# Test build script for SunHat app
 # This script builds the app with proper iOS 18.5 configuration
 
-echo "Starting hatti build test..."
+echo "Starting SunHat build test..."
 echo "Targeting iOS 18.5 with Swift 6.0..."
 
 # Clean previous builds
 echo "Cleaning previous builds..."
-xcodebuild clean -project hatti.xcodeproj -scheme hatti
+xcodebuild clean -project SunHat.xcodeproj -scheme SunHat
 
 # Build for iOS Simulator with proper configuration
 echo "Building for iOS Simulator (iPhone 16, iOS 18.5)..."
 xcodebuild \
-  -project hatti.xcodeproj \
-  -scheme hatti \
+  -project SunHat.xcodeproj \
+  -scheme SunHat \
   -sdk iphonesimulator \
   -destination "platform=iOS Simulator,name=iPhone 16,OS=18.5" \
   -configuration Debug \

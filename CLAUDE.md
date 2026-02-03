@@ -48,7 +48,7 @@ xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS
 ## Project Architecture
 
 ### Current Structure
-- **hattiApp.swift**: Main app entry point with SwiftData ModelContainer setup
+- **SunHatApp.swift**: Main app entry point with SwiftData ModelContainer setup
 - **ContentView.swift**: Primary UI with NavigationSplitView and basic CRUD operations
 - **Item.swift**: SwiftData model for basic timestamp storage
 - **Tests**: Standard XCTest setup for unit and UI testing
@@ -119,8 +119,8 @@ class WeatherData {
   - Improved temperature and humidity data precision
 
 ### Testing Requirements
-- Unit tests in `hattiTests/` for business logic with iOS 26 specific test cases
-- UI tests in `hattiUITests/` for user workflows including iOS 26 permission flows
+- Unit tests in `SunHatTests/` for business logic with iOS 26 specific test cases
+- UI tests in `SunHatUITests/` for user workflows including iOS 26 permission flows
 - Mock weather data for consistent testing with iOS 26 WeatherKit enhancements
 - Test both online and offline scenarios with iOS 26 background task patterns
 - Specific iOS 26 test coverage:
@@ -154,7 +154,7 @@ The app will implement sophisticated weather triggers including:
 
 ## Documentation
 
-For detailed migration information, see the [iOS 26 Migration Guide](hatti/Documentation/iOS-26-Migration-Guide.md) which contains:
+For detailed migration information, see the [iOS 26 Migration Guide](SunHat/Documentation/iOS-26-Migration-Guide.md) which contains:
 - Complete list of all changes made during the iOS 26 upgrade
 - Breaking changes and migration strategies
 - Testing strategy and validation approach
