@@ -27,6 +27,10 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
     @Published var useFeelsLike: Bool = false
     @Published var conditionType: TriggerType = .exactTemperature
     
+    // Sky condition filtering
+    @Published var selectedSkyConditions: Set<SkyCondition> = []
+    @Published var conditionMode: ConditionSelectionMode = .include
+
     @Published var trendType: TrendType = .rising
     @Published var trendDuration: Int = 3
     @Published var seasonalType: SeasonalTriggerType = .springTransition
@@ -230,7 +234,13 @@ final class ComprehensiveReminderCreationViewModel: NSObject, ObservableObject {
         }
         
         condition.useFeelsLike = useFeelsLike
-        
+
+        // Sky condition filtering
+        if !selectedSkyConditions.isEmpty {
+            condition.selectedSkyConditions = selectedSkyConditions
+            condition.conditionMode = conditionMode
+        }
+
         return condition
     }
     

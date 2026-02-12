@@ -80,20 +80,17 @@ struct HourlyForecastCard: View {
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
             
-            // Precipitation probability if > 0
-            if hourData.precipitationProbability > 0 {
-                HStack(spacing: 2) {
-                    Image(systemName: "drop.fill")
-                        .font(.caption2)
-                        .foregroundColor(.blue)
-                    
-                    Text("\(hourData.precipitationProbability)%")
-                        .font(.caption2)
-                        .foregroundColor(.blue)
-                }
-            } else {
-                Spacer(minLength: 16)
+            // Precipitation probability (always reserve space)
+            HStack(spacing: 2) {
+                Image(systemName: "drop.fill")
+                    .font(.caption2)
+                    .foregroundColor(.blue)
+
+                Text("\(hourData.precipitationProbability)%")
+                    .font(.caption2)
+                    .foregroundColor(.blue)
             }
+            .opacity(hourData.precipitationProbability > 0 ? 1 : 0)
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 12)

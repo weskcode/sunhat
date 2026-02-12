@@ -85,11 +85,8 @@ final class LocationPermissionManagerAdapter: LocationManaging {
             }
         }
 
-        // Check if we have a valid location
-        if let currentLocation = locationPermissionManager.currentLocation {
-            let locationName = locationPermissionManager.getDisplayLocation()
-            return (currentLocation, locationName)
-        } else if let manualLocation = locationPermissionManager.manualLocation {
+        // Check if we already have a manual location set
+        if let manualLocation = locationPermissionManager.manualLocation {
             let location = CLLocation(
                 latitude: manualLocation.coordinate.latitude,
                 longitude: manualLocation.coordinate.longitude
@@ -97,24 +94,49 @@ final class LocationPermissionManagerAdapter: LocationManaging {
             return (location, manualLocation.displayName)
         }
 
-        // Fallback to default location if no permission or location available
-        let defaultLoc = CLLocation(latitude: 37.7749, longitude: -122.4194)
-        let name = "San Francisco, CA"
-        return (defaultLoc, name)
+        // Check if we already have a current GPS location
+        if let currentLocation = locationPermissionManager.currentLocation {
+            let locationName = locationPermissionManager.getDisplayLocation()
+            return (currentLocation, locationName)
+        }
+
+        // If authorized but no location yet, request and wait with timeout
+        if locationPermissionManager.authorizationStatus == .authorizedWhenInUse ||
+           locationPermissionManager.authorizationStatus == .authorizedAlways {
+            locationPermissionManager.getCurrentLocation()
+
+            // Poll for location with timeout (up to 10 seconds)
+            for _ in 0..<20 {
+                try? await Task.sleep(for: .milliseconds(500))
+                if let loc = locationPermissionManager.currentLocation {
+                    let locationName = locationPermissionManager.getDisplayLocation()
+                    return (loc, locationName)
+                }
+            }
+        }
+
+        // Final fallback: log warning and return nil rather than fake data
+        let logger = Logger(subsystem: "org.wesley.sunhat", category: "LocationAdapter")
+        logger.warning("Could not obtain user location — no fallback used")
+        return nil
     }
 }
 
-// MARK: - Default Location Manager (Legacy)
+// MARK: - Default Location Manager (Legacy — no longer uses hardcoded fallback)
 final class DefaultLocationManager: LocationManaging {
     static let shared = DefaultLocationManager()
     private var cached: (CLLocation, String)?
 
     func currentLocation() async -> (location: CLLocation, name: String)? {
         if let loc = cached { return loc }
-        let defaultLoc = CLLocation(latitude: 37.7749, longitude: -122.4194)
-        let name = "San Francisco, CA"
-        cached = (defaultLoc, name)
-        return cached
+        // Use the shared LocationPermissionManager to get real location
+        let mgr = await LocationPermissionManager.shared
+        if let loc = mgr.currentLocation {
+            let name = mgr.getDisplayLocation()
+            cached = (loc, name)
+            return cached
+        }
+        return nil
     }
 }
 
@@ -188,8 +210,7 @@ final class WeatherViewModel: ObservableObject {
 
     // Convenience initializer that uses shared instances
     convenience init(modelContainer: ModelContainer) {
-        let locationPermissionManager = LocationPermissionManager()
-        let locationManager = LocationPermissionManagerAdapter(locationPermissionManager: locationPermissionManager)
+        let locationManager = LocationPermissionManagerAdapter(locationPermissionManager: LocationPermissionManager.shared)
         self.init(
             modelContainer: modelContainer,
             weatherService: WeatherService.shared,

@@ -12,6 +12,7 @@ import MapKit
 struct ManualLocationEntryView: View {
     @Binding var isPresented: Bool
     let onLocationSelected: (ManualLocationData) -> Void
+    var onUseCurrentLocation: (() -> Void)? = nil
     
     @State private var searchText = ""
     @State private var searchResults: [LocationSearchResult] = []
@@ -37,10 +38,17 @@ struct ManualLocationEntryView: View {
                     // Header section
                     headerSection
                         .padding(.top, 20)
-                    
+
+                    // "Use Current Location" option (when available)
+                    if let onUseCurrentLocation {
+                        currentLocationButton(action: onUseCurrentLocation)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 20)
+                    }
+
                     // Search section
                     searchSection
-                        .padding(.top, 30)
+                        .padding(.top, onUseCurrentLocation == nil ? 30 : 16)
                     
                     // Results section
                     if isSearching {
@@ -87,8 +95,53 @@ struct ManualLocationEntryView: View {
         }
     }
     
+    // MARK: - Current Location Button
+
+    private func currentLocationButton(action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.blue.opacity(0.1))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "location.fill")
+                        .font(.body)
+                        .foregroundColor(.blue)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Use Current Location")
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                    Text("Monitor weather at your device location")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.title3)
+                    .foregroundColor(.blue)
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.secondarySystemBackground))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel("Use current location")
+        .accessibilityHint("Monitor weather at your device's current GPS location")
+    }
+
     // MARK: - Header Section
-    
+
     private var headerSection: some View {
         VStack(spacing: 16) {
             // Search icon

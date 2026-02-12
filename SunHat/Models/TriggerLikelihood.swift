@@ -16,7 +16,7 @@ struct TriggerLikelihood {
     var color: Color {
         switch percentage {
         case 0...25:
-            return .red
+            return Color.gray.opacity(0.6)
         case 26...50:
             return .orange
         case 51...75:

@@ -13,6 +13,8 @@ import os
 
 @MainActor
 final class LocationPermissionManager: NSObject, ObservableObject {
+    static let shared = LocationPermissionManager()
+    
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var currentLocation: CLLocation?
     @Published var manualLocation: ManualLocationData?

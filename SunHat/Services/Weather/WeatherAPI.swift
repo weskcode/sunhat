@@ -35,31 +35,21 @@ final class AppleWeatherKitAPI: WeatherAPI {
     }
     
     func fetchCurrentWeather(for location: CLLocation) async throws -> WeatherDataDTO {
-        do {
-            let weather = try await weatherService.weather(for: location)
-            return mapCurrentWeather(weather.currentWeather, at: location)
-        } catch {
-            // For development, fall back to mock data if WeatherKit fails
-            return mapMockCurrentWeather(at: location)
-        }
+        let weather = try await weatherService.weather(for: location)
+        return mapCurrentWeather(weather.currentWeather, at: location)
     }
 
     // MARK: - iOS 26+ WeatherKit Enhancements
 
     @available(iOS 26, *)
     func fetchExtendedWeatherData(for location: CLLocation) async throws -> WeatherDataDTO {
-        do {
-            let weather = try await weatherService.weather(for: location)
+        let weather = try await weatherService.weather(for: location)
 
-            // Use iOS 26+ WeatherKit features
-            let currentWeather = weather.currentWeather
+        // Use iOS 26+ WeatherKit features
+        let currentWeather = weather.currentWeather
 
-            // Enhanced mapping with iOS 26+ features
-            return mapEnhancedCurrentWeather(currentWeather, at: location)
-        } catch {
-            // For development, fall back to mock data if WeatherKit fails
-            return mapMockCurrentWeather(at: location)
-        }
+        // Enhanced mapping with iOS 26+ features
+        return mapEnhancedCurrentWeather(currentWeather, at: location)
     }
 
     @available(iOS 26, *)
@@ -90,14 +80,9 @@ final class AppleWeatherKitAPI: WeatherAPI {
     }
     
     func fetchForecast(for location: CLLocation, days: Int = 7) async throws -> [ForecastDayDTO] {
-        do {
-            let weather = try await weatherService.weather(for: location)
-            return weather.dailyForecast.forecast.prefix(days).map { dailyWeather in
-                mapDailyWeather(dailyWeather)
-            }
-        } catch {
-            // For development, fall back to mock data if WeatherKit fails
-            return createMockForecast(days: days)
+        let weather = try await weatherService.weather(for: location)
+        return weather.dailyForecast.forecast.prefix(days).map { dailyWeather in
+            mapDailyWeather(dailyWeather)
         }
     }
     
@@ -149,46 +134,6 @@ final class AppleWeatherKitAPI: WeatherAPI {
             accuracy: .high,
             forecast: []
         )
-    }
-    
-    private func mapMockCurrentWeather(at location: CLLocation) -> WeatherDataDTO {
-        return WeatherDataDTO(
-            temperature: 72.0,
-            feelsLike: 75.0,
-            humidity: 60,
-            dewPoint: 55.0,
-            pressure: 30.0,
-            visibility: 10.0,
-            uvIndex: 5.0,
-            cloudCover: 30,
-            windSpeed: 10.0,
-            windDirection: 180,
-            precipitationAmount: 0.0,
-            precipitationType: .none,
-            weatherCondition: .clear,
-            dataSource: .appleWeatherKit,
-            accuracy: .medium,
-            forecast: []
-        )
-    }
-    
-    private func createMockForecast(days: Int) -> [ForecastDayDTO] {
-        return (0..<days).map { dayOffset in
-            ForecastDayDTO(
-                date: Calendar.current.date(byAdding: .day, value: dayOffset, to: Date()) ?? Date(),
-                highTemperature: 75.0 + Double(dayOffset * 2),
-                lowTemperature: 55.0 + Double(dayOffset),
-                weatherCondition: WeatherCondition.clear,
-                precipitationProbability: 10,
-                precipitationAmount: 0.0,
-                precipitationType: .none,
-                windSpeed: 8.0,
-                windDirection: 180,
-                humidity: 55,
-                uvIndex: 6.0,
-                cloudCover: 20
-            )
-        }
     }
     
     private func mapDailyWeather(_ daily: DayWeather) -> ForecastDayDTO {

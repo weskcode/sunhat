@@ -20,7 +20,7 @@ struct WelcomeView: View {
     
     // Animation states for staggered entrance
     @State private var showHeroText = false
-    @State private var showComparisonCards = false
+    @State private var showUseCases = false
     @State private var showActionButtons = false
     
     var body: some View {
@@ -36,8 +36,8 @@ struct WelcomeView: View {
                         heroSection
                             .padding(.top, geometry.safeAreaInsets.top + 40)
                         
-                        // Comparison Cards Section
-                        comparisonSection
+                        // Use Cases Section
+                        useCaseSection
                             .padding(.top, 60)
                         
                         // Action Buttons Section
@@ -56,7 +56,7 @@ struct WelcomeView: View {
             } else {
                 // Show all content immediately for reduced motion
                 showHeroText = true
-                showComparisonCards = true
+                showUseCases = true
                 showActionButtons = true
             }
         }
@@ -189,40 +189,118 @@ struct WelcomeView: View {
         .accessibilityHidden(true) // Decorative element
     }
     
-    // MARK: - Comparison Section
-    
-    private var comparisonSection: some View {
-        VStack(spacing: 32) {
-            // Section header
-            VStack(spacing: 12) {
-                Text("See the difference")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-                    .accessibilityAddTraits(.isHeader)
-                
-                Text("Weather-smart reminders vs traditional time-based alerts")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .opacity(showComparisonCards ? 1.0 : 0.0)
-            .offset(y: showComparisonCards ? 0 : 20)
-            .animation(.easeOut(duration: 0.6).delay(0.2), value: showComparisonCards)
-            
-            // Comparison cards
-            VStack(spacing: 20) {
-                ForEach(Array(comparisonExamples.enumerated()), id: \.offset) { index, example in
-                    ComparisonCard(
-                        example: example,
-                        index: index
+    // MARK: - Use Case Section
+
+    private let useCaseTags: [(String, String, Color)] = [
+        ("Gardening", "leaf.fill", .green),
+        ("Running", "figure.run", .blue),
+        ("Pool Day", "figure.pool.swim", .cyan),
+        ("Dog Walking", "dog.fill", .orange),
+        ("Photography", "camera.fill", .purple),
+        ("Picnic", "basket.fill", .pink)
+    ]
+
+    private var useCaseSection: some View {
+        VStack(spacing: 24) {
+            Text("Works for any outdoor activity")
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+                .accessibilityAddTraits(.isHeader)
+
+            // Use case tags
+            FlowLayout(spacing: 10) {
+                ForEach(useCaseTags, id: \.0) { tag in
+                    HStack(spacing: 6) {
+                        Image(systemName: tag.1)
+                            .font(.caption)
+                            .foregroundColor(tag.2)
+
+                        Text(tag.0)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primary)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(
+                        Capsule()
+                            .fill(tag.2.opacity(colorScheme == .dark ? 0.15 : 0.1))
+                            .overlay(
+                                Capsule()
+                                    .stroke(tag.2.opacity(0.2), lineWidth: 1)
+                            )
                     )
-                    .opacity(showComparisonCards ? 1.0 : 0.0)
-                    .offset(x: showComparisonCards ? 0 : -50)
-                    .animation(.easeOut(duration: 0.6).delay(0.4 + Double(index) * 0.15), value: showComparisonCards)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel(tag.0)
                 }
             }
+
+            // Single example notification
+            exampleNotificationCard
         }
+        .opacity(showUseCases ? 1.0 : 0.0)
+        .offset(y: showUseCases ? 0 : 20)
+        .animation(.easeOut(duration: 0.6).delay(0.2), value: showUseCases)
+    }
+
+    // MARK: - Example Notification Card
+
+    private var exampleNotificationCard: some View {
+        HStack(spacing: 12) {
+            // App icon
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.blue, Color.blue.opacity(0.8)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 36, height: 36)
+
+                Image(systemName: "cloud.sun.fill")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.white)
+            }
+            .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("SunHat")
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+
+                    Spacer()
+
+                    Text("now")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+
+                Text("Perfect gardening weather!")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.primary)
+
+                Text("It's 72°F and sunny — ideal for your outdoor plans.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+
+            Spacer()
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Example notification: Perfect gardening weather! It's 72°F and sunny, ideal for your outdoor plans.")
     }
     
     // MARK: - Action Buttons Section
@@ -290,7 +368,7 @@ struct WelcomeView: View {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
             withAnimation {
-                showComparisonCards = true
+                showUseCases = true
             }
         }
         
@@ -336,76 +414,48 @@ struct WelcomeView: View {
     }
 }
 
-// MARK: - Comparison Examples Data
+// MARK: - Flow Layout
 
-private let comparisonExamples: [ComparisonExample] = [
-    ComparisonExample(
-        title: "Gardening Reminder",
-        weatherBased: WeatherBasedReminder(
-            condition: "When it's above 60°F",
-            description: "Perfect planting weather!",
-            icon: "leaf.fill",
-            color: .green
-        ),
-        timeBased: TimeBasedReminder(
-            time: "Every Saturday 9 AM",
-            description: "Check garden (even if it's 30°F)",
-            icon: "clock.fill",
-            color: .gray
-        )
-    ),
-    ComparisonExample(
-        title: "Outdoor Exercise",
-        weatherBased: WeatherBasedReminder(
-            condition: "When it's 65-80°F",
-            description: "Ideal running conditions",
-            icon: "figure.run",
-            color: .blue
-        ),
-        timeBased: TimeBasedReminder(
-            time: "Daily at 6 PM",
-            description: "Go for a run (rain or shine)",
-            icon: "clock.fill",
-            color: .gray
-        )
-    ),
-    ComparisonExample(
-        title: "Pool Maintenance",
-        weatherBased: WeatherBasedReminder(
-            condition: "First day above 75°F",
-            description: "Time to open the pool!",
-            icon: "figure.pool.swim",
-            color: .cyan
-        ),
-        timeBased: TimeBasedReminder(
-            time: "April 15th",
-            description: "Open pool (might still be cold)",
-            icon: "calendar",
-            color: .gray
-        )
-    )
-]
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
 
-// MARK: - Supporting Data Structures
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? .infinity
+        var currentX: CGFloat = 0
+        var currentY: CGFloat = 0
+        var lineHeight: CGFloat = 0
 
-struct ComparisonExample {
-    let title: String
-    let weatherBased: WeatherBasedReminder
-    let timeBased: TimeBasedReminder
-}
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if currentX + size.width > maxWidth, currentX > 0 {
+                currentX = 0
+                currentY += lineHeight + spacing
+                lineHeight = 0
+            }
+            lineHeight = max(lineHeight, size.height)
+            currentX += size.width + spacing
+        }
 
-struct WeatherBasedReminder {
-    let condition: String
-    let description: String
-    let icon: String
-    let color: Color
-}
+        return CGSize(width: maxWidth, height: currentY + lineHeight)
+    }
 
-struct TimeBasedReminder {
-    let time: String
-    let description: String
-    let icon: String
-    let color: Color
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var currentX: CGFloat = bounds.minX
+        var currentY: CGFloat = bounds.minY
+        var lineHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if currentX + size.width > bounds.maxX, currentX > bounds.minX {
+                currentX = bounds.minX
+                currentY += lineHeight + spacing
+                lineHeight = 0
+            }
+            subview.place(at: CGPoint(x: currentX, y: currentY), proposal: .unspecified)
+            lineHeight = max(lineHeight, size.height)
+            currentX += size.width + spacing
+        }
+    }
 }
 
 // MARK: - Preview

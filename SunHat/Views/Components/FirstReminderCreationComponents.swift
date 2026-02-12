@@ -7,100 +7,85 @@
 
 import SwiftUI
 
-// MARK: - Activity Selector
+// MARK: - Title, Notes & Icon Section
 
-struct ActivitySelector: View {
-    @Binding var selectedActivity: ReminderActivity
-    @Binding var customActivity: String
-    
-    @State private var showCustomInput = false
-    
+struct TitleNotesIconSection: View {
+    @Binding var title: String
+    @Binding var notes: String
+    @Binding var selectedIcon: String
+
     var body: some View {
         VStack(spacing: 16) {
-            // Predefined activities
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 12) {
-                ForEach(ReminderActivity.allCases.filter { $0 != .custom }, id: \.self) { activity in
-                    ActivityButton(
-                        activity: activity,
-                        isSelected: selectedActivity == activity
-                    ) {
-                        selectedActivity = activity
-                        showCustomInput = false
-                    }
-                }
+            // Title field
+            TextField("Title", text: $title)
+                .font(.body)
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(.tertiarySystemBackground))
+                )
+                .accessibilityLabel("Reminder title")
+
+            // Notes field
+            TextField("Add Notes", text: $notes)
+                .font(.body)
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(.tertiarySystemBackground))
+                )
+                .accessibilityLabel("Reminder notes")
+
+            // Icon header
+            HStack {
+                Text("Icon")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.secondary)
+
+                Spacer()
             }
-            
-            // Custom activity option
-            VStack(spacing: 12) {
-                Button(action: {
-                    selectedActivity = .custom
-                    showCustomInput = true
-                }) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "plus.circle")
-                            .font(.body)
-                        
-                        Text("Custom Activity")
-                            .font(.body)
-                            .fontWeight(.medium)
-                    }
-                    .foregroundColor(selectedActivity == .custom ? .white : .blue)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(selectedActivity == .custom ? Color.blue : Color.blue.opacity(0.1))
-                    )
-                }
-                .buttonStyle(PlainButtonStyle())
-                
-                if showCustomInput {
-                    TextField("Enter activity name", text: $customActivity)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-            }
-        }
-        .onChange(of: selectedActivity) { _, newActivity in
-            if newActivity != .custom {
-                showCustomInput = false
-            }
+
+            // Icon grid
+            IconPickerGrid(selectedIcon: $selectedIcon)
         }
     }
 }
 
-struct ActivityButton: View {
-    let activity: ReminderActivity
-    let isSelected: Bool
-    let onTap: () -> Void
-    
+// MARK: - Icon Picker Grid
+
+struct IconPickerGrid: View {
+    @Binding var selectedIcon: String
+
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 5)
+
     var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 8) {
-                Image(systemName: activity.icon)
-                    .font(.title3)
-                    .foregroundColor(isSelected ? .white : activity.color)
-                
-                Text(activity.displayName)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(isSelected ? .white : .primary)
-                    .lineLimit(1)
+        LazyVGrid(columns: columns, spacing: 12) {
+            ForEach(CustomReminder.availableIcons, id: \.self) { icon in
+                Button {
+                    selectedIcon = icon
+                } label: {
+                    ZStack {
+                        Circle()
+                            .fill(selectedIcon == icon
+                                  ? Color.purple.opacity(0.2)
+                                  : Color(.tertiarySystemBackground))
+                            .overlay(
+                                Circle()
+                                    .stroke(selectedIcon == icon ? Color.purple : Color.clear, lineWidth: 2)
+                            )
+
+                        Image(systemName: icon)
+                            .font(.title3)
+                            .foregroundColor(selectedIcon == icon ? .purple : .secondary)
+                    }
+                    .frame(width: 52, height: 52)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .accessibilityLabel(icon)
+                .accessibilityAddTraits(selectedIcon == icon ? .isSelected : [])
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: 70)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? activity.color : Color(.tertiarySystemBackground))
-            )
         }
-        .buttonStyle(PlainButtonStyle())
-        .accessibilityLabel(activity.displayName)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
@@ -110,61 +95,122 @@ struct WeatherConditionBuilder: View {
     @Binding var condition: WeatherConditionType
     @Binding var minTemp: Double
     @Binding var maxTemp: Double
-    
+    @Binding var temperatureType: TemperatureConditionType
+    @Binding var selectedSkyConditions: Set<SkyCondition>
+    @Binding var conditionMode: ConditionSelectionMode
+
     var body: some View {
         VStack(spacing: 20) {
-            // Condition type selector
+            // Temperature type selector
             VStack(spacing: 12) {
                 HStack {
-                    Text("Condition Type")
+                    Text("Temperature")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)
-                    
+
                     Spacer()
+
+                    Text(temperatureType == .temperatureRange
+                         ? "\(Int(minTemp))° - \(Int(maxTemp))°F"
+                         : "\(Int(minTemp))°F")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.blue)
                 }
-                
-                LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: 12) {
-                    ForEach(WeatherConditionType.allCases, id: \.self) { conditionType in
-                        ConditionTypeButton(
-                            conditionType: conditionType,
-                            isSelected: condition == conditionType
-                        ) {
-                            condition = conditionType
+
+                HStack(spacing: 12) {
+                    ForEach(TemperatureConditionType.allCases, id: \.self) { type in
+                        Button(action: { temperatureType = type }) {
+                            VStack(spacing: 6) {
+                                Image(systemName: type.icon)
+                                    .font(.body)
+                                    .foregroundColor(temperatureType == type ? .white : .blue)
+
+                                Text(type.displayName)
+                                    .font(.caption2)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(temperatureType == type ? .white : .primary)
+                                    .lineLimit(1)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(temperatureType == type ? Color.blue : Color(.tertiarySystemBackground))
+                            )
                         }
+                        .buttonStyle(PlainButtonStyle())
+                        .accessibilityLabel(type.displayName)
+                        .accessibilityAddTraits(temperatureType == type ? .isSelected : [])
                     }
+                }
+
+                if temperatureType == .temperatureRange {
+                    TemperatureRangeSlider(minTemp: $minTemp, maxTemp: $maxTemp)
+                } else {
+                    SingleTemperatureSlider(temperature: $minTemp)
                 }
             }
-            
-            // Temperature range (if applicable)
-            if condition == .temperatureRange || condition == .exactTemperature {
-                VStack(spacing: 16) {
-                    HStack {
-                        Text("Temperature")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(.primary)
-                        
-                        Spacer()
-                        
-                        Text("\(Int(minTemp))° - \(Int(maxTemp))°F")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.blue)
+
+            Divider()
+
+            // Sky conditions — multi-select with include/exclude
+            VStack(spacing: 12) {
+                HStack {
+                    Text("Sky Conditions")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+
+                    Spacer()
+                }
+
+                // Include / Exclude toggle
+                HStack(spacing: 0) {
+                    ConditionModeTab(
+                        title: "Remind if",
+                        icon: "checkmark.circle.fill",
+                        isSelected: conditionMode == .include
+                    ) {
+                        conditionMode = .include
                     }
-                    
-                    if condition == .temperatureRange {
-                        TemperatureRangeSlider(
-                            minTemp: $minTemp,
-                            maxTemp: $maxTemp
-                        )
-                    } else {
-                        SingleTemperatureSlider(
-                            temperature: $minTemp
-                        )
+
+                    ConditionModeTab(
+                        title: "Exclude if",
+                        icon: "xmark.circle.fill",
+                        isSelected: conditionMode == .exclude
+                    ) {
+                        conditionMode = .exclude
+                    }
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(.tertiarySystemBackground))
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                Text(conditionMode == .include
+                     ? "Remind me when it's any of these:"
+                     : "Remind me unless it's any of these:")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                // Multi-select sky condition chips
+                FlowLayoutConditions(spacing: 8) {
+                    ForEach(SkyCondition.allCases) { sky in
+                        SkyConditionChip(
+                            sky: sky,
+                            isSelected: selectedSkyConditions.contains(sky),
+                            mode: conditionMode
+                        ) {
+                            if selectedSkyConditions.contains(sky) {
+                                selectedSkyConditions.remove(sky)
+                            } else {
+                                selectedSkyConditions.insert(sky)
+                            }
+                        }
                     }
                 }
             }
@@ -172,18 +218,153 @@ struct WeatherConditionBuilder: View {
     }
 }
 
+// MARK: - Condition Mode Tab
+
+struct ConditionModeTab: View {
+    let title: String
+    let icon: String
+    let isSelected: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.caption)
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .foregroundColor(isSelected ? .white : .secondary)
+            .frame(maxWidth: .infinity)
+            .frame(height: 36)
+            .background(
+                isSelected
+                    ? (title == "Exclude if"
+                       ? AnyShapeStyle(Color.gray.opacity(0.85))
+                       : AnyShapeStyle(Color.blue))
+                    : AnyShapeStyle(Color.clear)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+// MARK: - Sky Condition Chip
+
+struct SkyConditionChip: View {
+    let sky: SkyCondition
+    let isSelected: Bool
+    let mode: ConditionSelectionMode
+    let onTap: () -> Void
+
+    private var chipColor: Color {
+        guard isSelected else { return Color(.tertiarySystemBackground) }
+        return mode == .include ? sky.color : .gray.opacity(0.15)
+    }
+
+    private var borderColor: Color {
+        guard isSelected else { return Color.clear }
+        return mode == .include ? sky.color : .gray.opacity(0.4)
+    }
+
+    private var textColor: Color {
+        guard isSelected else { return .primary }
+        return mode == .include ? .white : .gray
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 6) {
+                Image(systemName: sky.icon)
+                    .font(.caption)
+                    .foregroundColor(isSelected && mode == .include ? .white : sky.color)
+
+                Text(sky.displayName)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(textColor)
+
+                if isSelected && mode == .exclude {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundColor(.gray)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(isSelected && mode == .include ? sky.color.opacity(0.85) : chipColor)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(borderColor, lineWidth: isSelected ? 1.5 : 0)
+                    )
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .accessibilityLabel("\(sky.displayName), \(isSelected ? "selected" : "not selected")")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+// MARK: - Flow Layout for Sky Conditions
+
+struct FlowLayoutConditions: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = arrange(proposal: proposal, subviews: subviews)
+        return result.size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = arrange(proposal: proposal, subviews: subviews)
+        for (index, position) in result.positions.enumerated() {
+            subviews[index].place(at: CGPoint(x: bounds.minX + position.x, y: bounds.minY + position.y), proposal: .unspecified)
+        }
+    }
+
+    private func arrange(proposal: ProposedViewSize, subviews: Subviews) -> (size: CGSize, positions: [CGPoint]) {
+        let maxWidth = proposal.width ?? .infinity
+        var positions: [CGPoint] = []
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        var maxX: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x + size.width > maxWidth && x > 0 {
+                x = 0
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+            positions.append(CGPoint(x: x, y: y))
+            rowHeight = max(rowHeight, size.height)
+            x += size.width + spacing
+            maxX = max(maxX, x)
+        }
+
+        return (CGSize(width: maxX, height: y + rowHeight), positions)
+    }
+}
+
+// Legacy ConditionTypeButton kept for backward compatibility
 struct ConditionTypeButton: View {
     let conditionType: WeatherConditionType
     let isSelected: Bool
     let onTap: () -> Void
-    
+
     var body: some View {
         Button(action: onTap) {
             VStack(spacing: 8) {
                 Image(systemName: conditionType.icon)
                     .font(.title3)
                     .foregroundColor(isSelected ? .white : .blue)
-                
+
                 Text(conditionType.displayName)
                     .font(.caption)
                     .fontWeight(.medium)
@@ -585,28 +766,24 @@ struct ReminderPreviewCard: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            // Activity icon and title
+            // Icon and title
             HStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .fill(reminder.activity.color.opacity(0.1))
+                        .fill(reminder.iconColor.opacity(0.1))
                         .frame(width: 60, height: 60)
-                    
-                    Image(systemName: reminder.activity.icon)
+
+                    Image(systemName: reminder.selectedIcon)
                         .font(.title2)
-                        .foregroundColor(reminder.activity.color)
+                        .foregroundColor(reminder.iconColor)
                 }
                 .accessibilityHidden(true)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(reminder.displayTitle)
                         .font(.title3)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
-                    
-                    Text(reminder.activityDisplayName)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
                 }
                 
                 Spacer()
@@ -620,14 +797,21 @@ struct ReminderPreviewCard: View {
                     value: reminder.temperatureDescription,
                     color: .blue
                 )
-                
+
+                ConditionRow(
+                    icon: reminder.conditionMode == .exclude ? "xmark.circle" : "cloud.sun.fill",
+                    title: "Sky",
+                    value: reminder.skyConditionDescription,
+                    color: reminder.conditionMode == .exclude ? .gray : .orange
+                )
+
                 ConditionRow(
                     icon: "clock",
                     title: "Time",
                     value: reminder.preferredTimeRange.displayName,
                     color: .orange
                 )
-                
+
                 if reminder.respectQuietHours {
                     ConditionRow(
                         icon: "moon.zzz",
@@ -877,15 +1061,19 @@ struct CircularProgressView: View {
 
 #Preview {
     VStack(spacing: 20) {
-        ActivitySelector(
-            selectedActivity: .constant(.walking),
-            customActivity: .constant("")
+        TitleNotesIconSection(
+            title: .constant("Morning Walk"),
+            notes: .constant(""),
+            selectedIcon: .constant("figure.walk")
         )
-        
+
         WeatherConditionBuilder(
             condition: .constant(.temperatureRange),
             minTemp: .constant(65),
-            maxTemp: .constant(75)
+            maxTemp: .constant(75),
+            temperatureType: .constant(.temperatureRange),
+            selectedSkyConditions: .constant([.sunny, .partlyCloudy]),
+            conditionMode: .constant(.include)
         )
     }
     .padding()

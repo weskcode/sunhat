@@ -7,10 +7,12 @@
 
 import SwiftUI
 import CoreLocation
+import SwiftData
 
 struct LocationPermissionView: View {
-    @StateObject private var locationManager = LocationPermissionManager()
+    @ObservedObject private var locationManager = LocationPermissionManager.shared
     @EnvironmentObject private var coordinator: OnboardingCoordinator
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -57,6 +59,7 @@ struct LocationPermissionView: View {
                         isPresented: $showManualEntry,
                         onLocationSelected: { location in
                             locationManager.manualLocation = location
+                            saveManualLocationToPreferences(location)
                             coordinator.nextStep()
                         }
                     )
@@ -227,14 +230,6 @@ struct LocationPermissionView: View {
                     color: .green,
                     animationDelay: 2.2
                 )
-                
-                ExplanationCard(
-                    icon: "lock.shield.fill",
-                    title: "Privacy Protected",
-                    description: "Your location stays on your device. We only fetch weather data when needed.",
-                    color: .purple,
-                    animationDelay: 2.4
-                )
             }
             .opacity(showExplanation ? 1.0 : 0.0)
             .offset(y: showExplanation ? 0 : 30)
@@ -320,27 +315,20 @@ struct LocationPermissionView: View {
     }
     
     private var privacyNotice: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 8) {
-                Image(systemName: "hand.raised.fill")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Text("Your privacy matters")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.secondary)
-            }
-            
-            Text("Location data is only used for weather updates and never shared with third parties.")
-                .font(.caption2)
+        HStack(spacing: 8) {
+            Image(systemName: "lock.shield.fill")
+                .font(.subheadline)
+                .foregroundColor(.green)
+
+            Text("Only **you** have your location data — it's used solely for accurate weather, nothing else.")
+                .font(.caption)
                 .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+                .multilineTextAlignment(.leading)
                 .lineLimit(nil)
         }
         .padding(.top, 8)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Privacy notice: Your privacy matters. Location data is only used for weather updates and never shared with third parties.")
+        .accessibilityLabel("Privacy notice: Only you have your location data. It's used solely for accurate weather, nothing else.")
     }
     
     // MARK: - Helper Methods
@@ -385,6 +373,9 @@ struct LocationPermissionView: View {
                 isProcessingPermission = false
                 
                 if granted {
+                    // Save GPS mode to UserPreferences
+                    saveGPSLocationToPreferences()
+
                     // Success haptic
                     let notificationFeedback = UINotificationFeedbackGenerator()
                     notificationFeedback.notificationOccurred(.success)
@@ -395,6 +386,36 @@ struct LocationPermissionView: View {
                 // Error handling is done through the location manager's alert
             }
         }
+    }
+
+    private func saveGPSLocationToPreferences() {
+        let prefs = fetchOrCreatePreferences()
+        prefs.locationMode = "gps"
+        prefs.manualLocationLatitude = 0
+        prefs.manualLocationLongitude = 0
+        prefs.manualLocationName = ""
+        prefs.updateTimestamp()
+        try? modelContext.save()
+    }
+
+    private func saveManualLocationToPreferences(_ location: ManualLocationData) {
+        let prefs = fetchOrCreatePreferences()
+        prefs.locationMode = "manual"
+        prefs.manualLocationLatitude = location.coordinate.latitude
+        prefs.manualLocationLongitude = location.coordinate.longitude
+        prefs.manualLocationName = location.displayName
+        prefs.updateTimestamp()
+        try? modelContext.save()
+    }
+
+    private func fetchOrCreatePreferences() -> UserPreferences {
+        let descriptor = FetchDescriptor<UserPreferences>()
+        if let existing = try? modelContext.fetch(descriptor).first {
+            return existing
+        }
+        let newPrefs = UserPreferences()
+        modelContext.insert(newPrefs)
+        return newPrefs
     }
     
     private func handleLocationStatusChange(_ status: CLAuthorizationStatus) {

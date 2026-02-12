@@ -27,8 +27,8 @@ struct ReminderSummaryCard: View {
                         .fill(
                             RadialGradient(
                                 colors: [
-                                    reminder.activity.color.opacity(0.3),
-                                    reminder.activity.color.opacity(0.1),
+                                    reminder.iconColor.opacity(0.3),
+                                    reminder.iconColor.opacity(0.1),
                                     Color.clear
                                 ],
                                 center: .center,
@@ -42,16 +42,16 @@ struct ReminderSummaryCard: View {
                         .animation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.2), value: showContent)
                     
                     Circle()
-                        .fill(reminder.activity.color.opacity(0.15))
+                        .fill(reminder.iconColor.opacity(0.15))
                         .frame(width: 60, height: 60)
                         .overlay(
                             Circle()
-                                .stroke(reminder.activity.color.opacity(0.3), lineWidth: 2)
+                                .stroke(reminder.iconColor.opacity(0.3), lineWidth: 2)
                         )
                     
-                    Image(systemName: reminder.activity.icon)
+                    Image(systemName: reminder.selectedIcon)
                         .font(.title)
-                        .foregroundColor(reminder.activity.color)
+                        .foregroundColor(reminder.iconColor)
                         .scaleEffect(showContent ? 1.0 : 0.5)
                         .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.4), value: showContent)
                 }
@@ -117,7 +117,18 @@ struct ReminderSummaryCard: View {
                     color: .blue,
                     animationDelay: 0.9
                 )
-                
+
+                // Sky conditions
+                if !reminder.selectedSkyConditions.isEmpty {
+                    ConditionSummaryRow(
+                        icon: "cloud.sun.fill",
+                        title: "Sky Conditions",
+                        value: reminder.skyConditionDescription,
+                        color: reminder.conditionMode == .include ? .cyan : .gray,
+                        animationDelay: 0.95
+                    )
+                }
+
                 // Time preference
                 ConditionSummaryRow(
                     icon: reminder.preferredTimeRange.icon,
@@ -126,7 +137,7 @@ struct ReminderSummaryCard: View {
                     color: .orange,
                     animationDelay: 1.0
                 )
-                
+
                 // Quiet hours
                 if reminder.respectQuietHours {
                     ConditionSummaryRow(
@@ -137,53 +148,19 @@ struct ReminderSummaryCard: View {
                         animationDelay: 1.1
                     )
                 }
+
+                // User notes
+                if !reminder.notes.isEmpty {
+                    ConditionSummaryRow(
+                        icon: "note.text",
+                        title: "Notes",
+                        value: reminder.notes,
+                        color: .gray,
+                        animationDelay: 1.15
+                    )
+                }
             }
             .padding(.horizontal, 24)
-            
-            // Likelihood summary
-            if let likelihood = triggerLikelihood {
-                VStack(spacing: 12) {
-                    Divider()
-                        .padding(.vertical, 16)
-                    
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Next 7 Days")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundColor(.primary)
-                            
-                            Text(likelihood.description)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        // Circular progress
-                        ZStack {
-                            Circle()
-                                .stroke(likelihood.color.opacity(0.2), lineWidth: 4)
-                                .frame(width: 50, height: 50)
-                            
-                            Circle()
-                                .trim(from: 0, to: showContent ? likelihood.percentage / 100 : 0)
-                                .stroke(likelihood.color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                                .frame(width: 50, height: 50)
-                                .rotationEffect(.degrees(-90))
-                                .animation(.easeInOut(duration: 1.5).delay(1.2), value: showContent)
-                            
-                            Text("\(Int(likelihood.percentage))%")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(likelihood.color)
-                        }
-                    }
-                }
-                .padding(.horizontal, 24)
-                .opacity(showContent ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.6).delay(1.1), value: showContent)
-            }
             
             // Action buttons
             HStack(spacing: 12) {
@@ -335,12 +312,12 @@ struct ReminderDetailsView: View {
                     VStack(spacing: 16) {
                         ZStack {
                             Circle()
-                                .fill(reminder.activity.color.opacity(0.15))
+                                .fill(reminder.iconColor.opacity(0.15))
                                 .frame(width: 80, height: 80)
                             
-                            Image(systemName: reminder.activity.icon)
+                            Image(systemName: reminder.selectedIcon)
                                 .font(.title)
-                                .foregroundColor(reminder.activity.color)
+                                .foregroundColor(reminder.iconColor)
                         }
                         
                         VStack(spacing: 8) {
@@ -366,14 +343,23 @@ struct ReminderDetailsView: View {
                                     value: reminder.temperatureDescription,
                                     color: .blue
                                 )
-                                
+
+                                if !reminder.selectedSkyConditions.isEmpty {
+                                    DetailRow(
+                                        icon: "cloud.sun.fill",
+                                        title: "Sky Conditions",
+                                        value: reminder.skyConditionDescription,
+                                        color: reminder.conditionMode == .include ? .cyan : .gray
+                                    )
+                                }
+
                                 DetailRow(
                                     icon: reminder.preferredTimeRange.icon,
                                     title: "Time Range",
                                     value: reminder.preferredTimeRange.displayName,
                                     color: .orange
                                 )
-                                
+
                                 if reminder.respectQuietHours {
                                     DetailRow(
                                         icon: "moon.zzz",
@@ -382,9 +368,18 @@ struct ReminderDetailsView: View {
                                         color: .purple
                                     )
                                 }
+
+                                if !reminder.notes.isEmpty {
+                                    DetailRow(
+                                        icon: "note.text",
+                                        title: "Notes",
+                                        value: reminder.notes,
+                                        color: .gray
+                                    )
+                                }
                             }
                         }
-                        
+
                         if let likelihood = likelihood {
                             DetailSection(title: "Forecast Analysis") {
                                 VStack(spacing: 12) {
