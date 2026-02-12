@@ -18,6 +18,7 @@ struct ContentView: View {
             Group {
                 if onboardingCoordinator.hasCompletedOnboarding {
                     MainTabView()
+                        .environmentObject(onboardingCoordinator)
                 } else {
                     OnboardingContainerView()
                         .environmentObject(onboardingCoordinator)

@@ -135,7 +135,7 @@ struct AllRemindersView: View {
             }
         }
         .sheet(isPresented: $showingQuickCreate) {
-            QuickCreateReminderView()
+            StreamlinedReminderCreationView()
         }
     }
 

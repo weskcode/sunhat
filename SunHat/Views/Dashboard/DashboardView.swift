@@ -11,10 +11,11 @@ import CoreLocation
 
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
+    @EnvironmentObject private var onboardingCoordinator: OnboardingCoordinator
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    
+
     @State private var showingQuickCreate = false
     @State private var showingAllReminders = false
     @State private var showingWeatherAlerts = false
@@ -86,7 +87,11 @@ struct DashboardView: View {
             .navigationTitle("SunHat")
             .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showingQuickCreate) {
-                QuickCreateReminderView()
+                StreamlinedReminderCreationView(onReminderCreated: {
+                    if !onboardingCoordinator.hasCreatedFirstReminder {
+                        onboardingCoordinator.markFirstReminderCreated()
+                    }
+                })
             }
             .sheet(isPresented: $showingAllReminders) {
                 AllRemindersView()
@@ -917,16 +922,15 @@ struct HourlyWeatherCard: View {
                 .foregroundColor(conditionColor)
                 .frame(height: 24)
 
-            if precipChance > 0 {
-                HStack(spacing: 2) {
-                    Image(systemName: "drop.fill")
-                        .font(.caption2)
-                        .foregroundColor(.cyan)
-                    Text("\(precipChance)%")
-                        .font(.caption2)
-                        .foregroundColor(.cyan)
-                }
+            HStack(spacing: 2) {
+                Image(systemName: "drop.fill")
+                    .font(.caption2)
+                    .foregroundColor(.cyan)
+                Text("\(precipChance)%")
+                    .font(.caption2)
+                    .foregroundColor(.cyan)
             }
+            .opacity(precipChance > 0 ? 1 : 0)
 
             Text("\(String(format: "%.0f", temperature))°")
                 .font(.callout)

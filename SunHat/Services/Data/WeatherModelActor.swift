@@ -189,7 +189,10 @@ do {
                 createdAt: triggerCondition.createdAt,
                 lastEvaluated: triggerCondition.lastEvaluated,
                 evaluationCount: triggerCondition.evaluationCount,
-                successfulTriggers: triggerCondition.successfulTriggers
+                successfulTriggers: triggerCondition.successfulTriggers,
+                selectedSkyConditionsRaw: triggerCondition.selectedSkyConditionsRaw,
+                conditionModeRaw: triggerCondition.conditionModeRaw,
+                hasSkyConditionFilter: triggerCondition.hasSkyConditionFilter
             )
             
             let locationDataTransfer = LocationDataTransfer(
@@ -267,7 +270,10 @@ do {
             createdAt: triggerCondition.createdAt,
             lastEvaluated: triggerCondition.lastEvaluated,
             evaluationCount: triggerCondition.evaluationCount,
-            successfulTriggers: triggerCondition.successfulTriggers
+            successfulTriggers: triggerCondition.successfulTriggers,
+            selectedSkyConditionsRaw: triggerCondition.selectedSkyConditionsRaw,
+            conditionModeRaw: triggerCondition.conditionModeRaw,
+            hasSkyConditionFilter: triggerCondition.hasSkyConditionFilter
         )
 
         // Create CLLocation from reminder's location data
@@ -339,7 +345,10 @@ do {
                     createdAt: condition.createdAt,
                     lastEvaluated: condition.lastEvaluated,
                     evaluationCount: condition.evaluationCount,
-                    successfulTriggers: condition.successfulTriggers
+                    successfulTriggers: condition.successfulTriggers,
+                    selectedSkyConditionsRaw: condition.selectedSkyConditionsRaw,
+                    conditionModeRaw: condition.conditionModeRaw,
+                    hasSkyConditionFilter: condition.hasSkyConditionFilter
                 )
             }
 
@@ -410,6 +419,11 @@ struct TriggerConditionData: Sendable {
     let lastEvaluated: Date?
     let evaluationCount: Int
     let successfulTriggers: Int
+
+    // Sky condition filtering
+    let selectedSkyConditionsRaw: String
+    let conditionModeRaw: String
+    let hasSkyConditionFilter: Bool
 }
 
 /// Sendable version of LocationData for cross-actor communication
@@ -595,7 +609,10 @@ public final class ModelDataConverter {
             createdAt: condition.createdAt,
             lastEvaluated: condition.lastEvaluated,
             evaluationCount: condition.evaluationCount,
-            successfulTriggers: condition.successfulTriggers
+            successfulTriggers: condition.successfulTriggers,
+            selectedSkyConditionsRaw: condition.selectedSkyConditionsRaw,
+            conditionModeRaw: condition.conditionModeRaw,
+            hasSkyConditionFilter: condition.hasSkyConditionFilter
         )
     }
     

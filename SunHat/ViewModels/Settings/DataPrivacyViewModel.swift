@@ -371,6 +371,7 @@ final class DataPrivacyViewModel {
     private func resetAppState() async {
         // Reset app to initial onboarding state
         UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
+        UserDefaults.standard.removeObject(forKey: "hasCreatedFirstReminder")
         UserDefaults.standard.removeObject(forKey: "lastLaunchVersion")
         
         // Clear any cached data

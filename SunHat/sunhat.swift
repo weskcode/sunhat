@@ -22,7 +22,6 @@ struct SunHatApp: App {
             UserPreferences.self,
             SavedLocation.self,
             LocationHistory.self,
-            Item.self,
         ])
         // CloudKit sync is disabled for now - can be re-enabled in the future
         let modelConfiguration = ModelConfiguration(

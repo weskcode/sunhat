@@ -23,28 +23,17 @@ struct RealTimeWeatherCard: View {
                 Image(systemName: "location.fill")
                     .font(.caption)
                     .foregroundColor(.blue)
-                
-                Text("Current Conditions")
+
+                Text("Right Now")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
-                
+
                 Spacer()
-                
+
                 if isLoading {
                     ProgressView()
                         .scaleEffect(0.8)
-                } else {
-                    Text("Live")
-                        .font(.caption2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.green)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(
-                            Capsule()
-                                .fill(Color.green.opacity(0.1))
-                        )
                 }
             }
             
@@ -176,17 +165,43 @@ struct RealTimeWeatherCard: View {
 struct TriggerStatusIndicator: View {
     let weather: CurrentWeatherData
     let reminder: CustomReminder
-    
+
     private var willTrigger: Bool {
-        switch reminder.condition {
+        // Check temperature
+        let tempMatch: Bool
+        switch reminder.temperatureType {
         case .temperatureRange:
-            return weather.temperature >= reminder.minTemperature && 
-                   weather.temperature <= reminder.maxTemperature
+            tempMatch = weather.temperature >= reminder.minTemperature &&
+                        weather.temperature <= reminder.maxTemperature
         case .exactTemperature:
-            return abs(weather.temperature - reminder.minTemperature) <= 2
-        default:
-            return false
+            tempMatch = abs(weather.temperature - reminder.minTemperature) <= 2
         }
+
+        // Check sky conditions against current weather condition string
+        let skyMatch: Bool
+        if reminder.selectedSkyConditions.isEmpty {
+            skyMatch = true
+        } else {
+            // Map the current weather condition string to a SkyCondition
+            let currentSky: SkyCondition
+            switch weather.condition.lowercased() {
+            case "clear": currentSky = .sunny
+            case "partly cloudy": currentSky = .partlyCloudy
+            case "cloudy": currentSky = .cloudy
+            case "light rain", "rain": currentSky = .rainy
+            case "snow": currentSky = .snowy
+            default: currentSky = .sunny
+            }
+
+            switch reminder.conditionMode {
+            case .include:
+                skyMatch = reminder.selectedSkyConditions.contains(currentSky)
+            case .exclude:
+                skyMatch = !reminder.selectedSkyConditions.contains(currentSky)
+            }
+        }
+
+        return tempMatch && skyMatch
     }
     
     var body: some View {
@@ -269,17 +284,18 @@ struct ForecastDayCard: View {
     let reminder: CustomReminder
     let isSelected: Bool
     let onTap: () -> Void
-    
+
     private var willTrigger: Bool {
-        switch reminder.condition {
+        let tempMatch: Bool
+        switch reminder.temperatureType {
         case .temperatureRange:
-            return day.highTemp >= Int(reminder.minTemperature) && 
-                   day.highTemp <= Int(reminder.maxTemperature)
+            tempMatch = day.highTemp >= Int(reminder.minTemperature) &&
+                        day.highTemp <= Int(reminder.maxTemperature)
         case .exactTemperature:
-            return abs(Double(day.highTemp) - reminder.minTemperature) <= 2
-        default:
-            return false
+            tempMatch = abs(Double(day.highTemp) - reminder.minTemperature) <= 2
         }
+        let skyMatch = reminder.matchesSkyCondition(for: day.weatherCondition)
+        return tempMatch && skyMatch
     }
     
     var body: some View {
@@ -355,7 +371,7 @@ struct DayDetailsCard: View {
                             .fontWeight(.medium)
                     }
                     
-                    Text("Conditions look good for \(reminder.activityDisplayName.lowercased())")
+                    Text("Conditions look good for \(reminder.displayTitle.lowercased())")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -468,7 +484,7 @@ struct DetailedDayCard: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
                     
-                    Text("Perfect conditions for \(reminder.activityDisplayName.lowercased())")
+                    Text("Perfect conditions for \(reminder.displayTitle.lowercased())")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

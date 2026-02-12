@@ -57,7 +57,7 @@ struct UserPreferencesOnboardingView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("User preferences setup")
-        .accessibilityHint("Final step of onboarding - step 5 of 6")
+        .accessibilityHint("Final step of onboarding - step 4 of 4")
     }
     
     // MARK: - Progress Indicator
@@ -65,21 +65,21 @@ struct UserPreferencesOnboardingView: View {
     private var progressIndicator: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                ForEach(0..<6, id: \.self) { index in
+                ForEach(0..<4, id: \.self) { index in
                     Circle()
-                        .fill(index < 5 ? Color.blue : Color.blue.opacity(0.3))
+                        .fill(Color.blue)
                         .frame(width: 8, height: 8)
-                        .scaleEffect(index == 4 ? 1.3 : 1.0)
-                        .animation(.easeInOut(duration: 0.3), value: index == 4)
+                        .scaleEffect(index == 3 ? 1.3 : 1.0)
+                        .animation(.easeInOut(duration: 0.3), value: index == 3)
                 }
             }
-            
-            Text("Step 5 of 6")
+
+            Text("Step 4 of 4")
                 .font(.caption2)
                 .foregroundColor(.secondary)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Progress: Step 5 of 6")
+        .accessibilityLabel("Progress: Final step - Step 4 of 4")
     }
     
     // MARK: - Header Section

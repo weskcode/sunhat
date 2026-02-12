@@ -28,6 +28,12 @@ final class UserPreferences {
     var vibrationPattern: VibrationPattern = VibrationPattern.default
     var notificationSounds: [String: String] = [:]  // ReminderCategory.rawValue -> sound file name
     
+    // Location preferences (persisted from onboarding)
+    var locationMode: String = "gps"  // "gps" or "manual"
+    var manualLocationLatitude: Double = 0.0
+    var manualLocationLongitude: Double = 0.0
+    var manualLocationName: String = ""
+    
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
 

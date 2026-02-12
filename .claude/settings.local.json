@@ -20,7 +20,11 @@
       "Bash(cat:*)",
       "Bash(ls:*)",
       "Bash(python3:*)",
-      "Bash(xcrun simctl:*)"
+      "Bash(xcrun simctl:*)",
+      "Bash(wc:*)",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(du:*)"
     ],
     "deny": []
   }

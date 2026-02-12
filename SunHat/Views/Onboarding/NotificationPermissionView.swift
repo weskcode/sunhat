@@ -75,7 +75,7 @@ struct NotificationPermissionView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Notification permission request")
-        .accessibilityHint("Step 3 of 5 in the onboarding process")
+        .accessibilityHint("Step 3 of 4 in the onboarding process")
     }
     
     // MARK: - Progress Indicator
@@ -83,7 +83,7 @@ struct NotificationPermissionView: View {
     private var progressIndicator: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                ForEach(0..<5, id: \.self) { index in
+                ForEach(0..<4, id: \.self) { index in
                     Circle()
                         .fill(index < 3 ? Color.blue : Color.gray.opacity(0.3))
                         .frame(width: 8, height: 8)
@@ -91,13 +91,13 @@ struct NotificationPermissionView: View {
                         .animation(.easeInOut(duration: 0.3), value: index == 2)
                 }
             }
-            
-            Text("Step 3 of 5")
+
+            Text("Step 3 of 4")
                 .font(.caption2)
                 .foregroundColor(.secondary)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Progress: Step 3 of 5")
+        .accessibilityLabel("Progress: Step 3 of 4")
     }
     
     // MARK: - Header Section

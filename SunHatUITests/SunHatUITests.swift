@@ -8,68 +8,107 @@
 import XCTest
 
 final class SunHatUITests: XCTestCase {
+    var app: XCUIApplication!
 
     override func setUpWithError() throws {
-        // Put setup code here. This method is called before the invocation of each test method in the class.
-
-        // In UI tests it is usually best to stop immediately when a failure occurs.
         continueAfterFailure = false
-
-        // In UI tests it’s important to set the initial state - such as interface orientation - required for your tests before they run. The setUp method is a good place to do this.
+        app = XCUIApplication()
+        app.launch()
     }
 
     override func tearDownWithError() throws {
-        // Put teardown code here. This method is called after the invocation of each test method in the class.
+        app = nil
+    }
+
+    // MARK: - App Launch Tests
+
+    @MainActor
+    func testAppLaunches() throws {
+        XCTAssertEqual(app.state, .runningForeground, "App should be running in foreground")
     }
 
     @MainActor
-    func testExample() throws {
-        // UI tests must launch the application that they test.
-        let app = XCUIApplication()
-        app.launch()
-
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+    func testTabBarExists() throws {
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.waitForExistence(timeout: 5), "Tab bar should exist")
     }
-
-    // MARK: - iOS 26 Location Permission UI Tests
 
     @MainActor
-    func testLocationPermissionFlow() throws {
-        let app = XCUIApplication()
-        app.launch()
-
-        // Test that the app can handle location permission requests
-        // This would be more comprehensive in a real test with proper UI elements
-        XCTAssertTrue(app.state == .runningForeground, "App should be running in foreground")
+    func testHomeTabExistsAndSelected() throws {
+        let homeTab = app.tabBars.buttons["Home"]
+        XCTAssertTrue(homeTab.waitForExistence(timeout: 5), "Home tab should exist")
+        XCTAssertTrue(homeTab.isSelected, "Home tab should be selected on launch")
     }
-
-    // MARK: - iOS 26 Weather UI Tests
 
     @MainActor
-    func testWeatherViewLoading() throws {
-        let app = XCUIApplication()
-        app.launch()
-
-        // Test that weather data loads properly
-        // In a real test, we'd check for specific weather UI elements
-        XCTAssertTrue(true, "Weather view should load successfully")
+    func testRemindersTabExists() throws {
+        let remindersTab = app.tabBars.buttons["Reminders"]
+        XCTAssertTrue(remindersTab.waitForExistence(timeout: 5), "Reminders tab should exist")
     }
-
-    // MARK: - iOS 26 Background Refresh UI Tests
 
     @MainActor
-    func testBackgroundRefreshPermission() throws {
-        let app = XCUIApplication()
-        app.launch()
-
-        // Test that background refresh permissions work
-        // This would check for background refresh UI elements in a real test
-        XCTAssertTrue(true, "Background refresh should be properly configured")
+    func testSettingsTabExists() throws {
+        let settingsTab = app.tabBars.buttons["Settings"]
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: 5), "Settings tab should exist")
     }
+
+    // MARK: - Navigation Tests
+
+    @MainActor
+    func testNavigateToRemindersTab() throws {
+        let remindersTab = app.tabBars.buttons["Reminders"]
+        XCTAssertTrue(remindersTab.waitForExistence(timeout: 5))
+        remindersTab.tap()
+        XCTAssertTrue(remindersTab.isSelected, "Reminders tab should be selected after tap")
+    }
+
+    @MainActor
+    func testNavigateToSettingsTab() throws {
+        let settingsTab = app.tabBars.buttons["Settings"]
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
+        settingsTab.tap()
+        XCTAssertTrue(settingsTab.isSelected, "Settings tab should be selected after tap")
+    }
+
+    @MainActor
+    func testNavigateBackToHome() throws {
+        // Go to settings
+        let settingsTab = app.tabBars.buttons["Settings"]
+        XCTAssertTrue(settingsTab.waitForExistence(timeout: 5))
+        settingsTab.tap()
+
+        // Navigate back to home
+        let homeTab = app.tabBars.buttons["Home"]
+        homeTab.tap()
+        XCTAssertTrue(homeTab.isSelected, "Home tab should be selected after navigating back")
+    }
+
+    // MARK: - Reminder Creation UI Tests
+
+    @MainActor
+    func testOpenReminderCreationSheet() throws {
+        // Look for the create/FAB button on the dashboard
+        let createButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'Create'")).firstMatch
+        let fabButton = app.buttons.matching(identifier: "QuickCreateFAB").firstMatch
+
+        let button = createButton.exists ? createButton : fabButton
+
+        if button.exists {
+            button.tap()
+
+            // Verify the creation sheet appears with a close button
+            let closeButton = app.buttons["Close"]
+            XCTAssertTrue(closeButton.waitForExistence(timeout: 3), "Close button should appear in creation sheet")
+
+            // Dismiss
+            closeButton.tap()
+        }
+    }
+
+    // MARK: - Performance Tests
 
     @MainActor
     func testLaunchPerformance() throws {
-        // This measures how long it takes to launch your application.
         measure(metrics: [XCTApplicationLaunchMetric()]) {
             XCUIApplication().launch()
         }
