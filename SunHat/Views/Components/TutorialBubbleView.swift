@@ -56,14 +56,19 @@ struct TutorialBubbleView: View {
         }
         .scaleEffect(isVisible ? 1.0 : 0.8)
         .opacity(isVisible ? 1.0 : 0.0)
-        .onAppear {
+        .task {
             if reduceMotion {
                 isVisible = true
             } else {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                do {
+                    try await Task.sleep(for: .milliseconds(800))
                     withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                         isVisible = true
                     }
+                } catch is CancellationError {
+                    // View disappeared before the hint animation started.
+                } catch {
+                    isVisible = true
                 }
             }
         }

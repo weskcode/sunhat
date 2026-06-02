@@ -2,7 +2,7 @@
 
 ## Current Verification
 
-- Unit tests: `SunHatTests` passed on the existing configured iPhone 17 Pro simulator (`127 passed, 0 failed`) on June 2, 2026.
+- Unit tests: `SunHatTests` passed on the existing configured iPhone 17 Pro simulator (`131 passed, 0 failed`) on June 2, 2026.
 - Compile: compile-only simulator build passed with no warnings or errors after the latest cleanup on June 2, 2026.
 - UI tests: not rerun after the latest changes. Swift Testing does not support UI tests, and the prior UI-test runner timed out during Xcode launch setup.
 - Simulator policy: use the single configured simulator only. Do not clone or repeatedly launch additional simulators for routine validation.
@@ -26,6 +26,10 @@
 - Split dashboard support cards/forecast rows into `DashboardComponents.swift`.
 - Moved weather condition display mapping and location dependency adapters out of `WeatherViewModel.swift`.
 - Removed the dead commented legacy implementation from `WeatherViewModel.swift`.
+- Added `WeatherProviding` and `SettingsOpening` dependency boundaries with Swift Testing coverage.
+- Converted main tab selection to an enum instead of integer tags.
+- Replaced root splash and tutorial hint delayed dispatches with cancellable SwiftUI `.task` flows.
+- Migrated `UserPreferencesViewModel` to `@Observable`.
 
 ## Priority 0: Correctness And App-Store Readiness
 
@@ -64,7 +68,7 @@
    - Circle back opportunistically for any remaining single-purpose sheets where selected model state or impossible combinations can occur.
 
 4. [ ] Make tab and route ownership explicit.
-   - Keep `MainTabView` selection enum-based.
+   - `MainTabView` selection is now enum-based.
    - Add per-tab `NavigationStack` path ownership before adding deeper routing.
 
 ## Priority 2: Visual Design And HIG Alignment
@@ -72,6 +76,7 @@
 1. [x] Rebalance the visual language around native controls.
    - Keep Liquid Glass for meaningful grouped surfaces.
    - Avoid applying custom card treatments where `Form`, `List`, `ContentUnavailableView`, `LabeledContent`, `Gauge`, `Picker`, and native buttons better fit iOS.
+   - Some legacy `.regularMaterial` surfaces remain; migrate them by owning screen instead of doing a blind global replacement.
 
 2. [x] Reduce global custom typography.
    - Prefer semantic SwiftUI text styles and `foregroundStyle`.
@@ -124,6 +129,7 @@
 
 4. [ ] Replace non-cancellable delayed UI work.
    - Onboarding, celebration, tutorial, manual location entry, and reminder detail flows still use `DispatchQueue.main.asyncAfter`.
+   - Completed for root splash and tutorial hint delays.
    - Move to `.task`, `Task.sleep(for:)`, and cancellation-aware animation state.
 
 5. [ ] Profile before heavy visual redesign.

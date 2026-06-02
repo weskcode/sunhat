@@ -50,7 +50,7 @@ Use the existing configured simulator only: `iPhone 17 Pro` (`C3E7115C-C029-4352
 ## Project Architecture
 
 ### Current Structure
-- **SunHatApp.swift**: Main app entry point with SwiftData ModelContainer setup
+- **SunHat/sunhat.swift**: Main app entry point with SwiftData ModelContainer setup
 - **ContentView.swift**: Root view — routes between splash, onboarding, and main tab bar
 - **MainTabView.swift**: iOS 26.4 tab bar with `.tabBarMinimizeBehavior(.onScrollDown)`
 - **Views/Components/GlassCard.swift**: Reusable Liquid Glass card/section components
@@ -65,7 +65,7 @@ The app is a sophisticated weather-triggered reminder system with:
 - **Background Processing**: iOS 26 BackgroundTasks framework for weather monitoring
 - **Modern Concurrency**: Swift 6.2 async/await, actors, structured concurrency with approachable concurrency
 - **Location Services**: iOS 26 CoreLocation with temporary location permission support
-- **Liquid Glass UI**: iOS 26.4 `.glassEffect()` throughout all card surfaces and interactive elements
+- **Liquid Glass UI**: iOS 26.4 `.glassEffect()` is the preferred direction for primary card surfaces and interactive elements; some older `.regularMaterial` surfaces still remain and should be migrated deliberately.
 
 ### Key Data Models
 ```swift
@@ -92,7 +92,7 @@ class WeatherData {
 
 ### iOS 26.4 Liquid Glass UI
 
-**Always use `.glassEffect()` for card surfaces** — do NOT use `.regularMaterial` or `Color(.secondarySystemBackground)` as card backgrounds.
+**Prefer `.glassEffect()` for new or touched card surfaces**. Some existing screens still use `.regularMaterial`; migrate them opportunistically when editing the owning screen rather than doing a risky blind rewrite.
 
 ```swift
 // ✅ iOS 26.4 — correct
@@ -114,7 +114,7 @@ GlassEffectContainer {
     VStack { cardA; cardB }
 }
 
-// ❌ Outdated — do not use
+// Existing legacy style — migrate when touching the owning screen
 .background(RoundedRectangle(cornerRadius: 20).fill(.regularMaterial))
 ```
 
@@ -149,11 +149,11 @@ label
 - **UI Safety**: Use `@MainActor` for UI-bound classes
 - **Actor Isolation**: Background actors for data processing
 - **Structured Concurrency**: TaskGroup and async let for parallel operations
-- **Observation**: ViewModels currently use `ObservableObject` — migrate to `@Observable` as a future refactor (see migration note below)
+- **Observation**: Lightweight ViewModels are being migrated incrementally to `@Observable`; Combine-heavy ViewModels can remain `ObservableObject` until their dependencies are isolated.
 - **Swift 6.2 Features**: Approachable concurrency, enhanced result builders, macros
 
 ### ViewModel Migration Note (`@Observable`)
-All ViewModels currently use `ObservableObject` + `@Published` + Combine. They should be migrated to `@Observable` incrementally:
+Some ViewModels still use `ObservableObject` + `@Published` + Combine. Migrate low-risk ViewModels to `@Observable` incrementally:
 
 ```swift
 // Before
@@ -172,14 +172,14 @@ final class SomeViewModel {
 // Injected: @Environment(SomeViewModel.self) var vm
 ```
 
-Priority order for migration:
-1. `UserPreferencesViewModel` (no Combine)
-2. `SettingsViewModel` (light Combine)
-3. `OnboardingCoordinator` (medium complexity)
-4. `DashboardViewModel` / `WeatherViewModel` (heavy Combine — keep Combine internally, expose via `@Observable`)
+Migration status and priority:
+1. `UserPreferencesViewModel` migrated to `@Observable`.
+2. Continue with `SettingsViewModel` and `LocationPickerViewModel` when dependencies are ready.
+3. Defer `OnboardingCoordinator` until onboarding flow cleanup is stable.
+4. Keep `DashboardViewModel` / `WeatherViewModel` on `ObservableObject` for now because they still coordinate heavier service work and Combine-backed services.
 
 ### Weather Integration Architecture
-- Primary: Apple WeatherKit with iOS 26 APIs — `WeatherService` protocol + `AppleWeatherKitAPI`
+- Primary: Apple WeatherKit with iOS 26 APIs — `WeatherProviding` / `WeatherService` + `AppleWeatherKitAPI`
 - Backup: OpenWeatherMap API
 - Cache with SwiftData for offline capability
 - Background refresh via iOS 26 BackgroundTasks (`BGContinuedProcessingTask`)
@@ -224,7 +224,7 @@ The app implements sophisticated weather triggers including:
 
 As of June 2026:
 - ✅ Deployment target: iOS 26.4, Swift 6.2
-- ✅ **Liquid Glass**: All card surfaces use `.glassEffect()` (no more `.regularMaterial`)
+- 🔲 **Liquid Glass**: Core reusable components use `.glassEffect()`, but some legacy `.regularMaterial` surfaces remain in dashboard, weather, location, and detail screens
 - ✅ **Glass tab bar**: `MainTabView` with `.tabBarMinimizeBehavior(.onScrollDown)`
 - ✅ **Glass create button**: Dashboard/reminder creation entry points use `GlassCreateTaskButton`
 - ✅ **Glass buttons**: Welcome screen "Get Started" uses `.buttonStyle(.glass)`
@@ -237,8 +237,10 @@ As of June 2026:
 - ✅ Complete location services integration with iOS 26 APIs
 - ✅ Enhanced WeatherKit support with extended weather data
 - ✅ Background weather updates using iOS 26 async patterns
-- ✅ Unit verification: `SunHatTests` passed with 127 tests on June 2, 2026
+- ✅ Dependency seams: `WeatherProviding`, `LocationManaging`, and `SettingsOpening` are in place for selected ViewModels
+- ✅ Observation migration started: `UserPreferencesViewModel` uses `@Observable`
+- ✅ Unit verification: `SunHatTests` passed with 131 tests on June 2, 2026
 - 🔲 Actual WidgetKit/watchOS targets (shared compact view exists; targets are not present yet)
 - 🔲 UI smoke verification on the single configured simulator
-- 🔲 ViewModel migration from `ObservableObject` → `@Observable` (future refactor)
+- 🔲 Continue ViewModel migration from `ObservableObject` → `@Observable`
 - 🔲 CloudKit sync re-enablement (prepared, needs provisioning)
