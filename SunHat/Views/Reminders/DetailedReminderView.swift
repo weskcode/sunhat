@@ -135,7 +135,7 @@ struct DetailedReminderView: View {
             }) {
                 HStack(spacing: 4) {
                     Image(systemName: isEditMode ? "xmark" : "chevron.left")
-                        .font(.title3)
+                        .font(AppFontStyle.title3.font)
                         .fontWeight(.medium)
                     
                     if !isEditMode {
@@ -173,7 +173,7 @@ struct DetailedReminderView: View {
                         enterEditMode()
                     }) {
                         Image(systemName: "pencil")
-                            .font(.title3)
+                            .font(AppFontStyle.title3.font)
                             .foregroundColor(.primary)
                             .padding(8)
                             .background(.regularMaterial, in: Circle())
@@ -185,7 +185,7 @@ struct DetailedReminderView: View {
                         moreOptionsMenu
                     } label: {
                         Image(systemName: "ellipsis")
-                            .font(.title3)
+                            .font(AppFontStyle.title3.font)
                             .foregroundColor(.primary)
                             .padding(8)
                             .background(.regularMaterial, in: Circle())
@@ -249,7 +249,7 @@ struct DetailedReminderView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image(systemName: reminder.category.iconName)
-                        .font(.title3)
+                        .font(AppFontStyle.title3.font)
                         .foregroundColor(.blue)
                     
                     if isEditMode {

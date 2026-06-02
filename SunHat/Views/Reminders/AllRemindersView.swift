@@ -48,6 +48,22 @@ struct AllRemindersView: View {
         return filtered
     }
 
+    private var activeReminders: [WeatherReminder] {
+        reminders.filter { $0.isCurrentlyActive }
+    }
+
+    private var inactiveReminders: [WeatherReminder] {
+        reminders.filter { !$0.isCurrentlyActive }
+    }
+
+    private var shouldShowSearchAndFilters: Bool {
+        reminders.count > 8
+    }
+
+    private var isSearchingOrFiltering: Bool {
+        !searchText.isEmpty || selectedFilter != .all
+    }
+
     var body: some View {
         ZStack {
             // Liquid glass background
@@ -61,67 +77,18 @@ struct AllRemindersView: View {
                 // Reminders list
                 ScrollView {
                     VStack(spacing: 12) {
-                        // Search bar
-                        searchBar
-                            .padding(.horizontal, 16)
-                            .padding(.top, 8)
+                        if shouldShowSearchAndFilters {
+                            searchBar
+                                .padding(.horizontal, 16)
+                                .padding(.top, 8)
 
-                        // Filter chips
-                        filterChips
-                            .padding(.horizontal, 16)
-
-                        // Reminders grid
-                        if filteredReminders.isEmpty {
-                            // No results for search/filter
-                            noResultsView
-                                .padding(.top, 60)
-                        } else {
-                            LazyVStack(spacing: 12) {
-                                ForEach(filteredReminders) { reminder in
-                                    ReminderGlassCard(reminder: reminder)
-                                        .contextMenu {
-                                            Button(role: .destructive) {
-                                                deleteReminder(reminder)
-                                            } label: {
-                                                Label("Delete", systemImage: "trash")
-                                            }
-                                        }
-                                }
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.bottom, 100)
+                            filterChips
+                                .padding(.horizontal, 16)
                         }
-                    }
-                }
-            }
 
-            // Floating Action Button
-            if !reminders.isEmpty {
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            showingQuickCreate = true
-                        }) {
-                            Image(systemName: "plus")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.white)
-                                .frame(width: 56, height: 56)
-                                .background(
-                                    LinearGradient(
-                                        colors: [.blue, .purple],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .clipShape(Circle())
-                                .shadow(color: .blue.opacity(0.4), radius: 8, x: 0, y: 4)
-                        }
-                        .buttonStyle(FloatingActionButtonStyle())
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 34)
+                        remindersContent
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 24)
                     }
                 }
             }
@@ -132,6 +99,15 @@ struct AllRemindersView: View {
                 Text("All Tasks")
                     .font(.headline)
                     .fontWeight(.semibold)
+            }
+        }
+        .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) {
+            if !reminders.isEmpty {
+                GlassCreateTaskButton {
+                    showingQuickCreate = true
+                }
+                .padding(.trailing, 18)
+                .padding(.bottom, 10)
             }
         }
         .sheet(isPresented: $showingQuickCreate) {
@@ -243,6 +219,49 @@ struct AllRemindersView: View {
 
     // MARK: - Empty State
 
+    @ViewBuilder
+    private var remindersContent: some View {
+        if shouldShowSearchAndFilters && isSearchingOrFiltering {
+            if filteredReminders.isEmpty {
+                noResultsView
+                    .padding(.top, 60)
+            } else {
+                reminderSection(title: "Results", reminders: filteredReminders)
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 20) {
+                if !activeReminders.isEmpty {
+                    reminderSection(title: "Active", reminders: activeReminders)
+                }
+
+                if !inactiveReminders.isEmpty {
+                    reminderSection(title: "Inactive", reminders: inactiveReminders)
+                }
+            }
+        }
+    }
+
+    private func reminderSection(title: String, reminders: [WeatherReminder]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(title)
+                .font(.headline)
+                .foregroundStyle(.primary)
+
+            LazyVStack(spacing: 12) {
+                ForEach(reminders) { reminder in
+                    ReminderGlassCard(reminder: reminder)
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                deleteReminder(reminder)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                }
+            }
+        }
+    }
+
     private var emptyStateView: some View {
         VStack(spacing: 24) {
             Spacer()
@@ -289,7 +308,7 @@ struct AllRemindersView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "plus.circle.fill")
-                        .font(.title3)
+                        .font(AppFontStyle.title3.font)
                     Text("Create Task")
                         .font(.headline)
                 }
@@ -363,7 +382,7 @@ struct ReminderGlassCard: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: reminder.category.iconName)
-                            .font(.title3)
+                            .font(AppFontStyle.title3.font)
                             .foregroundColor(.blue)
                     }
 

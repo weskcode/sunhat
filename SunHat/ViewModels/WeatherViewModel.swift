@@ -130,7 +130,7 @@ final class DefaultLocationManager: LocationManaging {
     func currentLocation() async -> (location: CLLocation, name: String)? {
         if let loc = cached { return loc }
         // Use the shared LocationPermissionManager to get real location
-        let mgr = await LocationPermissionManager.shared
+        let mgr = LocationPermissionManager.shared
         if let loc = mgr.currentLocation {
             let name = mgr.getDisplayLocation()
             cached = (loc, name)

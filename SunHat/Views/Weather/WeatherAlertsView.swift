@@ -17,15 +17,15 @@ struct WeatherAlertsView: View {
                 if alerts.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "checkmark.shield.fill")
-                            .font(.system(size: 48))
+                            .font(AppFont.inter(size: 48))
                             .foregroundColor(.green)
                         
                         Text("No Active Alerts")
-                            .font(.title2)
+                            .font(AppFontStyle.title2.font)
                             .fontWeight(.semibold)
                         
                         Text("All weather conditions are normal")
-                            .font(.callout)
+                            .font(AppFontStyle.callout.font)
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity)
@@ -57,7 +57,7 @@ struct WeatherAlertDetailCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: alert.iconName)
-                    .font(.title2)
+                    .font(AppFontStyle.title2.font)
                     .foregroundColor(alert.severityColor)
                 
                 VStack(alignment: .leading, spacing: 2) {

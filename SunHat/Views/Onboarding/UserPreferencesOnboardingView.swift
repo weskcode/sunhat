@@ -75,7 +75,7 @@ struct UserPreferencesOnboardingView: View {
             }
 
             Text("Step 4 of 4")
-                .font(.caption2)
+                .font(AppFontStyle.caption2.font)
                 .foregroundColor(.secondary)
         }
         .accessibilityElement(children: .combine)
@@ -230,16 +230,7 @@ struct UserPreferencesOnboardingView: View {
     // MARK: - Helper Methods
     
     private func startAnimation() {
-        guard !reduceMotion else {
-            showContent = true
-            return
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            withAnimation {
-                showContent = true
-            }
-        }
+        showContent = true
     }
     
     private func finishSetup() {
@@ -325,7 +316,7 @@ struct MinimalPreferenceSection<Content: View>: View {
                     
                     if let subtitle = subtitle {
                         Text(subtitle)
-                            .font(.caption2)
+                            .font(AppFontStyle.caption2.font)
                             .foregroundColor(.secondary)
                             .lineLimit(1)
                     }
@@ -447,7 +438,7 @@ struct CompactActivityButton: View {
                     .foregroundColor(isSelected ? .white : interest.color)
                 
                 Text(interest.displayName)
-                    .font(.caption2)
+                    .font(AppFontStyle.caption2.font)
                     .fontWeight(.medium)
                     .foregroundColor(isSelected ? .white : .primary)
                     .lineLimit(2)
@@ -490,7 +481,7 @@ struct CompactTimingSelector: View {
                             
                             if selectedTiming == timing {
                                 Image(systemName: "checkmark")
-                                    .font(.caption2)
+                                    .font(AppFontStyle.caption2.font)
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)
                             }

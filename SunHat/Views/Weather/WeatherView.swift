@@ -123,7 +123,7 @@ struct WeatherView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 8) {
                         Image(systemName: "location.fill")
-                            .font(.caption)
+                            .font(AppFontStyle.caption.font)
                             .foregroundColor(.blue)
                         
                         Text(viewModel.locationName)
@@ -134,7 +134,7 @@ struct WeatherView: View {
                     
                     if let lastUpdate = viewModel.lastUpdateTime {
                         Text("Updated \(lastUpdate, style: .relative) ago")
-                            .font(.caption)
+                            .font(AppFontStyle.caption.font)
                             .foregroundColor(.secondary)
                     }
                 }
@@ -165,7 +165,7 @@ struct WeatherView: View {
                     // Feels like temperature with visual distinction
                     HStack(spacing: 8) {
                         Image(systemName: "thermometer.medium")
-                            .font(.caption)
+                            .font(AppFontStyle.caption.font)
                             .foregroundColor(.orange)
                         
                         Text("Feels like \(String(format: "%.1f", viewModel.feelsLikeTemperature))°")
@@ -183,7 +183,7 @@ struct WeatherView: View {
                                 .foregroundColor(tempDifference > 0 ? .red : .blue)
                             
                             Text("\(String(format: "%.1f", abs(tempDifference)))° \(tempDifference > 0 ? "warmer" : "cooler")")
-                                .font(.caption)
+                                .font(AppFontStyle.caption.font)
                                 .foregroundColor(.secondary)
                         }
                     }

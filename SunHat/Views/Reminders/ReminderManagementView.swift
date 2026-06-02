@@ -83,7 +83,7 @@ struct ReminderManagementView: View {
             }
         }
         .sheet(isPresented: $showingCreateReminder) {
-            ComprehensiveReminderCreationView()
+            StreamlinedReminderCreationView()
         }
         .sheet(isPresented: $showingSortOptions) {
             SortOptionsView(
@@ -345,7 +345,7 @@ struct ReminderManagementView: View {
                 Button("Create Your First Reminder") {
                     showingCreateReminder = true
                 }
-                .font(.headline)
+                .font(AppFontStyle.headline.font)
                 .foregroundColor(.white)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)

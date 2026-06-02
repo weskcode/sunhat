@@ -93,7 +93,7 @@ struct NotificationPermissionView: View {
             }
 
             Text("Step 3 of 4")
-                .font(.caption2)
+                .font(AppFontStyle.caption2.font)
                 .foregroundColor(.secondary)
         }
         .accessibilityElement(children: .combine)
@@ -338,7 +338,7 @@ struct NotificationPermissionView: View {
             }
             
             Text("You can always change notification settings later in the app or device Settings.")
-                .font(.caption2)
+                .font(AppFontStyle.caption2.font)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(nil)
@@ -351,36 +351,10 @@ struct NotificationPermissionView: View {
     // MARK: - Helper Methods
     
     private func startAnimationSequence() {
-        guard !reduceMotion else {
-            // Show all content immediately for reduced motion
-            showHeader = true
-            showMockNotifications = true
-            showExplanation = true
-            showButtons = true
-            return
-        }
-        
-        withAnimation {
-            showHeader = true
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            withAnimation {
-                showMockNotifications = true
-            }
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
-            withAnimation {
-                showExplanation = true
-            }
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
-            withAnimation {
-                showButtons = true
-            }
-        }
+        showHeader = true
+        showMockNotifications = true
+        showExplanation = true
+        showButtons = true
     }
     
     private func requestNotificationPermission() {
@@ -472,7 +446,7 @@ struct MockNotificationCard: View {
                     Spacer()
                     
                     Text(type.time)
-                        .font(.caption2)
+                        .font(AppFontStyle.caption2.font)
                         .foregroundColor(.secondary)
                 }
                 

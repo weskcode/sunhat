@@ -1,0 +1,136 @@
+# Plan: Update SunHat to iOS 26.4
+
+## Summary
+Update the SunHat app from iOS 26.0 to iOS 26.4, adopting Xcode 26.4 / Swift 6.2 toolchain changes and cleaning up code that targeted iOS 26.0 as a minimum.
+
+---
+
+## Phase 1: Project Configuration Updates
+
+### 1.1 — Bump deployment target to iOS 26.4
+- Update `IPHONEOS_DEPLOYMENT_TARGET` from `26.0` → `26.4` in `project.pbxproj` (all 6 occurrences across app, test, and UI test targets)
+- Update `SWIFT_VERSION` from `6.0` → `6.2`
+
+### 1.2 — Adopt Swift 6.2 Approachable Concurrency build settings
+Swift 6.2 (shipped with Xcode 26.4) introduces "approachable concurrency" with these key changes:
+- **`defaultIsolation = MainActor`** — the project already sets `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`, so this aligns. Verify the setting name hasn't changed in Xcode 26.4.
+- **`nonisolated(nonsending)` by default (SE-461)** — nonisolated async functions now run on the caller's actor by default. Audit `nonisolated` usage (currently in `WeatherAPI.swift`, `LocationPermissionManager.swift`) to ensure no behavioral changes.
+- **`@concurrent` attribute** — new opt-in for explicit parallelism. No immediate changes needed, but we can adopt it where we want guaranteed background execution.
+- **Inferred isolated conformances (SE-470)** — protocol conformances can now be inferred within actor isolation. May simplify some `@MainActor` boilerplate.
+
+### 1.3 — Update CLAUDE.md and migration docs
+- Update iOS target references from 26.0 → 26.4
+- Update Swift version references from 6.0 → 6.2
+- Update Xcode version references
+- Update test commands (simulator name/OS version)
+
+---
+
+## Phase 2: Remove Unnecessary Availability Checks
+
+Since the minimum deployment target will be iOS 26.4, all `@available(iOS 26, *)` and `if #available(iOS 26.0, *)` checks are redundant.
+
+### 2.1 — WeatherAPI.swift (lines 44, 55)
+- Remove `@available(iOS 26, *)` from `fetchExtendedWeatherData(for:)` and `mapEnhancedCurrentWeather(_:at:)`
+- These are now always available
+
+### 2.2 — LocationPermissionManager.swift (line 107)
+- Remove `@available(iOS 26, *)` from `requestTemporaryFullAccuracyIfNeeded(purposeKey:)`
+
+### 2.3 — ComprehensiveReminderCreationViewModel.swift (lines 712, 748)
+- Remove `if #available(iOS 26.0, *)` checks for MapKit APIs
+- Remove fallback branches (dead code with 26.4 minimum)
+
+### 2.4 — SettingsViewModel.swift (line 292)
+- Remove `if #available(iOS 18.0, *)` check for `AppStore.requestReview(in:)`
+- Remove fallback to `SKStoreReviewController.requestReview()` — iOS 26.4 always has iOS 18+ APIs
+- Can also remove `import StoreKit` if `SKStoreReviewController` was the only reason for it (check)
+
+---
+
+## Phase 3: Adopt BGContinuedProcessingTask (New iOS 26 Background API)
+
+iOS 26 introduced `BGContinuedProcessingTask` for user-initiated long-running background tasks with progress reporting and system UI.
+
+### 3.1 — Evaluate adoption in BackgroundWeatherManager
+- The current implementation uses `BGAppRefreshTask` for periodic 15-minute weather refresh — this is still correct for automatic background refresh
+- `BGContinuedProcessingTask` is better suited for **user-initiated** operations like bulk weather data export or manual "refresh all locations" — consider adding it for explicit user-triggered refreshes
+- Add task identifier to Info.plist `BGTaskSchedulerPermittedIdentifiers` if adopting
+
+### 3.2 — Add progress reporting for user-initiated refresh
+- When user taps "refresh" in the UI, use `BGContinuedProcessingTask` with progress reporting
+- This gives users visibility into background weather fetches via system UI
+
+---
+
+## Phase 4: Swift 6.2 Concurrency Cleanup
+
+### 4.1 — Audit `nonisolated` usage
+With SE-461 (`nonisolated(nonsending)` by default), nonisolated async functions now run on the caller's actor. Review:
+- `WeatherAPI.swift` — `nonisolated var isAvailable: Bool { get async }` — behavior may change
+- `LocationPermissionManager.swift` — `nonisolated` delegate methods — these are sync so unaffected
+- Any other `nonisolated` async patterns across ViewModels
+
+### 4.2 — Simplify `@MainActor` annotations
+With `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor` and Swift 6.2 improvements:
+- Review which explicit `@MainActor` annotations are now redundant (module-level default makes them unnecessary in many cases)
+- Keep `@MainActor` on public API boundaries for clarity
+
+### 4.3 — Adopt `@concurrent` where appropriate
+For functions that genuinely need background execution (weather fetching, data processing):
+- Mark with `@concurrent` to opt out of caller isolation
+- Good candidates: weather API fetch methods, trigger evaluation logic
+
+---
+
+## Phase 5: Xcode 26.4 Testing Improvements
+
+### 5.1 — Adopt image attachments in Swift Testing
+Xcode 26.4 supports attaching `UIImage`/`CGImage` directly to test results:
+- Consider adding snapshot/image-based test attachments for weather UI components
+- This is optional but useful for visual regression testing
+
+### 5.2 — Adopt severity levels for test issues
+- Use the new severity level API to differentiate warnings vs. critical test failures
+- Apply to existing tests where appropriate
+
+---
+
+## Phase 6: Verify & Build
+
+### 6.1 — Build the project
+- Run full build with `xcodebuild -scheme SunHat -configuration Debug -destination 'generic/platform=iOS Simulator' build`
+- Fix any Swift 6.2 compiler warnings or errors from behavioral changes
+
+### 6.2 — Run tests
+- Verify all existing tests pass with the new deployment target and Swift version
+
+### 6.3 — Update documentation
+- Update iOS-26-Migration-Guide.md with 26.4 changes
+- Update CLAUDE.md references
+
+---
+
+## Files to Modify (Summary)
+
+| File | Changes |
+|------|---------|
+| `SunHat.xcodeproj/project.pbxproj` | Deployment target 26.4, Swift 6.2 |
+| `SunHat/Services/Weather/WeatherAPI.swift` | Remove `@available(iOS 26, *)` |
+| `SunHat/Services/Location/LocationPermissionManager.swift` | Remove `@available(iOS 26, *)` |
+| `SunHat/ViewModels/ComprehensiveReminderCreationViewModel.swift` | Remove `if #available` checks |
+| `SunHat/ViewModels/SettingsViewModel.swift` | Remove iOS 18 availability check |
+| `SunHat/Services/Weather/BackgroundWeatherManager.swift` | Consider BGContinuedProcessingTask |
+| `CLAUDE.md` | Update version references |
+| `SunHat/Documentation/iOS-26-Migration-Guide.md` | Add 26.4 section |
+
+---
+
+## Risk Assessment
+
+- **Low risk**: Phases 1-2 (config bumps and removing dead availability checks)
+- **Medium risk**: Phases 3-4 (new API adoption and concurrency behavior changes from SE-461)
+- **Optional**: Phase 5 (testing improvements — nice to have, not required)
+
+## Recommended Approach
+Implement phases sequentially, building after each phase to catch issues early. Phase 3 (BGContinuedProcessingTask) can be scoped down or deferred if you'd prefer a minimal update.

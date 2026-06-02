@@ -23,6 +23,7 @@ final class TriggerEngineManager: ObservableObject {
     @Published var evaluationResults: [TriggerEvaluationResult] = []
     
     private var triggerEngine: TriggerEngine?
+    private var scheduledEvaluationTask: Task<Void, Never>?
     private let notificationManager = TriggerNotificationManager.shared
     private let backgroundTaskIdentifier = "org.wesley.sunhat.trigger-evaluation"
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "TriggerEngineManager")
@@ -103,7 +104,12 @@ final class TriggerEngineManager: ObservableObject {
     private func registerBackgroundTask() {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: backgroundTaskIdentifier, using: nil) { task in
             Task {
-                await self.handleBackgroundEvaluation(task as! BGAppRefreshTask)
+                guard let refreshTask = task as? BGAppRefreshTask else {
+                    task.setTaskCompleted(success: false)
+                    return
+                }
+
+                await self.handleBackgroundEvaluation(refreshTask)
             }
         }
         logger.info("Registered background task: \(self.backgroundTaskIdentifier)")
@@ -223,11 +229,15 @@ final class TriggerEngineManager: ObservableObject {
             let timeInterval = earliestNext.timeIntervalSince(Date())
             
             if timeInterval > 0 && timeInterval < 24 * 3600 { // Within next 24 hours
-                // Schedule a more specific evaluation
-                DispatchQueue.main.asyncAfter(deadline: .now() + timeInterval) {
-                    Task {
-                        await self.evaluateAllReminders()
-                    }
+                scheduledEvaluationTask?.cancel()
+                let delayMilliseconds = max(1, Int(timeInterval * 1000))
+
+                scheduledEvaluationTask = Task { [weak self] in
+                    do {
+                        try await Task.sleep(for: .milliseconds(delayMilliseconds))
+                        guard !Task.isCancelled else { return }
+                        await self?.evaluateAllReminders()
+                    } catch { }
                 }
                 
                 logger.debug("Scheduled next evaluation in \(String(format: "%.1f", timeInterval / 3600)) hours")
@@ -472,12 +482,14 @@ actor TriggerNotificationManager {
         }
         
         // Schedule re-evaluation after snooze period
-        DispatchQueue.main.asyncAfter(deadline: .now() + TimeInterval(hours * 3600)) {
-            Task {
-                // Re-evaluate this specific reminder after snooze
-                // This would typically involve fetching the reminder from the database
+        Task {
+            do {
+                try await Task.sleep(for: .seconds(hours * 3600))
+                guard !Task.isCancelled else { return }
+                // Re-evaluate this specific reminder after snooze.
+                // This would typically involve fetching the reminder from the database.
                 self.logger.info("Re-evaluating snoozed reminder \(reminderId)")
-            }
+            } catch { }
         }
     }
     
