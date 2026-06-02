@@ -16,8 +16,14 @@ struct WeatherView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
     @State private var selectedTimeframe: WeatherTimeframe = .current
-    @State private var showingLocationPicker = false
+    @State private var activeSheet: ActiveSheet?
     @State private var selectedLocation: ReminderLocation = .currentLocation
+
+    private enum ActiveSheet: Identifiable {
+        case locationPicker
+
+        var id: Self { self }
+    }
     
     init() {
         // Initialize with a dummy modelContainer
@@ -75,16 +81,19 @@ struct WeatherView: View {
             .navigationTitle("Weather Details")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button(action: {
-                        showingLocationPicker = true
+                        activeSheet = .locationPicker
                     }) {
                         Image(systemName: "location")
                     }
                 }
             }
-            .sheet(isPresented: $showingLocationPicker) {
-                LocationPickerView(selectedLocation: $selectedLocation)
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .locationPicker:
+                    LocationPickerView(selectedLocation: $selectedLocation)
+                }
             }
             .onAppear {
                 // The viewModel is already configured with modelContext from init

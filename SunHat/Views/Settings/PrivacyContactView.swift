@@ -86,7 +86,7 @@ struct PrivacyContactView: View {
                     ContactDetailRow(
                         icon: "envelope.fill",
                         title: "Email",
-                        value: "placeholder@example.com", // TODO: Replace with actual privacy email
+                        value: AppSupportLinks.privacyEmail,
                         isLink: true
                     ) {
                         openEmailClient()
@@ -281,7 +281,7 @@ struct PrivacyContactView: View {
         
         if let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-           let url = URL(string: "mailto:placeholder@example.com?subject=\(encodedSubject)&body=\(encodedBody)") { // TODO: Replace with actual privacy email
+           let url = URL(string: "mailto:\(AppSupportLinks.privacyEmail)?subject=\(encodedSubject)&body=\(encodedBody)") {
             Task { @MainActor in
                 UIApplication.shared.open(url)
             }
@@ -322,10 +322,8 @@ struct PrivacyContactView: View {
     }
     
     private func openPrivacyPolicy() {
-        if let url = URL(string: "https://example.com/privacy") { // TODO: Replace with actual privacy policy URL
-            Task { @MainActor in
-                UIApplication.shared.open(url)
-            }
+        Task { @MainActor in
+            UIApplication.shared.open(AppSupportLinks.privacyPolicyURL)
         }
     }
 }
@@ -348,6 +346,17 @@ struct ContactDetailRow: View {
     }
     
     var body: some View {
+        if isLink {
+            Button(action: { action?() }) {
+                rowContent
+            }
+            .buttonStyle(.plain)
+        } else {
+            rowContent
+        }
+    }
+
+    private var rowContent: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .foregroundColor(.blue)
@@ -369,12 +378,6 @@ struct ContactDetailRow: View {
                 Image(systemName: "arrow.up.right.square")
                     .font(.caption)
                     .foregroundColor(.blue)
-            }
-        }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if isLink {
-                action?()
             }
         }
     }
@@ -429,7 +432,7 @@ struct MailComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> MFMailComposeViewController {
         let composer = MFMailComposeViewController()
         composer.mailComposeDelegate = context.coordinator
-        composer.setToRecipients(["placeholder@example.com"]) // TODO: Replace with actual privacy email
+        composer.setToRecipients([AppSupportLinks.privacyEmail])
         composer.setSubject("Privacy Inquiry - \(inquiryType.displayName)")
         
         let body = generateEmailBody()

@@ -69,7 +69,7 @@ struct PrivacyPolicyView: View {
                 .fontWeight(.semibold)
                 .padding(.top, 20)
 
-            Text("If you have any questions about this privacy policy, please contact us at placeholder@example.com")
+            Text("If you have any questions about this privacy policy, please contact us at \(AppSupportLinks.privacyEmail)")
                 .font(.body)
 
             Text("Last updated: January 30, 2026")

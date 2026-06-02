@@ -18,14 +18,19 @@ struct TutorialBubbleView: View {
         VStack(spacing: 0) {
             // Bubble
             HStack(spacing: 10) {
-                Image(systemName: "sparkles")
-                    .font(.subheadline)
-                    .foregroundColor(.blue)
+                Button(action: onTap) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "sparkles")
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
 
-                Text("Create your first reminder")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                        Text("Create your first reminder")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primary)
+                    }
+                }
+                .buttonStyle(.plain)
 
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
@@ -43,7 +48,6 @@ struct TutorialBubbleView: View {
                     .fill(.ultraThinMaterial)
                     .shadow(color: .black.opacity(0.12), radius: 12, x: 0, y: 4)
             )
-            .onTapGesture(perform: onTap)
 
             // Arrow pointing down toward the FAB
             TrianglePointer()

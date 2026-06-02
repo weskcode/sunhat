@@ -16,13 +16,16 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     
-    @State private var showingLocationPicker = false
-    @State private var showingManualLocationEntry = false
     @State private var showingNotificationInfo = false
-    @State private var showingPrivacyPolicy = false
-    @State private var showingAbout = false
-    @State private var selectedLocation = ReminderLocation.currentLocation
+    @State private var activeSheet: ActiveSheet?
     @StateObject private var locationViewModel = LocationManagementViewModel()
+
+    private enum ActiveSheet: Identifiable {
+        case manualLocationEntry
+        case about
+
+        var id: Self { self }
+    }
     
     var body: some View {
         NavigationStack {
@@ -39,12 +42,6 @@ struct SettingsView: View {
                 viewModel.configure(modelContext: modelContext)
                 locationViewModel.configure(modelContext: modelContext)
             }
-            .sheet(isPresented: $showingLocationPicker) {
-                LocationPickerView(selectedLocation: $selectedLocation)
-            }
-            .sheet(isPresented: $showingManualLocationEntry) {
-                ManualLocationEntrySheet(viewModel: locationViewModel)
-            }
             .alert("Notification Settings", isPresented: $showingNotificationInfo) {
                 Button("Settings") {
                     viewModel.openAppSettings()
@@ -53,11 +50,13 @@ struct SettingsView: View {
             } message: {
                 Text("To receive weather-based reminders, please enable notifications in Settings.")
             }
-            .sheet(isPresented: $showingPrivacyPolicy) {
-                PrivacyPolicyView()
-            }
-            .sheet(isPresented: $showingAbout) {
-                AboutView()
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .manualLocationEntry:
+                    ManualLocationEntrySheet(viewModel: locationViewModel)
+                case .about:
+                    AboutView()
+                }
             }
         }
     }
@@ -166,7 +165,7 @@ struct SettingsView: View {
                 }
 
                 Button {
-                    showingManualLocationEntry = true
+                    activeSheet = .manualLocationEntry
                 } label: {
                     HStack {
                         Label("Choose City Manually", systemImage: "mappin.and.ellipse")
@@ -290,7 +289,7 @@ struct SettingsView: View {
             }
             
             Button("Acknowledgments") {
-                showingAbout = true
+                activeSheet = .about
             }
             
             Button("Terms of Service") {

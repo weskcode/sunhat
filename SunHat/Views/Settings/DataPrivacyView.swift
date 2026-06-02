@@ -13,9 +13,15 @@ struct DataPrivacyView: View {
     @State private var viewModel = DataPrivacyViewModel()
     
     @State private var showingDeleteConfirmation = false
-    @State private var showingExportOptions = false
-    @State private var showingPrivacyPolicy = false
-    @State private var showingContactOptions = false
+    @State private var activeSheet: ActiveSheet?
+
+    private enum ActiveSheet: Identifiable {
+        case exportOptions
+        case privacyPolicy
+        case contactOptions
+
+        var id: Self { self }
+    }
     
     var body: some View {
         NavigationStack {
@@ -71,14 +77,15 @@ struct DataPrivacyView: View {
             } message: {
                 Text("This action cannot be undone. All your reminders, preferences, and weather data will be permanently deleted from this device.")
             }
-            .sheet(isPresented: $showingExportOptions) {
-                DataExportOptionsView(viewModel: viewModel)
-            }
-            .sheet(isPresented: $showingPrivacyPolicy) {
-                PrivacyPolicyView()
-            }
-            .sheet(isPresented: $showingContactOptions) {
-                PrivacyContactView()
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .exportOptions:
+                    DataExportOptionsView(viewModel: viewModel)
+                case .privacyPolicy:
+                    PrivacyPolicyView()
+                case .contactOptions:
+                    PrivacyContactView()
+                }
             }
         }
     }
@@ -253,7 +260,7 @@ struct DataPrivacyView: View {
     private var dataExportSection: some View {
         Section {
             Button("Export My Data") {
-                showingExportOptions = true
+                activeSheet = .exportOptions
             }
             
             VStack(alignment: .leading, spacing: 8) {
@@ -398,7 +405,7 @@ struct DataPrivacyView: View {
                     regulation: "GDPR Art. 15, CCPA",
                     action: "Export Data"
                 ) {
-                    showingExportOptions = true
+                    activeSheet = .exportOptions
                 }
                 
                 PrivacyRightCard(
@@ -427,7 +434,7 @@ struct DataPrivacyView: View {
                     regulation: "GDPR Art. 16",
                     action: "Contact Support"
                 ) {
-                    showingContactOptions = true
+                    activeSheet = .contactOptions
                 }
             }
             
@@ -443,23 +450,25 @@ struct DataPrivacyView: View {
     private var contactSection: some View {
         Section {
             Button("Privacy Policy") {
-                showingPrivacyPolicy = true
+                activeSheet = .privacyPolicy
             }
             
             Button("Contact Privacy Officer") {
-                showingContactOptions = true
+                activeSheet = .contactOptions
             }
             
-            HStack {
-                Text("Data Protection Officer")
-                Spacer()
-                Text("placeholder@example.com") // TODO: Replace with actual privacy email
-                    .font(.caption)
-                    .foregroundColor(.blue)
-            }
-            .onTapGesture {
+            Button {
                 viewModel.contactPrivacyOfficer()
+            } label: {
+                HStack {
+                    Text("Data Protection Officer")
+                    Spacer()
+                    Text(AppSupportLinks.privacyEmail)
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                }
             }
+            .buttonStyle(.plain)
             
             HStack {
                 Text("Response Time")
