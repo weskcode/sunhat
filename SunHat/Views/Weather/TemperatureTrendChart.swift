@@ -91,7 +91,7 @@ struct TemperatureTrendChart: View {
                 if let date = value.as(Date.self) {
                     AxisValueLabel {
                         Text(dayFormatter.string(from: date))
-                            .font(.caption2)
+                            .font(AppFontStyle.caption2.font)
                             .foregroundColor(.secondary)
                     }
                 }
@@ -104,7 +104,7 @@ struct TemperatureTrendChart: View {
                 if let temp = value.as(Double.self) {
                     AxisValueLabel {
                         Text("\(Int(temp))°")
-                            .font(.caption2)
+                            .font(AppFontStyle.caption2.font)
                             .foregroundColor(.secondary)
                     }
                 }

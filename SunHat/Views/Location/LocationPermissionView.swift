@@ -334,29 +334,9 @@ struct LocationPermissionView: View {
     // MARK: - Helper Methods
     
     private func startAnimationSequence() {
-        guard !reduceMotion else {
-            // Show all content immediately for reduced motion
-            showLocationVisual = true
-            showExplanation = true
-            showButtons = true
-            return
-        }
-        
-        withAnimation {
-            showLocationVisual = true
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            withAnimation {
-                showExplanation = true
-            }
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
-            withAnimation {
-                showButtons = true
-            }
-        }
+        showLocationVisual = true
+        showExplanation = true
+        showButtons = true
     }
     
     private func requestLocationPermission() {

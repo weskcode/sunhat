@@ -30,16 +30,13 @@ struct DashboardView: View {
                     backgroundGradient
                         .ignoresSafeArea()
                     
-                    // Main content
                     RefreshableScrollView {
                         await viewModel.refreshWeatherData()
                     } content: {
                         LazyVStack(spacing: 20) {
-                            // Current temperature widget (expandable)
                             currentTemperatureWidget
                                 .padding(.top, 16)
 
-                            // Detailed weather metrics (expandable)
                             if showingDetailedWeather {
                                 detailedWeatherMetrics
                                     .transition(.asymmetric(
@@ -48,44 +45,21 @@ struct DashboardView: View {
                                     ))
                             }
 
-                            // Weather alerts (if any)
-                            if !viewModel.activeAlerts.isEmpty {
-                                weatherAlertsSection
-                            }
-
-                            // Hourly forecast (24 hours)
-                            hourlyForecastSection
-
-                            // Active reminders section
+                            readyNowSection
                             activeRemindersSection
-
-                            // Multi-day forecast with selector (5/7/10 days)
-                            enhancedForecastSection
-
-                            // Comprehensive weather metrics grid
-                            comprehensiveWeatherMetrics
-
-                            // Additional weather stats (always visible)
-                            quickStatsSection
                         }
                         .padding(.horizontal, 16)
-                        .padding(.bottom, 100) // Space for FAB
-                    }
-                    
-                    // Floating Action Button
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            quickCreateButton
-                                .padding(.trailing, 20)
-                                .padding(.bottom, 34)
-                        }
+                        .padding(.bottom, 24)
                     }
                 }
             }
             .navigationTitle("SunHat")
             .navigationBarTitleDisplayMode(.large)
+            .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) {
+                quickCreateButton
+                    .padding(.trailing, 18)
+                    .padding(.bottom, 10)
+            }
             .sheet(isPresented: $showingQuickCreate) {
                 StreamlinedReminderCreationView(onReminderCreated: {
                     if !onboardingCoordinator.hasCreatedFirstReminder {
@@ -125,18 +99,18 @@ struct DashboardView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
                         Image(systemName: "location.fill")
-                            .font(.caption)
+                            .font(AppFontStyle.caption.font)
                             .foregroundColor(.blue)
                         
                         Text(viewModel.currentLocationName)
-                            .font(.subheadline)
+                            .font(AppFontStyle.subheadline.font)
                             .fontWeight(.medium)
                             .foregroundColor(.primary)
                     }
                     
                     if let lastUpdate = viewModel.lastUpdateTime {
                         Text("Updated \(lastUpdate, style: .relative) ago")
-                            .font(.caption2)
+                            .font(AppFontStyle.caption2.font)
                             .foregroundColor(.secondary)
                     }
                 }
@@ -150,7 +124,7 @@ struct DashboardView: View {
                     }
 
                     Image(systemName: "chevron.down.circle.fill")
-                        .font(.title3)
+                        .font(AppFontStyle.title3.font)
                         .foregroundColor(.blue)
                         .rotationEffect(.degrees(showingDetailedWeather ? 180 : 0))
                         .animation(.interpolatingSpring(duration: 0.3, bounce: 0.25), value: showingDetailedWeather)
@@ -165,18 +139,18 @@ struct DashboardView: View {
                     // Current temperature
                     HStack(alignment: .top, spacing: 4) {
                         Text("\(viewModel.currentTemperature, specifier: "%.0f")")
-                            .font(.system(size: dynamicTypeSize.isAccessibilitySize ? 64 : 72, weight: .thin, design: .rounded))
+                            .font(AppFont.inter(size: dynamicTypeSize.isAccessibilitySize ? 64 : 72, weight: .thin))
                             .foregroundColor(.primary)
                         
                         Text("°")
-                            .font(.system(size: 24, weight: .light))
+                            .font(AppFont.inter(size: 24, weight: .light))
                             .foregroundColor(.primary)
                             .offset(y: 8)
                     }
                     
                     // Feels like temperature
                     Text("Feels like \(viewModel.feelsLikeTemperature, specifier: "%.0f")°")
-                        .font(.callout)
+                        .font(AppFontStyle.callout.font)
                         .foregroundColor(.secondary)
                 }
                 
@@ -186,12 +160,12 @@ struct DashboardView: View {
                     // Weather icon and condition
                     VStack(alignment: .trailing, spacing: 8) {
                         Image(systemName: viewModel.weatherIconName)
-                            .font(.system(size: 44))
+                            .font(AppFont.inter(size: 44))
                             .foregroundStyle(viewModel.weatherIconColor)
                             .symbolRenderingMode(.hierarchical)
                         
                         Text(viewModel.weatherDescription)
-                            .font(.caption)
+                            .font(AppFontStyle.caption.font)
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.trailing)
                     }
@@ -199,11 +173,11 @@ struct DashboardView: View {
                     // High/Low
                     VStack(alignment: .trailing, spacing: 2) {
                         Text("H: \(viewModel.highTemperature, specifier: "%.0f")°")
-                            .font(.callout)
+                            .font(AppFontStyle.callout.font)
                             .foregroundColor(.primary)
                         
                         Text("L: \(viewModel.lowTemperature, specifier: "%.0f")°")
-                            .font(.callout)
+                            .font(AppFontStyle.callout.font)
                             .foregroundColor(.secondary)
                     }
                 }
@@ -226,7 +200,7 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Label("Weather Alerts", systemImage: "exclamationmark.triangle.fill")
-                    .font(.headline)
+                    .font(AppFontStyle.headline.font)
                     .foregroundColor(.orange)
                 
                 Spacer()
@@ -234,7 +208,7 @@ struct DashboardView: View {
                 Button("View All") {
                     showingWeatherAlerts = true
                 }
-                .font(.callout)
+                .font(AppFontStyle.callout.font)
                 .foregroundColor(.blue)
             }
             
@@ -252,12 +226,43 @@ struct DashboardView: View {
     }
     
     // MARK: - Active Reminders Section
+
+    private var readyNowSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Ready Now", systemImage: "checkmark.circle.fill")
+                .font(AppFontStyle.headline.font)
+                .foregroundColor(.primary)
+
+            if viewModel.activeReminders.isEmpty {
+                Text("Create a weather task and SunHat will watch for matching conditions.")
+                    .font(AppFontStyle.callout.font)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else if viewModel.activeAlerts.isEmpty {
+                Text("No tasks match the weather right now. SunHat is still watching.")
+                    .font(AppFontStyle.callout.font)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                LazyVStack(spacing: 8) {
+                    ForEach(Array(viewModel.activeAlerts.prefix(2)), id: \.id) { alert in
+                        WeatherAlertCard(alert: alert)
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.regularMaterial)
+        )
+    }
     
     private var activeRemindersSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Label("Active Reminders", systemImage: "bell.badge.fill")
-                    .font(.headline)
+                Label("Watching", systemImage: "bell.badge.fill")
+                    .font(AppFontStyle.headline.font)
                     .foregroundColor(.primary)
                 
                 Spacer()
@@ -265,7 +270,7 @@ struct DashboardView: View {
                 Button("View All") {
                     showingAllReminders = true
                 }
-                .font(.callout)
+                .font(AppFontStyle.callout.font)
                 .foregroundColor(.blue)
             }
             
@@ -292,19 +297,19 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Label("7-Day Forecast", systemImage: "chart.line.uptrend.xyaxis")
-                    .font(.headline)
+                    .font(AppFontStyle.headline.font)
                     .foregroundColor(.primary)
                 
                 Spacer()
                 
                 Text("°\(viewModel.temperatureUnit.symbol.dropFirst())")
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .foregroundColor(.secondary)
             }
             
             if viewModel.forecastData.isEmpty {
                 Text("Forecast data unavailable")
-                    .font(.callout)
+                    .font(AppFontStyle.callout.font)
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 120)
@@ -362,26 +367,9 @@ struct DashboardView: View {
     // MARK: - Quick Create Button
     
     private var quickCreateButton: some View {
-        Button(action: {
+        GlassCreateTaskButton {
             showingQuickCreate = true
-        }) {
-            Image(systemName: "plus")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.white)
-                .frame(width: 56, height: 56)
-                .background(
-                    LinearGradient(
-                        colors: [.blue, .purple],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .clipShape(Circle())
-                .shadow(color: .blue.opacity(0.4), radius: 8, x: 0, y: 4)
         }
-        .buttonStyle(FloatingActionButtonStyle())
-        .accessibilityLabel("Create new reminder")
     }
     
     // MARK: - Hourly Forecast Section
@@ -390,7 +378,7 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Label("Hourly Forecast", systemImage: "clock.fill")
-                    .font(.headline)
+                    .font(AppFontStyle.headline.font)
                     .foregroundColor(.primary)
 
                 Spacer()
@@ -423,7 +411,7 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Label("Forecast", systemImage: "calendar")
-                    .font(.headline)
+                    .font(AppFontStyle.headline.font)
                     .foregroundColor(.primary)
 
                 Spacer()
@@ -546,7 +534,7 @@ struct DashboardView: View {
             // Section header
             HStack {
                 Label("More Details", systemImage: "info.circle.fill")
-                    .font(.headline)
+                    .font(AppFontStyle.headline.font)
                     .foregroundColor(.primary)
 
                 Spacer()
@@ -556,7 +544,7 @@ struct DashboardView: View {
                         showingDetailedWeather = false
                     }
                 }
-                .font(.callout)
+                .font(AppFontStyle.callout.font)
                 .foregroundColor(.blue)
             }
 
@@ -564,21 +552,21 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 12) {
                     Image(systemName: "thermometer.medium")
-                        .font(.title2)
+                        .font(AppFontStyle.title2.font)
                         .foregroundColor(.orange)
                         .frame(width: 36)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Temperature Details")
-                            .font(.subheadline)
+                            .font(AppFontStyle.subheadline.font)
                             .fontWeight(.medium)
 
                         Text("Current: \(String(format: "%.1f", viewModel.currentTemperature))° • Feels like: \(String(format: "%.1f", viewModel.feelsLikeTemperature))°")
-                            .font(.caption)
+                            .font(AppFontStyle.caption.font)
                             .foregroundColor(.secondary)
 
                         Text("High: \(String(format: "%.0f", viewModel.highTemperature))° • Low: \(String(format: "%.0f", viewModel.lowTemperature))°")
-                            .font(.caption)
+                            .font(AppFontStyle.caption.font)
                             .foregroundColor(.secondary)
                     }
                 }
@@ -587,31 +575,31 @@ struct DashboardView: View {
 
                 HStack(spacing: 12) {
                     Image(systemName: "cloud.fill")
-                        .font(.title2)
+                        .font(AppFontStyle.title2.font)
                         .foregroundColor(.blue)
                         .frame(width: 36)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(viewModel.weatherDescription)
-                            .font(.subheadline)
+                            .font(AppFontStyle.subheadline.font)
                             .fontWeight(.medium)
 
                         HStack(spacing: 16) {
                             HStack(spacing: 4) {
                                 Image(systemName: "humidity.fill")
-                                    .font(.caption)
+                                    .font(AppFontStyle.caption.font)
                                     .foregroundColor(.cyan)
                                 Text("\(viewModel.humidity)%")
-                                    .font(.caption)
+                                    .font(AppFontStyle.caption.font)
                                     .foregroundColor(.secondary)
                             }
 
                             HStack(spacing: 4) {
                                 Image(systemName: "wind")
-                                    .font(.caption)
+                                    .font(AppFontStyle.caption.font)
                                     .foregroundColor(.green)
                                 Text("\(String(format: "%.0f", viewModel.windSpeed)) mph")
-                                    .font(.caption)
+                                    .font(AppFontStyle.caption.font)
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -622,31 +610,31 @@ struct DashboardView: View {
 
                 HStack(spacing: 12) {
                     Image(systemName: "eye.fill")
-                        .font(.title2)
+                        .font(AppFontStyle.title2.font)
                         .foregroundColor(.purple)
                         .frame(width: 36)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Visibility & UV")
-                            .font(.subheadline)
+                            .font(AppFontStyle.subheadline.font)
                             .fontWeight(.medium)
 
                         HStack(spacing: 16) {
                             HStack(spacing: 4) {
                                 Text("Visibility:")
-                                    .font(.caption)
+                                    .font(AppFontStyle.caption.font)
                                     .foregroundColor(.secondary)
                                 Text("\(String(format: "%.1f", viewModel.visibility)) mi")
-                                    .font(.caption)
+                                    .font(AppFontStyle.caption.font)
                                     .foregroundColor(.primary)
                             }
 
                             HStack(spacing: 4) {
                                 Text("UV Index:")
-                                    .font(.caption)
+                                    .font(AppFontStyle.caption.font)
                                     .foregroundColor(.secondary)
                                 Text("\(String(format: "%.0f", viewModel.uvIndex))")
-                                    .font(.caption)
+                                    .font(AppFontStyle.caption.font)
                                     .foregroundColor(.primary)
                             }
                         }
@@ -693,18 +681,18 @@ struct WeatherAlertCard: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: alert.iconName)
-                .font(.title3)
+                .font(AppFontStyle.title3.font)
                 .foregroundColor(alert.severityColor)
                 .frame(width: 28)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(alert.title)
-                    .font(.subheadline)
+                    .font(AppFontStyle.subheadline.font)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
                 
                 Text(alert.description)
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .foregroundColor(.secondary)
                     .lineLimit(2)
             }
@@ -729,24 +717,24 @@ struct ActiveReminderCard: View {
         HStack(spacing: 12) {
             // Category icon
             Image(systemName: reminder.category.iconName)
-                .font(.title3)
+                .font(AppFontStyle.title3.font)
                 .foregroundColor(.blue)
                 .frame(width: 28)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(reminder.title)
-                    .font(.subheadline)
+                    .font(AppFontStyle.subheadline.font)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
                     .lineLimit(1)
                 
                 if let condition = reminder.triggerCondition {
                     Text("Trigger: When temperature is \(condition.comparisonType.rawValue) \(condition.targetTemperature, specifier: "%.1f")°")
-                        .font(.caption)
+                        .font(AppFontStyle.caption.font)
                         .foregroundColor(.secondary)
                 } else {
                     Text("Trigger: No condition set")
-                        .font(.caption)
+                        .font(AppFontStyle.caption.font)
                         .foregroundColor(.secondary)
                 }
                 
@@ -757,7 +745,7 @@ struct ActiveReminderCard: View {
                         .frame(width: 8, height: 8)
                     
                     Text(statusText)
-                        .font(.caption2)
+                        .font(AppFontStyle.caption2.font)
                         .foregroundColor(.secondary)
                 }
             }
@@ -767,7 +755,7 @@ struct ActiveReminderCard: View {
             // Temperature difference indicator (simplified for Sendable types)
             if let weatherData = weatherData {
                 Text("\(weatherData.temperature, specifier: "%.0f")°")
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
             }
@@ -809,17 +797,17 @@ struct DetailedWeatherCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
-                    .font(.title3)
+                    .font(AppFontStyle.title3.font)
                     .foregroundColor(color)
                     .frame(width: 24)
 
                 Text(title)
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .foregroundColor(.secondary)
             }
 
             Text(value)
-                .font(.headline)
+                .font(AppFontStyle.headline.font)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
         }
@@ -838,15 +826,15 @@ struct EmptyActiveRemindersView: View {
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: "bell.slash")
-                .font(.title)
+                .font(AppFontStyle.title.font)
                 .foregroundColor(.secondary)
             
             Text("No active reminders")
-                .font(.subheadline)
+                .font(AppFontStyle.subheadline.font)
                 .foregroundColor(.secondary)
             
             Text("Create your first weather reminder to get started")
-                .font(.caption)
+                .font(AppFontStyle.caption.font)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -867,7 +855,7 @@ struct QuickStatCard: View {
         VStack(spacing: 8) {
             HStack {
                 Image(systemName: icon)
-                    .font(.title3)
+                    .font(AppFontStyle.title3.font)
                     .foregroundColor(color)
                 
                 Spacer()
@@ -875,12 +863,12 @@ struct QuickStatCard: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(value)
-                    .font(.title3)
+                    .font(AppFontStyle.title3.font)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
                 
                 Text(title)
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .foregroundColor(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -914,26 +902,26 @@ struct HourlyWeatherCard: View {
     var body: some View {
         VStack(spacing: 8) {
             Text(hourText)
-                .font(.caption)
+                .font(AppFontStyle.caption.font)
                 .foregroundColor(.secondary)
 
             Image(systemName: condition)
-                .font(.title3)
+                .font(AppFontStyle.title3.font)
                 .foregroundColor(conditionColor)
                 .frame(height: 24)
 
             HStack(spacing: 2) {
                 Image(systemName: "drop.fill")
-                    .font(.caption2)
+                    .font(AppFontStyle.caption2.font)
                     .foregroundColor(.cyan)
                 Text("\(precipChance)%")
-                    .font(.caption2)
+                    .font(AppFontStyle.caption2.font)
                     .foregroundColor(.cyan)
             }
             .opacity(precipChance > 0 ? 1 : 0)
 
             Text("\(String(format: "%.0f", temperature))°")
-                .font(.callout)
+                .font(AppFontStyle.callout.font)
                 .fontWeight(.semibold)
         }
         .frame(width: 60)
@@ -988,14 +976,14 @@ struct EnhancedDayForecastRow: View {
         HStack(spacing: 10) {
             // Day name
             Text(dayText)
-                .font(.subheadline)
+                .font(AppFontStyle.subheadline.font)
                 .fontWeight(.medium)
                 .foregroundColor(.primary)
                 .frame(width: 52, alignment: .leading)
 
             // Weather icon
             Image(systemName: forecast.weatherCondition.icon)
-                .font(.body)
+                .font(AppFontStyle.body.font)
                 .foregroundColor(.blue)
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: 26)
@@ -1003,10 +991,10 @@ struct EnhancedDayForecastRow: View {
             // Precipitation chance
             HStack(spacing: 2) {
                 Image(systemName: "drop.fill")
-                    .font(.caption2)
+                    .font(AppFontStyle.caption2.font)
                     .foregroundColor(.blue)
                 Text("\(forecast.precipitationProbability)%")
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .foregroundColor(.secondary)
             }
             .frame(width: 44, alignment: .leading)
@@ -1017,7 +1005,7 @@ struct EnhancedDayForecastRow: View {
             // Temperature bar
             HStack(spacing: 5) {
                 Text("\(String(format: "%.0f", forecast.lowTemperature))°")
-                    .font(.subheadline)
+                    .font(AppFontStyle.subheadline.font)
                     .foregroundColor(.secondary)
                     .frame(width: 30, alignment: .trailing)
 
@@ -1030,7 +1018,7 @@ struct EnhancedDayForecastRow: View {
                 .frame(width: 75, height: 6)
 
                 Text("\(String(format: "%.0f", forecast.highTemperature))°")
-                    .font(.subheadline)
+                    .font(AppFontStyle.subheadline.font)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
                     .frame(width: 30, alignment: .leading)
@@ -1111,21 +1099,21 @@ struct WeatherMetricCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Image(systemName: icon)
-                    .font(.title3)
+                    .font(AppFontStyle.title3.font)
                     .foregroundColor(color)
                     .frame(width: 24)
 
                 Text(title)
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .foregroundColor(.secondary)
             }
 
             Text(value)
-                .font(.title3)
+                .font(AppFontStyle.title3.font)
                 .fontWeight(.semibold)
 
             Text(subtitle)
-                .font(.caption2)
+                .font(AppFontStyle.caption2.font)
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1143,15 +1131,15 @@ struct EmptyForecastView: View {
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: "cloud.slash")
-                .font(.title)
+                .font(AppFontStyle.title.font)
                 .foregroundColor(.secondary)
 
             Text("Forecast unavailable")
-                .font(.subheadline)
+                .font(AppFontStyle.subheadline.font)
                 .foregroundColor(.secondary)
 
             Text("Pull to refresh weather data")
-                .font(.caption)
+                .font(AppFontStyle.caption.font)
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)

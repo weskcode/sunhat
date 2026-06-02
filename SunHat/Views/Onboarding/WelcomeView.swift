@@ -115,7 +115,7 @@ struct WelcomeView: View {
             
             // Subtitle
             Text("Perfect conditions for your outdoor activities, gardening, and daily tasks")
-                .font(.title3)
+                .font(AppFontStyle.title3.font)
                 .fontWeight(.medium)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -315,11 +315,11 @@ struct WelcomeView: View {
             }) {
                 HStack(spacing: 12) {
                     Text("Get Started")
-                        .font(.title3)
+                        .font(AppFontStyle.title3.font)
                         .fontWeight(.semibold)
                     
                     Image(systemName: "arrow.right")
-                        .font(.title3)
+                        .font(AppFontStyle.title3.font)
                         .fontWeight(.medium)
                 }
                 .foregroundColor(.white)
@@ -362,21 +362,9 @@ struct WelcomeView: View {
     // MARK: - Helper Methods
     
     private func startOnboardingAnimation() {
-        withAnimation {
-            showHeroText = true
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            withAnimation {
-                showUseCases = true
-            }
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            withAnimation {
-                showActionButtons = true
-            }
-        }
+        showHeroText = true
+        showUseCases = true
+        showActionButtons = true
     }
     
     // MARK: - Computed Properties

@@ -308,7 +308,7 @@ struct ComprehensiveReminderCreationView: View {
             }) {
                 HStack(spacing: 12) {
                     Image(systemName: viewModel.selectedLocation.isCurrentLocation ? "location.fill" : "mappin.circle.fill")
-                        .font(.title3)
+                        .font(AppFontStyle.title3.font)
                         .foregroundColor(.blue)
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -448,7 +448,7 @@ struct ComprehensiveReminderCreationView: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     } else {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.title3)
+                            .font(AppFontStyle.title3.font)
                     }
                     
                     Text(viewModel.isSaving ? "Creating..." : "Create Reminder")
@@ -536,7 +536,7 @@ struct SectionHeaderView: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .font(.title3)
+                .font(AppFontStyle.title3.font)
                 .foregroundColor(.blue)
                 .frame(width: 24, height: 24)
             

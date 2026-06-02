@@ -11,6 +11,7 @@ import SwiftData
 import CoreLocation
 import CoreData
 import Combine
+import MapKit
 import os
 
 @MainActor
@@ -113,21 +114,19 @@ final class DashboardViewModel: ObservableObject {
             // Fetch weather data
             let weatherData = try await weatherService.fetchCurrentWeather(for: location, forceRefresh: true)
 
-            await MainActor.run {
-                updateWeatherData(weatherData)
-                loadActiveReminders()
-                loadWeatherAlerts()
-                lastUpdateTime = Date()
-                connectionStatus = .connected
-            }
+            // refreshWeatherData() is already isolated to @MainActor (inherited from the class),
+            // so no MainActor.run hop is needed — these assignments are safe as-is.
+            updateWeatherData(weatherData)
+            loadActiveReminders()
+            loadWeatherAlerts()
+            lastUpdateTime = Date()
+            connectionStatus = .connected
 
             logger.info("Weather data refresh completed successfully")
 
         } catch {
-            await MainActor.run {
-                errorMessage = "Weather data unavailable: \(error.localizedDescription)"
-                connectionStatus = .disconnected
-            }
+            errorMessage = "Weather data unavailable: \(error.localizedDescription)"
+            connectionStatus = .disconnected
             logger.error("Weather data refresh failed: \(error)")
         }
 
@@ -137,25 +136,28 @@ final class DashboardViewModel: ObservableObject {
     // MARK: - Private Methods
     
     private func setupBindings() {
-        // Weather service bindings
+        // Weather service bindings — use RunLoop.main as the Combine scheduler
+        // so Swift 6 can verify we're delivering on the @MainActor thread.
         weatherService.$isLoading
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.isLoading, on: self)
             .store(in: &cancellables)
-        
+
         weatherService.$lastUpdateTime
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.lastUpdateTime, on: self)
             .store(in: &cancellables)
-        
+
         weatherService.$connectionStatus
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.connectionStatus, on: self)
             .store(in: &cancellables)
-        
-        // Reactive updates when active reminders change
+
+        // Reactive updates when SwiftData model context saves.
+        // SwiftData surfaces changes via NSManagedObjectContextDidSave
+        // because it is backed by Core Data internally.
         NotificationCenter.default.publisher(for: .NSManagedObjectContextDidSave)
-            .debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
+            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .sink { [weak self] _ in
                 self?.loadActiveReminders()
             }
@@ -246,20 +248,17 @@ final class DashboardViewModel: ObservableObject {
     }
     
     private func updateLocationName(for location: CLLocation) async {
-        let geocoder = CLGeocoder()
-
+        guard let request = MKReverseGeocodingRequest(location: location) else {
+            currentLocationName = "Current Location"
+            return
+        }
         do {
-            let placemarks = try await geocoder.reverseGeocodeLocation(location)
-            if let placemark = placemarks.first {
-                let city = placemark.locality ?? ""
-                let state = placemark.administrativeArea ?? ""
-                if !city.isEmpty && !state.isEmpty {
-                    currentLocationName = "\(city), \(state)"
-                } else if !city.isEmpty {
-                    currentLocationName = city
-                } else {
-                    currentLocationName = "Current Location"
-                }
+            let mapItems = try await request.mapItems
+            if let mapItem = mapItems.first {
+                // iOS 26: MKMapItem.placemark is deprecated — use MKAddress instead.
+                // shortAddress gives a concise "City, State" style string.
+                let display = mapItem.address?.shortAddress ?? mapItem.name ?? ""
+                currentLocationName = display.isEmpty ? "Current Location" : display
             }
         } catch {
             logger.warning("Failed to reverse geocode location: \(error.localizedDescription)")

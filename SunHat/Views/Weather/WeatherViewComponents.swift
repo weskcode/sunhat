@@ -21,7 +21,7 @@ struct DetailedMetricCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: icon)
-                    .font(.title3)
+                    .font(AppFontStyle.title3.font)
                     .foregroundColor(color)
 
                 Spacer()
@@ -29,16 +29,16 @@ struct DetailedMetricCard: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(value)
-                    .font(.title3)
+                    .font(AppFontStyle.title3.font)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
 
                 Text(title)
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .foregroundColor(.secondary)
 
                 Text(description)
-                    .font(.caption2)
+                    .font(AppFontStyle.caption2.font)
                     .foregroundColor(.secondary)
                     .lineLimit(2)
             }
@@ -63,20 +63,20 @@ struct HourlyForecastCard: View {
         VStack(spacing: 8) {
             // Time
             Text(hourData.timeLabel)
-                .font(.caption)
+                .font(AppFontStyle.caption.font)
                 .fontWeight(.medium)
                 .foregroundColor(.secondary)
             
             // Weather icon
             Image(systemName: hourData.iconName)
-                .font(.title3)
+                .font(AppFontStyle.title3.font)
                 .foregroundStyle(hourData.iconColor)
                 .symbolRenderingMode(.hierarchical)
                 .frame(height: 24)
             
             // Temperature
             Text("\(hourData.temperature, specifier: "%.0f")°")
-                .font(.subheadline)
+                .font(AppFontStyle.subheadline.font)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
             
@@ -119,7 +119,7 @@ struct WeeklyForecastRow: View {
             
             // Weather icon
             Image(systemName: dayData.iconName)
-                .font(.title3)
+                .font(AppFontStyle.title3.font)
                 .foregroundStyle(dayData.iconColor)
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: 32)
@@ -136,11 +136,11 @@ struct WeeklyForecastRow: View {
             if dayData.precipitationProbability > 0 {
                 HStack(spacing: 4) {
                     Image(systemName: "drop.fill")
-                        .font(.caption)
+                        .font(AppFontStyle.caption.font)
                         .foregroundColor(.blue)
                     
                     Text("\(dayData.precipitationProbability)%")
-                        .font(.caption)
+                        .font(AppFontStyle.caption.font)
                         .foregroundColor(.blue)
                 }
                 .frame(width: 40)
@@ -201,13 +201,13 @@ struct AirQualityCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: "leaf.fill")
-                    .font(.title3)
+                    .font(AppFontStyle.title3.font)
                     .foregroundColor(aqiColor)
                 
                 Spacer()
                 
                 Text("AQI")
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .foregroundColor(.secondary)
             }
             
@@ -218,7 +218,7 @@ struct AirQualityCard: View {
                     .foregroundColor(.primary)
                 
                 Text(description)
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .fontWeight(.medium)
                     .foregroundColor(aqiColor)
                 
@@ -262,13 +262,13 @@ struct SunTimesCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: "sun.and.horizon.fill")
-                    .font(.title3)
+                    .font(AppFontStyle.title3.font)
                     .foregroundColor(.orange)
                 
                 Spacer()
                 
                 Text("Sun")
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .foregroundColor(.secondary)
             }
             
@@ -276,7 +276,7 @@ struct SunTimesCard: View {
                 if let sunrise = sunrise {
                     HStack(spacing: 6) {
                         Image(systemName: "sunrise.fill")
-                            .font(.caption)
+                            .font(AppFontStyle.caption.font)
                             .foregroundColor(.orange)
                         
                         Text(sunrise, style: .time)
@@ -289,7 +289,7 @@ struct SunTimesCard: View {
                 if let sunset = sunset {
                     HStack(spacing: 6) {
                         Image(systemName: "sunset.fill")
-                            .font(.caption)
+                            .font(AppFontStyle.caption.font)
                             .foregroundColor(.orange)
                         
                         Text(sunset, style: .time)
@@ -347,7 +347,7 @@ struct HistoricalComparisonRow: View {
                     .foregroundColor(.primary)
                 
                 Text(timeframe)
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .foregroundColor(.secondary)
             }
             
@@ -356,7 +356,7 @@ struct HistoricalComparisonRow: View {
             VStack(alignment: .trailing, spacing: 2) {
                 HStack(spacing: 4) {
                     Image(systemName: difference > 0 ? "arrow.up" : difference < 0 ? "arrow.down" : "minus")
-                        .font(.caption)
+                        .font(AppFontStyle.caption.font)
                         .foregroundColor(difference > 0 ? .red : difference < 0 ? .blue : .secondary)
                     
                     Text(differenceText)
@@ -366,7 +366,7 @@ struct HistoricalComparisonRow: View {
                 }
                 
                 Text("\(historicalTemp, specifier: "%.1f")° then")
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .foregroundColor(.secondary)
             }
         }
@@ -385,7 +385,7 @@ struct TriggerPredictionCard: View {
         HStack(spacing: 12) {
             // Reminder category icon
             Image(systemName: prediction.reminderIcon)
-                .font(.title3)
+                .font(AppFontStyle.title3.font)
                 .foregroundColor(.blue)
                 .frame(width: 28)
             
@@ -397,7 +397,7 @@ struct TriggerPredictionCard: View {
                     .lineLimit(1)
                 
                 Text(prediction.conditionDescription)
-                    .font(.caption)
+                    .font(AppFontStyle.caption.font)
                     .foregroundColor(.secondary)
                     .lineLimit(1)
                 
@@ -424,7 +424,7 @@ struct TriggerPredictionCard: View {
                         .frame(width: 8, height: 8)
                     
                     Text(likelihoodText)
-                        .font(.caption)
+                        .font(AppFontStyle.caption.font)
                         .fontWeight(.medium)
                         .foregroundColor(likelihoodColor)
                 }
@@ -433,7 +433,7 @@ struct TriggerPredictionCard: View {
                 if let targetTemp = prediction.targetTemperature {
                     let difference = prediction.currentTemperature - targetTemp
                     Text("\(difference > 0 ? "+" : "")\(difference, specifier: "%.0f")°")
-                        .font(.caption)
+                        .font(AppFontStyle.caption.font)
                         .foregroundColor(difference > 0 ? .red : .blue)
                 }
             }
@@ -481,7 +481,7 @@ struct EmptyTriggerPredictionsView: View {
                 .foregroundColor(.secondary)
             
             Text("Create weather-triggered reminders to see predictions here")
-                .font(.caption)
+                .font(AppFontStyle.caption.font)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }

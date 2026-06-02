@@ -19,8 +19,6 @@ struct SettingsView: View {
     @State private var showingLocationPicker = false
     @State private var showingManualLocationEntry = false
     @State private var showingNotificationInfo = false
-    @State private var showingNotificationPreferences = false
-    @State private var showingCloudKitInfo = false
     @State private var showingPrivacyPolicy = false
     @State private var showingAbout = false
     @State private var selectedLocation = ReminderLocation.currentLocation
@@ -29,28 +27,10 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                // Account/Storage Section - hidden until iCloud backup support is added
-                // accountSection
-
-                // Notification Preferences
                 notificationSection
-                
-                // Location Settings
                 locationSection
-                
-                // Temperature Units
                 temperatureSection
-                
-                // App Appearance
-                appearanceSection
-                
-                // Privacy Settings
                 privacySection
-                
-                // Support & Feedback
-                supportSection
-                
-                // About Section
                 aboutSection
             }
             .navigationTitle("Settings")
@@ -73,58 +53,11 @@ struct SettingsView: View {
             } message: {
                 Text("To receive weather-based reminders, please enable notifications in Settings.")
             }
-            .alert("Sync Status", isPresented: $showingCloudKitInfo) {
-                Button("OK", role: .cancel) { }
-            } message: {
-                Text(viewModel.syncStatusMessage)
-            }
             .sheet(isPresented: $showingPrivacyPolicy) {
                 PrivacyPolicyView()
             }
             .sheet(isPresented: $showingAbout) {
                 AboutView()
-            }
-        }
-    }
-    
-    // MARK: - Account Section
-    
-    private var accountSection: some View {
-        Section("Storage") {
-            // Sync status
-            HStack {
-                Label("Data Storage", systemImage: "internaldrive.fill")
-                    .foregroundColor(.blue)
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(viewModel.syncStatusColor)
-                            .frame(width: 8, height: 8)
-
-                        Text(viewModel.syncStatusText)
-                            .font(.callout)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                showingCloudKitInfo = true
-            }
-
-            // Storage info
-            HStack {
-                Label("Storage Mode", systemImage: "doc.fill")
-                    .foregroundColor(.green)
-
-                Spacer()
-
-                Text(viewModel.userAccountInfo)
-                    .font(.callout)
-                    .foregroundColor(.secondary)
             }
         }
     }
@@ -142,7 +75,7 @@ struct SettingsView: View {
                 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(viewModel.notificationStatusText)
-                        .font(.callout)
+                        .font(AppFontStyle.callout.font)
                         .foregroundColor(viewModel.notificationsEnabled ? .primary : .secondary)
                     
                     if !viewModel.notificationsEnabled {
@@ -156,22 +89,6 @@ struct SettingsView: View {
             }
             
             if viewModel.notificationsEnabled {
-                // Default notification timing
-                Picker("Default Timing", selection: $viewModel.defaultNotificationTiming) {
-                    ForEach(NotificationTiming.allCases, id: \.self) { timing in
-                        HStack {
-                            Image(systemName: timing.icon)
-                                .foregroundColor(.blue)
-                            Text(timing.displayName)
-                        }
-                        .tag(timing)
-                    }
-                }
-                .pickerStyle(.menu)
-                .onChange(of: viewModel.defaultNotificationTiming) {
-                    viewModel.handleNotificationTimingChange()
-                }
-                
                 // Quiet hours
                 Toggle("Quiet Hours", isOn: $viewModel.quietHoursEnabled)
                     .onChange(of: viewModel.quietHoursEnabled) {
@@ -194,24 +111,13 @@ struct SettingsView: View {
                     }
                 }
                 
-                // Weekend notifications
-                Toggle("Weekend Notifications", isOn: $viewModel.allowWeekendNotifications)
-                    .onChange(of: viewModel.allowWeekendNotifications) {
-                        viewModel.handleWeekendNotificationsChange()
-                    }
-                
                 // Maximum daily notifications
                 Stepper("Daily Limit: \(viewModel.maximumDailyNotifications)", 
                        value: $viewModel.maximumDailyNotifications, 
-                       in: 1...20)
+                       in: 1...10)
                     .onChange(of: viewModel.maximumDailyNotifications) {
                         viewModel.handleDailyLimitChange()
                     }
-                
-                // Advanced notification preferences
-                NavigationLink("Advanced Settings") {
-                    NotificationPreferencesView()
-                }
             }
         } header: {
             Text("Notifications")
@@ -235,7 +141,7 @@ struct SettingsView: View {
                 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(viewModel.locationStatusText)
-                        .font(.callout)
+                        .font(AppFontStyle.callout.font)
                         .foregroundColor(viewModel.locationEnabled ? .primary : .secondary)
                     
                     if !viewModel.locationEnabled {
@@ -254,17 +160,16 @@ struct SettingsView: View {
                     Text("Current Location")
                     Spacer()
                     Text(viewModel.currentLocationName)
-                        .font(.callout)
+                        .font(AppFontStyle.callout.font)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
 
-                // Set custom location
                 Button {
                     showingManualLocationEntry = true
                 } label: {
                     HStack {
-                        Label("Set Custom Location", systemImage: "pencil.circle.fill")
+                        Label("Choose City Manually", systemImage: "mappin.and.ellipse")
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.caption)
@@ -272,14 +177,6 @@ struct SettingsView: View {
                     }
                 }
                 .foregroundColor(.primary)
-
-                // Manage locations
-                NavigationLink("Manage Locations") {
-                    LocationManagementView()
-                }
-
-                // Background location updates
-                Toggle("Background Updates", isOn: $viewModel.backgroundLocationEnabled)
             }
         } header: {
             Text("Location")
@@ -338,7 +235,7 @@ struct SettingsView: View {
                     Text("Current Mode")
                     Spacer()
                     Text(colorScheme == .dark ? "Dark" : "Light")
-                        .font(.callout)
+                        .font(AppFontStyle.callout.font)
                         .foregroundColor(.secondary)
                 }
             }
@@ -353,10 +250,6 @@ struct SettingsView: View {
     
     private var privacySection: some View {
         Section("Privacy") {
-            NavigationLink("Data & Privacy") {
-                DataPrivacyView()
-            }
-            
             NavigationLink("Privacy Policy") {
                 PrivacyPolicyView()
             }
@@ -376,28 +269,6 @@ struct SettingsView: View {
         }
     }
     
-    // MARK: - Support Section
-    
-    private var supportSection: some View {
-        Section("Support & Feedback") {
-            Button("Send Feedback") {
-                viewModel.sendFeedback()
-            }
-            
-            Button("Contact Support") {
-                viewModel.contactSupport()
-            }
-            
-            Button("Rate SunHat") {
-                viewModel.rateApp()
-            }
-            
-            NavigationLink("Help & FAQ") {
-                HelpFAQView()
-            }
-        }
-    }
-    
     // MARK: - About Section
     
     private var aboutSection: some View {
@@ -406,7 +277,7 @@ struct SettingsView: View {
                 Text("Version")
                 Spacer()
                 Text(viewModel.appVersion)
-                    .font(.callout)
+                    .font(AppFontStyle.callout.font)
                     .foregroundColor(.secondary)
             }
             
@@ -414,7 +285,7 @@ struct SettingsView: View {
                 Text("Build")
                 Spacer()
                 Text(viewModel.buildNumber)
-                    .font(.callout)
+                    .font(AppFontStyle.callout.font)
                     .foregroundColor(.secondary)
             }
             

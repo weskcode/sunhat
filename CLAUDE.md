@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude when working with code in this repository.
 
 ## Project Overview
 
@@ -8,12 +8,12 @@ This is "SunHat" - a weather-triggered reminder iOS application. The app concept
 
 ## Development Environment
 
-- **Platform**: iOS 26.0+ (fully upgraded to iOS 26)
-- **Language**: Swift 6.0+ (latest as of December 2025)
-- **UI Framework**: SwiftUI 6.0 with iOS 26 enhancements
+- **Platform**: iOS 26.4 (upgraded March 2026)
+- **Language**: Swift 6.2 (Xcode 26.4, approachable concurrency)
+- **UI Framework**: SwiftUI with iOS 26.4 Liquid Glass design language
 - **Architecture**: MVVM (Model-View-ViewModel) pattern with improved dependency injection
 - **Data Layer**: SwiftData for local persistence with iOS 26 optimizations, CloudKit for sync
-- **Minimum Target**: iOS 26.0
+- **Minimum Target**: iOS 26.4
 - **Bundle ID**: org.wesley.sunhat
 
 ## Common Development Commands
@@ -27,7 +27,7 @@ open SunHat.xcodeproj
 xcodebuild -scheme SunHat -configuration Debug build
 
 # Run tests
-xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.4' test
 
 # Build for release
 xcodebuild -scheme SunHat -configuration Release build
@@ -36,34 +36,36 @@ xcodebuild -scheme SunHat -configuration Release build
 ### Testing Commands
 ```bash
 # Run unit tests only
-xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' -only-testing:SunHatTests test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.4' -only-testing:SunHatTests test
 
 # Run UI tests only
-xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' -only-testing:SunHatUITests test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.4' -only-testing:SunHatUITests test
 
 # Run specific test
-xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.0' -only-testing:SunHatTests/SunHatTests/testExample test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.4' -only-testing:SunHatTests/SunHatTests/testExample test
 ```
 
 ## Project Architecture
 
 ### Current Structure
 - **SunHatApp.swift**: Main app entry point with SwiftData ModelContainer setup
-- **ContentView.swift**: Primary UI with NavigationSplitView and basic CRUD operations
-- **Item.swift**: SwiftData model for basic timestamp storage
+- **ContentView.swift**: Root view — routes between splash, onboarding, and main tab bar
+- **MainTabView.swift**: iOS 26.4 tab bar with `.tabBarMinimizeBehavior(.onScrollDown)`
+- **Views/Components/GlassCard.swift**: Reusable Liquid Glass card/section components
 - **Tests**: Standard XCTest setup for unit and UI testing
 
-### Current Architecture (iOS 26 Implementation)
-The app has evolved into a sophisticated weather-triggered reminder system with:
+### Current Architecture (iOS 26.4 Implementation)
+The app is a sophisticated weather-triggered reminder system with:
 
 - **MVVM Pattern**: SwiftUI Views + ViewModels + SwiftData Models with improved dependency injection
-- **SwiftData + CloudKit**: Automatic cross-device sync for reminders with iOS 26 optimizations
+- **SwiftData**: Local persistence with iOS 26 optimizations (CloudKit sync prepared, currently disabled)
 - **Weather Integration**: Apple WeatherKit (primary) with iOS 26 APIs, OpenWeatherMap (backup)
 - **Background Processing**: iOS 26 BackgroundTasks framework for weather monitoring
-- **Modern Concurrency**: Swift 6.0 async/await, actors, structured concurrency with iOS 26 enhancements
+- **Modern Concurrency**: Swift 6.2 async/await, actors, structured concurrency with approachable concurrency
 - **Location Services**: iOS 26 CoreLocation with temporary location permission support
+- **Liquid Glass UI**: iOS 26.4 `.glassEffect()` throughout all card surfaces and interactive elements
 
-### Key Data Models (Planned)
+### Key Data Models
 ```swift
 @Model
 class WeatherReminder {
@@ -72,7 +74,6 @@ class WeatherReminder {
     var triggerCondition: TriggerCondition
     var isActive: Bool
     var location: LocationData?
-    // CloudKit sync automatic with SwiftData
 }
 
 @Model
@@ -87,51 +88,114 @@ class WeatherData {
 
 ## Development Standards
 
+### iOS 26.4 Liquid Glass UI
+
+**Always use `.glassEffect()` for card surfaces** — do NOT use `.regularMaterial` or `Color(.secondarySystemBackground)` as card backgrounds.
+
+```swift
+// ✅ iOS 26.4 — correct
+someView
+    .padding(20)
+    .glassEffect(in: .rect(cornerRadius: 20))
+
+// ✅ Tinted glass for secondary panels
+innerPanel
+    .padding(16)
+    .glassEffect(.regular.tint(.blue.opacity(0.05)), in: .rect(cornerRadius: 12))
+
+// ✅ Reusable GlassCard component
+GlassCard { content }
+GlassSection(title: "Weather", icon: "cloud.fill") { content }
+
+// ✅ Group glass elements for shared refraction
+GlassEffectContainer {
+    VStack { cardA; cardB }
+}
+
+// ❌ Outdated — do not use
+.background(RoundedRectangle(cornerRadius: 20).fill(.regularMaterial))
+```
+
+**Glass button styles**:
+```swift
+// System glass button
+Button("Action") { ... }
+    .buttonStyle(.glass)
+    .tint(.blue)
+
+// Glass FAB (floating action button)
+Button { ... } label: { Image(systemName: "plus") }
+    .buttonStyle(GlassFABStyle(tint: .blue))
+
+// Glass capsule tags
+label
+    .padding(.horizontal, 14).padding(.vertical, 8)
+    .glassEffect(.regular.tint(color.opacity(0.15)), in: .capsule)
+```
+
+**Tab bar** — use `.tabBarMinimizeBehavior(.onScrollDown)` on `TabView` to auto-hide on scroll.
+
 ### SwiftData Implementation
 - Use `@Model` for all persistent entities
 - Configure ModelContainer in app entry point (already done)
-- Leverage automatic CloudKit sync for cross-device functionality
+- CloudKit sync is prepared but disabled — enable via `ModelConfiguration(.cloud)` when ready
 - Use `@Query` in views for reactive data binding
 
-### Modern Swift Patterns (iOS 26)
+### Modern Swift Patterns (iOS 26.4)
 - **Concurrency**: Always use async/await, never completion handlers
-- **UI Safety**: Use `@MainActor` for UI-bound classes with iOS 26 improvements
-- **Actor Isolation**: Background actors for data processing with iOS 26 actor enhancements
+- **UI Safety**: Use `@MainActor` for UI-bound classes
+- **Actor Isolation**: Background actors for data processing
 - **Structured Concurrency**: TaskGroup and async let for parallel operations
-- **Observation Framework**: Use `@Observable` macro for state management
-- **Swift 6.0 Features**: Leverage macros, opaque types, and enhanced result builders
+- **Observation**: ViewModels currently use `ObservableObject` — migrate to `@Observable` as a future refactor (see migration note below)
+- **Swift 6.2 Features**: Approachable concurrency, enhanced result builders, macros
 
-### Weather Integration Architecture (iOS 26)
-- Primary: Apple WeatherKit for native integration with iOS 26 APIs
-  - Uses `WeatherService` protocol with `AppleWeatherKitAPI` implementation
-  - Supports iOS 26 enhanced weather data including extended forecasts and detailed conditions
-  - Implements `fetchExtendedWeatherData(for:)` for iOS 26+ features
-- Backup: OpenWeatherMap for reliability with updated API endpoints
-  - Maintains backward compatibility while supporting iOS 26 data structures
-- Cache with SwiftData for offline capability with iOS 26 optimizations
-  - Automatic CloudKit sync for cross-device weather data
-  - Efficient querying with `@Query` and predicates
-- Background refresh using iOS 26 BackgroundTasks framework
-  - Async/await patterns with `scheduleBackgroundRefreshAsync()`
-  - Proper error handling for iOS 26 background task failures
-- Support for new iOS 26 weather data types and condition mappings
-  - Enhanced weather condition detection for trigger logic
-  - Improved temperature and humidity data precision
+### ViewModel Migration Note (`@Observable`)
+All ViewModels currently use `ObservableObject` + `@Published` + Combine. They should be migrated to `@Observable` incrementally:
+
+```swift
+// Before
+@MainActor
+final class SomeViewModel: ObservableObject {
+    @Published var value: String = ""
+}
+// In view: @StateObject private var vm = SomeViewModel()
+
+// After (iOS 17+ / iOS 26 preferred)
+@MainActor @Observable
+final class SomeViewModel {
+    var value: String = ""  // automatically observed
+}
+// In view: @State private var vm = SomeViewModel()
+// Injected: @Environment(SomeViewModel.self) var vm
+```
+
+Priority order for migration:
+1. `UserPreferencesViewModel` (no Combine)
+2. `SettingsViewModel` (light Combine)
+3. `OnboardingCoordinator` (medium complexity)
+4. `DashboardViewModel` / `WeatherViewModel` (heavy Combine — keep Combine internally, expose via `@Observable`)
+
+### Weather Integration Architecture
+- Primary: Apple WeatherKit with iOS 26 APIs — `WeatherService` protocol + `AppleWeatherKitAPI`
+- Backup: OpenWeatherMap API
+- Cache with SwiftData for offline capability
+- Background refresh via iOS 26 BackgroundTasks (`BGContinuedProcessingTask`)
+- `async/await` throughout — no completion handlers
 
 ### Testing Requirements
-- Unit tests in `SunHatTests/` for business logic with iOS 26 specific test cases
-- UI tests in `SunHatUITests/` for user workflows including iOS 26 permission flows
-- Mock weather data for consistent testing with iOS 26 WeatherKit enhancements
-- Test both online and offline scenarios with iOS 26 background task patterns
-- Specific iOS 26 test coverage:
+- Unit tests in `SunHatTests/` for business logic
+- UI tests in `SunHatUITests/` for user workflows
+- Mock weather data for consistent testing
+- Test both online and offline scenarios
+- Specific iOS 26.4 test coverage:
   - Temporary location permission flows
-  - Background weather refresh with async/await patterns
-  - Enhanced WeatherKit data mapping and error handling
-  - Location accuracy authorization scenarios
+  - Background weather refresh with async/await
+  - Liquid Glass rendering (accessibility audit)
+  - Enhanced WeatherKit data mapping
 
 ## Feature Implementation Notes
 
-The app will implement sophisticated weather triggers including:
+The app implements sophisticated weather triggers including:
 - Temperature-based conditions (exact, ranges, "feels like")
 - Pattern recognition (consecutive days, averages)
 - Seasonal intelligence and transitions
@@ -140,33 +204,32 @@ The app will implement sophisticated weather triggers including:
 
 ## Performance Considerations
 
-- **Battery Optimization**: Intelligent background refresh intervals
+- **Battery Optimization**: Intelligent background refresh intervals (5-minute minimum)
 - **Memory Management**: Efficient SwiftData queries with predicates
 - **Network Efficiency**: Request batching and response caching
-- **UI Responsiveness**: Background processing with main thread UI updates
+- **UI Responsiveness**: Background processing with `@MainActor` UI updates
+- **Liquid Glass Performance**: Group related glass surfaces in `GlassEffectContainer` for shared GPU compositing
 
 ## Privacy Requirements
 
 - **Location Privacy**: Optional precise location, city-level default with iOS 26 temporary permission support
-- **Data Minimization**: Store only necessary weather data locally with iOS 26 location accuracy reduction options
+- **Data Minimization**: Store only necessary weather data locally
 - **No Data Sharing**: Zero personal weather data shared externally
-- **Compliance**: GDPR and CCPA ready implementation with iOS 26 privacy enhancements
-
-## Documentation
-
-For detailed migration information, see the [iOS 26 Migration Guide](SunHat/Documentation/iOS-26-Migration-Guide.md) which contains:
-- Complete list of all changes made during the iOS 26 upgrade
-- Breaking changes and migration strategies
-- Testing strategy and validation approach
-- Performance considerations for iOS 26
+- **Compliance**: GDPR and CCPA ready implementation
 
 ## Current Implementation Status
 
-As of December 2025, the app has been successfully upgraded to iOS 26 with:
+As of March 2026 (iOS 26.4 upgrade):
+- ✅ Deployment target: iOS 26.4, Swift 6.2
+- ✅ **Liquid Glass**: All card surfaces use `.glassEffect()` (no more `.regularMaterial`)
+- ✅ **Glass tab bar**: `MainTabView` with `.tabBarMinimizeBehavior(.onScrollDown)`
+- ✅ **Glass FAB**: Dashboard quick-create button uses `GlassFABStyle`
+- ✅ **Glass buttons**: Welcome screen "Get Started" uses `.buttonStyle(.glass)`
+- ✅ **Glass tags**: Onboarding activity tags use capsule glass tints
+- ✅ **GlassCard component**: Reusable `GlassCard`, `GlassSection`, `GlassMetricBadge`
 - ✅ Complete location services integration with iOS 26 APIs
 - ✅ Enhanced WeatherKit support with extended weather data
 - ✅ Background weather updates using iOS 26 async patterns
 - ✅ Full test coverage including iOS 26 specific scenarios
-- ✅ Comprehensive documentation of all changes
-
-This project represents a fully upgraded iOS 26 weather-intelligent reminder system following modern iOS development patterns and Apple's design guidelines as of December 2025. The app leverages the latest iOS 26 APIs, Swift 6.0 features, and enhanced architecture patterns for optimal performance and user experience.
+- 🔲 ViewModel migration from `ObservableObject` → `@Observable` (future refactor)
+- 🔲 CloudKit sync re-enablement (prepared, needs provisioning)

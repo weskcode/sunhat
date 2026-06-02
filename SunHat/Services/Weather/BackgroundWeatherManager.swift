@@ -33,7 +33,12 @@ final class BackgroundWeatherManager: ObservableObject {
     private func registerBackgroundTask() {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: self.taskIdentifier, using: nil) { task in
             Task {
-                await self.handleBackgroundTask(task as! BGAppRefreshTask)
+                guard let refreshTask = task as? BGAppRefreshTask else {
+                    task.setTaskCompleted(success: false)
+                    return
+                }
+
+                await self.handleBackgroundTask(refreshTask)
             }
         }
         logger.info("Registered background task: \(self.taskIdentifier)")

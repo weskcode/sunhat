@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import SwiftData
 import CoreLocation
 
 struct StreamlinedReminderCreationView: View {
@@ -17,10 +18,7 @@ struct StreamlinedReminderCreationView: View {
 
     var onReminderCreated: (() -> Void)?
 
-    @State private var showCelebration = false
     @State private var showLocationPicker = false
-    @State private var contentOpacity: Double = 0
-    @State private var iconPulse = false
 
     var body: some View {
         ZStack {
@@ -35,7 +33,7 @@ struct StreamlinedReminderCreationView: View {
                         Spacer()
                         Button(action: { dismiss() }) {
                             Image(systemName: "xmark.circle.fill")
-                                .font(.title2)
+                                .font(AppFontStyle.title2.font)
                                 .foregroundStyle(.secondary)
                                 .symbolRenderingMode(.hierarchical)
                         }
@@ -54,12 +52,6 @@ struct StreamlinedReminderCreationView: View {
                         VStack(spacing: 20) {
                             // Title field
                             titleField
-
-                            // Color picker
-                            colorPickerSection
-
-                            // Icon picker section
-                            iconPickerSection
 
                             // Notes field
                             notesField
@@ -86,16 +78,8 @@ struct StreamlinedReminderCreationView: View {
                         Spacer(minLength: 40)
                     }
                 }
-                .opacity(contentOpacity)
             }
             .scrollIndicators(.hidden)
-
-            // Celebration overlay
-            if showCelebration {
-                CelebrationView()
-                    .transition(.opacity)
-                    .zIndex(100)
-            }
         }
         .sheet(isPresented: $showLocationPicker) {
             ManualLocationEntryView(
@@ -113,16 +97,9 @@ struct StreamlinedReminderCreationView: View {
             viewModel.configure(modelContext: modelContext)
             viewModel.initializeDefaultLocation()
             viewModel.loadWeatherForecast()
-
-            // Animate content in
-            withAnimation(.easeOut(duration: 0.6)) {
-                contentOpacity = 1
-            }
-
-            // Start icon pulse
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                iconPulse = true
-            }
+        }
+        .onChange(of: viewModel.customReminder.title) { _, newTitle in
+            viewModel.applyActivityDefaults(from: newTitle)
         }
     }
 
@@ -165,8 +142,6 @@ struct StreamlinedReminderCreationView: View {
                 Image(systemName: viewModel.customReminder.selectedIcon)
                     .font(.system(size: 45, weight: .medium))
                     .foregroundColor(.white)
-                    .scaleEffect(iconPulse ? 1.0 : 0.95)
-                    .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: iconPulse)
             }
             .accessibilityHidden(true)
         }
@@ -193,172 +168,6 @@ struct StreamlinedReminderCreationView: View {
                 .background(liquidGlassBackground)
                 .accessibilityLabel("Reminder notes")
         }
-    }
-
-    // MARK: - Color Picker Section
-
-    private var colorPickerSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Color")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .padding(.horizontal, 4)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(CustomReminder.availableColors) { reminderColor in
-                        colorButton(for: reminderColor)
-                    }
-                }
-                .padding(.horizontal, 4)
-                .padding(.vertical, 2)
-            }
-        }
-    }
-
-    private func colorButton(for reminderColor: ReminderColor) -> some View {
-        Button {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                viewModel.customReminder.selectedColor = reminderColor.color
-            }
-
-            let impact = UIImpactFeedbackGenerator(style: .light)
-            impact.impactOccurred()
-        } label: {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                reminderColor.color.opacity(0.8),
-                                reminderColor.color
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 50, height: 50)
-                    .overlay(
-                        Circle()
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.4),
-                                        Color.white.opacity(0.1)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 2
-                            )
-                    )
-                    .shadow(color: reminderColor.color.opacity(0.3), radius: 8, x: 0, y: 4)
-
-                if viewModel.customReminder.selectedColor == reminderColor.color {
-                    Image(systemName: "checkmark")
-                        .font(.body)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                }
-
-                if viewModel.customReminder.selectedColor == reminderColor.color {
-                    Circle()
-                        .stroke(reminderColor.color, lineWidth: 3)
-                        .frame(width: 60, height: 60)
-                }
-            }
-        }
-        .buttonStyle(PlainButtonStyle())
-        .accessibilityLabel(reminderColor.name)
-        .accessibilityAddTraits(viewModel.customReminder.selectedColor == reminderColor.color ? .isSelected : [])
-    }
-
-    // MARK: - Icon Picker Section
-
-    private var iconPickerSection: some View {
-        let icons = CustomReminder.availableIcons
-        let rowSize = 2
-        let rows: [[String]] = stride(from: 0, to: icons.count, by: rowSize).map {
-            Array(icons[$0..<min($0 + rowSize, icons.count)])
-        }
-
-        return VStack(alignment: .leading, spacing: 12) {
-            Text("Icon")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .padding(.horizontal, 4)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(Array(rows.enumerated()), id: \.offset) { _, column in
-                        VStack(spacing: 10) {
-                            ForEach(column, id: \.self) { icon in
-                                iconButton(for: icon)
-                            }
-                        }
-                    }
-                }
-                .padding(.horizontal, 4)
-                .padding(.vertical, 2)
-            }
-        }
-    }
-
-    private func iconButton(for icon: String) -> some View {
-        Button {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                viewModel.customReminder.selectedIcon = icon
-            }
-
-            let impact = UIImpactFeedbackGenerator(style: .light)
-            impact.impactOccurred()
-        } label: {
-            ZStack {
-                Circle()
-                    .fill(
-                        viewModel.customReminder.selectedIcon == icon
-                            ? LinearGradient(
-                                colors: [
-                                    viewModel.customReminder.selectedColor.opacity(0.3),
-                                    viewModel.customReminder.selectedColor.opacity(0.2)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                            : LinearGradient(
-                                colors: [
-                                    Color(.tertiarySystemBackground),
-                                    Color(.tertiarySystemBackground)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                    )
-                    .overlay(
-                        Circle()
-                            .stroke(
-                                viewModel.customReminder.selectedIcon == icon
-                                    ? viewModel.customReminder.selectedColor
-                                    : Color.clear,
-                                lineWidth: 2
-                            )
-                    )
-
-                Image(systemName: icon)
-                    .font(.body)
-                    .foregroundColor(
-                        viewModel.customReminder.selectedIcon == icon
-                            ? viewModel.customReminder.selectedColor
-                            : .secondary
-                    )
-            }
-            .frame(width: 50, height: 50)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .accessibilityLabel(icon)
-        .accessibilityAddTraits(viewModel.customReminder.selectedIcon == icon ? .isSelected : [])
     }
 
     // MARK: - Location Selector
@@ -435,7 +244,7 @@ struct StreamlinedReminderCreationView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("74°")
-                        .font(.title2)
+                        .font(AppFontStyle.title2.font)
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
 
@@ -921,20 +730,8 @@ struct StreamlinedReminderCreationView: View {
 
         viewModel.createReminder()
 
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-            showCelebration = true
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-            withAnimation(.easeInOut(duration: 0.8)) {
-                showCelebration = false
-            }
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                onReminderCreated?()
-                dismiss()
-            }
-        }
+        onReminderCreated?()
+        dismiss()
     }
 
     // MARK: - Liquid Glass Background
