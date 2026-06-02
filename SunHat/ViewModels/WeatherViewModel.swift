@@ -52,7 +52,7 @@ final class WeatherViewModel: ObservableObject {
 
     // MARK: - Private Properties
     private var weatherModelActor: WeatherModelActor?
-    private var weatherService: WeatherService
+    private var weatherService: any WeatherProviding
     private var locationManager: LocationManaging
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "WeatherVM")
     private var cancellables = Set<AnyCancellable>()
@@ -66,7 +66,7 @@ final class WeatherViewModel: ObservableObject {
     // MARK: - Initialization
     init(
         modelContainer: ModelContainer,
-        weatherService: WeatherService,
+        weatherService: any WeatherProviding,
         locationManager: LocationManaging
     ) {
         self.weatherModelActor = WeatherModelActor(modelContainer: modelContainer)
@@ -104,10 +104,10 @@ final class WeatherViewModel: ObservableObject {
 
     // MARK: - Service Bindings
     private func bindService() {
-        weatherService.$isLoading
+        weatherService.isLoadingPublisher
             .receive(on: DispatchQueue.main)
             .assign(to: &$isLoading)
-        weatherService.$lastUpdateTime
+        weatherService.lastUpdateTimePublisher
             .receive(on: DispatchQueue.main)
             .assign(to: &$lastUpdateTime)
     }
@@ -460,4 +460,3 @@ final class WeatherViewModel: ObservableObject {
         return nil
     }
 }
-

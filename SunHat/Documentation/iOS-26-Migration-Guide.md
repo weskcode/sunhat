@@ -10,8 +10,8 @@ This guide documents the comprehensive upgrade of the SunHat weather-based remin
 
 #### iOS Deployment Target
 - **File:** `SunHat.xcodeproj/project.pbxproj`
-- **Change:** Updated `IPHONEOS_DEPLOYMENT_TARGET` from `18.5` to `26.0` in all build configurations
-- **Impact:** Ensures app targets iOS 26 minimum and can use iOS 26 APIs
+- **Change:** Updated `IPHONEOS_DEPLOYMENT_TARGET` from `18.5` to `26.4` in all build configurations
+- **Impact:** Ensures app targets iOS 26.4 minimum and can use iOS 26 APIs
 
 #### Info.plist Updates
 - **File:** `SunHat/Info.plist`
@@ -59,7 +59,7 @@ This guide documents the comprehensive upgrade of the SunHat weather-based remin
   - Maintained backward compatibility with existing WeatherKit APIs
 
 #### SwiftData Compatibility
-- **File:** `SunHat/SunHatApp.swift`
+- **File:** `SunHat/sunhat.swift`
 - **Changes:**
   - Updated SwiftData schema for iOS 26 compatibility
   - Added iOS 26 specific model configurations:
@@ -73,20 +73,20 @@ This guide documents the comprehensive upgrade of the SunHat weather-based remin
 - **Changes:**
   - Standardized ViewModel initialization patterns
   - Improved error handling consistency
-  - Added proper dependency injection throughout
+  - Added targeted dependency seams for weather, location, and settings-opening actions
   - Created `LocationPermissionManagerAdapter` for better separation of concerns
 
 #### Service Layer Updates
 - **Files:** All Service classes
 - **Changes:**
-  - Added proper protocol definitions (already existed as `WeatherAPI`)
+  - Added proper protocol definitions such as `WeatherAPI`, `WeatherProviding`, `LocationManaging`, and `SettingsOpening`
   - Improved actor isolation patterns
   - Standardized logging approach using `Logger` throughout
 
 ### Testing and Validation
 
 #### Current Verification Snapshot
-- `SunHatTests` passed on June 2, 2026: `127 passed, 0 failed`.
+- `SunHatTests` passed on June 2, 2026: `131 passed, 0 failed`.
 - Verification used the existing configured iPhone 17 Pro simulator only.
 - UI tests still need a stable XCTest run on that same simulator.
 - Swift Testing is used for new unit and integration tests; UI tests remain XCTest-based.
@@ -187,7 +187,7 @@ This guide documents the comprehensive upgrade of the SunHat weather-based remin
 - **Enhanced Weather Visualizations:** Use iOS 26 weather visualization APIs
 - **Improved Notifications:** Adopt iOS 26 notification enhancements
 - **WidgetKit/watchOS Targets:** Add actual targets only if they remain in scope. Keep them minimal: next ready reminder plus an unavailable state.
-- **Observation Migration:** Incrementally migrate low-risk ViewModels from `ObservableObject` to `@Observable`.
+- **Observation Migration:** `UserPreferencesViewModel` is migrated; continue incrementally with other low-risk ViewModels.
 
 ## Success Criteria
 
@@ -221,7 +221,7 @@ This guide documents the comprehensive upgrade of the SunHat weather-based remin
 5. **Testing**
    - [x] Update unit tests for iOS 26
    - [x] Update UI tests for iOS 26
-   - [x] Add Swift Testing coverage for activity defaults and compact next-ready reminder selection
+   - [x] Add Swift Testing coverage for activity defaults, compact next-ready reminder selection, and weather/settings dependency seams
    - [ ] Re-run UI smoke tests on the single configured simulator
 
 6. **Finalization**

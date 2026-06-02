@@ -50,7 +50,7 @@ The wrappers should continue to resolve to system fonts, not custom font files.
 
 ## Testing Checklist
 
-- [x] Unit test build passed through `SunHatTests` on June 2, 2026.
+- [x] Unit test build passed through `SunHatTests` on June 2, 2026: `131 passed, 0 failed`.
 - [ ] Visual QA all major screens at default Dynamic Type.
 - [ ] Visual QA all major screens at accessibility Dynamic Type.
 - [ ] Confirm no text clips in buttons, empty states, compact reminder surfaces, or reminder rows.

@@ -9,34 +9,37 @@ import SwiftUI
 import SwiftData
 
 struct MainTabView: View {
-    @State private var selectedTab = 0
+    @State private var selectedTab: AppTab = .home
+
+    private enum AppTab: Hashable {
+        case home
+        case reminders
+        case settings
+    }
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Home Tab - Consolidated home and weather view
             DashboardView()
                 .tabItem {
-                    Label("Home", systemImage: selectedTab == 0 ? "house.fill" : "house")
+                    Label("Home", systemImage: selectedTab == .home ? "house.fill" : "house")
                 }
-                .tag(0)
+                .tag(AppTab.home)
 
-            // All Reminders Tab
             NavigationStack {
                 AllRemindersView()
             }
             .tabItem {
-                Label("Reminders", systemImage: selectedTab == 1 ? "list.bullet.rectangle.fill" : "list.bullet.rectangle")
+                Label("Reminders", systemImage: selectedTab == .reminders ? "list.bullet.rectangle.fill" : "list.bullet.rectangle")
             }
-            .tag(1)
+            .tag(AppTab.reminders)
 
-            // Settings Tab
             NavigationStack {
                 SettingsView()
             }
             .tabItem {
-                Label("Settings", systemImage: selectedTab == 2 ? "gearshape.fill" : "gearshape")
+                Label("Settings", systemImage: selectedTab == .settings ? "gearshape.fill" : "gearshape")
             }
-            .tag(2)
+            .tag(AppTab.settings)
         }
         .tint(Color.accentColor)
     }

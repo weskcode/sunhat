@@ -50,11 +50,13 @@ final class SettingsViewModel: NSObject, ObservableObject {
     private var modelContext: ModelContext?
     private var userPreferences: UserPreferences?
     private let locationManager = CLLocationManager()
+    private let settingsOpener: SettingsOpening
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "SettingsViewModel")
     
     // MARK: - Initialization
     
-    override init() {
+    init(settingsOpener: SettingsOpening = ApplicationSettingsOpener()) {
+        self.settingsOpener = settingsOpener
         super.init()
         setupLocationManager()
         setupInitialValues()
@@ -270,9 +272,7 @@ final class SettingsViewModel: NSObject, ObservableObject {
         """
         
         if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&body=\(body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
-            Task { @MainActor in
-                UIApplication.shared.open(url)
-            }
+            settingsOpener.open(url)
         }
     }
     
@@ -281,9 +281,7 @@ final class SettingsViewModel: NSObject, ObservableObject {
         let subject = "SunHat Support Request"
         
         if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
-            Task { @MainActor in
-                UIApplication.shared.open(url)
-            }
+            settingsOpener.open(url)
         }
     }
     
@@ -301,16 +299,12 @@ final class SettingsViewModel: NSObject, ObservableObject {
     }
     
     func openTermsOfService() {
-        Task { @MainActor in
-            UIApplication.shared.open(AppSupportLinks.termsOfServiceURL)
-        }
+        settingsOpener.open(AppSupportLinks.termsOfServiceURL)
     }
     
     func openAppSettings() {
         if let url = URL(string: UIApplication.openSettingsURLString) {
-            Task { @MainActor in
-                UIApplication.shared.open(url)
-            }
+            settingsOpener.open(url)
         }
     }
     

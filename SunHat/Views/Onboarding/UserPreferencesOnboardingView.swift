@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 struct UserPreferencesOnboardingView: View {
-    @StateObject private var viewModel = UserPreferencesViewModel()
+    @State private var viewModel = UserPreferencesViewModel()
     @EnvironmentObject private var coordinator: OnboardingCoordinator
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -242,19 +242,17 @@ struct UserPreferencesOnboardingView: View {
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
         
-        Task {
+        Task { @MainActor in
             await viewModel.savePreferences(to: modelContext)
-            
-            DispatchQueue.main.async {
-                isSaving = false
-                
-                // Success haptic
-                let notificationFeedback = UINotificationFeedbackGenerator()
-                notificationFeedback.notificationOccurred(.success)
-                
-                // Move to completion step
-                coordinator.nextStep()
-            }
+
+            isSaving = false
+
+            // Success haptic
+            let notificationFeedback = UINotificationFeedbackGenerator()
+            notificationFeedback.notificationOccurred(.success)
+
+            // Move to completion step
+            coordinator.nextStep()
         }
     }
     

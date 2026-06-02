@@ -8,15 +8,15 @@
 import Foundation
 import SwiftUI
 import SwiftData
-import Combine
 import os
 
 @MainActor
-final class UserPreferencesViewModel: ObservableObject {
-    @Published var preferences = UserPreferences()
-    @Published var selectedActivityInterests: Set<ActivityInterest> = []
-    @Published var isSaving = false
-    @Published var saveError: String?
+@Observable
+final class UserPreferencesViewModel {
+    var preferences = UserPreferences()
+    var selectedActivityInterests: Set<ActivityInterest> = []
+    var isSaving = false
+    var saveError: String?
     
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "UserPreferencesViewModel")
 

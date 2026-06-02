@@ -10,7 +10,7 @@
 ## Current Architecture
 
 - UI stack: SwiftUI, with some UIKit system APIs used for app settings, mail links, background tasks, and notifications.
-- Presentation: mostly `View` + `ObservableObject` ViewModel.
+- Presentation: mostly `View` + ViewModel. Some lightweight ViewModels now use Observation, while Combine-backed ViewModels remain `ObservableObject`.
 - Persistence: SwiftData models under `Models/`.
 - Side effects: weather, location, background tasks, trigger evaluation, notifications, and settings actions live under `Services/` and `ViewModels/`.
 - Navigation: primary SwiftUI views now use `NavigationStack` and modern toolbar placements.
@@ -18,7 +18,7 @@
 
 ## Current Verification
 
-- Unit tests: `SunHatTests` passed on the existing configured iPhone 17 Pro simulator (`127 passed, 0 failed`) on June 2, 2026.
+- Unit tests: `SunHatTests` passed on the existing configured iPhone 17 Pro simulator (`131 passed, 0 failed`) on June 2, 2026.
 - Compile-only simulator build passed with no warnings or errors after the latest architecture cleanup on June 2, 2026.
 - UI tests: not rerun after the latest changes. Swift Testing does not support UI tests, and the previous UI-test runner timed out in Xcode launch setup.
 - Simulator policy: use the single configured simulator only; avoid cloning or launching extra simulators for routine validation.
@@ -104,6 +104,10 @@
 - Added `Views/Dashboard/DashboardComponents.swift`.
 - Added `Models/WeatherCondition+Display.swift`.
 - Added `Services/Location/LocationManaging.swift`.
+- Added `Services/Weather/WeatherProviding.swift`.
+- Added `Services/Settings/SettingsOpening.swift`.
+- Added Swift Testing coverage for the new weather/settings dependency seams.
+- Migrated `UserPreferencesViewModel` to `@Observable`.
 - Removed the dead commented legacy implementation from `WeatherViewModel.swift`.
 
 ## Target Structure
@@ -178,10 +182,10 @@ Do not jump to the long-term structure in one commit. Move feature-by-feature af
    - [ ] Keep raw weather data and business rules out of view bodies.
 
 4. **Introduce dependency protocols at ViewModel boundaries**
-   - [ ] `WeatherProviding`
+   - [x] `WeatherProviding`
    - [x] `LocationManaging` boundary for `WeatherViewModel`
    - [ ] `NotificationPermissionProviding`
-   - [ ] `SettingsOpening`
+   - [x] `SettingsOpening`
    - [ ] Keep live implementations in services.
 
 5. **Add a composition root**
@@ -189,12 +193,14 @@ Do not jump to the long-term structure in one commit. Move feature-by-feature af
    - [ ] Stop creating service singletons from leaf views.
 
 6. **Move low-risk ViewModels to Observation**
-   - [ ] Start with `UserPreferencesViewModel`, `SettingsViewModel`, and `LocationPickerViewModel`.
+   - [x] Start with `UserPreferencesViewModel`.
+   - [ ] Continue with `SettingsViewModel` and `LocationPickerViewModel`.
    - [ ] Keep Combine-heavy services on `ObservableObject` until their dependencies are isolated.
 
 7. **Performance pass**
    - [ ] Remove filtering/sorting/formatting from large view bodies.
    - [ ] Replace remaining delayed `DispatchQueue` animation flows with cancellable task-based state.
+     - Completed for the root splash delay and tutorial hint delay.
    - [ ] Use Instruments on dashboard scrolling, reminder creation, weather refresh, and onboarding.
 
 ## Product Scope Cleanup From Recent Chat
@@ -256,9 +262,10 @@ Completed cleanup batches:
 - Split `FirstReminderCreationComponents.swift` into `Views/Reminders/Creation/`.
 - Simplified creation/navigation scope around the streamlined reminder creator.
 - Added minimal compact reminder snapshot/view support for future widget/watch surfaces.
+- Added `WeatherProviding`, `LocationManaging`, and `SettingsOpening` dependency seams.
+- Migrated `UserPreferencesViewModel` to Observation.
 
 Verification:
 
-- Simulator build passed after the detailed-reminder split with zero warnings.
-- Simulator build passed after the first-reminder creation split with zero warnings.
-- `SunHatTests` passed after the product simplification and compact-surface tests: `127 passed, 0 failed`.
+- Latest compile-only simulator build passed with zero warnings or errors.
+- Latest `SunHatTests` run passed: `131 passed, 0 failed`.

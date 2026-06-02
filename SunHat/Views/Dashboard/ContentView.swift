@@ -31,11 +31,16 @@ struct ContentView: View {
                     .transition(.opacity)
             }
         }
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+        .task {
+            do {
+                try await Task.sleep(for: .seconds(1.5))
                 withAnimation(.easeInOut(duration: 0.4)) {
                     showSplash = false
                 }
+            } catch is CancellationError {
+                // View disappeared before the splash finished.
+            } catch {
+                showSplash = false
             }
         }
     }
