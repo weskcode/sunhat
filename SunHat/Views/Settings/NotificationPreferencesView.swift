@@ -8,7 +8,6 @@
 import SwiftUI
 import SwiftData
 import UserNotifications
-import AVFoundation
 
 struct NotificationPreferencesView: View {
     @Environment(\.dismiss) private var dismiss
@@ -19,7 +18,7 @@ struct NotificationPreferencesView: View {
     @State private var selectedReminderType: String = "general"
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 // Quiet Hours Section
                 quietHoursSection
@@ -45,13 +44,13 @@ struct NotificationPreferencesView: View {
             .navigationTitle("Notification Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") {
                         Task {
                             await viewModel.saveSettings()
@@ -396,61 +395,52 @@ struct SoundPickerView: View {
     let onSoundSelected: (NotificationSound) -> Void
     
     @Environment(\.dismiss) private var dismiss
-    @State private var playingSound: NotificationSound?
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 SwiftUI.ForEach(NotificationSound.allCases, id: \.self) { sound in
-                    HStack {
-                        Image(systemName: sound.icon)
-                            .foregroundColor(.blue)
-                            .frame(width: 24)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(sound.displayName)
-                                .font(.body)
-                            
-                            if sound == .none {
-                                Text("No sound")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            } else if sound == .default {
-                                Text("System default")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                        
-                        Spacer()
-                        
-                        if sound != .none && sound != .default {
-                            Button(action: {
-                                playSound(sound)
-                            }) {
-                                Image(systemName: playingSound == sound ? "stop.circle.fill" : "play.circle")
-                                    .foregroundColor(.blue)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                        }
-                        
-                        if selectedSound == sound {
-                            Image(systemName: "checkmark")
-                                .foregroundColor(.blue)
-                                .fontWeight(.semibold)
-                        }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
+                    Button {
                         onSoundSelected(sound)
                         dismiss()
+                    } label: {
+                        HStack {
+                            Image(systemName: sound.icon)
+                                .foregroundColor(.blue)
+                                .frame(width: 24)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(sound.displayName)
+                                    .font(.body)
+                                    .foregroundColor(.primary)
+
+                                if sound == .none {
+                                    Text("No sound")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                } else if sound == .default {
+                                    Text("System default")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+
+                            Spacer()
+
+                            if selectedSound == sound {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.blue)
+                                    .fontWeight(.semibold)
+                            }
+                        }
                     }
+                    .buttonStyle(.plain)
                 }
             }
             .navigationTitle("Select Sound")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
@@ -459,29 +449,6 @@ struct SoundPickerView: View {
         }
     }
     
-    private func playSound(_ sound: NotificationSound) {
-        if playingSound == sound {
-            // Stop playing
-            playingSound = nil
-            AudioServicesDisposeSystemSoundID(1000)
-        } else {
-            // Start playing
-            playingSound = sound
-            if sound.fileName != nil {
-                // Play custom sound file
-                AudioServicesPlaySystemSound(1007) // Placeholder system sound
-            } else {
-                AudioServicesPlaySystemSound(1007) // Default notification sound
-            }
-            
-            // Auto-stop after 2 seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                if playingSound == sound {
-                    playingSound = nil
-                }
-            }
-        }
-    }
 }
 
 // MARK: - Preview

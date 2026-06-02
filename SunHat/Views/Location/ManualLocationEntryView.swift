@@ -28,7 +28,7 @@ struct ManualLocationEntryView: View {
     @State private var searchWorkItem: DispatchWorkItem?
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 // Background
                 backgroundGradient
@@ -73,7 +73,7 @@ struct ManualLocationEntryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismissView()
                     }
@@ -699,8 +699,7 @@ private let popularCities: [PopularCity] = [
 // MARK: - Preview
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         Text("Manual Location Entry View")
     }
 }
-

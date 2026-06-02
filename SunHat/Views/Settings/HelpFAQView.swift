@@ -124,7 +124,7 @@ struct HelpFAQView: View {
     }
 
     private func sendSupportEmail() {
-        let email = "placeholder@example.com"
+        let email = AppSupportLinks.supportEmail
         let subject = "SunHat Support Request"
 
         if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {

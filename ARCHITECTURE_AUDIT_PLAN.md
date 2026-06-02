@@ -13,12 +13,13 @@
 - Presentation: mostly `View` + `ObservableObject` ViewModel.
 - Persistence: SwiftData models under `Models/`.
 - Side effects: weather, location, background tasks, trigger evaluation, notifications, and settings actions live under `Services/` and `ViewModels/`.
-- Navigation: currently mixed. Some screens use `NavigationStack`, while remaining legacy sheets still use `NavigationView` and old toolbar placements.
+- Navigation: primary SwiftUI views now use `NavigationStack` and modern toolbar placements.
 - Async model: mixed `async`/`await`, Combine, `Task`, and remaining `DispatchQueue.main.asyncAfter` in animation and delayed UI flows.
 
 ## Current Verification
 
 - Unit tests: `SunHatTests` passed on the existing configured iPhone 17 Pro simulator (`127 passed, 0 failed`) on June 2, 2026.
+- Compile-only simulator build passed with no warnings or errors after the latest architecture cleanup on June 2, 2026.
 - UI tests: not rerun after the latest changes. Swift Testing does not support UI tests, and the previous UI-test runner timed out in Xcode launch setup.
 - Simulator policy: use the single configured simulator only; avoid cloning or launching extra simulators for routine validation.
 
@@ -38,8 +39,8 @@
    - Recommended direction: introduce protocol-based dependencies in ViewModels first, then move app wiring into a composition root.
 
 4. **Boolean presentation state**
-   - Settings and creation flows have many independent booleans for sheets and alerts.
-   - Recommended direction: replace with `enum ActiveSheet: Identifiable` and `enum ActiveAlert`.
+   - Major multi-sheet screens have been converted to item-driven presentation.
+   - Recommended direction: continue replacing booleans only where selected model state or impossible combinations can still occur, and use typed alert state for complex alerts.
 
 5. **Mixed async orchestration**
    - Some delayed work now uses cancellable tasks, but onboarding and animation flows still use `DispatchQueue.main.asyncAfter`.
@@ -47,7 +48,8 @@
 
 6. **Large ViewModels and large view files**
    - High-risk areas include `WeatherViewModel.swift`, `DashboardView.swift`, `StreamlinedReminderCreationView.swift`, `Views/Reminders/Creation/`, and `Views/Location/`.
-   - Recommended direction: extract ViewData, state enums, subviews, and service protocols before changing behavior.
+   - Recent cleanup split dashboard support views, moved weather display mapping out of `WeatherViewModel`, and moved location adapters into `Services/Location`.
+   - Recommended direction: continue extracting ViewData, state enums, subviews, and service protocols before changing behavior.
 
 ## Files Cleaned Up In This Pass
 
@@ -96,6 +98,13 @@
 - Added `Models/NextReadyReminderSnapshot.swift`.
 - Added `Views/Components/NextReadyReminderCompactView.swift`.
 - These are intentionally minimal so future WidgetKit/watchOS targets can show only the next ready reminder or one unavailable state.
+
+### Dashboard And Weather ViewModel
+
+- Added `Views/Dashboard/DashboardComponents.swift`.
+- Added `Models/WeatherCondition+Display.swift`.
+- Added `Services/Location/LocationManaging.swift`.
+- Removed the dead commented legacy implementation from `WeatherViewModel.swift`.
 
 ## Target Structure
 
@@ -155,10 +164,12 @@ Do not jump to the long-term structure in one commit. Move feature-by-feature af
    - [x] Split `ReminderManagementComponents.swift`.
    - [x] Split `DetailedReminderComponents.swift`.
    - [x] Split `FirstReminderCreationComponents.swift`.
-   - [ ] Continue with remaining large files: `DashboardView.swift`, `WeatherViewModel.swift`, `StreamlinedReminderCreationView.swift`, and long settings/privacy views.
+   - [x] Split dashboard support cards and forecast rows from `DashboardView.swift`.
+   - [x] Split weather condition display mapping and location adapters from `WeatherViewModel.swift`.
+   - [ ] Continue with remaining large sections in `DashboardView.swift`, `StreamlinedReminderCreationView.swift`, and long settings/privacy views.
 
 2. **Make presentation state explicit**
-   - [ ] Replace multi-boolean sheets in settings/reminder creation with `ActiveSheet`.
+   - [x] Replace major multi-boolean sheets in settings, location, dashboard, reminder management, reminder detail, and privacy with `ActiveSheet`.
    - [ ] Replace ad hoc alerts with typed alert state.
 
 3. **Extract ViewData from large ViewModels**
@@ -168,7 +179,7 @@ Do not jump to the long-term structure in one commit. Move feature-by-feature af
 
 4. **Introduce dependency protocols at ViewModel boundaries**
    - [ ] `WeatherProviding`
-   - [ ] `LocationProviding`
+   - [x] `LocationManaging` boundary for `WeatherViewModel`
    - [ ] `NotificationPermissionProviding`
    - [ ] `SettingsOpening`
    - [ ] Keep live implementations in services.
@@ -205,7 +216,8 @@ Circle back:
 - [ ] Add real WidgetKit and watchOS targets if still desired. The app currently has shared compact snapshot/view code, not separate targets.
 - [ ] Run a visual QA pass for onboarding, empty states, and create-task placement on the single configured simulator.
 - [ ] Run UI smoke tests only after the UI-test runner is stable on that simulator.
-- [ ] Replace placeholder privacy/support/contact URLs.
+- [x] Replace scattered placeholder privacy/support/contact URLs with centralized app support links.
+- [ ] Confirm final production contact/privacy endpoints are owned and monitored before release.
 - [ ] Finish dependency injection cleanup and `@Observable` migration.
 
 ## Testing Strategy

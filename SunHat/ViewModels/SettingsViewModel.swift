@@ -258,7 +258,7 @@ final class SettingsViewModel: NSObject, ObservableObject {
     // MARK: - Support Methods
     
     func sendFeedback() {
-        let email = "placeholder@example.com" // TODO: Replace with actual feedback email
+        let email = AppSupportLinks.feedbackEmail
         let subject = "SunHat Feedback"
         let body = """
         
@@ -277,7 +277,7 @@ final class SettingsViewModel: NSObject, ObservableObject {
     }
     
     func contactSupport() {
-        let email = "placeholder@example.com" // TODO: Replace with actual support email
+        let email = AppSupportLinks.supportEmail
         let subject = "SunHat Support Request"
         
         if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
@@ -301,10 +301,8 @@ final class SettingsViewModel: NSObject, ObservableObject {
     }
     
     func openTermsOfService() {
-        if let url = URL(string: "https://example.com/terms") { // TODO: Replace with actual terms URL
-            Task { @MainActor in
-                UIApplication.shared.open(url)
-            }
+        Task { @MainActor in
+            UIApplication.shared.open(AppSupportLinks.termsOfServiceURL)
         }
     }
     
@@ -409,4 +407,3 @@ extension SettingsViewModel {
         applyAppearance()
     }
 }
-

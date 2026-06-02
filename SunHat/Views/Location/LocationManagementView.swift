@@ -16,12 +16,18 @@ struct LocationManagementView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     
-    @State private var showingAddLocationSheet = false
-    @State private var showingManualEntrySheet = false
-    @State private var showingMapView = false
-    @State private var showingPrivacyInfo = false
+    @State private var activeSheet: ActiveSheet?
     @State private var editingLocation: SavedLocation?
     @State private var newLocationName = ""
+
+    private enum ActiveSheet: Identifiable {
+        case addLocation
+        case manualEntry
+        case map
+        case privacyInfo
+
+        var id: Self { self }
+    }
     
     var body: some View {
         NavigationStack {
@@ -57,24 +63,24 @@ struct LocationManagementView: View {
             .navigationTitle("Location Management")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Done") {
                         dismiss()
                     }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button("Add Location", systemImage: "plus") {
-                            showingAddLocationSheet = true
+                            activeSheet = .addLocation
                         }
                         
                         Button("View on Map", systemImage: "map") {
-                            showingMapView = true
+                            activeSheet = .map
                         }
                         
                         Button("Privacy Info", systemImage: "hand.raised") {
-                            showingPrivacyInfo = true
+                            activeSheet = .privacyInfo
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
@@ -84,17 +90,17 @@ struct LocationManagementView: View {
             .onAppear {
                 viewModel.configure(modelContext: modelContext)
             }
-            .sheet(isPresented: $showingAddLocationSheet) {
-                AddLocationSheet(viewModel: viewModel)
-            }
-            .sheet(isPresented: $showingManualEntrySheet) {
-                ManualLocationEntrySheet(viewModel: viewModel)
-            }
-            .sheet(isPresented: $showingMapView) {
-                LocationMapView(viewModel: viewModel)
-            }
-            .sheet(isPresented: $showingPrivacyInfo) {
-                PrivacyInfoSheet(explanation: viewModel.privacyExplanation)
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .addLocation:
+                    AddLocationSheet(viewModel: viewModel)
+                case .manualEntry:
+                    ManualLocationEntrySheet(viewModel: viewModel)
+                case .map:
+                    LocationMapView(viewModel: viewModel)
+                case .privacyInfo:
+                    PrivacyInfoSheet(explanation: viewModel.privacyExplanation)
+                }
             }
             .alert("Location Permission", isPresented: $viewModel.showingPermissionAlert) {
                 if viewModel.locationError == .permissionDenied {
@@ -288,7 +294,7 @@ struct LocationManagementView: View {
                     icon: "plus.circle.fill",
                     color: .green
                 ) {
-                    showingAddLocationSheet = true
+                    activeSheet = .addLocation
                 }
                 
                 QuickActionCard(
@@ -297,7 +303,7 @@ struct LocationManagementView: View {
                     icon: "map.fill",
                     color: .blue
                 ) {
-                    showingMapView = true
+                    activeSheet = .map
                 }
                 
                 QuickActionCard(
@@ -306,7 +312,7 @@ struct LocationManagementView: View {
                     icon: "pencil.circle.fill",
                     color: .purple
                 ) {
-                    showingManualEntrySheet = true
+                    activeSheet = .manualEntry
                 }
                 
                 QuickActionCard(
@@ -337,7 +343,7 @@ struct LocationManagementView: View {
                 
                 if !viewModel.savedLocations.isEmpty {
                     Button("Add") {
-                        showingAddLocationSheet = true
+                        activeSheet = .addLocation
                     }
                     .font(.caption)
                     .buttonStyle(.bordered)
@@ -351,7 +357,7 @@ struct LocationManagementView: View {
                     Text("Add locations to quickly access weather data for specific places.")
                 } actions: {
                     Button {
-                        showingAddLocationSheet = true
+                        activeSheet = .addLocation
                     } label: {
                         Label("Add Location", systemImage: "plus")
                     }
@@ -448,7 +454,7 @@ struct LocationManagementView: View {
                 )
                 
                 Button("View Full Privacy Policy") {
-                    showingPrivacyInfo = true
+                    activeSheet = .privacyInfo
                 }
                 .font(.caption)
                 .foregroundColor(.blue)

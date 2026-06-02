@@ -3,7 +3,7 @@
 ## Current Verification
 
 - Unit tests: `SunHatTests` passed on the existing configured iPhone 17 Pro simulator (`127 passed, 0 failed`) on June 2, 2026.
-- Compile: covered by the passing unit-test build.
+- Compile: compile-only simulator build passed with no warnings or errors after the latest cleanup on June 2, 2026.
 - UI tests: not rerun after the latest changes. Swift Testing does not support UI tests, and the prior UI-test runner timed out during Xcode launch setup.
 - Simulator policy: use the single configured simulator only. Do not clone or repeatedly launch additional simulators for routine validation.
 
@@ -23,12 +23,15 @@
 - Converted key empty states to `ContentUnavailableView`.
 - Removed global Inter/custom display typography in favor of system typography and Dynamic Type text styles.
 - Added a minimal `NextReadyReminderSnapshot` and compact view contract for future widget/watch surfaces.
+- Split dashboard support cards/forecast rows into `DashboardComponents.swift`.
+- Moved weather condition display mapping and location dependency adapters out of `WeatherViewModel.swift`.
+- Removed the dead commented legacy implementation from `WeatherViewModel.swift`.
 
 ## Priority 0: Correctness And App-Store Readiness
 
-1. [ ] Replace placeholder production contact and policy values.
-   - Current placeholders include `placeholder@example.com`, `https://example.com/terms`, and `https://example.com/privacy`.
-   - A shipping app should use real support/privacy endpoints and matching privacy policy text.
+1. [x] Replace placeholder production contact and policy values in code.
+   - Scattered placeholder email, terms, and privacy values were replaced with `AppSupportLinks`.
+   - Circle back before release to confirm the final `sunhat.app` URLs and support/privacy email inboxes are owned and monitored.
 
 2. [ ] Verify onboarding reachability visually and with accessibility snapshots.
    - Recent code removed staged animation delays, but a fresh visual/accessibility pass still needs to confirm the primary action is visible and reachable on first viewport sizes.
@@ -48,17 +51,17 @@
 
 ## Priority 1: Native Navigation And Interaction
 
-1. [ ] Finish `NavigationView` migration.
-   - Remaining files include weather alerts, reminder management components, detailed reminder components, manual location entry, location management components, notification preferences, data privacy, privacy contact, and export options.
-   - Replace `.navigationBarLeading` / `.navigationBarTrailing` with `.topBarLeading` / `.topBarTrailing`.
+1. [x] Finish `NavigationView` migration.
+   - `SunHat/Views` no longer contains `NavigationView`, `.navigationBarLeading`, or `.navigationBarTrailing`.
 
-2. [ ] Convert tappable rows from `onTapGesture` to `Button`.
-   - Affected areas include tutorial bubbles, reminder management rows, notification preference options, privacy contact rows, data export rows, and settings storage rows.
-   - Preserve visual styling with `.buttonStyle(.plain)` where needed.
+2. [x] Convert tappable rows from `onTapGesture` to explicit controls.
+   - `SunHat/Views` no longer contains `onTapGesture`.
+   - Visual styling was preserved with `.buttonStyle(.plain)` where needed.
 
-3. [ ] Use item-driven sheets for selected models.
-   - Several flows still use boolean sheet flags for selected or mutually exclusive state.
-   - Move to enum/item-driven presentation so state cannot represent impossible combinations.
+3. [x] Use item-driven sheets for major mutually exclusive presentations.
+   - Converted settings, data privacy, location management, dashboard, reminder management, and detailed reminder multi-sheet state to enum/item-driven presentation.
+   - Also cleaned up remaining creation/location sheet booleans in all reminders, weather, and retired comprehensive creation screens.
+   - Circle back opportunistically for any remaining single-purpose sheets where selected model state or impossible combinations can occur.
 
 4. [ ] Make tab and route ownership explicit.
    - Keep `MainTabView` selection enum-based.
@@ -108,6 +111,7 @@
 
 1. [ ] Continue splitting large view files by feature component.
    - High-priority files: `DashboardView.swift`, `StreamlinedReminderCreationView.swift`, `Views/Reminders/Creation/`, `NotificationPermissionView.swift`, `WeatherViewModel.swift`, and `Views/Location/`.
+   - Completed first dashboard component extraction and weather view model support extraction.
    - Keep one major type per file where practical.
 
 2. [ ] Remove render-time derived work.
@@ -129,10 +133,9 @@
 ## Suggested Work Order
 
 1. Verify onboarding reachability and accessibility semantics visually.
-2. Replace placeholder production contact/privacy values.
+2. Confirm final production contact/privacy endpoints are owned and monitored.
 3. Add actual WidgetKit/watchOS targets only if product scope still calls for them, using the compact next-ready reminder contract.
-4. Finish navigation and tap-gesture modernization.
-5. Refactor dashboard/weather/reminder creation into smaller views.
-6. Migrate low-risk ViewModels to `@Observable`.
-7. Run accessibility and performance profiling passes.
-8. Re-run unit tests after each change and run UI smoke tests only when the single simulator is stable.
+4. Refactor dashboard/weather/reminder creation into smaller views.
+5. Migrate low-risk ViewModels to `@Observable`.
+6. Run accessibility and performance profiling passes.
+7. Re-run unit tests after each change and run UI smoke tests only when the single simulator is stable.

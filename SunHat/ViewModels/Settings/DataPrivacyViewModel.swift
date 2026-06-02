@@ -169,7 +169,7 @@ final class DataPrivacyViewModel {
     }
     
     func contactPrivacyOfficer() {
-        let email = "placeholder@example.com" // TODO: Replace with actual privacy email
+        let email = AppSupportLinks.privacyEmail
         let subject = "Privacy Inquiry - SunHat App"
         let body = """
         Hello,

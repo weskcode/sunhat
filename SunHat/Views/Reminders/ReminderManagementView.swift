@@ -17,10 +17,16 @@ struct ReminderManagementView: View {
     @State private var searchText = ""
     @State private var selectedReminders = Set<UUID>()
     @State private var isSelectionMode = false
-    @State private var showingCreateReminder = false
-    @State private var showingSortOptions = false
-    @State private var showingFilterOptions = false
+    @State private var activeSheet: ActiveSheet?
     @State private var selectedSection: ManagementSection = .active
+
+    private enum ActiveSheet: Identifiable {
+        case createReminder
+        case sortOptions
+        case filterOptions
+
+        var id: Self { self }
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -45,7 +51,7 @@ struct ReminderManagementView: View {
         .navigationTitle("Manage Reminders")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 if isSelectionMode {
                     Button("Cancel") {
                         exitSelectionMode()
@@ -57,7 +63,7 @@ struct ReminderManagementView: View {
                 }
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 if isSelectionMode {
                     Menu {
                         bulkActionMenu
@@ -68,13 +74,13 @@ struct ReminderManagementView: View {
                 } else {
                     HStack(spacing: 16) {
                         Button(action: {
-                            showingSortOptions = true
+                            activeSheet = .sortOptions
                         }) {
                             Image(systemName: "arrow.up.arrow.down")
                         }
 
                         Button(action: {
-                            showingCreateReminder = true
+                            activeSheet = .createReminder
                         }) {
                             Image(systemName: "plus")
                         }
@@ -82,23 +88,24 @@ struct ReminderManagementView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingCreateReminder) {
-            StreamlinedReminderCreationView()
-        }
-        .sheet(isPresented: $showingSortOptions) {
-            SortOptionsView(
-                selectedSort: $viewModel.sortOption,
-                selectedOrder: $viewModel.sortOrder
-            )
-            .presentationDetents([.medium])
-        }
-        .sheet(isPresented: $showingFilterOptions) {
-            FilterOptionsView(
-                selectedCategories: $viewModel.selectedCategories,
-                selectedStatuses: $viewModel.selectedStatuses,
-                temperatureRange: $viewModel.temperatureRange
-            )
-            .presentationDetents([.large])
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .createReminder:
+                StreamlinedReminderCreationView()
+            case .sortOptions:
+                SortOptionsView(
+                    selectedSort: $viewModel.sortOption,
+                    selectedOrder: $viewModel.sortOrder
+                )
+                .presentationDetents([.medium])
+            case .filterOptions:
+                FilterOptionsView(
+                    selectedCategories: $viewModel.selectedCategories,
+                    selectedStatuses: $viewModel.selectedStatuses,
+                    temperatureRange: $viewModel.temperatureRange
+                )
+                .presentationDetents([.large])
+            }
         }
         .onAppear {
             viewModel.configure(modelContext: modelContext)
@@ -191,7 +198,7 @@ struct ReminderManagementView: View {
             
             // Filter button
             Button(action: {
-                showingFilterOptions = true
+                activeSheet = .filterOptions
             }) {
                 HStack(spacing: 4) {
                     Image(systemName: "line.horizontal.3.decrease.circle")
@@ -330,7 +337,7 @@ struct ReminderManagementView: View {
         } actions: {
             if selectedSection == .active {
                 Button {
-                    showingCreateReminder = true
+                    activeSheet = .createReminder
                 } label: {
                     Label("Create Reminder", systemImage: "plus")
                 }

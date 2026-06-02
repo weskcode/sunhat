@@ -18,9 +18,15 @@ struct DetailedReminderView: View {
     
     @State private var isEditMode = false
     @State private var showingDeleteConfirmation = false
-    @State private var showingShareSheet = false
-    @State private var showingDuplicateOptions = false
+    @State private var activeSheet: ActiveSheet?
     @State private var editedReminder: EditableReminder
+
+    private enum ActiveSheet: Identifiable {
+        case share
+        case duplicate
+
+        var id: Self { self }
+    }
     
     // Animation states
     @State private var headerOffset: CGFloat = 0
@@ -105,11 +111,13 @@ struct DetailedReminderView: View {
         } message: {
             Text("This action cannot be undone. The reminder and all its history will be permanently deleted.")
         }
-        .sheet(isPresented: $showingShareSheet) {
-            ShareReminderView(reminder: reminder)
-        }
-        .sheet(isPresented: $showingDuplicateOptions) {
-            DuplicateReminderView(reminder: reminder)
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .share:
+                ShareReminderView(reminder: reminder)
+            case .duplicate:
+                DuplicateReminderView(reminder: reminder)
+            }
         }
         .onAppear {
             viewModel.configure(modelContext: modelContext)
@@ -418,7 +426,7 @@ struct DetailedReminderView: View {
                 HStack(spacing: 12) {
                     // Duplicate button
                     Button(action: {
-                        showingDuplicateOptions = true
+                        activeSheet = .duplicate
                     }) {
                         Label("Duplicate", systemImage: "plus.square.on.square")
                             .font(.subheadline)
@@ -433,7 +441,7 @@ struct DetailedReminderView: View {
                     
                     // Share button
                     Button(action: {
-                        showingShareSheet = true
+                        activeSheet = .share
                     }) {
                         Label("Share", systemImage: "square.and.arrow.up")
                             .font(.subheadline)
@@ -470,13 +478,13 @@ struct DetailedReminderView: View {
     private var moreOptionsMenu: some View {
         Group {
             Button(action: {
-                showingDuplicateOptions = true
+                activeSheet = .duplicate
             }) {
                 Label("Duplicate", systemImage: "plus.square.on.square")
             }
             
             Button(action: {
-                showingShareSheet = true
+                activeSheet = .share
             }) {
                 Label("Share", systemImage: "square.and.arrow.up")
             }

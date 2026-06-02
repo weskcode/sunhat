@@ -14,7 +14,7 @@ struct AllRemindersView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Query(sort: \WeatherReminder.createdDate, order: .reverse) private var reminders: [WeatherReminder]
 
-    @State private var showingQuickCreate = false
+    @State private var activeSheet: ActiveSheet?
     @State private var searchText = ""
     @State private var selectedFilter: ReminderFilter = .all
 
@@ -22,6 +22,12 @@ struct AllRemindersView: View {
         case all = "All"
         case active = "Active"
         case inactive = "Inactive"
+    }
+
+    private enum ActiveSheet: Identifiable {
+        case quickCreate
+
+        var id: Self { self }
     }
 
     var filteredReminders: [WeatherReminder] {
@@ -104,14 +110,17 @@ struct AllRemindersView: View {
         .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) {
             if !reminders.isEmpty {
                 GlassCreateTaskButton {
-                    showingQuickCreate = true
+                    activeSheet = .quickCreate
                 }
                 .padding(.trailing, 18)
                 .padding(.bottom, 10)
             }
         }
-        .sheet(isPresented: $showingQuickCreate) {
-            StreamlinedReminderCreationView()
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .quickCreate:
+                StreamlinedReminderCreationView()
+            }
         }
     }
 
@@ -269,7 +278,7 @@ struct AllRemindersView: View {
             Text("Create your first weather-triggered task to get started.")
         } actions: {
             Button {
-                showingQuickCreate = true
+                activeSheet = .quickCreate
             } label: {
                 Label("Create Task", systemImage: "plus")
             }

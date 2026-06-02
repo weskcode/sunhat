@@ -309,11 +309,11 @@ struct ExportDataRow: View {
             }
             
             if !isRequired {
-                Toggle("", isOn: .constant(isIncluded))
+                Toggle("", isOn: Binding(
+                    get: { isIncluded },
+                    set: { _ in onToggle?() }
+                ))
                     .labelsHidden()
-                    .onTapGesture {
-                        onToggle?()
-                    }
             } else {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(.green)

@@ -27,57 +27,68 @@ struct ReminderManagementRow: View {
                 .buttonStyle(.plain)
             }
 
-            Image(systemName: reminder.category.iconName)
-                .font(.title3)
-                .foregroundColor(reminder.category == .general ? .blue : reminderStatusColor)
-                .frame(width: 24)
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(reminder.displayTitle)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-
-                    Spacer()
-
-                    HStack(spacing: 4) {
-                        Circle()
-                            .fill(reminderStatusColor)
-                            .frame(width: 8, height: 8)
-
-                        Text(reminder.statusText)
-                            .font(.caption2)
-                            .foregroundColor(reminderStatusColor)
-                    }
+            Button {
+                if isSelectionMode {
+                    onToggleSelection()
+                } else {
+                    showingDetails = true
                 }
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: reminder.category.iconName)
+                        .font(.title3)
+                        .foregroundColor(reminder.category == .general ? .blue : reminderStatusColor)
+                        .frame(width: 24)
 
-                Text(reminderDescription)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(reminder.displayTitle)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.primary)
+                                .lineLimit(1)
 
-                HStack {
-                    if let condition = reminder.triggerCondition {
-                        HStack(spacing: 4) {
-                            Image(systemName: "thermometer")
+                            Spacer()
+
+                            HStack(spacing: 4) {
+                                Circle()
+                                    .fill(reminderStatusColor)
+                                    .frame(width: 8, height: 8)
+
+                                Text(reminder.statusText)
+                                    .font(.caption2)
+                                    .foregroundColor(reminderStatusColor)
+                            }
+                        }
+
+                        Text(reminderDescription)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+
+                        HStack {
+                            if let condition = reminder.triggerCondition {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "thermometer")
+                                        .font(.caption2)
+                                        .foregroundColor(.orange)
+
+                                    Text("\(Int(condition.targetTemperature))° \(condition.comparisonType.rawValue)")
+                                        .font(.caption2)
+                                        .foregroundColor(.orange)
+                                }
+                            }
+
+                            Spacer()
+
+                            Text(dateDescription)
                                 .font(.caption2)
-                                .foregroundColor(.orange)
-
-                            Text("\(Int(condition.targetTemperature))° \(condition.comparisonType.rawValue)")
-                                .font(.caption2)
-                                .foregroundColor(.orange)
+                                .foregroundColor(.secondary)
                         }
                     }
-
-                    Spacer()
-
-                    Text(dateDescription)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
                 }
             }
+            .buttonStyle(.plain)
 
             if !isSelectionMode && reminder.canTrigger {
                 Toggle("", isOn: .init(
@@ -89,14 +100,6 @@ struct ReminderManagementRow: View {
             }
         }
         .padding(.vertical, 4)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if isSelectionMode {
-                onToggleSelection()
-            } else {
-                showingDetails = true
-            }
-        }
         .sheet(isPresented: $showingDetails) {
             ReminderDetailView(reminder: reminder)
         }

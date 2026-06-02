@@ -17,12 +17,18 @@ struct ComprehensiveReminderCreationView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
-    @State private var showingLocationPicker = false
+    @State private var activeSheet: ActiveSheet?
     @State private var keyboardHeight: CGFloat = 0
     @FocusState private var isNaturalLanguageFieldFocused: Bool
+
+    private enum ActiveSheet: Identifiable {
+        case locationPicker
+
+        var id: Self { self }
+    }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             GeometryReader { geometry in
                 ZStack {
                     // Background gradient
@@ -87,13 +93,13 @@ struct ComprehensiveReminderCreationView: View {
             .navigationTitle("Create Reminder")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Save") {
                         saveReminder()
                     }
@@ -101,8 +107,11 @@ struct ComprehensiveReminderCreationView: View {
                     .fontWeight(.semibold)
                 }
             }
-            .sheet(isPresented: $showingLocationPicker) {
-                LocationPickerView(selectedLocation: $viewModel.selectedLocation)
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .locationPicker:
+                    LocationPickerView(selectedLocation: $viewModel.selectedLocation)
+                }
             }
             .onAppear {
                 viewModel.configure(modelContext: modelContext)
@@ -304,7 +313,7 @@ struct ComprehensiveReminderCreationView: View {
             )
             
             Button(action: {
-                showingLocationPicker = true
+                activeSheet = .locationPicker
             }) {
                 HStack(spacing: 12) {
                     Image(systemName: viewModel.selectedLocation.isCurrentLocation ? "location.fill" : "mappin.circle.fill")
