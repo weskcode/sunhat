@@ -12,24 +12,14 @@ struct WeatherAlertsView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 if alerts.isEmpty {
-                    VStack(spacing: 16) {
-                        Image(systemName: "checkmark.shield.fill")
-                            .font(AppFont.inter(size: 48))
-                            .foregroundColor(.green)
-                        
-                        Text("No Active Alerts")
-                            .font(AppFontStyle.title2.font)
-                            .fontWeight(.semibold)
-                        
-                        Text("All weather conditions are normal")
-                            .font(AppFontStyle.callout.font)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 40)
+                    ContentUnavailableView(
+                        "No Active Alerts",
+                        systemImage: "checkmark.shield",
+                        description: Text("All weather conditions are normal.")
+                    )
                     .listRowBackground(Color.clear)
                 } else {
                     ForEach(alerts) { alert in
@@ -40,7 +30,7 @@ struct WeatherAlertsView: View {
             .navigationTitle("Weather Alerts")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }

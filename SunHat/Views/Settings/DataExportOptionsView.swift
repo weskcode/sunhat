@@ -17,7 +17,7 @@ struct DataExportOptionsView: View {
     @State private var dateRange: ExportDateRange = .last30Days
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 // Export Format Section
                 Section {
@@ -204,7 +204,7 @@ struct DataExportOptionsView: View {
             .navigationTitle("Export Options")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }

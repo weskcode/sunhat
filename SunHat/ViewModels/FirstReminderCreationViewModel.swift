@@ -98,18 +98,18 @@ final class FirstReminderCreationViewModel: ObservableObject {
         let appearance: (icon: String, color: Color)?
         if normalizedTitle.contains("run") || normalizedTitle.contains("jog") {
             appearance = ("figure.run", .blue)
-        } else if normalizedTitle.contains("walk") || normalizedTitle.contains("hike") {
-            appearance = ("figure.walk", .green)
-        } else if normalizedTitle.contains("garden") || normalizedTitle.contains("plant") || normalizedTitle.contains("yard") {
-            appearance = ("leaf.fill", .green)
-        } else if normalizedTitle.contains("pool") || normalizedTitle.contains("swim") {
-            appearance = ("figure.pool.swim", .cyan)
+        } else if normalizedTitle.contains("dog") || normalizedTitle.contains("pet") {
+            appearance = ("dog.fill", .orange)
         } else if normalizedTitle.contains("photo") || normalizedTitle.contains("camera") {
             appearance = ("camera.fill", .purple)
         } else if normalizedTitle.contains("bike") || normalizedTitle.contains("cycle") {
             appearance = ("bicycle", .orange)
-        } else if normalizedTitle.contains("dog") || normalizedTitle.contains("pet") {
-            appearance = ("dog.fill", .orange)
+        } else if normalizedTitle.contains("pool") || normalizedTitle.contains("swim") {
+            appearance = ("figure.pool.swim", .cyan)
+        } else if normalizedTitle.contains("garden") || normalizedTitle.contains("plant") || normalizedTitle.contains("yard") {
+            appearance = ("leaf.fill", .green)
+        } else if normalizedTitle.contains("walk") || normalizedTitle.contains("hike") {
+            appearance = ("figure.walk", .green)
         } else {
             appearance = nil
         }

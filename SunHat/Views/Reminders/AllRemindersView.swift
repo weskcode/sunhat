@@ -263,73 +263,17 @@ struct AllRemindersView: View {
     }
 
     private var emptyStateView: some View {
-        VStack(spacing: 24) {
-            Spacer()
-
-            // Animated icon
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.blue.opacity(0.1), Color.cyan.opacity(0.05)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 120, height: 120)
-                    .blur(radius: 20)
-
-                Image(systemName: "list.bullet.clipboard.fill")
-                    .font(.system(size: 60))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.blue, .cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .symbolEffect(.bounce, value: showingQuickCreate)
-            }
-
-            VStack(spacing: 12) {
-                Text("No Tasks Yet")
-                    .font(.title2)
-                    .fontWeight(.bold)
-
-                Text("Create your first weather-triggered task to get started")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-            }
-
+        ContentUnavailableView {
+            Label("No Tasks Yet", systemImage: "list.bullet.clipboard")
+        } description: {
+            Text("Create your first weather-triggered task to get started.")
+        } actions: {
             Button {
                 showingQuickCreate = true
             } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(AppFontStyle.title3.font)
-                    Text("Create Task")
-                        .font(.headline)
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 32)
-                .padding(.vertical, 16)
-                .background(
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [.blue, .cyan],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .shadow(color: .blue.opacity(0.3), radius: 12, x: 0, y: 6)
-                )
+                Label("Create Task", systemImage: "plus")
             }
-            .buttonStyle(BounceButtonStyle())
-
-            Spacer()
+            .buttonStyle(.borderedProminent)
         }
         .padding()
     }
@@ -337,18 +281,10 @@ struct AllRemindersView: View {
     // MARK: - No Results View
 
     private var noResultsView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 48))
-                .foregroundColor(.secondary.opacity(0.6))
-
-            Text("No Tasks Found")
-                .font(.headline)
-                .fontWeight(.semibold)
-
+        ContentUnavailableView {
+            Label("No Tasks Found", systemImage: "magnifyingglass")
+        } description: {
             Text("Try adjusting your search or filter")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 40)

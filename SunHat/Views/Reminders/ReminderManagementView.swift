@@ -323,34 +323,18 @@ struct ReminderManagementView: View {
     // MARK: - Empty State View
     
     private var emptyStateView: some View {
-        VStack(spacing: 24) {
-            Image(systemName: selectedSection.emptyStateIcon)
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
-            
-            VStack(spacing: 8) {
-                Text(selectedSection.emptyStateTitle)
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-                
-                Text(selectedSection.emptyStateMessage)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            }
-            
+        ContentUnavailableView {
+            Label(selectedSection.emptyStateTitle, systemImage: selectedSection.emptyStateIcon)
+        } description: {
+            Text(selectedSection.emptyStateMessage)
+        } actions: {
             if selectedSection == .active {
-                Button("Create Your First Reminder") {
+                Button {
                     showingCreateReminder = true
+                } label: {
+                    Label("Create Reminder", systemImage: "plus")
                 }
-                .font(AppFontStyle.headline.font)
-                .foregroundColor(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
-                .background(Color.blue)
-                .cornerRadius(8)
+                .buttonStyle(.borderedProminent)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

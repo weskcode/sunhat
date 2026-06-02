@@ -85,6 +85,12 @@ This guide documents the comprehensive upgrade of the SunHat weather-based remin
 
 ### Testing and Validation
 
+#### Current Verification Snapshot
+- `SunHatTests` passed on June 2, 2026: `127 passed, 0 failed`.
+- Verification used the existing configured iPhone 17 Pro simulator only.
+- UI tests still need a stable XCTest run on that same simulator.
+- Swift Testing is used for new unit and integration tests; UI tests remain XCTest-based.
+
 #### Unit Tests
 - **File:** `SunHatTests/SunHatTests.swift`
 - **Changes:**
@@ -180,15 +186,18 @@ This guide documents the comprehensive upgrade of the SunHat weather-based remin
 - **Background Task Prioritization:** Implement more sophisticated background task scheduling
 - **Enhanced Weather Visualizations:** Use iOS 26 weather visualization APIs
 - **Improved Notifications:** Adopt iOS 26 notification enhancements
+- **WidgetKit/watchOS Targets:** Add actual targets only if they remain in scope. Keep them minimal: next ready reminder plus an unavailable state.
+- **Observation Migration:** Incrementally migrate low-risk ViewModels from `ObservableObject` to `@Observable`.
 
 ## Success Criteria
 
 - ✅ App compiles and runs on iOS 26
-- ✅ All incomplete features completed
-- ✅ All tests passing (including new iOS 26 tests)
-- ✅ No deprecated API warnings
+- 🔲 Product scope follow-ups tracked in the HIG and architecture audit plans
+- ✅ Unit tests passing, including iOS 26 tests
+- 🔲 UI tests need a stable single-simulator run
+- 🔲 Deprecated API warning audit needs a fresh build log review before release
 - ✅ Proper error handling for all scenarios
-- ✅ Clean, maintainable codebase following iOS 26 best practices
+- 🔲 Clean, maintainable codebase work is ongoing through the architecture cleanup plan
 
 ## Migration Checklist
 
@@ -212,11 +221,13 @@ This guide documents the comprehensive upgrade of the SunHat weather-based remin
 5. **Testing**
    - [x] Update unit tests for iOS 26
    - [x] Update UI tests for iOS 26
+   - [x] Add Swift Testing coverage for activity defaults and compact next-ready reminder selection
+   - [ ] Re-run UI smoke tests on the single configured simulator
 
 6. **Finalization**
    - [x] Create migration documentation
    - [x] Clean up deprecated code
-   - [x] Final code review and verification completed
+   - [ ] Final release code review and verification completed
 
 ## Troubleshooting
 

@@ -345,13 +345,17 @@ struct LocationManagementView: View {
             }
             
             if viewModel.savedLocations.isEmpty {
-                EmptyStateView(
-                    icon: "bookmark",
-                    title: "No Saved Locations",
-                    subtitle: "Add locations to quickly access weather data for specific places",
-                    actionTitle: "Add Location"
-                ) {
-                    showingAddLocationSheet = true
+                ContentUnavailableView {
+                    Label("No Saved Locations", systemImage: "bookmark")
+                } description: {
+                    Text("Add locations to quickly access weather data for specific places.")
+                } actions: {
+                    Button {
+                        showingAddLocationSheet = true
+                    } label: {
+                        Label("Add Location", systemImage: "plus")
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
             } else {
                 LazyVStack(spacing: 8) {
@@ -398,12 +402,11 @@ struct LocationManagementView: View {
             }
             
             if viewModel.locationHistory.isEmpty {
-                EmptyStateView(
-                    icon: "clock",
-                    title: "No Location History",
-                    subtitle: "Your recently accessed locations will appear here",
-                    actionTitle: nil
-                ) { }
+                ContentUnavailableView(
+                    "No Location History",
+                    systemImage: "clock",
+                    description: Text("Your recently accessed locations will appear here.")
+                )
             } else {
                 LazyVStack(spacing: 6) {
                     ForEach(viewModel.locationHistory, id: \.id) { historyItem in

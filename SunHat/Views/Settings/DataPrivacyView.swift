@@ -18,7 +18,7 @@ struct DataPrivacyView: View {
     @State private var showingContactOptions = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 // Data Collection Overview
                 dataCollectionSection
@@ -47,7 +47,7 @@ struct DataPrivacyView: View {
             .navigationTitle("Data & Privacy")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
