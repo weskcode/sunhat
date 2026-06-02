@@ -110,7 +110,7 @@ struct UserPreferencesOnboardingView: View {
             
             VStack(spacing: 8) {
                 Text("Personalize SunHat")
-                    .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 24 : 28, relativeTo: .title2))
+                    .font(dynamicTypeSize.isAccessibilitySize ? .title3 : .title2)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
                     .multilineTextAlignment(.center)

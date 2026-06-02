@@ -17,7 +17,7 @@ struct PrivacyContactView: View {
     @State private var canSendEmail = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 // Contact Information Section
                 contactInfoSection
@@ -40,7 +40,7 @@ struct PrivacyContactView: View {
             .navigationTitle("Privacy Contact")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }

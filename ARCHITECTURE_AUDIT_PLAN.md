@@ -16,6 +16,12 @@
 - Navigation: currently mixed. Some screens use `NavigationStack`, while remaining legacy sheets still use `NavigationView` and old toolbar placements.
 - Async model: mixed `async`/`await`, Combine, `Task`, and remaining `DispatchQueue.main.asyncAfter` in animation and delayed UI flows.
 
+## Current Verification
+
+- Unit tests: `SunHatTests` passed on the existing configured iPhone 17 Pro simulator (`127 passed, 0 failed`) on June 2, 2026.
+- UI tests: not rerun after the latest changes. Swift Testing does not support UI tests, and the previous UI-test runner timed out in Xcode launch setup.
+- Simulator policy: use the single configured simulator only; avoid cloning or launching extra simulators for routine validation.
+
 ## Anti-Patterns Found
 
 1. **Views in service folders**
@@ -40,7 +46,7 @@
    - Recommended direction: move UI delays to `.task`, store task handles where cancellation matters, and ignore cancellation explicitly.
 
 6. **Large ViewModels and large view files**
-   - High-risk files include `WeatherViewModel.swift`, `DashboardView.swift`, `StreamlinedReminderCreationView.swift`, `FirstReminderCreationComponents.swift`, and `LocationManagementComponents.swift`.
+   - High-risk areas include `WeatherViewModel.swift`, `DashboardView.swift`, `StreamlinedReminderCreationView.swift`, `Views/Reminders/Creation/`, and `Views/Location/`.
    - Recommended direction: extract ViewData, state enums, subviews, and service protocols before changing behavior.
 
 ## Files Cleaned Up In This Pass
@@ -76,6 +82,20 @@
   - `Views/Settings/AboutView.swift`
   - `Views/Settings/FAQItem.swift`
   - `Views/Settings/HelpFAQView.swift`
+
+### Reminders
+
+- Made `StreamlinedReminderCreationView` the normal creation flow.
+- Removed comprehensive creation from standard navigation.
+- Removed color/icon picker UI from the main creation path.
+- Added activity-based appearance defaults in `FirstReminderCreationViewModel`.
+- Split reminder management, detail, and first-creation components into focused feature files.
+
+### Shared Compact Surfaces
+
+- Added `Models/NextReadyReminderSnapshot.swift`.
+- Added `Views/Components/NextReadyReminderCompactView.swift`.
+- These are intentionally minimal so future WidgetKit/watchOS targets can show only the next ready reminder or one unavailable state.
 
 ## Target Structure
 
@@ -131,39 +151,62 @@ Do not jump to the long-term structure in one commit. Move feature-by-feature af
 ## Refactor Sequence
 
 1. **Finish type-per-file cleanup**
-   - Split `LocationManagementComponents.swift`.
-   - Split `ReminderManagementComponents.swift`.
-   - Split `DetailedReminderComponents.swift`.
-   - Split `FirstReminderCreationComponents.swift`.
+   - [x] Split `LocationManagementComponents.swift`.
+   - [x] Split `ReminderManagementComponents.swift`.
+   - [x] Split `DetailedReminderComponents.swift`.
+   - [x] Split `FirstReminderCreationComponents.swift`.
+   - [ ] Continue with remaining large files: `DashboardView.swift`, `WeatherViewModel.swift`, `StreamlinedReminderCreationView.swift`, and long settings/privacy views.
 
 2. **Make presentation state explicit**
-   - Replace multi-boolean sheets in settings/reminder creation with `ActiveSheet`.
-   - Replace ad hoc alerts with typed alert state.
+   - [ ] Replace multi-boolean sheets in settings/reminder creation with `ActiveSheet`.
+   - [ ] Replace ad hoc alerts with typed alert state.
 
 3. **Extract ViewData from large ViewModels**
-   - Start with `WeatherViewModel`.
-   - Move display strings and metric presentation into value structs.
-   - Keep raw weather data and business rules out of view bodies.
+   - [ ] Start with `WeatherViewModel`.
+   - [ ] Move display strings and metric presentation into value structs.
+   - [ ] Keep raw weather data and business rules out of view bodies.
 
 4. **Introduce dependency protocols at ViewModel boundaries**
-   - `WeatherProviding`
-   - `LocationProviding`
-   - `NotificationPermissionProviding`
-   - `SettingsOpening`
-   - Keep live implementations in services.
+   - [ ] `WeatherProviding`
+   - [ ] `LocationProviding`
+   - [ ] `NotificationPermissionProviding`
+   - [ ] `SettingsOpening`
+   - [ ] Keep live implementations in services.
 
 5. **Add a composition root**
-   - Add `AppContainer` to build shared services and ViewModels.
-   - Stop creating service singletons from leaf views.
+   - [ ] Add `AppContainer` to build shared services and ViewModels.
+   - [ ] Stop creating service singletons from leaf views.
 
 6. **Move low-risk ViewModels to Observation**
-   - Start with `UserPreferencesViewModel`, `SettingsViewModel`, and `LocationPickerViewModel`.
-   - Keep Combine-heavy services on `ObservableObject` until their dependencies are isolated.
+   - [ ] Start with `UserPreferencesViewModel`, `SettingsViewModel`, and `LocationPickerViewModel`.
+   - [ ] Keep Combine-heavy services on `ObservableObject` until their dependencies are isolated.
 
 7. **Performance pass**
-   - Remove filtering/sorting/formatting from large view bodies.
-   - Replace remaining delayed `DispatchQueue` animation flows with cancellable task-based state.
-   - Use Instruments on dashboard scrolling, reminder creation, weather refresh, and onboarding.
+   - [ ] Remove filtering/sorting/formatting from large view bodies.
+   - [ ] Replace remaining delayed `DispatchQueue` animation flows with cancellable task-based state.
+   - [ ] Use Instruments on dashboard scrolling, reminder creation, weather refresh, and onboarding.
+
+## Product Scope Cleanup From Recent Chat
+
+Completed:
+
+- [x] Keep only the streamlined reminder creator in normal navigation.
+- [x] Remove color/icon picker from the main creation flow.
+- [x] Use activity-based icon/color defaults.
+- [x] Keep notification settings focused on enabled state, quiet hours, and daily maximum.
+- [x] Reduce onboarding animation staging.
+- [x] Replace the old FAB with a Liquid Glass create button.
+- [x] Convert primary empty states to `ContentUnavailableView`.
+- [x] Move global typography back to native system text styles.
+- [x] Add Swift Testing coverage for activity defaults and the compact next-ready selector.
+
+Circle back:
+
+- [ ] Add real WidgetKit and watchOS targets if still desired. The app currently has shared compact snapshot/view code, not separate targets.
+- [ ] Run a visual QA pass for onboarding, empty states, and create-task placement on the single configured simulator.
+- [ ] Run UI smoke tests only after the UI-test runner is stable on that simulator.
+- [ ] Replace placeholder privacy/support/contact URLs.
+- [ ] Finish dependency injection cleanup and `@Observable` migration.
 
 ## Testing Strategy
 
@@ -173,7 +216,9 @@ Do not jump to the long-term structure in one commit. Move feature-by-feature af
   - cancellation/no stale overwrite
 - Stub service protocols instead of relying on singletons.
 - Add focused UI smoke tests only for navigation and critical onboarding/reminder flows.
-- Keep XCTest verification blocked until simulator launch instability is resolved.
+- Keep using Swift Testing for new unit/integration tests.
+- UI tests must remain XCTest-based because Swift Testing does not support UI tests.
+- Unit verification is currently passing; UI smoke verification still needs a stable single-simulator run.
 
 ## Architecture PR Checklist
 
@@ -197,8 +242,11 @@ Completed cleanup batches:
 - Split `ReminderManagementComponents.swift` into `Views/Reminders/Management/`.
 - Split `DetailedReminderComponents.swift` into `Views/Reminders/Detail/`.
 - Split `FirstReminderCreationComponents.swift` into `Views/Reminders/Creation/`.
+- Simplified creation/navigation scope around the streamlined reminder creator.
+- Added minimal compact reminder snapshot/view support for future widget/watch surfaces.
 
 Verification:
 
 - Simulator build passed after the detailed-reminder split with zero warnings.
 - Simulator build passed after the first-reminder creation split with zero warnings.
+- `SunHatTests` passed after the product simplification and compact-surface tests: `127 passed, 0 failed`.

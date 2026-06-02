@@ -27,7 +27,7 @@ open SunHat.xcodeproj
 xcodebuild -scheme SunHat -configuration Debug build
 
 # Run tests
-xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.4' test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,id=C3E7115C-C029-4352-A255-EFB6CB69367A' test
 
 # Build for release
 xcodebuild -scheme SunHat -configuration Release build
@@ -36,14 +36,16 @@ xcodebuild -scheme SunHat -configuration Release build
 ### Testing Commands
 ```bash
 # Run unit tests only
-xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.4' -only-testing:SunHatTests test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,id=C3E7115C-C029-4352-A255-EFB6CB69367A' -only-testing:SunHatTests test
 
 # Run UI tests only
-xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.4' -only-testing:SunHatUITests test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,id=C3E7115C-C029-4352-A255-EFB6CB69367A' -only-testing:SunHatUITests test
 
 # Run specific test
-xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS=26.4' -only-testing:SunHatTests/SunHatTests/testExample test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,id=C3E7115C-C029-4352-A255-EFB6CB69367A' -only-testing:SunHatTests/SunHatTests/testExample test
 ```
+
+Use the existing configured simulator only: `iPhone 17 Pro` (`C3E7115C-C029-4352-A255-EFB6CB69367A`). Do not clone or repeatedly launch additional simulators for routine validation.
 
 ## Project Architecture
 
@@ -52,7 +54,7 @@ xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,name=iPhone 18,OS
 - **ContentView.swift**: Root view — routes between splash, onboarding, and main tab bar
 - **MainTabView.swift**: iOS 26.4 tab bar with `.tabBarMinimizeBehavior(.onScrollDown)`
 - **Views/Components/GlassCard.swift**: Reusable Liquid Glass card/section components
-- **Tests**: Standard XCTest setup for unit and UI testing
+- **Tests**: Unit tests use XCTest plus newer Swift Testing suites; UI tests remain XCTest-based
 
 ### Current Architecture (iOS 26.4 Implementation)
 The app is a sophisticated weather-triggered reminder system with:
@@ -123,9 +125,10 @@ Button("Action") { ... }
     .buttonStyle(.glass)
     .tint(.blue)
 
-// Glass FAB (floating action button)
-Button { ... } label: { Image(systemName: "plus") }
-    .buttonStyle(GlassFABStyle(tint: .blue))
+// Glass create task button
+GlassCreateTaskButton {
+    showingQuickCreate = true
+}
 
 // Glass capsule tags
 label
@@ -183,8 +186,8 @@ Priority order for migration:
 - `async/await` throughout — no completion handlers
 
 ### Testing Requirements
-- Unit tests in `SunHatTests/` for business logic
-- UI tests in `SunHatUITests/` for user workflows
+- Unit tests in `SunHatTests/` for business logic; write new unit/integration tests with Swift Testing where practical
+- UI tests in `SunHatUITests/` for user workflows; Swift Testing does not support UI tests
 - Mock weather data for consistent testing
 - Test both online and offline scenarios
 - Specific iOS 26.4 test coverage:
@@ -219,17 +222,23 @@ The app implements sophisticated weather triggers including:
 
 ## Current Implementation Status
 
-As of March 2026 (iOS 26.4 upgrade):
+As of June 2026:
 - ✅ Deployment target: iOS 26.4, Swift 6.2
 - ✅ **Liquid Glass**: All card surfaces use `.glassEffect()` (no more `.regularMaterial`)
 - ✅ **Glass tab bar**: `MainTabView` with `.tabBarMinimizeBehavior(.onScrollDown)`
-- ✅ **Glass FAB**: Dashboard quick-create button uses `GlassFABStyle`
+- ✅ **Glass create button**: Dashboard/reminder creation entry points use `GlassCreateTaskButton`
 - ✅ **Glass buttons**: Welcome screen "Get Started" uses `.buttonStyle(.glass)`
 - ✅ **Glass tags**: Onboarding activity tags use capsule glass tints
 - ✅ **GlassCard component**: Reusable `GlassCard`, `GlassSection`, `GlassMetricBadge`
+- ✅ **System typography**: Global Inter/custom display typography has been retired in favor of semantic system styles
+- ✅ **Native empty states**: Key empty states use `ContentUnavailableView`
+- ✅ **Streamlined creation**: Normal navigation uses the streamlined reminder creator
+- ✅ **Minimal compact surface**: `NextReadyReminderSnapshot` and `NextReadyReminderCompactView` support future widget/watch surfaces
 - ✅ Complete location services integration with iOS 26 APIs
 - ✅ Enhanced WeatherKit support with extended weather data
 - ✅ Background weather updates using iOS 26 async patterns
-- ✅ Full test coverage including iOS 26 specific scenarios
+- ✅ Unit verification: `SunHatTests` passed with 127 tests on June 2, 2026
+- 🔲 Actual WidgetKit/watchOS targets (shared compact view exists; targets are not present yet)
+- 🔲 UI smoke verification on the single configured simulator
 - 🔲 ViewModel migration from `ObservableObject` → `@Observable` (future refactor)
 - 🔲 CloudKit sync re-enablement (prepared, needs provisioning)

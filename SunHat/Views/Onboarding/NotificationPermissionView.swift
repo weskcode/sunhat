@@ -152,7 +152,7 @@ struct NotificationPermissionView: View {
             // Title and subtitle
             VStack(spacing: 12) {
                 Text("Stay in the Loop")
-                    .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 28 : 34, relativeTo: .largeTitle))
+                    .font(dynamicTypeSize.isAccessibilitySize ? .title : .largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
                     .multilineTextAlignment(.center)

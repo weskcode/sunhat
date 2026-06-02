@@ -144,7 +144,7 @@ struct LocationPermissionView: View {
             // Title
             VStack(spacing: 12) {
                 Text("Get Accurate Weather")
-                    .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 28 : 34, relativeTo: .largeTitle))
+                    .font(dynamicTypeSize.isAccessibilitySize ? .title : .largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(.primary)
                     .multilineTextAlignment(.center)

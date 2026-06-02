@@ -79,7 +79,7 @@ struct WelcomeView: View {
             // Main headline
             VStack(spacing: 16) {
                 Text("Smart reminders")
-                    .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 28 : 36, relativeTo: .largeTitle))
+                    .font(dynamicTypeSize.isAccessibilitySize ? .title : .largeTitle)
                     .fontWeight(.bold)
                     .foregroundStyle(
                         differentiateWithoutColor
@@ -90,7 +90,7 @@ struct WelcomeView: View {
                     .accessibilityAddTraits(.isHeader)
                 
                 Text("triggered by weather,")
-                    .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 28 : 36, relativeTo: .largeTitle))
+                    .font(dynamicTypeSize.isAccessibilitySize ? .title : .largeTitle)
                     .fontWeight(.bold)
                     .foregroundStyle(
                         differentiateWithoutColor
@@ -100,7 +100,7 @@ struct WelcomeView: View {
                     .multilineTextAlignment(.center)
                 
                 Text("not time")
-                    .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 28 : 36, relativeTo: .largeTitle))
+                    .font(dynamicTypeSize.isAccessibilitySize ? .title : .largeTitle)
                     .fontWeight(.bold)
                     .foregroundStyle(
                         differentiateWithoutColor
