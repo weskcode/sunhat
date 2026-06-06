@@ -22,7 +22,7 @@ struct ReminderManagementRow: View {
                 Button(action: onToggleSelection) {
                     Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                         .font(.title3)
-                        .foregroundColor(isSelected ? .blue : .gray)
+                        .foregroundStyle(isSelected ? .blue : .gray)
                 }
                 .buttonStyle(.plain)
             }
@@ -37,7 +37,7 @@ struct ReminderManagementRow: View {
                 HStack(spacing: 12) {
                     Image(systemName: reminder.category.iconName)
                         .font(.title3)
-                        .foregroundColor(reminder.category == .general ? .blue : reminderStatusColor)
+                        .foregroundStyle(reminder.category == .general ? .blue : reminderStatusColor)
                         .frame(width: 24)
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -45,7 +45,7 @@ struct ReminderManagementRow: View {
                             Text(reminder.displayTitle)
                                 .font(.subheadline)
                                 .fontWeight(.medium)
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                                 .lineLimit(1)
 
                             Spacer()
@@ -57,13 +57,13 @@ struct ReminderManagementRow: View {
 
                                 Text(reminder.statusText)
                                     .font(.caption2)
-                                    .foregroundColor(reminderStatusColor)
+                                    .foregroundStyle(reminderStatusColor)
                             }
                         }
 
                         Text(reminderDescription)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .lineLimit(2)
 
                         HStack {
@@ -71,11 +71,11 @@ struct ReminderManagementRow: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: "thermometer")
                                         .font(.caption2)
-                                        .foregroundColor(.orange)
+                                        .foregroundStyle(.orange)
 
                                     Text("\(Int(condition.targetTemperature))° \(condition.comparisonType.rawValue)")
                                         .font(.caption2)
-                                        .foregroundColor(.orange)
+                                        .foregroundStyle(.orange)
                                 }
                             }
 
@@ -83,7 +83,7 @@ struct ReminderManagementRow: View {
 
                             Text(dateDescription)
                                 .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }

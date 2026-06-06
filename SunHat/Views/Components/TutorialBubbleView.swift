@@ -22,12 +22,12 @@ struct TutorialBubbleView: View {
                     HStack(spacing: 10) {
                         Image(systemName: "sparkles")
                             .font(.subheadline)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
 
                         Text("Create your first reminder")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                     }
                 }
                 .buttonStyle(.plain)
@@ -36,7 +36,7 @@ struct TutorialBubbleView: View {
                     Image(systemName: "xmark")
                         .font(.caption2)
                         .fontWeight(.semibold)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .frame(width: 20, height: 20)
                 }
                 .accessibilityLabel("Dismiss hint")

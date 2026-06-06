@@ -68,7 +68,7 @@ struct PrivacyContactView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image(systemName: "person.badge.shield.checkmark")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                         .font(.title2)
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -78,7 +78,7 @@ struct PrivacyContactView: View {
                         
                         Text("SunHat Privacy Team")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 
@@ -125,13 +125,13 @@ struct PrivacyContactView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack {
                             Image(systemName: type.icon)
-                                .foregroundColor(type.color)
+                                .foregroundStyle(type.color)
                             Text(type.displayName)
                                 .font(.body)
                         }
                         Text(type.description)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .tag(type)
                 }
@@ -142,7 +142,7 @@ struct PrivacyContactView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         Image(systemName: "scale.3d")
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                         Text("Legal Basis")
                             .font(.subheadline)
                             .fontWeight(.medium)
@@ -150,11 +150,11 @@ struct PrivacyContactView: View {
                     
                     Text(selectedInquiryType.legalBasis)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 .padding(12)
                 .background(Color.blue.opacity(0.05))
-                .cornerRadius(8)
+                .clipShape(.rect(cornerRadius: 8))
             }
             
         } header: {
@@ -263,7 +263,7 @@ struct PrivacyContactView: View {
                 if !canSendEmail {
                     Text("📧 Email app not configured. We'll copy the details to your clipboard.")
                         .font(.caption)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
                 }
             }
         }
@@ -359,17 +359,17 @@ struct ContactDetailRow: View {
     private var rowContent: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
                 .frame(width: 20)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Text(value)
                     .font(.subheadline)
-                    .foregroundColor(isLink ? .blue : .primary)
+                    .foregroundStyle(isLink ? .blue : .primary)
             }
             
             Spacer()
@@ -377,7 +377,7 @@ struct ContactDetailRow: View {
             if isLink {
                 Image(systemName: "arrow.up.right.square")
                     .font(.caption)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
             }
         }
     }
@@ -393,7 +393,7 @@ struct ResponseTimeCard: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(color)
+                .foregroundStyle(color)
                 .font(.title3)
                 .frame(width: 24)
             
@@ -405,18 +405,18 @@ struct ResponseTimeCard: View {
                 Text(timeframe)
                     .font(.caption)
                     .fontWeight(.semibold)
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
         }
         .padding(12)
         .background(color.opacity(0.05))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 

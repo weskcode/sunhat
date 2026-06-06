@@ -5,37 +5,38 @@
 //  Created by Wesley Keetch on 7/20/25.
 //
 
-import Combine
 import CoreLocation
 import Foundation
 import MapKit
 
-@MainActor
-final class LocationPickerViewModel: NSObject, ObservableObject {
-    @Published var searchResults: [MKLocalSearchCompletion] = []
-    @Published var isSearching = false
-    @Published var currentLocation: CLLocation?
-    @Published var isShowingSearchError = false
-    @Published var searchErrorMessage = ""
+@MainActor @Observable
+final class LocationPickerViewModel {
+    var searchResults: [MKLocalSearchCompletion] = []
+    var isSearching = false
+    var currentLocation: CLLocation?
+    var isShowingSearchError = false
+    var searchErrorMessage = ""
 
-    private let locationManager = CLLocationManager()
-    private let searchCompleter = MKLocalSearchCompleter()
+    private let delegate: LocationPickerDelegate
 
-    override init() {
-        super.init()
-        setupLocationManager()
-        setupSearchCompleter()
-    }
+    init() {
+        let delegate = LocationPickerDelegate()
+        self.delegate = delegate
 
-    private func setupLocationManager() {
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.requestWhenInUseAuthorization()
-    }
-
-    private func setupSearchCompleter() {
-        searchCompleter.delegate = self
-        searchCompleter.resultTypes = [.address, .pointOfInterest]
+        delegate.onLocationUpdate = { [weak self] location in
+            self?.currentLocation = location
+        }
+        delegate.onLocationError = { [weak self] message in
+            self?.showError(message)
+        }
+        delegate.onSearchResults = { [weak self] results in
+            self?.searchResults = results
+            self?.isSearching = false
+        }
+        delegate.onSearchError = { [weak self] message in
+            self?.isSearching = false
+            self?.showError(message)
+        }
     }
 
     func searchLocations(_ query: String) {
@@ -45,7 +46,7 @@ final class LocationPickerViewModel: NSObject, ObservableObject {
         }
 
         isSearching = true
-        searchCompleter.queryFragment = query
+        delegate.search(query)
     }
 
     func clearResults() {
@@ -87,20 +88,42 @@ final class LocationPickerViewModel: NSObject, ObservableObject {
     }
 }
 
-extension LocationPickerViewModel: CLLocationManagerDelegate {
-    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        Task { @MainActor in
-            currentLocation = locations.last
+private final class LocationPickerDelegate: NSObject, CLLocationManagerDelegate, MKLocalSearchCompleterDelegate {
+    let locationManager = CLLocationManager()
+    let searchCompleter = MKLocalSearchCompleter()
+
+    var onLocationUpdate: (@MainActor (CLLocation) -> Void)?
+    var onLocationError: (@MainActor (String) -> Void)?
+    var onSearchResults: (@MainActor ([MKLocalSearchCompletion]) -> Void)?
+    var onSearchError: (@MainActor (String) -> Void)?
+
+    override init() {
+        super.init()
+        locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.requestWhenInUseAuthorization()
+        searchCompleter.delegate = self
+        searchCompleter.resultTypes = [.address, .pointOfInterest]
+    }
+
+    func search(_ query: String) {
+        searchCompleter.queryFragment = query
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+        Task { @MainActor [weak self] in
+            self?.onLocationUpdate?(location)
         }
     }
 
-    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        Task { @MainActor in
-            showError("Could not get your current location. Check Location Services and try again.")
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor [weak self] in
+            self?.onLocationError?("Could not get your current location. Check Location Services and try again.")
         }
     }
 
-    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
             manager.requestLocation()
@@ -108,21 +131,17 @@ extension LocationPickerViewModel: CLLocationManagerDelegate {
             break
         }
     }
-}
 
-extension LocationPickerViewModel: MKLocalSearchCompleterDelegate {
     func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
         let results = completer.results
-        Task { @MainActor in
-            searchResults = results
-            isSearching = false
+        Task { @MainActor [weak self] in
+            self?.onSearchResults?(results)
         }
     }
 
     func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
-        Task { @MainActor in
-            isSearching = false
-            showError("Location search is unavailable right now. Please try again.")
+        Task { @MainActor [weak self] in
+            self?.onSearchError?("Location search is unavailable right now. Please try again.")
         }
     }
 }

@@ -14,7 +14,7 @@ struct DuplicateReminderView: View {
             VStack(spacing: 20) {
                 Text("Create a copy of this reminder with modifications")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
 
                 VStack(spacing: 12) {

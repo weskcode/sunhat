@@ -100,7 +100,7 @@ struct DetailedReminderView: View {
                 }
             }
         }
-        .navigationBarHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .animation(.smooth(duration: 0.5), value: isEditMode)
         .overlay(alignment: .topLeading) {
             // Custom navigation bar
@@ -151,12 +151,12 @@ struct DetailedReminderView: View {
                             .font(.body)
                     }
                 }
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(.regularMaterial, in: Capsule())
+                .glassEffect(in: .capsule)
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(.plain)
             
             Spacer()
             
@@ -169,35 +169,35 @@ struct DetailedReminderView: View {
                     }
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(editedReminder.isValid ? Color.blue : Color.gray)
                     .clipShape(Capsule())
                     .disabled(!editedReminder.isValid)
                 } else {
-                    // Edit button
                     Button(action: {
                         enterEditMode()
                     }) {
                         Image(systemName: "pencil")
                             .font(AppFontStyle.title3.font)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                             .padding(8)
-                            .background(.regularMaterial, in: Circle())
+                            .glassEffect(in: .circle)
                     }
-                    .buttonStyle(PlainButtonStyle())
-                    
-                    // More options menu
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Edit reminder")
+
                     Menu {
                         moreOptionsMenu
                     } label: {
                         Image(systemName: "ellipsis")
                             .font(AppFontStyle.title3.font)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                             .padding(8)
-                            .background(.regularMaterial, in: Circle())
+                            .glassEffect(in: .circle)
                     }
+                    .accessibilityLabel("More options")
                 }
             }
         }
@@ -218,16 +218,16 @@ struct DetailedReminderView: View {
                         // Weather icon
                         Image(systemName: currentWeather.weatherCondition.icon)
                             .font(.title2)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         
                         VStack(alignment: .leading, spacing: 4) {
                             Text("\(Int(currentWeather.temperature))°")
                                 .font(.system(size: 48, weight: .thin, design: .rounded))
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                             
                             Text("Feels like \(Int(currentWeather.feelsLike))°")
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     
@@ -248,7 +248,7 @@ struct DetailedReminderView: View {
                     
                     Text("Loading current weather...")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 40)
             }
@@ -258,7 +258,7 @@ struct DetailedReminderView: View {
                 HStack {
                     Image(systemName: reminder.category.iconName)
                         .font(AppFontStyle.title3.font)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     
                     if isEditMode {
                         TextField("Reminder title", text: $editedReminder.title)
@@ -269,31 +269,28 @@ struct DetailedReminderView: View {
                         Text(reminder.displayTitle)
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                     }
                 }
                 
                 if isEditMode {
                     TextField("Description (optional)", text: $editedReminder.description, axis: .vertical)
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .textFieldStyle(PlainTextFieldStyle())
                         .lineLimit(3)
                 } else if !reminder.reminderDescription.isEmpty {
                     Text(reminder.reminderDescription)
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
-        )
+        .glassEffect(in: .rect(cornerRadius: 20))
+        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
         .padding(.horizontal, 20)
         .padding(.top, 80)
     }
@@ -317,12 +314,12 @@ struct DetailedReminderView: View {
                     
                     Text("Calculating prediction...")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 60)
                 .background(Color(.secondarySystemBackground))
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
             }
         }
         .cardStyle()
@@ -431,13 +428,13 @@ struct DetailedReminderView: View {
                         Label("Duplicate", systemImage: "plus.square.on.square")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                             .frame(maxWidth: .infinity)
                             .frame(height: 44)
                             .background(Color.blue.opacity(0.1))
-                            .cornerRadius(12)
+                            .clipShape(.rect(cornerRadius: 12))
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(.plain)
                     
                     // Share button
                     Button(action: {
@@ -446,13 +443,13 @@ struct DetailedReminderView: View {
                         Label("Share", systemImage: "square.and.arrow.up")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.green)
+                            .foregroundStyle(.green)
                             .frame(maxWidth: .infinity)
                             .frame(height: 44)
                             .background(Color.green.opacity(0.1))
-                            .cornerRadius(12)
+                            .clipShape(.rect(cornerRadius: 12))
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(.plain)
                 }
                 
                 // Delete button
@@ -462,13 +459,13 @@ struct DetailedReminderView: View {
                     Label("Delete Reminder", systemImage: "trash")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 44)
                         .background(Color.red)
-                        .cornerRadius(12)
+                        .clipShape(.rect(cornerRadius: 12))
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.plain)
             }
         }
     }
@@ -535,40 +532,34 @@ struct DetailedReminderView: View {
             isEditMode = true
             isAnimatingTransition = true
         }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(500))
             isAnimatingTransition = false
         }
     }
-    
+
     private func cancelEditing() {
         editedReminder = EditableReminder(from: reminder)
-        
         withAnimation(.smooth(duration: 0.5)) {
             isEditMode = false
             isAnimatingTransition = true
         }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(500))
             isAnimatingTransition = false
         }
     }
-    
+
     private func saveChanges() {
         Task {
             let success = await viewModel.saveChanges(editedReminder)
-            
-            await MainActor.run {
-                if success {
-                    withAnimation(.smooth(duration: 0.5)) {
-                        isEditMode = false
-                        isAnimatingTransition = true
-                    }
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        isAnimatingTransition = false
-                    }
+            if success {
+                withAnimation(.smooth(duration: 0.5)) {
+                    isEditMode = false
+                    isAnimatingTransition = true
                 }
+                try? await Task.sleep(for: .milliseconds(500))
+                isAnimatingTransition = false
             }
         }
     }
@@ -608,7 +599,7 @@ struct ConditionMatchIndicator: View {
             Text(matchText)
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(matchColor)
+                .foregroundStyle(matchColor)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
@@ -642,11 +633,8 @@ extension View {
     func cardStyle() -> some View {
         self
             .padding(20)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.regularMaterial)
-                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
-            )
+            .glassEffect(in: .rect(cornerRadius: 16))
+            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
 }
 

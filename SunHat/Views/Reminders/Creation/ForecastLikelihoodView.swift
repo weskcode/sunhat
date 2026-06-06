@@ -19,19 +19,19 @@ struct ForecastLikelihoodView: View {
                 HStack {
                     Image(systemName: "chart.bar.fill")
                         .font(.subheadline)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
 
                     Text("7-Day Forecast")
                         .font(.headline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
 
                     Spacer()
                 }
 
                 Text("Based on current weather forecast")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
@@ -39,22 +39,22 @@ struct ForecastLikelihoodView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Trigger Likelihood")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
 
                     Text(likelihood.description)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(likelihood.color)
+                        .foregroundStyle(likelihood.color)
 
                     if let nextTriggerDay = likelihood.triggerDays.first {
                         HStack(spacing: 6) {
                             Image(systemName: "clock.fill")
                                 .font(.caption2)
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
 
                             Text("Next: \(nextTriggerDay, style: .date)")
                                 .font(.caption)
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                                 .fontWeight(.medium)
                         }
                         .padding(.horizontal, 8)
@@ -77,7 +77,7 @@ struct ForecastLikelihoodView: View {
 
                     Text("\(likelihood.triggerDays.count) of 7 days")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -116,24 +116,24 @@ private struct ForecastDayRow: View {
                 Text(day.dayName)
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
 
                 Text(day.shortDate)
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             .frame(width: 50, alignment: .leading)
 
             Image(systemName: day.weatherIcon)
                 .font(.caption)
-                .foregroundColor(day.weatherColor)
+                .foregroundStyle(day.weatherColor)
                 .frame(width: 20)
                 .accessibilityHidden(true)
 
             Text("\(day.highTemp)°")
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
                 .frame(width: 30, alignment: .trailing)
 
             Spacer()
@@ -145,7 +145,7 @@ private struct ForecastDayRow: View {
 
                 Text(willTrigger ? "Will trigger" : "No trigger")
                     .font(.caption2)
-                    .foregroundColor(willTrigger ? .green : .secondary)
+                    .foregroundStyle(willTrigger ? .green : .secondary)
             }
         }
         .padding(.vertical, 4)
@@ -169,7 +169,7 @@ private struct CircularProgressView: View {
             Text("\(Int(progress * 100))%")
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundColor(color)
+                .foregroundStyle(color)
         }
     }
 }

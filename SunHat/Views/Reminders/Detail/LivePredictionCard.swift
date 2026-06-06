@@ -15,11 +15,11 @@ struct LivePredictionCard: View {
                     Text("Next Trigger")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
 
                     Text(prediction.description)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
@@ -28,11 +28,11 @@ struct LivePredictionCard: View {
                     Text(prediction.confidenceText)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(prediction.confidenceColor)
+                        .foregroundStyle(prediction.confidenceColor)
 
                     Text("confidence")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -63,7 +63,7 @@ struct LivePredictionCard: View {
 
                 Text("\(prediction.matchingDays) of \(prediction.totalDays) days")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(16)

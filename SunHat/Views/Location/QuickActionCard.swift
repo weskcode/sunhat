@@ -26,30 +26,26 @@ struct QuickActionCard: View {
 
                     Image(systemName: icon)
                         .font(.title2)
-                        .foregroundColor(color)
+                        .foregroundStyle(color)
                 }
 
                 VStack(spacing: 4) {
                     Text(title)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
 
                     Text(subtitle)
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .padding(.horizontal, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.regularMaterial)
-                    .scaleEffect(isPressed ? 0.95 : 1.0)
-            )
+            .glassEffect(in: .rect(cornerRadius: 12))
         }
         .buttonStyle(.plain)
         .scaleEffect(isPressed ? 0.95 : 1.0)

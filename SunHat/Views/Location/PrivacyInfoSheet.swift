@@ -17,7 +17,7 @@ struct PrivacyInfoSheet: View {
                 VStack(alignment: .leading, spacing: 20) {
                     Text(explanation)
                         .font(.body)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .lineSpacing(4)
                 }
                 .padding(20)

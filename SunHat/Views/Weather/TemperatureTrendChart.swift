@@ -92,7 +92,7 @@ struct TemperatureTrendChart: View {
                     AxisValueLabel {
                         Text(dayFormatter.string(from: date))
                             .font(AppFontStyle.caption2.font)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
@@ -105,7 +105,7 @@ struct TemperatureTrendChart: View {
                     AxisValueLabel {
                         Text("\(Int(temp))°")
                             .font(AppFontStyle.caption2.font)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
@@ -130,16 +130,16 @@ struct EmptyChartView: View {
         VStack(spacing: 8) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.title2)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Text("Forecast Unavailable")
                 .font(.callout)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
         .frame(height: 120)
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 

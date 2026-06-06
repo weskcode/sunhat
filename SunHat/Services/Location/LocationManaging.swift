@@ -35,11 +35,11 @@ final class LocationPermissionManagerAdapter: LocationManaging {
                 latitude: manualLocation.coordinate.latitude,
                 longitude: manualLocation.coordinate.longitude
             )
-            return (location, manualLocation.displayName)
+            return (location, LocationDisplayFormatter.privacyPreservingName(from: manualLocation.displayName))
         }
 
         if let currentLocation = locationPermissionManager.currentLocation {
-            let locationName = locationPermissionManager.getDisplayLocation()
+            let locationName = await LocationDisplayFormatter.reverseGeocodedName(for: currentLocation)
             return (currentLocation, locationName)
         }
 
@@ -50,7 +50,7 @@ final class LocationPermissionManagerAdapter: LocationManaging {
             for _ in 0..<20 {
                 try? await Task.sleep(for: .milliseconds(500))
                 if let location = locationPermissionManager.currentLocation {
-                    let locationName = locationPermissionManager.getDisplayLocation()
+                    let locationName = await LocationDisplayFormatter.reverseGeocodedName(for: location)
                     return (location, locationName)
                 }
             }
@@ -76,7 +76,7 @@ final class DefaultLocationManager: LocationManaging {
             return nil
         }
 
-        let name = manager.getDisplayLocation()
+        let name = await LocationDisplayFormatter.reverseGeocodedName(for: currentLocation)
         cached = (currentLocation, name)
         return cached
     }

@@ -83,24 +83,24 @@ struct ParsedInfoView: View {
                 HStack {
                     Image(systemName: "wand.and.stars")
                         .font(.caption)
-                        .foregroundColor(.purple)
+                        .foregroundStyle(.purple)
                     
                     Text("Smart Analysis")
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(.purple)
+                        .foregroundStyle(.purple)
                     
                     Spacer()
                     
                     Text("\(Int(info.confidence * 100))%")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Text(info.suggestedTitle)
                     .font(.callout)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
             }
             
             Button("Apply") {
@@ -108,15 +108,15 @@ struct ParsedInfoView: View {
             }
             .font(.caption)
             .fontWeight(.semibold)
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(Color.purple)
-            .cornerRadius(6)
+            .clipShape(.rect(cornerRadius: 6))
         }
         .padding(12)
         .background(Color.purple.opacity(0.1))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -130,32 +130,32 @@ struct SmartSuggestionCard: View {
                 HStack {
                     Image(systemName: suggestion.icon)
                         .font(.title3)
-                        .foregroundColor(suggestion.color)
+                        .foregroundStyle(suggestion.color)
                     
                     Spacer()
                     
                     Image(systemName: "plus.circle.fill")
                         .font(.caption)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                 }
                 
                 Text(suggestion.title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.leading)
                 
                 Text(suggestion.description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.leading)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(12)
             .background(Color(.secondarySystemBackground))
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
     }
 }
 
@@ -183,7 +183,7 @@ struct VisualTemperatureSlider: View {
                     endPoint: .trailing
                 )
                 .frame(height: 20)
-                .cornerRadius(10)
+                .clipShape(.rect(cornerRadius: 10))
                 
                 // Temperature markers
                 HStack {
@@ -195,7 +195,7 @@ struct VisualTemperatureSlider: View {
                             
                             Text("\(temp)°")
                                 .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                         
                         if temp != 100 {
@@ -252,17 +252,17 @@ struct ConditionTypeCard: View {
             VStack(spacing: 8) {
                 Image(systemName: type.iconName)
                     .font(.title2)
-                    .foregroundColor(isSelected ? .white : type.iconColor)
+                    .foregroundStyle(isSelected ? .white : type.iconColor)
                 
                 Text(type.displayName)
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(isSelected ? .white : .primary)
+                    .foregroundStyle(isSelected ? .white : .primary)
                     .multilineTextAlignment(.center)
                 
                 Text(type.descriptionText)
                     .font(.caption2)
-                    .foregroundColor(isSelected ? .white.opacity(0.8) : .secondary)
+                    .foregroundStyle(isSelected ? .white.opacity(0.8) : .secondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
             }
@@ -278,7 +278,7 @@ struct ConditionTypeCard: View {
                     .stroke(isSelected ? Color.clear : Color(.separator), lineWidth: 0.5)
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
     }
 }
 
@@ -292,12 +292,12 @@ struct ActivityCategoryCard: View {
             VStack(spacing: 6) {
                 Image(systemName: category.icon)
                     .font(.title3)
-                    .foregroundColor(isSelected ? .white : category.color)
+                    .foregroundStyle(isSelected ? .white : category.color)
                 
                 Text(category.displayName)
                     .font(.caption2)
                     .fontWeight(.medium)
-                    .foregroundColor(isSelected ? .white : .primary)
+                    .foregroundStyle(isSelected ? .white : .primary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
             }
@@ -309,7 +309,7 @@ struct ActivityCategoryCard: View {
                     .fill(isSelected ? category.color : Color(.tertiarySystemBackground))
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
     }
 }
 
@@ -323,17 +323,17 @@ struct NotificationTimingRow: View {
             HStack(spacing: 12) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
-                    .foregroundColor(isSelected ? .blue : .gray)
+                    .foregroundStyle(isSelected ? .blue : .gray)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(timing.displayName)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     
                     Text(timing.displayName)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
                 
@@ -341,11 +341,11 @@ struct NotificationTimingRow: View {
                 
                 Image(systemName: timing.icon)
                     .font(.callout)
-                    .foregroundColor(isSelected ? .blue : .gray)
+                    .foregroundStyle(isSelected ? .blue : .gray)
             }
             .padding(.vertical, 8)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
     }
 }
 
@@ -360,7 +360,7 @@ struct TrendConditionParameters: View {
             HStack {
                 Text("Trend Type:")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Picker("Trend Type", selection: $trendType) {
                     ForEach(TrendType.allCases, id: \.self) { type in
@@ -374,7 +374,7 @@ struct TrendConditionParameters: View {
             HStack {
                 Text("Duration:")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Stepper("\(trendDuration) days", value: $trendDuration, in: 1...7)
                     .font(.subheadline)
@@ -396,7 +396,7 @@ struct SeasonalConditionParameters: View {
                         Text(type.displayName)
                         Text(type.description)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .tag(type)
                 }
@@ -425,11 +425,11 @@ struct TriggerLikelihoodView: View {
                         Text("Trigger Likelihood")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         
                         Text(likelihood.description)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     
                     Spacer()
@@ -438,11 +438,11 @@ struct TriggerLikelihoodView: View {
                         Text("\(Int(likelihood.percentage))%")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(likelihood.color)
+                            .foregroundStyle(likelihood.color)
                         
                         Text("\(likelihood.triggerDays.count) trigger days")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 
@@ -450,11 +450,11 @@ struct TriggerLikelihoodView: View {
                     HStack {
                         Image(systemName: "calendar")
                             .font(.caption)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                         
                         Text("Next possible trigger: \(nextDate, format: .dateTime.weekday().month().day())")
                             .font(.caption)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                         
                         Spacer()
                     }
@@ -462,12 +462,12 @@ struct TriggerLikelihoodView: View {
             } else {
                 Text("Calculating likelihood...")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(12)
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(10)
+        .clipShape(.rect(cornerRadius: 10))
     }
 }
 
@@ -480,7 +480,7 @@ struct ForecastPreviewView: View {
             Text("7-Day Forecast")
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
@@ -518,16 +518,16 @@ struct ForecastDayView: View {
             Text(dayName)
                 .font(.caption2)
                 .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             Image(systemName: "sun.max.fill")
                 .font(.title3)
-                .foregroundColor(.orange)
+                .foregroundStyle(.orange)
             
             Text("\(Int(day.highTemperature))°")
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(willTrigger ? .green : .primary)
+                .foregroundStyle(willTrigger ? .green : .primary)
             
             if willTrigger {
                 Circle()
@@ -560,25 +560,25 @@ struct ExampleNotificationView: View {
             Text("Example Notification")
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             VStack(spacing: 0) {
                 // Mock notification header
                 HStack {
                     Image(systemName: "app.badge")
                         .font(.caption)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     
                     Text("SunHat")
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     
                     Spacer()
                     
                     Text("now")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 8)
@@ -588,12 +588,12 @@ struct ExampleNotificationView: View {
                     Text(title)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     
                     Text(message)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .lineLimit(2)
                 }
@@ -611,7 +611,7 @@ struct ExampleNotificationView: View {
             
             Text("Timing: \(timing.displayName)")
                 .font(.caption2)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
     }
 }

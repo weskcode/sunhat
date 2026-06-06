@@ -20,8 +20,14 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>SunHat needs location access to provide weather-based reminders for your current area.</string>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>org.wesley.sunhat.weather-refresh</string>
+		<string>org.wesley.sunhat.trigger-evaluation</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
+		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
 </dict>

@@ -89,12 +89,12 @@ struct NotificationPreferencesView: View {
     private var quietHoursSection: some View {
         Section {
             Toggle("Enable Quiet Hours", isOn: $viewModel.quietHoursEnabled)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             if viewModel.quietHoursEnabled {
                 HStack {
                     Text("Start Time")
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     
                     Spacer()
                     
@@ -108,7 +108,7 @@ struct NotificationPreferencesView: View {
                 
                 HStack {
                     Text("End Time")
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     
                     Spacer()
                     
@@ -123,11 +123,11 @@ struct NotificationPreferencesView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Active Period")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     
                     Text(viewModel.quietHoursDescription)
                         .font(.caption)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                 }
             }
         } header: {
@@ -148,7 +148,7 @@ struct NotificationPreferencesView: View {
                             .font(.body)
                         Text(grouping.description)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .tag(grouping)
                 }
@@ -184,14 +184,14 @@ struct NotificationPreferencesView: View {
                 SwiftUI.ForEach(VibrationPattern.allCases, id: \.self) { pattern in
                     HStack {
                         Image(systemName: pattern.icon)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                         
                         VStack(alignment: .leading, spacing: 2) {
                             Text(pattern.displayName)
                                 .font(.body)
                             Text(pattern.description)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .tag(pattern)
@@ -202,7 +202,7 @@ struct NotificationPreferencesView: View {
             // Sound Settings per Reminder Type - temporarily disabled
             Group {
                 Text("Sound settings temporarily disabled due to Swift 6 concurrency issues")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .padding()
             }
             
@@ -222,13 +222,13 @@ struct NotificationPreferencesView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack {
                             Image(systemName: behavior.icon)
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                             Text(behavior.displayName)
                                 .font(.body)
                         }
                         Text(behavior.description)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .tag(behavior)
                 }
@@ -252,7 +252,7 @@ struct NotificationPreferencesView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                         Text("Critical Alert Features")
                             .font(.subheadline)
                             .fontWeight(.medium)
@@ -265,7 +265,7 @@ struct NotificationPreferencesView: View {
                         Text("• Use sparingly for urgent weather conditions")
                     }
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 }
                 .padding(.vertical, 4)
             }
@@ -313,7 +313,7 @@ struct NotificationPreferencesView: View {
             Button("Reset to Defaults") {
                 showingResetAlert = true
             }
-            .foregroundColor(.red)
+            .foregroundStyle(.red)
             .frame(maxWidth: .infinity, alignment: .center)
         } footer: {
             Text("This will reset all notification preferences to their original default values.")
@@ -334,31 +334,31 @@ struct NotificationPreviewCard: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: "app.badge.fill")
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                     .font(.caption)
                 
                 Text("SunHat")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
                 Text(time)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 if lockScreenBehavior != .hideDetails {
                     Text(lockScreenBehavior == .showPreviews ? message : "Notification content hidden")
                         .font(.caption)
-                        .foregroundColor(lockScreenBehavior == .showPreviews ? .secondary : Color(.tertiaryLabel))
+                        .foregroundStyle(lockScreenBehavior == .showPreviews ? .secondary : Color(.tertiaryLabel))
                         .lineLimit(2)
                 }
             }
@@ -367,11 +367,11 @@ struct NotificationPreviewCard: View {
                 HStack {
                     Image(systemName: grouping.icon)
                         .font(.caption2)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     
                     Text("Grouped with similar \(grouping.displayName.lowercased())")
                         .font(.caption2)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                 }
             }
         }
@@ -406,22 +406,22 @@ struct SoundPickerView: View {
                     } label: {
                         HStack {
                             Image(systemName: sound.icon)
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                                 .frame(width: 24)
 
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(sound.displayName)
                                     .font(.body)
-                                    .foregroundColor(.primary)
+                                    .foregroundStyle(.primary)
 
                                 if sound == .none {
                                     Text("No sound")
                                         .font(.caption)
-                                        .foregroundColor(.secondary)
+                                        .foregroundStyle(.secondary)
                                 } else if sound == .default {
                                     Text("System default")
                                         .font(.caption)
-                                        .foregroundColor(.secondary)
+                                        .foregroundStyle(.secondary)
                                 }
                             }
 
@@ -429,7 +429,7 @@ struct SoundPickerView: View {
 
                             if selectedSound == sound {
                                 Image(systemName: "checkmark")
-                                    .foregroundColor(.blue)
+                                    .foregroundStyle(.blue)
                                     .fontWeight(.semibold)
                             }
                         }

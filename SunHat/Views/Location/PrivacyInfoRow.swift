@@ -16,18 +16,18 @@ struct PrivacyInfoRow: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.body)
-                .foregroundColor(.purple)
+                .foregroundStyle(.purple)
                 .frame(width: 24, height: 24)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.caption)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
 
                 Text(description)
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
 

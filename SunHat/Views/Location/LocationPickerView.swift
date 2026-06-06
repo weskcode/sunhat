@@ -12,7 +12,7 @@ struct LocationPickerView: View {
     @Binding var selectedLocation: ReminderLocation
     @Environment(\.dismiss) private var dismiss
     
-    @StateObject private var viewModel = LocationPickerViewModel()
+    @State private var viewModel = LocationPickerViewModel()
     @State private var searchText = ""
     
     var body: some View {

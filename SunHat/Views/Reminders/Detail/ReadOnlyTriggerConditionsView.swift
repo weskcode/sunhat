@@ -15,18 +15,18 @@ struct ReadOnlyTriggerConditionsView: View {
                 HStack {
                     Image(systemName: "thermometer.medium")
                         .font(.title3)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Temperature \(condition.comparisonType.displayName)")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
 
                         Text("\(Int(displayTemperature(condition.targetTemperature)))°\(temperatureUnit.symbol.dropFirst())")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                     }
 
                     Spacer()
@@ -35,11 +35,11 @@ struct ReadOnlyTriggerConditionsView: View {
                         VStack {
                             Image(systemName: "person.fill")
                                 .font(.caption)
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
 
                             Text("Feels Like")
                                 .font(.caption2)
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                         }
                     }
                 }
@@ -51,12 +51,12 @@ struct ReadOnlyTriggerConditionsView: View {
                     HStack {
                         Text("Range:")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
 
                         Text("\(Int(displayTemperature(min)))° - \(Int(displayTemperature(max)))°")
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                     }
                 }
 
@@ -64,18 +64,18 @@ struct ReadOnlyTriggerConditionsView: View {
                     HStack {
                         Text("Tolerance:")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
 
                         Text("±\(Int(condition.temperatureTolerance))°")
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                     }
                 }
             } else {
                 Text("No trigger condition set")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(12)

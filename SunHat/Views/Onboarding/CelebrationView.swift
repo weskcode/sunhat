@@ -55,7 +55,7 @@ struct CelebrationView: View {
                     
                     Image(systemName: "checkmark")
                         .font(.system(size: 50, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .scaleEffect(showCheckmark ? 1.0 : 0.3)
                 .opacity(showCheckmark ? 1.0 : 0.0)
@@ -68,7 +68,7 @@ struct CelebrationView: View {
                     Text("Congratulations! 🎉")
                         .font(.title)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .multilineTextAlignment(.center)
                         .accessibilityAddTraits(.isHeader)
                         .scaleEffect(showText ? 1.0 : 0.8)
@@ -78,7 +78,7 @@ struct CelebrationView: View {
                     // Success message with slide up
                     Text("Your first weather reminder is ready!")
                         .font(.title3)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .offset(y: showText ? 0 : 30)
                         .opacity(showText ? 1.0 : 0.0)
@@ -87,7 +87,7 @@ struct CelebrationView: View {
                     // Description with fade in
                     Text("You'll be notified when conditions are perfect for your activity")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .lineLimit(nil)
                         .opacity(showText ? 1.0 : 0.0)
@@ -98,17 +98,17 @@ struct CelebrationView: View {
                         HStack(spacing: 12) {
                             Image(systemName: "thermometer.sun.fill")
                                 .font(.title2)
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Your reminder is active!")
                                     .font(.subheadline)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.primary)
+                                    .foregroundStyle(.primary)
                                 
                                 Text("Monitoring weather conditions now")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                             }
                             
                             Spacer()
@@ -121,7 +121,7 @@ struct CelebrationView: View {
                                 Image(systemName: "checkmark")
                                     .font(.subheadline)
                                     .fontWeight(.bold)
-                                    .foregroundColor(.green)
+                                    .foregroundStyle(.green)
                             }
                         }
                         .padding(16)
@@ -142,7 +142,7 @@ struct CelebrationView: View {
                     ForEach(0..<3, id: \.self) { index in
                         Image(systemName: "sparkles")
                             .font(.title2)
-                            .foregroundColor(.yellow)
+                            .foregroundStyle(.yellow)
                             .scaleEffect(showText ? 1.0 : 0.5)
                             .opacity(showText ? 1.0 : 0.0)
                             .animation(
@@ -171,35 +171,32 @@ struct CelebrationView: View {
     
     private func startCelebration() {
         if reduceMotion {
-            // Show all elements immediately for reduced motion
             showConfetti = true
             showCheckmark = true
             showText = true
             return
         }
-        
-        // Start confetti immediately
+
         withAnimation(.easeOut(duration: 0.5)) {
             showConfetti = true
         }
-        
-        // Show checkmark
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+
+        Task {
+            try? await Task.sleep(for: .milliseconds(200))
+            guard !Task.isCancelled else { return }
             withAnimation {
                 showCheckmark = true
                 pulseScale = 1.1
             }
-        }
-        
-        // Show text
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+
+            try? await Task.sleep(for: .milliseconds(800))
+            guard !Task.isCancelled else { return }
             withAnimation {
                 showText = true
             }
-        }
-        
-        // Fade out confetti
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+
+            try? await Task.sleep(for: .milliseconds(1500))
+            guard !Task.isCancelled else { return }
             withAnimation(.easeOut(duration: 0.5)) {
                 confettiOpacity = 0.0
             }
@@ -337,7 +334,7 @@ struct SimpleCelebrationView: View {
                     
                     Image(systemName: "checkmark")
                         .font(.system(size: 35, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .accessibilityHidden(true)
                 
@@ -346,11 +343,11 @@ struct SimpleCelebrationView: View {
                     Text("Success!")
                         .font(.title)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     
                     Text("Your first reminder is ready")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
             }

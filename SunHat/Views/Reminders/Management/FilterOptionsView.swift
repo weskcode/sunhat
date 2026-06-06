@@ -70,7 +70,7 @@ struct FilterOptionsView: View {
                 } label: {
                     HStack {
                         Image(systemName: status.icon)
-                            .foregroundColor(status.color)
+                            .foregroundStyle(status.color)
                             .frame(width: 20)
 
                         Text(status.displayName)
@@ -80,7 +80,7 @@ struct FilterOptionsView: View {
 
                         if selectedStatuses.contains(status) {
                             Image(systemName: "checkmark")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                         }
                     }
                 }
@@ -95,13 +95,13 @@ struct FilterOptionsView: View {
                 HStack {
                     Text("Temperature")
                         .font(.subheadline)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
 
                     Spacer()
 
                     Text("\(Int(tempRange.lowerBound))° - \(Int(tempRange.upperBound))°F")
                         .font(.subheadline)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                         .fontWeight(.medium)
                 }
 
@@ -153,12 +153,12 @@ private struct FilterCategoryButton: View {
             VStack(spacing: 6) {
                 Image(systemName: category.iconName)
                     .font(.title3)
-                    .foregroundColor(isSelected ? .white : categoryColor)
+                    .foregroundStyle(isSelected ? .white : categoryColor)
 
                 Text(category.displayName)
                     .font(.caption2)
                     .fontWeight(.medium)
-                    .foregroundColor(isSelected ? .white : .primary)
+                    .foregroundStyle(isSelected ? .white : .primary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
             }

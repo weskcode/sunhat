@@ -94,7 +94,7 @@ struct NotificationPermissionView: View {
 
             Text("Step 3 of 4")
                 .font(AppFontStyle.caption2.font)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Progress: Step 3 of 4")
@@ -141,7 +141,7 @@ struct NotificationPermissionView: View {
                     
                     Image(systemName: "bell.fill")
                         .font(.system(size: 35, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .scaleEffect(showHeader ? 1.0 : 0.5)
                 .opacity(showHeader ? 1.0 : 0.0)
@@ -154,14 +154,14 @@ struct NotificationPermissionView: View {
                 Text("Stay in the Loop")
                     .font(dynamicTypeSize.isAccessibilitySize ? .title : .largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 
                 Text("Get notified when weather conditions are perfect for your activities")
                     .font(.title3)
                     .fontWeight(.medium)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(nil)
             }
@@ -178,7 +178,7 @@ struct NotificationPermissionView: View {
             Text("Here's what you'll receive:")
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .opacity(showMockNotifications ? 1.0 : 0.0)
                 .animation(.easeOut(duration: 0.6).delay(1.0), value: showMockNotifications)
             
@@ -269,7 +269,7 @@ struct NotificationPermissionView: View {
                         .font(.title3)
                         .fontWeight(.semibold)
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(
@@ -300,7 +300,7 @@ struct NotificationPermissionView: View {
                         .font(.body)
                         .fontWeight(.medium)
                 }
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
                 .background(
@@ -329,17 +329,17 @@ struct NotificationPermissionView: View {
             HStack(spacing: 8) {
                 Image(systemName: "info.circle.fill")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Text("About notifications")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Text("You can always change notification settings later in the app or device Settings.")
                 .font(AppFontStyle.caption2.font)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(nil)
         }
@@ -431,7 +431,7 @@ struct MockNotificationCard: View {
                 
                 Image(systemName: "cloud.sun.fill")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
             }
             .accessibilityHidden(true)
             
@@ -441,24 +441,24 @@ struct MockNotificationCard: View {
                     Text("SunHat")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     
                     Spacer()
                     
                     Text(type.time)
                         .font(AppFontStyle.caption2.font)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Text(type.title)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .lineLimit(2)
                 
                 Text(type.body)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
             
@@ -506,7 +506,7 @@ struct NotificationBenefit: View {
                 
                 Image(systemName: icon)
                     .font(.title3)
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             }
             .accessibilityHidden(true)
             
@@ -515,11 +515,11 @@ struct NotificationBenefit: View {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(nil)
             }
             

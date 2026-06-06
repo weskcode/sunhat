@@ -15,18 +15,18 @@ struct ReadOnlyNotificationSettingsView: View {
                     HStack {
                         Image(systemName: "bell.fill")
                             .font(.title3)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
 
                         Text(config.title.isEmpty ? "Default Title" : config.title)
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                     }
 
                     if !config.message.isEmpty {
                         Text(config.message)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .padding(.leading, 28)
                     }
                 }
@@ -35,30 +35,30 @@ struct ReadOnlyNotificationSettingsView: View {
                     HStack {
                         Text("Cooldown:")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
 
                         Text("\(config.cooldownPeriodHours) hours")
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                     }
 
                     HStack {
                         Label("Badge", systemImage: "app.badge")
                             .font(.caption2)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
 
                         if config.customSound != nil {
                             Label("Sound", systemImage: "speaker.wave.2")
                                 .font(.caption2)
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                         }
                     }
                 }
             } else {
                 Text("Default notification settings")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(12)

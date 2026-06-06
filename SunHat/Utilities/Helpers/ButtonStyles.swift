@@ -203,7 +203,7 @@ struct WeatherButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .frame(height: 50)
             .background(Color.blue)
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         
         Button("Enhanced Button") {}
@@ -211,7 +211,7 @@ struct WeatherButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .frame(height: 50)
             .background(Color.purple)
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         
         Button("Magical Button") {}
@@ -225,14 +225,14 @@ struct WeatherButtonStyle: ButtonStyle {
                     endPoint: .bottomTrailing
                 )
             )
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .clipShape(RoundedRectangle(cornerRadius: 16))
         
         Button("Weather Button") {}
             .buttonStyle(WeatherButtonStyle(weatherCondition: .sunny))
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     .padding()

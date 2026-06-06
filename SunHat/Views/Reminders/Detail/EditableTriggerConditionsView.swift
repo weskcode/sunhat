@@ -15,7 +15,7 @@ struct EditableTriggerConditionsView: View {
                 Text("Trigger Type")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
 
                 Picker("Trigger Type", selection: $condition.triggerType) {
                     ForEach(TriggerType.allCases, id: \.self) { type in
@@ -29,20 +29,20 @@ struct EditableTriggerConditionsView: View {
                 Text("Temperature")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
 
                 VStack(spacing: 8) {
                     HStack {
                         Text("Target Temperature")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
 
                         Spacer()
 
                         Text("\(Int(displayTemperature))°\(temperatureUnit.symbol.dropFirst())")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                     }
 
                     Slider(

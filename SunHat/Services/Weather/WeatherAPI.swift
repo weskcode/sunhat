@@ -35,8 +35,12 @@ final class AppleWeatherKitAPI: WeatherAPI {
     }
     
     func fetchCurrentWeather(for location: CLLocation) async throws -> WeatherDataDTO {
-        let weather = try await weatherService.weather(for: location)
-        return mapCurrentWeather(weather.currentWeather, at: location)
+        do {
+            let weather = try await weatherService.weather(for: location)
+            return mapCurrentWeather(weather.currentWeather, at: location)
+        } catch {
+            throw mapWeatherKitError(error)
+        }
     }
 
     // MARK: - iOS 26+ WeatherKit Enhancements
@@ -60,15 +64,15 @@ final class AppleWeatherKitAPI: WeatherAPI {
 
         // iOS 26+ enhanced data mapping
         return WeatherDataDTO(
-            temperature: current.temperature.value,
-            feelsLike: current.apparentTemperature.value,
+            temperature: current.temperature.fahrenheitValue,
+            feelsLike: current.apparentTemperature.fahrenheitValue,
             humidity: Int(current.humidity * 100),
-            dewPoint: current.dewPoint.value,
+            dewPoint: current.dewPoint.fahrenheitValue,
             pressure: current.pressure.value,
-            visibility: current.visibility.value,
+            visibility: current.visibility.milesValue,
             uvIndex: Double(current.uvIndex.value),
             cloudCover: Int(current.cloudCover * 100),
-            windSpeed: current.wind.speed.value,
+            windSpeed: current.wind.speed.milesPerHourValue,
             windDirection: Int(current.wind.direction.value),
             precipitationAmount: 0.0, // CurrentWeather doesn't provide precipitation amount
             precipitationType: precipType,
@@ -80,35 +84,45 @@ final class AppleWeatherKitAPI: WeatherAPI {
     }
     
     func fetchForecast(for location: CLLocation, days: Int = 7) async throws -> [ForecastDayDTO] {
-        let weather = try await weatherService.weather(for: location)
-        return weather.dailyForecast.forecast.prefix(days).map { dailyWeather in
-            mapDailyWeather(dailyWeather)
+        do {
+            let weather = try await weatherService.weather(for: location)
+            return weather.dailyForecast.forecast.prefix(days).map { dailyWeather in
+                mapDailyWeather(dailyWeather)
+            }
+        } catch {
+            throw mapWeatherKitError(error)
         }
     }
     
     func fetchWeatherData(for location: CLLocation) async throws -> WeatherDataDTO {
-        async let currentTask = fetchCurrentWeather(for: location)
-        async let forecastTask = fetchForecast(for: location)
-        let (current, forecast) = try await (currentTask, forecastTask)
-        
-        return WeatherDataDTO(
-            temperature: current.temperature,
-            feelsLike: current.feelsLike,
-            humidity: current.humidity,
-            dewPoint: current.dewPoint,
-            pressure: current.pressure,
-            visibility: current.visibility,
-            uvIndex: current.uvIndex,
-            cloudCover: current.cloudCover,
-            windSpeed: current.windSpeed,
-            windDirection: current.windDirection,
-            precipitationAmount: current.precipitationAmount,
-            precipitationType: current.precipitationType,
-            weatherCondition: current.weatherCondition,
-            dataSource: current.dataSource,
-            accuracy: current.accuracy,
-            forecast: forecast
-        )
+        do {
+            let weather = try await weatherService.weather(for: location)
+            let current = mapCurrentWeather(weather.currentWeather, at: location)
+            let forecast = weather.dailyForecast.forecast.prefix(10).map { dailyWeather in
+                mapDailyWeather(dailyWeather)
+            }
+
+            return WeatherDataDTO(
+                temperature: current.temperature,
+                feelsLike: current.feelsLike,
+                humidity: current.humidity,
+                dewPoint: current.dewPoint,
+                pressure: current.pressure,
+                visibility: current.visibility,
+                uvIndex: current.uvIndex,
+                cloudCover: current.cloudCover,
+                windSpeed: current.windSpeed,
+                windDirection: current.windDirection,
+                precipitationAmount: current.precipitationAmount,
+                precipitationType: current.precipitationType,
+                weatherCondition: current.weatherCondition,
+                dataSource: current.dataSource,
+                accuracy: current.accuracy,
+                forecast: forecast
+            )
+        } catch {
+            throw mapWeatherKitError(error)
+        }
     }
     
     private func mapCurrentWeather(_ current: CurrentWeather, at location: CLLocation) -> WeatherDataDTO {
@@ -117,15 +131,15 @@ final class AppleWeatherKitAPI: WeatherAPI {
         let precipType = mapPrecipitationType(current.condition)
         
         return WeatherDataDTO(
-            temperature: current.temperature.value,
-            feelsLike: current.apparentTemperature.value,
+            temperature: current.temperature.fahrenheitValue,
+            feelsLike: current.apparentTemperature.fahrenheitValue,
             humidity: Int(current.humidity * 100),
-            dewPoint: current.dewPoint.value,
+            dewPoint: current.dewPoint.fahrenheitValue,
             pressure: current.pressure.value,
-            visibility: current.visibility.value,
+            visibility: current.visibility.milesValue,
             uvIndex: Double(current.uvIndex.value),
             cloudCover: Int(current.cloudCover * 100),
-            windSpeed: current.wind.speed.value,
+            windSpeed: current.wind.speed.milesPerHourValue,
             windDirection: Int(current.wind.direction.value),
             precipitationAmount: 0.0, // CurrentWeather doesn't provide precipitation amount
             precipitationType: precipType,
@@ -142,17 +156,23 @@ final class AppleWeatherKitAPI: WeatherAPI {
         
         return ForecastDayDTO(
             date: daily.date,
-            highTemperature: daily.highTemperature.value,
-            lowTemperature: daily.lowTemperature.value,
+            highTemperature: daily.highTemperature.fahrenheitValue,
+            lowTemperature: daily.lowTemperature.fahrenheitValue,
             weatherCondition: mapWeatherKitCondition(daily.condition),
             precipitationProbability: Int(daily.precipitationChance * 100),
-            precipitationAmount: 0.0, // DayWeather doesn't provide direct precipitation amount
+            // Real total liquid-equivalent precipitation, in inches to match the app's
+            // US-unit convention (and the 0.1" thresholds in WeatherData descriptions).
+            precipitationAmount: daily.precipitationAmount.converted(to: .inches).value,
             precipitationType: precipType,
-            windSpeed: daily.wind.speed.value,
+            windSpeed: daily.wind.speed.milesPerHourValue,
             windDirection: Int(daily.wind.direction.value),
-            humidity: 50, // DayWeather doesn't provide humidity, using default
+            // NOTE: WeatherKit's DayWeather exposes no daily humidity or cloud-cover
+            // aggregate. These are placeholders — forecast-based humidity/cloud triggers
+            // should treat them as unknown. Proper fix (optional fields + averaging the
+            // hourlyForecast) is tracked in IMPROVEMENT_PLAN.md §4.
+            humidity: 50,
             uvIndex: Double(daily.uvIndex.value),
-            cloudCover: 20 // DayWeather doesn't provide cloud cover, using default
+            cloudCover: 20
         )
     }
     
@@ -485,6 +505,24 @@ private extension Array where Element == Double {
     nonisolated func average() -> Double {
         guard !isEmpty else { return 0 }
         return reduce(0, +) / Double(count)
+    }
+}
+
+private extension Measurement where UnitType == UnitTemperature {
+    var fahrenheitValue: Double {
+        converted(to: .fahrenheit).value
+    }
+}
+
+private extension Measurement where UnitType == UnitLength {
+    var milesValue: Double {
+        converted(to: .miles).value
+    }
+}
+
+private extension Measurement where UnitType == UnitSpeed {
+    var milesPerHourValue: Double {
+        converted(to: .milesPerHour).value
     }
 }
 

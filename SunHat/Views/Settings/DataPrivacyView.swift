@@ -97,7 +97,7 @@ struct DataPrivacyView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image(systemName: "shield.checkered")
-                        .foregroundColor(.green)
+                        .foregroundStyle(.green)
                         .font(.title2)
                     
                     Text("Privacy First")
@@ -107,7 +107,7 @@ struct DataPrivacyView: View {
                 
                 Text("SunHat is designed with your privacy in mind. We collect minimal data necessary to provide weather-based reminders.")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             .padding(.vertical, 4)
             
@@ -193,7 +193,7 @@ struct DataPrivacyView: View {
                 }
                 .padding(12)
                 .background(Color(.secondarySystemBackground))
-                .cornerRadius(8)
+                .clipShape(.rect(cornerRadius: 8))
             }
             
         } header: {
@@ -216,20 +216,20 @@ struct DataPrivacyView: View {
 
                     Text(viewModel.syncStatusDescription)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
                 Image(systemName: "internaldrive.fill")
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
             }
 
             // Storage Information
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "checkmark.shield.fill")
-                        .foregroundColor(.green)
+                        .foregroundStyle(.green)
                     Text("Local Storage")
                         .font(.subheadline)
                         .fontWeight(.medium)
@@ -242,11 +242,11 @@ struct DataPrivacyView: View {
                     Text("• iCloud sync coming in a future update")
                 }
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             }
             .padding(12)
             .background(Color.green.opacity(0.05))
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
 
         } header: {
             Label("Data Storage", systemImage: "internaldrive")
@@ -266,7 +266,7 @@ struct DataPrivacyView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "square.and.arrow.up")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     Text("Export Includes")
                         .font(.subheadline)
                         .fontWeight(.medium)
@@ -279,11 +279,11 @@ struct DataPrivacyView: View {
                     Text("• App preferences and customizations")
                 }
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             }
             .padding(12)
             .background(Color.blue.opacity(0.05))
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
             
         } header: {
             Label("Data Export", systemImage: "square.and.arrow.up")
@@ -303,11 +303,11 @@ struct DataPrivacyView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                     Text("This Will Delete")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -318,11 +318,11 @@ struct DataPrivacyView: View {
                     Text("• iCloud synced data (if enabled)")
                 }
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             }
             .padding(12)
             .background(Color.red.opacity(0.05))
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
             
         } header: {
             Label("Data Deletion", systemImage: "trash")
@@ -465,7 +465,7 @@ struct DataPrivacyView: View {
                     Spacer()
                     Text(AppSupportLinks.privacyEmail)
                         .font(.caption)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                 }
             }
             .buttonStyle(.plain)
@@ -475,7 +475,7 @@ struct DataPrivacyView: View {
                 Spacer()
                 Text("Within 30 days")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
         } header: {
@@ -497,7 +497,7 @@ struct DataCollectionRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(dataType.color)
+                .foregroundStyle(dataType.color)
                 .frame(width: 20)
             
             VStack(alignment: .leading, spacing: 2) {
@@ -511,16 +511,16 @@ struct DataCollectionRow: View {
                     Text(dataType.displayName)
                         .font(.caption2)
                         .fontWeight(.medium)
-                        .foregroundColor(dataType.color)
+                        .foregroundStyle(dataType.color)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(dataType.color.opacity(0.1))
-                        .cornerRadius(4)
+                        .clipShape(.rect(cornerRadius: 4))
                 }
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -546,17 +546,17 @@ struct WeatherSourceCard: View {
                     Text("Primary")
                         .font(.caption2)
                         .fontWeight(.medium)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(Color.blue.opacity(0.1))
-                        .cornerRadius(4)
+                        .clipShape(.rect(cornerRadius: 4))
                 }
             }
             
             Text(description)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             HStack {
                 Text("Data Shared:")
@@ -573,11 +573,11 @@ struct WeatherSourceCard: View {
                 }
             }
             .font(.caption)
-            .foregroundColor(.blue)
+            .foregroundStyle(.blue)
         }
         .padding(12)
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -595,11 +595,11 @@ struct ThirdPartyServiceCard: View {
             
             Text("Purpose: \(purpose)")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Text("Data Shared: \(dataShared)")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Button("Privacy Policy") {
                 if let url = URL(string: privacyPolicy) {
@@ -609,11 +609,11 @@ struct ThirdPartyServiceCard: View {
                 }
             }
             .font(.caption)
-            .foregroundColor(.blue)
+            .foregroundStyle(.blue)
         }
         .padding(12)
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -635,26 +635,26 @@ struct PrivacyRightCard: View {
                 
                 Text(regulation)
                     .font(.caption2)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(Color.blue.opacity(0.1))
-                    .cornerRadius(4)
+                    .clipShape(.rect(cornerRadius: 4))
             }
             
             Text(description)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Button(action) {
                 onAction()
             }
             .font(.caption)
-            .foregroundColor(.blue)
+            .foregroundStyle(.blue)
         }
         .padding(12)
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 

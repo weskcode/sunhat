@@ -11,10 +11,10 @@ import CoreLocation
 
 struct WeatherView: View {
     @Environment(\.modelContext) private var modelContext
-    @StateObject private var viewModel: WeatherViewModel
+    @StateObject private var viewModel = WeatherViewModel()
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    
+
     @State private var selectedTimeframe: WeatherTimeframe = .current
     @State private var activeSheet: ActiveSheet?
     @State private var selectedLocation: ReminderLocation = .currentLocation
@@ -24,13 +24,7 @@ struct WeatherView: View {
 
         var id: Self { self }
     }
-    
-    init() {
-        // Initialize with a dummy modelContainer
-        let container = try! ModelContainer(for: WeatherData.self, WeatherReminder.self, LocationData.self, TriggerCondition.self)
-        self._viewModel = StateObject(wrappedValue: WeatherViewModel(modelContainer: container))
-    }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -95,8 +89,8 @@ struct WeatherView: View {
                     LocationPickerView(selectedLocation: $selectedLocation)
                 }
             }
-            .onAppear {
-                // The viewModel is already configured with modelContext from init
+            .task {
+                viewModel.configure(modelContainer: modelContext.container)
             }
         }
     }
@@ -133,18 +127,18 @@ struct WeatherView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "location.fill")
                             .font(AppFontStyle.caption.font)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                         
                         Text(viewModel.locationName)
                             .font(.headline)
                             .fontWeight(.semibold)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                     }
                     
                     if let lastUpdate = viewModel.lastUpdateTime {
                         Text("Updated \(lastUpdate, style: .relative) ago")
                             .font(AppFontStyle.caption.font)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 
@@ -163,11 +157,11 @@ struct WeatherView: View {
                     HStack(alignment: .top, spacing: 4) {
                         Text(String(format: "%.1f", viewModel.currentTemperature))
                             .font(.system(size: dynamicTypeSize.isAccessibilitySize ? 68 : 80, weight: .ultraLight, design: .rounded))
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         
                         Text("°")
                             .font(.system(size: 28, weight: .light))
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                             .offset(y: 12)
                     }
                     
@@ -175,12 +169,12 @@ struct WeatherView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "thermometer.medium")
                             .font(AppFontStyle.caption.font)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                         
                         Text("Feels like \(String(format: "%.1f", viewModel.feelsLikeTemperature))°")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                     }
                     
                     // Temperature difference indicator
@@ -189,11 +183,11 @@ struct WeatherView: View {
                         HStack(spacing: 6) {
                             Image(systemName: tempDifference > 0 ? "arrow.up" : "arrow.down")
                                 .font(.caption2)
-                                .foregroundColor(tempDifference > 0 ? .red : .blue)
+                                .foregroundStyle(tempDifference > 0 ? .red : .blue)
                             
                             Text("\(String(format: "%.1f", abs(tempDifference)))° \(tempDifference > 0 ? "warmer" : "cooler")")
                                 .font(AppFontStyle.caption.font)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -211,7 +205,7 @@ struct WeatherView: View {
                         Text(viewModel.weatherDescription)
                             .font(.callout)
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                             .multilineTextAlignment(.trailing)
                     }
                     
@@ -220,31 +214,28 @@ struct WeatherView: View {
                         HStack(spacing: 6) {
                             Image(systemName: "arrow.up")
                                 .font(.caption2)
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                             Text("\(String(format: "%.0f", viewModel.highTemperature))°")
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                         }
                         
                         HStack(spacing: 6) {
                             Image(systemName: "arrow.down")
                                 .font(.caption2)
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                             Text("\(String(format: "%.0f", viewModel.lowTemperature))°")
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
             }
         }
         .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.regularMaterial)
-                .shadow(color: .black.opacity(0.1), radius: 12, x: 0, y: 6)
-        )
+        .glassEffect(in: .rect(cornerRadius: 20))
+        .shadow(color: .black.opacity(0.1), radius: 12, x: 0, y: 6)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
             "Current weather: \(String(format: "%.1f", viewModel.currentTemperature)) degrees, feels like \(String(format: "%.1f", viewModel.feelsLikeTemperature)) degrees, \(viewModel.weatherDescription). High \(String(format: "%.0f", viewModel.highTemperature)), low \(String(format: "%.0f", viewModel.lowTemperature)) degrees"
@@ -322,10 +313,7 @@ struct WeatherView: View {
             }
         }
         .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.regularMaterial)
-        )
+        .glassEffect(in: .rect(cornerRadius: 20))
     }
     
     // MARK: - Weekly Forecast Section
@@ -342,10 +330,7 @@ struct WeatherView: View {
             .padding(.horizontal, 20)
         }
         .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.regularMaterial)
-        )
+        .glassEffect(in: .rect(cornerRadius: 20))
     }
     
     // MARK: - Weather Alerts Section
@@ -362,10 +347,7 @@ struct WeatherView: View {
             .padding(.horizontal, 20)
         }
         .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.regularMaterial)
-        )
+        .glassEffect(in: .rect(cornerRadius: 20))
     }
     
     // MARK: - Additional Metrics Section
@@ -393,10 +375,7 @@ struct WeatherView: View {
             .padding(.horizontal, 20)
         }
         .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.regularMaterial)
-        )
+        .glassEffect(in: .rect(cornerRadius: 20))
     }
     
     // MARK: - Historical Comparison Section
@@ -430,10 +409,7 @@ struct WeatherView: View {
             .padding(.horizontal, 20)
         }
         .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.regularMaterial)
-        )
+        .glassEffect(in: .rect(cornerRadius: 20))
     }
     
     // MARK: - Trigger Predictions Section
@@ -454,10 +430,7 @@ struct WeatherView: View {
             }
         }
         .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.regularMaterial)
-        )
+        .glassEffect(in: .rect(cornerRadius: 20))
     }
     
     // MARK: - Helper Views
@@ -467,7 +440,7 @@ struct WeatherView: View {
             Label(title, systemImage: icon)
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(color)
+                .foregroundStyle(color)
             
             Spacer()
         }

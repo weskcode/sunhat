@@ -31,7 +31,7 @@ struct SplashScreenView: View {
                         .opacity(logoOpacity)
 
                     Text("SunHat")
-                        .font(AppFont.inter(size: logoSize * 0.16, weight: .bold))
+                        .font(AppFont.system(size: logoSize * 0.16, weight: .bold))
                         .foregroundStyle(.white)
                         .opacity(titleOpacity)
                         .offset(y: titleOffset)

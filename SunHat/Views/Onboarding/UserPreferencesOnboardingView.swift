@@ -76,7 +76,7 @@ struct UserPreferencesOnboardingView: View {
 
             Text("Step 4 of 4")
                 .font(AppFontStyle.caption2.font)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Progress: Final step - Step 4 of 4")
@@ -101,7 +101,7 @@ struct UserPreferencesOnboardingView: View {
                 
                 Image(systemName: "slider.horizontal.3")
                     .font(.system(size: 24, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
             }
             .scaleEffect(showContent ? 1.0 : 0.8)
             .opacity(showContent ? 1.0 : 0.0)
@@ -112,13 +112,13 @@ struct UserPreferencesOnboardingView: View {
                 Text("Personalize SunHat")
                     .font(dynamicTypeSize.isAccessibilitySize ? .title3 : .title2)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 
                 Text("Set up your preferences to get the perfect weather reminders")
                     .font(.callout)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
             }
@@ -204,7 +204,7 @@ struct UserPreferencesOnboardingView: View {
                     .font(.headline)
                     .fontWeight(.semibold)
             }
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .frame(height: 52)
             .background(
@@ -301,7 +301,7 @@ struct MinimalPreferenceSection<Content: View>: View {
             HStack(spacing: 10) {
                 Image(systemName: icon)
                     .font(.body)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                     .frame(width: 20, height: 20)
                     .accessibilityHidden(true)
                 
@@ -309,13 +309,13 @@ struct MinimalPreferenceSection<Content: View>: View {
                     Text(title)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .accessibilityAddTraits(.isHeader)
                     
                     if let subtitle = subtitle {
                         Text(subtitle)
                             .font(AppFontStyle.caption2.font)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
                 }
@@ -372,11 +372,11 @@ struct CompactTemperatureSelector: View {
                 Text(unit.symbol)
                     .font(.callout)
                     .fontWeight(.medium)
-                    .foregroundColor(symbolColor)
+                    .foregroundStyle(symbolColor)
                 
                 Text(unit.shortName)
                     .font(.caption)
-                    .foregroundColor(textColor)
+                    .foregroundStyle(textColor)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 36)
@@ -385,7 +385,7 @@ struct CompactTemperatureSelector: View {
                     .fill(backgroundColor)
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
         .accessibilityLabel(unit.shortName)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -433,12 +433,12 @@ struct CompactActivityButton: View {
             VStack(spacing: 4) {
                 Image(systemName: interest.icon)
                     .font(.callout)
-                    .foregroundColor(isSelected ? .white : interest.color)
+                    .foregroundStyle(isSelected ? .white : interest.color)
                 
                 Text(interest.displayName)
                     .font(AppFontStyle.caption2.font)
                     .fontWeight(.medium)
-                    .foregroundColor(isSelected ? .white : .primary)
+                    .foregroundStyle(isSelected ? .white : .primary)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
             }
@@ -449,7 +449,7 @@ struct CompactActivityButton: View {
                     .fill(isSelected ? interest.color : Color(.tertiarySystemBackground))
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
         .accessibilityLabel(interest.displayName)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -481,24 +481,24 @@ struct CompactTimingSelector: View {
                                 Image(systemName: "checkmark")
                                     .font(AppFontStyle.caption2.font)
                                     .fontWeight(.bold)
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(.white)
                             }
                         }
                         .accessibilityHidden(true)
                         
                         Text(timing.displayName)
                             .font(.callout)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         
                         Spacer()
                         
                         Image(systemName: timing.icon)
                             .font(.caption)
-                            .foregroundColor(selectedTiming == timing ? .blue : .secondary)
+                            .foregroundStyle(selectedTiming == timing ? .blue : .secondary)
                     }
                     .frame(height: 32)
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.plain)
                 .accessibilityLabel(timing.displayName)
                 .accessibilityAddTraits(selectedTiming == timing ? .isSelected : [])
             }
@@ -519,7 +519,7 @@ struct CompactQuietHoursToggle: View {
             HStack {
                 Text("Enable quiet hours")
                     .font(.callout)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
@@ -533,7 +533,7 @@ struct CompactQuietHoursToggle: View {
                 HStack(spacing: 8) {
                     Text("From")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .frame(width: 35, alignment: .leading)
                     
                     DatePicker("Start", selection: $startTime, displayedComponents: .hourAndMinute)
@@ -542,7 +542,7 @@ struct CompactQuietHoursToggle: View {
                     
                     Text("to")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     
                     DatePicker("End", selection: $endTime, displayedComponents: .hourAndMinute)
                         .labelsHidden()

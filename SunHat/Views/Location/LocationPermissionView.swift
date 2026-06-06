@@ -133,7 +133,7 @@ struct LocationPermissionView: View {
                     
                     Image(systemName: "location.fill")
                         .font(.system(size: 35, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .scaleEffect(showLocationVisual ? 1.0 : 0.5)
                 .opacity(showLocationVisual ? 1.0 : 0.0)
@@ -146,14 +146,14 @@ struct LocationPermissionView: View {
                 Text("Get Accurate Weather")
                     .font(dynamicTypeSize.isAccessibilitySize ? .title : .largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 
                 Text("For Your Exact Location")
                     .font(.title2)
                     .fontWeight(.medium)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                     .multilineTextAlignment(.center)
             }
             .opacity(showExplanation ? 1.0 : 0.0)
@@ -169,7 +169,7 @@ struct LocationPermissionView: View {
             Text("Weather varies by location")
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .opacity(showLocationVisual ? 1.0 : 0.0)
                 .animation(.easeOut(duration: 0.6).delay(1.2), value: showLocationVisual)
             
@@ -259,7 +259,7 @@ struct LocationPermissionView: View {
                         .font(.title3)
                         .fontWeight(.semibold)
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(
@@ -290,7 +290,7 @@ struct LocationPermissionView: View {
                         .font(.body)
                         .fontWeight(.medium)
                 }
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
                 .background(
@@ -318,11 +318,11 @@ struct LocationPermissionView: View {
         HStack(spacing: 8) {
             Image(systemName: "lock.shield.fill")
                 .font(.subheadline)
-                .foregroundColor(.green)
+                .foregroundStyle(.green)
 
             Text("Only **you** have your location data — it's used solely for accurate weather, nothing else.")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.leading)
                 .lineLimit(nil)
         }
@@ -468,14 +468,14 @@ struct LocationWeatherCard: View {
             Text(cityName)
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
                 .lineLimit(1)
             
             // Temperature
             Text("\(temperature)°")
                 .font(.title3)
                 .fontWeight(.bold)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
@@ -522,7 +522,7 @@ struct ExplanationCard: View {
                 
                 Image(systemName: icon)
                     .font(.title3)
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             }
             .accessibilityHidden(true)
             
@@ -531,11 +531,11 @@ struct ExplanationCard: View {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(nil)
             }
             

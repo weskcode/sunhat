@@ -15,7 +15,7 @@ struct ShareReminderView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Share Reminder")
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text(reminder.displayTitle)
@@ -25,13 +25,13 @@ struct ShareReminderView: View {
                         if !reminder.reminderDescription.isEmpty {
                             Text(reminder.reminderDescription)
                                 .font(.body)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
 
                         if let condition = reminder.triggerCondition {
                             Text("Triggers when temperature is \(condition.comparisonType.rawValue) \(Int(condition.targetTemperature))°F")
                                 .font(.subheadline)
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                         }
                     }
                     .padding()
@@ -80,7 +80,7 @@ struct ShareButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .frame(height: 44)
             .background(Color.blue)
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .font(.headline)
             .clipShape(.rect(cornerRadius: 12))
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
