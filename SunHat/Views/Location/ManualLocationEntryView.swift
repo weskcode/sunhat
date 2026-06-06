@@ -25,7 +25,7 @@ struct ManualLocationEntryView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
     @FocusState private var isSearchFieldFocused: Bool
-    @State private var searchWorkItem: DispatchWorkItem?
+    @State private var searchTask: Task<Void, Never>?
     
     var body: some View {
         NavigationStack {
@@ -77,7 +77,7 @@ struct ManualLocationEntryView: View {
                     Button("Cancel") {
                         dismissView()
                     }
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                 }
             }
         }
@@ -106,24 +106,24 @@ struct ManualLocationEntryView: View {
                         .frame(width: 40, height: 40)
                     Image(systemName: "location.fill")
                         .font(.body)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Use Current Location")
                         .font(.body)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     Text("Monitor weather at your device location")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
                 Image(systemName: "arrow.right.circle.fill")
                     .font(.title3)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
             }
             .padding(16)
             .background(
@@ -135,7 +135,7 @@ struct ManualLocationEntryView: View {
                     )
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
         .accessibilityLabel("Use current location")
         .accessibilityHint("Monitor weather at your device's current GPS location")
     }
@@ -167,13 +167,13 @@ struct ManualLocationEntryView: View {
                 Text("Search for Your City")
                     .font(.title2)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 
                 Text("Enter your city name to get accurate weather data")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
         }
@@ -187,7 +187,7 @@ struct ManualLocationEntryView: View {
             HStack(spacing: 12) {
                 Image(systemName: "magnifyingglass")
                     .font(.body)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 TextField("City name (e.g., San Francisco)", text: $searchText)
                     .textFieldStyle(PlainTextFieldStyle())
@@ -210,7 +210,7 @@ struct ManualLocationEntryView: View {
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.body)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .accessibilityLabel("Clear search")
                 }
@@ -234,12 +234,12 @@ struct ManualLocationEntryView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "lightbulb.fill")
                             .font(.caption)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                         
                         Text("Search tips")
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                         
                         Spacer()
                     }
@@ -273,7 +273,7 @@ struct ManualLocationEntryView: View {
             
             Text(text)
                 .font(.caption2)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Spacer()
         }
@@ -289,7 +289,7 @@ struct ManualLocationEntryView: View {
             
             Text("Searching for cities...")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Searching for cities")
@@ -304,13 +304,13 @@ struct ManualLocationEntryView: View {
                 Text("Search Results")
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
                 Text("\(searchResults.count) found")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 4)
             .padding(.bottom, 12)
@@ -338,18 +338,18 @@ struct ManualLocationEntryView: View {
         VStack(spacing: 20) {
             Image(systemName: "location.slash")
                 .font(.system(size: 50))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
             
             VStack(spacing: 8) {
                 Text("No cities found")
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Text("Try searching with a different spelling or include the state/country")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             
@@ -371,12 +371,12 @@ struct ManualLocationEntryView: View {
                 Text("Popular Cities")
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .accessibilityAddTraits(.isHeader)
                 
                 Text("Tap a city below or search for your location")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             
@@ -397,7 +397,8 @@ struct ManualLocationEntryView: View {
     // MARK: - Helper Methods
     
     private func focusSearchField() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(500))
             isSearchFieldFocused = true
         }
     }
@@ -409,19 +410,18 @@ struct ManualLocationEntryView: View {
     }
     
     private func debounceSearch() {
-        searchWorkItem?.cancel()
-        
+        searchTask?.cancel()
+
         guard !searchText.isEmpty else {
             searchResults = []
             return
         }
-        
-        let workItem = DispatchWorkItem {
+
+        searchTask = Task {
+            try? await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled else { return }
             performSearch()
         }
-        
-        searchWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: workItem)
     }
     
     private func performSearch() {
@@ -549,7 +549,7 @@ struct LocationResultCard: View {
                     
                     Image(systemName: "location.fill")
                         .font(.body)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                 }
                 .accessibilityHidden(true)
                 
@@ -558,13 +558,13 @@ struct LocationResultCard: View {
                     Text(result.city)
                         .font(.body)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
                     
                     if let subtitle = result.subtitle {
                         Text(subtitle)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
                 }
@@ -575,11 +575,11 @@ struct LocationResultCard: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.title3)
-                        .foregroundColor(.green)
+                        .foregroundStyle(.green)
                 } else {
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
             .padding(16)
@@ -592,7 +592,7 @@ struct LocationResultCard: View {
                     )
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(result.displayName)")
         .accessibilityHint("Select this city for weather data")
@@ -614,12 +614,12 @@ struct PopularCityCard: View {
                 Text(city.name)
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .lineLimit(1)
                 
                 Text(city.country)
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
@@ -630,7 +630,7 @@ struct PopularCityCard: View {
                     .fill(Color(.tertiarySystemBackground))
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(city.name), \(city.country)")
         .accessibilityHint("Search for this city")

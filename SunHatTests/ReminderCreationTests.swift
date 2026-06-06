@@ -662,13 +662,17 @@ final class ReminderCreationViewModelTests: XCTestCase {
 
     // MARK: - Forecast & Likelihood
 
-    func testLoadWeatherForecast() {
-        viewModel.loadWeatherForecast()
+    func testLoadWeatherDoesNotFabricateForecast() {
+        // The forecast is now sourced from live WeatherKit data. With no resolvable
+        // location / no live weather in the test environment, the VM must NOT fall back
+        // to fabricated forecast data (previously it generated a fake 7-day forecast).
+        viewModel.loadWeather()
 
-        let expectation = XCTestExpectation(description: "Forecast loaded")
+        let expectation = XCTestExpectation(description: "Weather load settles")
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            XCTAssertFalse(self.viewModel.weatherForecast.isEmpty)
-            XCTAssertEqual(self.viewModel.weatherForecast.count, 7)
+            XCTAssertTrue(self.viewModel.weatherForecast.isEmpty)
+            XCTAssertNil(self.viewModel.triggerLikelihood)
+            XCTAssertFalse(self.viewModel.hasCurrentWeather)
             expectation.fulfill()
         }
         wait(for: [expectation], timeout: 3)

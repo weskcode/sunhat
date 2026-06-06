@@ -73,7 +73,7 @@ struct ManualLocationEntrySheet: View {
                 HStack(spacing: 12) {
                     Image(systemName: "pencil.circle.fill")
                         .font(.title)
-                        .foregroundColor(.purple)
+                        .foregroundStyle(.purple)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Manual Location Entry")
@@ -82,7 +82,7 @@ struct ManualLocationEntrySheet: View {
 
                         Text("Enter coordinates for a custom location")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -98,7 +98,7 @@ struct ManualLocationEntrySheet: View {
 
             HStack {
                 Text("Latitude")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 Spacer()
                 TextField("e.g., 37.7749", text: $latitudeText)
                     .keyboardType(.decimalPad)
@@ -108,7 +108,7 @@ struct ManualLocationEntrySheet: View {
 
             HStack {
                 Text("Longitude")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 Spacer()
                 TextField("e.g., -122.4194", text: $longitudeText)
                     .keyboardType(.numbersAndPunctuation)
@@ -135,7 +135,7 @@ struct ManualLocationEntrySheet: View {
                 Text("Examples")
                     .font(.caption)
                     .fontWeight(.semibold)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 ExampleLocationRow(name: "San Francisco", lat: "37.7749", lon: "-122.4194") {
                     fillExample(name: "San Francisco", lat: "37.7749", lon: "-122.4194")
@@ -239,17 +239,17 @@ private struct ExampleLocationRow: View {
             HStack {
                 Text(name)
                     .font(.caption)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
 
                 Spacer()
 
                 Text("\(lat), \(lon)")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 Image(systemName: "arrow.right.circle.fill")
                     .font(.caption)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
             }
             .padding(.vertical, 4)
         }

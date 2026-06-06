@@ -129,42 +129,36 @@ final class TriggerEngineManager: ObservableObject {
     
     private func handleBackgroundEvaluation(_ task: BGAppRefreshTask) async {
         logger.info("Starting background trigger evaluation")
-        
-        let startTime = Date()
-        
-        // Set up task completion handler
-        task.expirationHandler = {
-            self.logger.warning("Background evaluation task expired")
-            task.setTaskCompleted(success: false)
-        }
-        
+
         guard let triggerEngine = triggerEngine else {
             logger.error("TriggerEngine not configured for background evaluation")
             task.setTaskCompleted(success: false)
             return
         }
 
+        let startTime = Date()
 
-        // Perform the evaluation
-        let results = await triggerEngine.evaluateAllActiveReminders()
-
-        // Process results and send notifications
-        await processEvaluationResults(results, isBackground: true)
-
-        let duration = Date().timeIntervalSince(startTime)
-
-        await MainActor.run {
-            self.lastEvaluationTime = Date()
-            self.evaluationResults = results
-            self.updatePerformanceMetrics(duration: duration)
+        let workTask = Task {
+            let results = await triggerEngine.evaluateAllActiveReminders()
+            await processEvaluationResults(results, isBackground: true)
+            return results
         }
 
+        task.expirationHandler = {
+            self.logger.warning("Background evaluation task expired")
+            workTask.cancel()
+        }
+
+        let results = await workTask.value
+        let duration = Date().timeIntervalSince(startTime)
+
+        lastEvaluationTime = Date()
+        evaluationResults = results
+        updatePerformanceMetrics(duration: duration)
+
         logger.info("Background evaluation completed: \(results.count) reminders in \(duration)s")
-
-        // Schedule next evaluation
         scheduleBackgroundEvaluation()
-
-        task.setTaskCompleted(success: true)
+        task.setTaskCompleted(success: !workTask.isCancelled)
     }
     
     // MARK: - Result Processing

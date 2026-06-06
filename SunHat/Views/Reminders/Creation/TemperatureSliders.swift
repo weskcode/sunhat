@@ -29,13 +29,13 @@ struct TemperatureRangeSlider: View {
             HStack {
                 Text("32°F")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 Spacer()
 
                 Text("100°F")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
     }
@@ -49,20 +49,20 @@ struct SingleTemperatureSlider: View {
             HStack {
                 Text("32°F")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 Spacer()
 
                 Text("\(Int(temperature))°F")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
 
                 Spacer()
 
                 Text("100°F")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
 
             Slider(value: $temperature, in: 32...100, step: 1)

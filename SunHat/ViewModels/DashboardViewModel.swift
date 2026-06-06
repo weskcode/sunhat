@@ -11,7 +11,6 @@ import SwiftData
 import CoreLocation
 import CoreData
 import Combine
-import MapKit
 import os
 
 @MainActor
@@ -35,6 +34,7 @@ final class DashboardViewModel: ObservableObject {
     @Published var forecastData: [ForecastDay] = []
     @Published var activeReminders: [WeatherReminderDisplay] = []
     @Published var activeAlerts: [WeatherAlertDisplay] = []
+    @Published var hasWeatherData = false
     
     @Published var isLoading: Bool = false
     @Published var lastUpdateTime: Date?
@@ -42,6 +42,34 @@ final class DashboardViewModel: ObservableObject {
     @Published var connectionStatus: ConnectionStatus = .unknown
     
     @Published var temperatureUnit: TemperatureUnit = .fahrenheit
+
+    var currentTemperatureDisplay: String {
+        formattedTemperature(currentTemperature)
+    }
+
+    var feelsLikeTemperatureDisplay: String {
+        formattedTemperature(feelsLikeTemperature)
+    }
+
+    var highTemperatureDisplay: String {
+        formattedTemperature(highTemperature)
+    }
+
+    var lowTemperatureDisplay: String {
+        formattedTemperature(lowTemperature)
+    }
+
+    var windSpeedDisplay: String {
+        hasWeatherData ? "\(windSpeed.formatted(.number.precision(.fractionLength(0)))) mph" : "--"
+    }
+
+    var visibilityDisplay: String {
+        hasWeatherData ? "\(visibility.formatted(.number.precision(.fractionLength(1)))) mi" : "--"
+    }
+
+    var uvIndexDisplay: String {
+        hasWeatherData ? uvIndex.formatted(.number.precision(.fractionLength(0))) : "--"
+    }
     
     // MARK: - Private Properties
     
@@ -127,6 +155,11 @@ final class DashboardViewModel: ObservableObject {
         } catch {
             errorMessage = "Weather data unavailable: \(error.localizedDescription)"
             connectionStatus = .disconnected
+            if !hasWeatherData {
+                weatherDescription = "Weather unavailable"
+                activeAlerts = []
+                forecastData = []
+            }
             logger.error("Weather data refresh failed: \(error)")
         }
 
@@ -194,7 +227,9 @@ final class DashboardViewModel: ObservableObject {
                prefs.locationMode == "manual",
                prefs.manualLocationLatitude != 0 || prefs.manualLocationLongitude != 0 {
                 let loc = CLLocation(latitude: prefs.manualLocationLatitude, longitude: prefs.manualLocationLongitude)
-                currentLocationName = prefs.manualLocationName.isEmpty ? "Manual Location" : prefs.manualLocationName
+                currentLocationName = prefs.manualLocationName.isEmpty
+                    ? "Manual Location"
+                    : LocationDisplayFormatter.privacyPreservingName(from: prefs.manualLocationName)
                 return loc
             }
         }
@@ -202,7 +237,7 @@ final class DashboardViewModel: ObservableObject {
         // 2) Check if the shared manager already has a manual location
         if let manual = locationPermissionManager.manualLocation {
             let loc = CLLocation(latitude: manual.coordinate.latitude, longitude: manual.coordinate.longitude)
-            currentLocationName = manual.displayName
+            currentLocationName = LocationDisplayFormatter.privacyPreservingName(from: manual.displayName)
             return loc
         }
 
@@ -248,27 +283,13 @@ final class DashboardViewModel: ObservableObject {
     }
     
     private func updateLocationName(for location: CLLocation) async {
-        guard let request = MKReverseGeocodingRequest(location: location) else {
-            currentLocationName = "Current Location"
-            return
-        }
-        do {
-            let mapItems = try await request.mapItems
-            if let mapItem = mapItems.first {
-                // iOS 26: MKMapItem.placemark is deprecated — use MKAddress instead.
-                // shortAddress gives a concise "City, State" style string.
-                let display = mapItem.address?.shortAddress ?? mapItem.name ?? ""
-                currentLocationName = display.isEmpty ? "Current Location" : display
-            }
-        } catch {
-            logger.warning("Failed to reverse geocode location: \(error.localizedDescription)")
-            currentLocationName = "Current Location"
-        }
+        currentLocationName = await LocationDisplayFormatter.reverseGeocodedName(for: location)
     }
     
     @MainActor
     private func updateWeatherData(_ weatherData: WeatherData) {
         currentWeatherData = ModelDataConverter.convertWeatherData(weatherData)
+        hasWeatherData = true
         currentTemperature = convertTemperature(weatherData.temperature)
         feelsLikeTemperature = convertTemperature(weatherData.feelsLike)
         humidity = weatherData.humidity
@@ -461,6 +482,10 @@ final class DashboardViewModel: ObservableObject {
         case .celsius:
             return (fahrenheit - 32) * 5 / 9
         }
+    }
+
+    private func formattedTemperature(_ temperature: Double) -> String {
+        hasWeatherData ? temperature.formatted(.number.precision(.fractionLength(0))) : "--"
     }
 }
 

@@ -14,7 +14,6 @@ struct AllRemindersView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Query(sort: \WeatherReminder.createdDate, order: .reverse) private var reminders: [WeatherReminder]
 
-    @State private var activeSheet: ActiveSheet?
     @State private var searchText = ""
     @State private var selectedFilter: ReminderFilter = .all
 
@@ -22,12 +21,6 @@ struct AllRemindersView: View {
         case all = "All"
         case active = "Active"
         case inactive = "Inactive"
-    }
-
-    private enum ActiveSheet: Identifiable {
-        case quickCreate
-
-        var id: Self { self }
     }
 
     var filteredReminders: [WeatherReminder] {
@@ -107,69 +100,14 @@ struct AllRemindersView: View {
                     .fontWeight(.semibold)
             }
         }
-        .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) {
-            if !reminders.isEmpty {
-                GlassCreateTaskButton {
-                    activeSheet = .quickCreate
-                }
-                .padding(.trailing, 18)
-                .padding(.bottom, 10)
-            }
-        }
-        .sheet(item: $activeSheet) { sheet in
-            switch sheet {
-            case .quickCreate:
-                StreamlinedReminderCreationView()
-            }
-        }
     }
 
     // MARK: - Liquid Glass Background
 
     private var liquidGlassBackground: some View {
-        ZStack {
-            LinearGradient(
-                colors: colorScheme == .dark ? [
-                    Color.black,
-                    Color(red: 0.05, green: 0.05, blue: 0.15),
-                    Color.black
-                ] : [
-                    Color(red: 0.95, green: 0.97, blue: 1.0),
-                    Color(red: 0.90, green: 0.94, blue: 0.98),
-                    Color(red: 0.95, green: 0.97, blue: 1.0)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-            GeometryReader { geometry in
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.purple.opacity(0.1), Color.pink.opacity(0.05)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 280, height: 280)
-                        .blur(radius: 55)
-                        .offset(x: geometry.size.width * 0.75, y: geometry.size.height * 0.15)
-
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue.opacity(0.08), Color.cyan.opacity(0.04)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 240, height: 240)
-                        .blur(radius: 45)
-                        .offset(x: geometry.size.width * 0.1, y: geometry.size.height * 0.7)
-                }
-            }
-        }
+        colorScheme == .dark
+            ? Color.black
+            : Color(red: 0.97, green: 0.98, blue: 1.0)
     }
 
     // MARK: - Search Bar
@@ -177,7 +115,7 @@ struct AllRemindersView: View {
     private var searchBar: some View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
             TextField("Search tasks...", text: $searchText)
                 .textFieldStyle(.plain)
@@ -187,24 +125,12 @@ struct AllRemindersView: View {
                     searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
         .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(
-                            colorScheme == .dark ?
-                            Color.white.opacity(0.1) :
-                            Color.white.opacity(0.3),
-                            lineWidth: 1
-                        )
-                )
-        )
+        .glassEffect(in: .rect(cornerRadius: 12))
     }
 
     // MARK: - Filter Chips
@@ -276,13 +202,6 @@ struct AllRemindersView: View {
             Label("No Tasks Yet", systemImage: "list.bullet.clipboard")
         } description: {
             Text("Create your first weather-triggered task to get started.")
-        } actions: {
-            Button {
-                activeSheet = .quickCreate
-            } label: {
-                Label("Create Task", systemImage: "plus")
-            }
-            .buttonStyle(.borderedProminent)
         }
         .padding()
     }
@@ -312,7 +231,6 @@ struct AllRemindersView: View {
 
 struct ReminderGlassCard: View {
     let reminder: WeatherReminder
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         NavigationLink {
@@ -328,7 +246,7 @@ struct ReminderGlassCard: View {
 
                         Image(systemName: reminder.category.iconName)
                             .font(AppFontStyle.title3.font)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                     }
 
                     // Title and description
@@ -336,13 +254,13 @@ struct ReminderGlassCard: View {
                         Text(reminder.displayTitle)
                             .font(.headline)
                             .fontWeight(.semibold)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                             .lineLimit(1)
 
                         if !reminder.reminderDescription.isEmpty {
                             Text(reminder.reminderDescription)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         }
                     }
@@ -357,7 +275,7 @@ struct ReminderGlassCard: View {
 
                         Text(reminder.isCurrentlyActive ? "Active" : "Waiting")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -366,35 +284,23 @@ struct ReminderGlassCard: View {
                     HStack(spacing: 8) {
                         Image(systemName: "thermometer")
                             .font(.caption)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
 
                         Text("When temp is \(condition.comparisonType.rawValue) \(Int(condition.targetTemperature))°")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
 
                         Spacer()
 
                         Text(reminder.createdDate, format: .dateTime.month().day())
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(
-                                colorScheme == .dark ?
-                                Color.white.opacity(0.08) :
-                                Color.white.opacity(0.3),
-                                lineWidth: 1
-                            )
-                    )
-                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
-            )
+            .glassEffect(in: .rect(cornerRadius: 16))
+            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(.plain)
     }
@@ -413,7 +319,7 @@ struct FilterChip: View {
             Text(title)
                 .font(.subheadline)
                 .fontWeight(isSelected ? .semibold : .regular)
-                .foregroundColor(isSelected ? .white : .primary)
+                .foregroundStyle(isSelected ? .white : .primary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(

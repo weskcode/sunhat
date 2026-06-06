@@ -17,18 +17,18 @@ struct SectionHeader: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundColor(iconColor)
+                .foregroundStyle(iconColor)
                 .frame(width: 24, height: 24)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
 
                 Text(subtitle)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()

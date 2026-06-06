@@ -28,7 +28,7 @@ struct TitleNotesIconSection: View {
                 Text("Icon")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 Spacer()
             }
@@ -61,7 +61,7 @@ private struct IconPickerGrid: View {
 
                         Image(systemName: icon)
                             .font(.title3)
-                            .foregroundColor(selectedIcon == icon ? .purple : .secondary)
+                            .foregroundStyle(selectedIcon == icon ? .purple : .secondary)
                     }
                     .frame(width: 52, height: 52)
                 }

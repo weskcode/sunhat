@@ -25,13 +25,13 @@ struct LivePreviewCard: View {
 
                     Image(systemName: "eye.fill")
                         .font(.subheadline)
-                        .foregroundColor(.green)
+                        .foregroundStyle(.green)
                 }
 
                 Text("Live Preview")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.green)
+                    .foregroundStyle(.green)
 
                 Spacer()
 
@@ -45,7 +45,7 @@ struct LivePreviewCard: View {
                     Text("LIVE")
                         .font(.caption2)
                         .fontWeight(.bold)
-                        .foregroundColor(.green)
+                        .foregroundStyle(.green)
                 }
             }
 
@@ -57,7 +57,7 @@ struct LivePreviewCard: View {
 
                     Image(systemName: "cloud.sun.fill")
                         .font(.caption)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .accessibilityHidden(true)
 
@@ -66,24 +66,24 @@ struct LivePreviewCard: View {
                         Text("SunHat")
                             .font(.caption2)
                             .fontWeight(.semibold)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
 
                         Spacer()
 
                         Text("now")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
 
                     Text(reminder.previewTitle)
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .lineLimit(2)
 
                     Text(reminder.previewBody)
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
 
@@ -133,7 +133,7 @@ struct ReminderPreviewCard: View {
 
                     Image(systemName: reminder.selectedIcon)
                         .font(.title2)
-                        .foregroundColor(reminder.iconColor)
+                        .foregroundStyle(reminder.iconColor)
                 }
                 .accessibilityHidden(true)
 
@@ -141,7 +141,7 @@ struct ReminderPreviewCard: View {
                     Text(reminder.displayTitle)
                         .font(.title3)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                 }
 
                 Spacer()
@@ -210,20 +210,20 @@ private struct ConditionRow: View {
 
                 Image(systemName: icon)
                     .font(.caption)
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             }
             .accessibilityHidden(true)
 
             Text(title)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
             Spacer()
 
             Text(value)
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
         }
     }
 }

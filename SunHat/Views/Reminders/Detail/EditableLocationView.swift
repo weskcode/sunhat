@@ -16,18 +16,18 @@ struct EditableLocationView: View {
             HStack(spacing: 12) {
                 Image(systemName: location.isCurrentLocation ? "location.fill" : "mappin.circle")
                     .font(.title3)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(location.displayName)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
 
                     if let address = location.fullAddress {
                         Text(address)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
                 }
@@ -36,7 +36,7 @@ struct EditableLocationView: View {
 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             .padding(12)
             .glassEffect(.regular.tint(.blue.opacity(0.05)), in: .rect(cornerRadius: 10))

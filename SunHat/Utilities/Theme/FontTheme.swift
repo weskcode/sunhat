@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 enum AppFont {
-    static func inter(size: CGFloat, weight: Font.Weight = .regular) -> Font {
+    static func system(size: CGFloat, weight: Font.Weight = .regular) -> Font {
         .system(size: size, weight: weight)
     }
 }
@@ -54,7 +54,7 @@ enum AppFontStyle: CaseIterable {
 }
 
 extension UIFont {
-    static func inter(size: CGFloat, weight: UIFont.Weight) -> UIFont {
+    static func system(size: CGFloat, weight: UIFont.Weight) -> UIFont {
         UIFont.systemFont(ofSize: size, weight: weight)
     }
 

@@ -51,7 +51,7 @@ struct ReminderSummaryCard: View {
                     
                     Image(systemName: reminder.selectedIcon)
                         .font(.title)
-                        .foregroundColor(reminder.iconColor)
+                        .foregroundStyle(reminder.iconColor)
                         .scaleEffect(showContent ? 1.0 : 0.5)
                         .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.4), value: showContent)
                 }
@@ -62,14 +62,14 @@ struct ReminderSummaryCard: View {
                     Text(reminder.displayTitle)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .opacity(showContent ? 1.0 : 0.0)
                         .offset(x: showContent ? 0 : 20)
                         .animation(.easeOut(duration: 0.6).delay(0.3), value: showContent)
                     
                     Text("Weather-triggered reminder")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .opacity(showContent ? 1.0 : 0.0)
                         .offset(x: showContent ? 0 : 20)
                         .animation(.easeOut(duration: 0.6).delay(0.5), value: showContent)
@@ -83,7 +83,7 @@ struct ReminderSummaryCard: View {
                         Text("Active & Monitoring")
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(.green)
+                            .foregroundStyle(.green)
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
@@ -175,7 +175,7 @@ struct ReminderSummaryCard: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
                     .background(
@@ -183,7 +183,7 @@ struct ReminderSummaryCard: View {
                             .fill(Color.blue.opacity(0.1))
                     )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.plain)
                 
                 Button(action: {
                     // Edit action
@@ -196,7 +196,7 @@ struct ReminderSummaryCard: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
                     .background(
@@ -204,7 +204,7 @@ struct ReminderSummaryCard: View {
                             .fill(Color(.tertiarySystemBackground))
                     )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.plain)
             }
             .padding(.top, 20)
             .padding(.horizontal, 24)
@@ -257,7 +257,7 @@ struct ConditionSummaryRow: View {
                 
                 Image(systemName: icon)
                     .font(.body)
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             }
             .accessibilityHidden(true)
             
@@ -265,12 +265,12 @@ struct ConditionSummaryRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Text(value)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
             }
             
             Spacer()
@@ -278,7 +278,7 @@ struct ConditionSummaryRow: View {
             // Checkmark
             Image(systemName: "checkmark.circle.fill")
                 .font(.body)
-                .foregroundColor(.green)
+                .foregroundStyle(.green)
                 .scaleEffect(isVisible ? 1.0 : 0.5)
                 .opacity(isVisible ? 1.0 : 0.0)
                 .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(animationDelay), value: isVisible)
@@ -317,7 +317,7 @@ struct ReminderDetailsView: View {
                             
                             Image(systemName: reminder.selectedIcon)
                                 .font(.title)
-                                .foregroundColor(reminder.iconColor)
+                                .foregroundStyle(reminder.iconColor)
                         }
                         
                         VStack(spacing: 8) {
@@ -328,7 +328,7 @@ struct ReminderDetailsView: View {
                             
                             Text("Created just now")
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .padding(.top, 20)
@@ -386,27 +386,27 @@ struct ReminderDetailsView: View {
                                     HStack {
                                         Text("Trigger Likelihood")
                                             .font(.subheadline)
-                                            .foregroundColor(.secondary)
+                                            .foregroundStyle(.secondary)
                                         
                                         Spacer()
                                         
                                         Text(likelihood.description)
                                             .font(.subheadline)
                                             .fontWeight(.semibold)
-                                            .foregroundColor(likelihood.color)
+                                            .foregroundStyle(likelihood.color)
                                     }
                                     
                                     HStack {
                                         Text("Expected Triggers")
                                             .font(.subheadline)
-                                            .foregroundColor(.secondary)
+                                            .foregroundStyle(.secondary)
                                         
                                         Spacer()
                                         
                                         Text("\(likelihood.triggerDays.count) days this week")
                                             .font(.subheadline)
                                             .fontWeight(.semibold)
-                                            .foregroundColor(.primary)
+                                            .foregroundStyle(.primary)
                                     }
                                 }
                             }
@@ -468,7 +468,7 @@ struct DetailSection<Content: View>: View {
             Text(title)
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             content
         }
@@ -491,18 +491,18 @@ struct DetailRow: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.body)
-                .foregroundColor(color)
+                .foregroundStyle(color)
                 .frame(width: 20)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Text(value)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
             }
             
             Spacer()
@@ -525,18 +525,18 @@ struct HowItWorksStep: View {
                 Text("\(number)")
                     .font(.caption)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             

@@ -24,7 +24,7 @@ struct SavedLocationCard: View {
 
                 Image(systemName: location.source.icon)
                     .font(.body)
-                    .foregroundColor(sourceColor)
+                    .foregroundStyle(sourceColor)
             }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -32,29 +32,29 @@ struct SavedLocationCard: View {
                     Text(location.displayName)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
 
                     if location.isFavorite {
                         Image(systemName: "heart.fill")
                             .font(.caption)
-                            .foregroundColor(.red)
+                            .foregroundStyle(.red)
                     }
                 }
 
                 Text(location.shortAddress)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
 
                 HStack(spacing: 12) {
                     Label("Used \(location.useCount) times", systemImage: "clock")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
 
                     Label(location.lastUsed.formatted(.relative(presentation: .named)), systemImage: "calendar")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
 
@@ -65,16 +65,14 @@ struct SavedLocationCard: View {
             }) {
                 Image(systemName: "ellipsis")
                     .font(.body)
-                    .foregroundColor(.secondary)
-                    .frame(width: 30, height: 30)
+                    .foregroundStyle(.secondary)
+                    .frame(width: 44, height: 44)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Location actions")
         }
         .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(.regularMaterial)
-        )
+        .glassEffect(in: .rect(cornerRadius: 10))
         .confirmationDialog("Location Actions", isPresented: $showingActions) {
             Button(location.isFavorite ? "Remove from Favorites" : "Add to Favorites") {
                 onToggleFavorite()

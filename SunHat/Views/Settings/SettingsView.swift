@@ -11,7 +11,7 @@ import UserNotifications
 import CoreLocation
 
 struct SettingsView: View {
-    @StateObject private var viewModel = SettingsViewModel()
+    @State private var viewModel = SettingsViewModel()
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
@@ -33,8 +33,12 @@ struct SettingsView: View {
                 notificationSection
                 locationSection
                 temperatureSection
+                appearanceSection
                 privacySection
                 aboutSection
+            }
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: 72)
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
@@ -49,6 +53,15 @@ struct SettingsView: View {
                 Button("Cancel", role: .cancel) { }
             } message: {
                 Text("To receive weather-based reminders, please enable notifications in Settings.")
+            }
+            .alert(
+                "Couldn't Open",
+                isPresented: $viewModel.isShowingActionError,
+                presenting: viewModel.actionError
+            ) { _ in
+                Button("OK", role: .cancel) { }
+            } message: { message in
+                Text(message)
             }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
@@ -68,21 +81,21 @@ struct SettingsView: View {
             // Notification status
             HStack {
                 Label("Notifications", systemImage: "bell.fill")
-                    .foregroundColor(.red)
+                    .foregroundStyle(.red)
                 
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(viewModel.notificationStatusText)
                         .font(AppFontStyle.callout.font)
-                        .foregroundColor(viewModel.notificationsEnabled ? .primary : .secondary)
+                        .foregroundStyle(viewModel.notificationsEnabled ? .primary : .secondary)
                     
                     if !viewModel.notificationsEnabled {
                         Button("Enable") {
                             showingNotificationInfo = true
                         }
                         .font(.caption)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     }
                 }
             }
@@ -134,21 +147,21 @@ struct SettingsView: View {
             // Location permission status
             HStack {
                 Label("Location Access", systemImage: "location.fill")
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                 
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 2) {
                     Text(viewModel.locationStatusText)
                         .font(AppFontStyle.callout.font)
-                        .foregroundColor(viewModel.locationEnabled ? .primary : .secondary)
+                        .foregroundStyle(viewModel.locationEnabled ? .primary : .secondary)
                     
                     if !viewModel.locationEnabled {
                         Button("Enable") {
                             viewModel.requestLocationPermission()
                         }
                         .font(.caption)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     }
                 }
             }
@@ -160,7 +173,7 @@ struct SettingsView: View {
                     Spacer()
                     Text(viewModel.currentLocationName)
                         .font(AppFontStyle.callout.font)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
 
@@ -172,10 +185,10 @@ struct SettingsView: View {
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             }
         } header: {
             Text("Location")
@@ -193,7 +206,7 @@ struct SettingsView: View {
                     HStack {
                         Text(unit.symbol)
                             .fontWeight(.medium)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                         Text(unit.shortName)
                     }
                     .tag(unit)
@@ -218,7 +231,7 @@ struct SettingsView: View {
                 ForEach(AppearanceMode.allCases, id: \.self) { mode in
                     HStack {
                         Image(systemName: mode.iconName)
-                            .foregroundColor(mode.color)
+                            .foregroundStyle(mode.color)
                         Text(mode.displayName)
                     }
                     .tag(mode)
@@ -235,7 +248,7 @@ struct SettingsView: View {
                     Spacer()
                     Text(colorScheme == .dark ? "Dark" : "Light")
                         .font(AppFontStyle.callout.font)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
         } header: {
@@ -256,7 +269,7 @@ struct SettingsView: View {
             Button("Reset All Settings") {
                 viewModel.showResetConfirmation = true
             }
-            .foregroundColor(.red)
+            .foregroundStyle(.red)
             .alert("Reset Settings", isPresented: $viewModel.showResetConfirmation) {
                 Button("Reset", role: .destructive) {
                     viewModel.resetAllSettings()
@@ -277,7 +290,7 @@ struct SettingsView: View {
                 Spacer()
                 Text(viewModel.appVersion)
                     .font(AppFontStyle.callout.font)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             HStack {
@@ -285,7 +298,7 @@ struct SettingsView: View {
                 Spacer()
                 Text(viewModel.buildNumber)
                     .font(AppFontStyle.callout.font)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Button("Acknowledgments") {
@@ -301,11 +314,11 @@ struct SettingsView: View {
             VStack(spacing: 8) {
                 Text("Made with ❤️ for weather enthusiasts")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Text("© 2026 SunHat. All rights reserved.")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity)
             .multilineTextAlignment(.center)

@@ -205,9 +205,10 @@ final class LocationPermissionManager: NSObject, ObservableObject {
     
     func getDisplayLocation() -> String {
         if let manual = manualLocation {
-            return manual.name
+            return LocationDisplayFormatter.privacyPreservingName(from: manual.displayName)
         } else if let current = currentLocation {
-            return "Current Location (\(String(format: "%.2f", current.coordinate.latitude)), \(String(format: "%.2f", current.coordinate.longitude)))"
+            logger.debug("Current location available for broad display: \(current.coordinate.latitude), \(current.coordinate.longitude)")
+            return "Current Location"
         } else {
             return "No Location Set"
         }

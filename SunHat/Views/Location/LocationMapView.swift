@@ -28,7 +28,7 @@ struct LocationMapView: View {
                         VStack {
                             Image(systemName: annotation.icon)
                                 .font(.title2)
-                                .foregroundColor(.white)
+                                .foregroundStyle(.white)
                                 .padding(8)
                                 .background(annotation.color)
                                 .clipShape(Circle())
@@ -37,11 +37,10 @@ struct LocationMapView: View {
                             Text(annotation.title)
                                 .font(.caption2)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(.regularMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                .glassEffect(in: .rect(cornerRadius: 4))
                         }
                     }
                 }

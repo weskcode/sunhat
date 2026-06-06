@@ -71,6 +71,26 @@ struct NextReadyReminderSelectorTests {
         #expect(snapshot.subtitle == "Ready when the weather matches.")
     }
 
+    @Test("Snapshot round-trips through Codable for widget/watch transport")
+    func snapshotRoundTripsThroughCodable() throws {
+        let original = NextReadyReminderSelector.snapshot(from: [
+            makeReminder(title: "Morning run", category: .exercise, priority: .urgent)
+        ])
+
+        let data = try JSONEncoder().encode(original)
+        let decoded = try JSONDecoder().decode(NextReadyReminderSnapshot.self, from: data)
+
+        #expect(decoded == original)
+    }
+
+    @Test("The unavailable snapshot round-trips through Codable")
+    func unavailableSnapshotRoundTrips() throws {
+        let data = try JSONEncoder().encode(NextReadyReminderSnapshot.unavailable)
+        let decoded = try JSONDecoder().decode(NextReadyReminderSnapshot.self, from: data)
+
+        #expect(decoded == .unavailable)
+    }
+
     private func makeReminder(
         id: UUID = UUID(),
         title: String,

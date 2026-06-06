@@ -16,7 +16,7 @@ struct TimePreferencesBuilder: View {
                     Text("Preferred Time")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
 
                     Spacer()
                 }
@@ -41,11 +41,11 @@ struct TimePreferencesBuilder: View {
                     Text("Respect Quiet Hours")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
 
                     Text("Avoid notifications during sleep hours")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
@@ -67,12 +67,12 @@ private struct TimeRangeButton: View {
             VStack(spacing: 8) {
                 Image(systemName: timeRange.icon)
                     .font(.title3)
-                    .foregroundColor(isSelected ? .white : .orange)
+                    .foregroundStyle(isSelected ? .white : .orange)
 
                 Text(timeRange.displayName)
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(isSelected ? .white : .primary)
+                    .foregroundStyle(isSelected ? .white : .primary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
             }

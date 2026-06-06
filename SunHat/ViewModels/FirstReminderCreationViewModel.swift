@@ -21,12 +21,32 @@ final class FirstReminderCreationViewModel: ObservableObject {
     @Published var isCreatingReminder = false
     @Published var showLocationPicker = false
 
+    // Real current-weather display for the selected location (no hardcoded values).
+    @Published var isLoadingCurrentWeather = false
+    @Published var hasCurrentWeather = false
+    @Published var currentTemperatureText = "--"
+    @Published var feelsLikeText = "--"
+    @Published var currentConditionText = ""
+    @Published var currentConditionIcon = "cloud.fill"
+    @Published var currentConditionColor: Color = .secondary
+
     private let weatherService = WeatherService.shared
     private let locationPermissionManager = LocationPermissionManager.shared
     private var modelContext: ModelContext?
+    private var temperatureUnit: TemperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
+    private var weatherTask: Task<Void, Never>?
 
     func configure(modelContext: ModelContext) {
         self.modelContext = modelContext
+        loadTemperatureUnit()
+    }
+
+    private func loadTemperatureUnit() {
+        guard let modelContext else { return }
+        let descriptor = FetchDescriptor<UserPreferences>()
+        if let preferences = try? modelContext.fetch(descriptor).first {
+            temperatureUnit = preferences.temperatureUnit
+        }
     }
 
     // MARK: - Location Management
@@ -41,11 +61,13 @@ final class FirstReminderCreationViewModel: ObservableObject {
     func selectManualLocation(_ location: ManualLocationData) {
         customReminder.selectedLocation = .manual(location)
         showLocationPicker = false
+        loadWeather()
     }
 
     func selectCurrentLocation() {
         customReminder.selectedLocation = .currentLocation
         showLocationPicker = false
+        loadWeather()
     }
     
     var isReminderValid: Bool {
@@ -119,32 +141,105 @@ final class FirstReminderCreationViewModel: ObservableObject {
         customReminder.selectedColor = appearance.color
     }
     
-    func loadWeatherForecast() {
-        Task {
+    /// Loads live weather for the selected location via WeatherKit and publishes both
+    /// the current-conditions card and the forecast (used for trigger likelihood) from a
+    /// single API call. Degrades to an unavailable/empty state when there's no location
+    /// or the fetch fails — never shows fabricated values.
+    func loadWeather() {
+        weatherTask?.cancel()
+        weatherTask = Task { [weak self] in
+            guard let self else { return }
+
+            guard let location = self.resolveSelectedLocation() else {
+                self.clearWeather()
+                return
+            }
+
+            self.isLoadingCurrentWeather = true
+            defer { self.isLoadingCurrentWeather = false }
+
             do {
-                // Try to get real weather data first
-                if let realForecast = try await fetchRealWeatherForecast() {
-                    weatherForecast = realForecast
-                } else {
-                    // Fall back to enhanced mock data
-                    weatherForecast = generateEnhancedMockForecast()
-                }
+                let data = try await self.weatherService.fetchWeatherData(for: location)
+                guard !Task.isCancelled else { return }
+                self.applyCurrentWeather(data)
+                self.weatherForecast = Self.mapForecast(data.forecastDays)
+                self.calculateLikelihood()
             } catch {
-                print("Failed to load weather forecast: \(error)")
-                weatherForecast = generateEnhancedMockForecast()
+                guard !Task.isCancelled else { return }
+                self.clearWeather()
             }
         }
     }
-    
-    private func fetchRealWeatherForecast() async throws -> [WeatherForecastDay]? {
-        // In a real implementation, this would use WeatherService
-        // For now, return nil to use mock data
-        return nil
+
+    private func clearWeather() {
+        isLoadingCurrentWeather = false
+        hasCurrentWeather = false
+        weatherForecast = []
+        triggerLikelihood = nil
+    }
+
+    /// Maps the live forecast (full `WeatherCondition` set, Fahrenheit) into the compact
+    /// `WeatherForecastDay` used by the likelihood calculation. Temps stay in Fahrenheit
+    /// to match the trigger comparison against the user's configured temperature range.
+    // Internal (not private) so the mapping is unit-testable via `@testable import`.
+    static func mapForecast(_ days: [ForecastDay]) -> [WeatherForecastDay] {
+        days.prefix(7).map { day in
+            WeatherForecastDay(
+                date: day.date,
+                highTemp: Int(day.highTemperature.rounded()),
+                lowTemp: Int(day.lowTemperature.rounded()),
+                weatherCondition: mapToMockCondition(day.weatherCondition)
+            )
+        }
+    }
+
+    static func mapToMockCondition(_ condition: WeatherCondition) -> MockWeatherCondition {
+        switch condition {
+        case .clear: return .clear
+        case .partlyCloudy: return .partlyCloudy
+        case .cloudy, .overcast, .fog, .windy, .unknown: return .cloudy
+        case .rain, .drizzle, .thunderstorm: return .rain
+        case .snow, .sleet, .hail: return .snow
+        }
+    }
+
+    private func applyCurrentWeather(_ data: WeatherData) {
+        currentTemperatureText = formattedTemperature(data.temperature)
+        feelsLikeText = formattedTemperature(data.feelsLike)
+        currentConditionText = data.weatherDescription.isEmpty
+            ? data.weatherCondition.rawValue.capitalized
+            : data.weatherDescription
+        currentConditionIcon = data.weatherCondition.iconName
+        currentConditionColor = data.weatherCondition.iconColor
+        hasCurrentWeather = true
+    }
+
+    private func resolveSelectedLocation() -> CLLocation? {
+        switch customReminder.selectedLocation {
+        case .currentLocation:
+            return locationPermissionManager.currentLocation
+        case .manual(let data):
+            return CLLocation(latitude: data.coordinate.latitude, longitude: data.coordinate.longitude)
+        }
+    }
+
+    private func convertTemperature(_ fahrenheit: Double) -> Double {
+        switch temperatureUnit {
+        case .fahrenheit: return fahrenheit
+        case .celsius: return (fahrenheit - 32) * 5 / 9
+        }
+    }
+
+    private func formattedTemperature(_ fahrenheit: Double) -> String {
+        convertTemperature(fahrenheit).formatted(.number.precision(.fractionLength(0)))
     }
     
     func calculateLikelihood() {
-        guard !weatherForecast.isEmpty else { return }
-        
+        guard !weatherForecast.isEmpty else {
+            triggerLikelihood = nil
+            return
+        }
+
         let triggerDays = weatherForecast.filter { day in
             matchesConditions(day: day)
         }
@@ -259,77 +354,6 @@ final class FirstReminderCreationViewModel: ObservableObject {
         isCreatingReminder = false
     }
     
-    private func generateEnhancedMockForecast() -> [WeatherForecastDay] {
-        let today = Date()
-        var forecast: [WeatherForecastDay] = []
-        
-        // Create more realistic weather patterns
-        let baseTemperature = getCurrentSeasonalBaseTemp()
-        var previousTemp = baseTemperature
-        
-        for i in 0..<7 {
-            let date = Calendar.current.date(byAdding: .day, value: i, to: today) ?? today
-            
-            // Create gradual temperature changes (more realistic)
-            let tempChange = Int.random(in: -8...8)
-            let newTemp = max(30, min(90, previousTemp + tempChange))
-            previousTemp = newTemp
-            
-            // Weather conditions based on temperature and season
-            let condition = getRealisticWeatherCondition(for: newTemp, date: date)
-            
-            forecast.append(WeatherForecastDay(
-                date: date,
-                highTemp: newTemp,
-                lowTemp: newTemp - Int.random(in: 8...15),
-                weatherCondition: condition
-            ))
-        }
-        
-        return forecast
-    }
-    
-    private func getCurrentSeasonalBaseTemp() -> Int {
-        let month = Calendar.current.component(.month, from: Date())
-        switch month {
-        case 12, 1, 2: return 45 // Winter
-        case 3, 4, 5: return 65 // Spring
-        case 6, 7, 8: return 80 // Summer
-        case 9, 10, 11: return 60 // Fall
-        default: return 65
-        }
-    }
-    
-    private func getRealisticWeatherCondition(for temp: Int, date: Date) -> MockWeatherCondition {
-        let month = Calendar.current.component(.month, from: date)
-        
-        // Winter conditions
-        if month == 12 || month == 1 || month == 2 {
-            if temp < 35 {
-                return Bool.random() ? .snow : .cloudy
-            } else if temp < 50 {
-                return [.cloudy, .partlyCloudy].randomElement() ?? .cloudy
-            }
-        }
-        
-        // Summer conditions
-        if month == 6 || month == 7 || month == 8 {
-            if temp > 85 {
-                return [.clear, .partlyCloudy].randomElement() ?? .clear
-            } else if temp > 75 {
-                return Bool.random() ? .clear : .partlyCloudy
-            }
-        }
-        
-        // General conditions based on temperature
-        if temp < 40 {
-            return [.cloudy, .snow].randomElement() ?? .cloudy
-        } else if temp > 80 {
-            return [.clear, .partlyCloudy].randomElement() ?? .clear
-        } else {
-            return [.clear, .partlyCloudy, .cloudy, .rain].randomElement() ?? .partlyCloudy
-        }
-    }
 }
 
 // MARK: - Data Structures

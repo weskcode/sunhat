@@ -117,7 +117,7 @@ struct WelcomeView: View {
             Text("Perfect conditions for your outdoor activities, gardening, and daily tasks")
                 .font(AppFontStyle.title3.font)
                 .fontWeight(.medium)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(nil)
                 .opacity(showHeroText ? 1.0 : 0.0)
@@ -205,7 +205,7 @@ struct WelcomeView: View {
             Text("Works for any outdoor activity")
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
                 .accessibilityAddTraits(.isHeader)
 
             // Use case tags
@@ -214,12 +214,12 @@ struct WelcomeView: View {
                     HStack(spacing: 6) {
                         Image(systemName: tag.1)
                             .font(.caption)
-                            .foregroundColor(tag.2)
+                            .foregroundStyle(tag.2)
 
                         Text(tag.0)
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                     }
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
@@ -262,7 +262,7 @@ struct WelcomeView: View {
 
                 Image(systemName: "cloud.sun.fill")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
             }
             .accessibilityHidden(true)
 
@@ -271,23 +271,23 @@ struct WelcomeView: View {
                     Text("SunHat")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
 
                     Spacer()
 
                     Text("now")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
 
                 Text("Perfect gardening weather!")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
 
                 Text("It's 72°F and sunny — ideal for your outdoor plans.")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
 
@@ -322,7 +322,7 @@ struct WelcomeView: View {
                         .font(AppFontStyle.title3.font)
                         .fontWeight(.medium)
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(
@@ -347,7 +347,7 @@ struct WelcomeView: View {
                 Text("Skip for now")
                     .font(.body)
                     .fontWeight(.medium)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 }
                 .buttonStyle(SecondaryButtonStyle())
                 .accessibilityLabel("Skip for now")

@@ -20,7 +20,7 @@ struct WeatherConditionBuilder: View {
                     Text("Temperature")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
 
                     Spacer()
 
@@ -29,7 +29,7 @@ struct WeatherConditionBuilder: View {
                          : "\(Int(minTemp))°F")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                 }
 
                 HStack(spacing: 12) {
@@ -40,12 +40,12 @@ struct WeatherConditionBuilder: View {
                             VStack(spacing: 6) {
                                 Image(systemName: type.icon)
                                     .font(.body)
-                                    .foregroundColor(temperatureType == type ? .white : .blue)
+                                    .foregroundStyle(temperatureType == type ? .white : .blue)
 
                                 Text(type.displayName)
                                     .font(.caption2)
                                     .fontWeight(.medium)
-                                    .foregroundColor(temperatureType == type ? .white : .primary)
+                                    .foregroundStyle(temperatureType == type ? .white : .primary)
                                     .lineLimit(1)
                             }
                             .frame(maxWidth: .infinity)
@@ -75,7 +75,7 @@ struct WeatherConditionBuilder: View {
                     Text("Sky Conditions")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
 
                     Spacer()
                 }
@@ -107,7 +107,7 @@ struct WeatherConditionBuilder: View {
                      ? "Remind me when it's any of these:"
                      : "Remind me unless it's any of these:")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 FlowLayoutConditions(spacing: 8) {
@@ -145,7 +145,7 @@ private struct ConditionModeTab: View {
                     .font(.caption)
                     .fontWeight(.medium)
             }
-            .foregroundColor(isSelected ? .white : .secondary)
+            .foregroundStyle(isSelected ? .white : .secondary)
             .frame(maxWidth: .infinity)
             .frame(height: 36)
             .background(
@@ -188,17 +188,17 @@ private struct SkyConditionChip: View {
             HStack(spacing: 6) {
                 Image(systemName: sky.icon)
                     .font(.caption)
-                    .foregroundColor(isSelected && mode == .include ? .white : sky.color)
+                    .foregroundStyle(isSelected && mode == .include ? .white : sky.color)
 
                 Text(sky.displayName)
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(textColor)
+                    .foregroundStyle(textColor)
 
                 if isSelected && mode == .exclude {
                     Image(systemName: "xmark")
                         .font(.system(size: 8, weight: .bold))
-                        .foregroundColor(.gray)
+                        .foregroundStyle(.gray)
                 }
             }
             .padding(.horizontal, 12)
@@ -268,12 +268,12 @@ struct ConditionTypeButton: View {
             VStack(spacing: 8) {
                 Image(systemName: conditionType.icon)
                     .font(.title3)
-                    .foregroundColor(isSelected ? .white : .blue)
+                    .foregroundStyle(isSelected ? .white : .blue)
 
                 Text(conditionType.displayName)
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(isSelected ? .white : .primary)
+                    .foregroundStyle(isSelected ? .white : .primary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
             }

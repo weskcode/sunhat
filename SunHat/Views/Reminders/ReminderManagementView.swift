@@ -78,12 +78,14 @@ struct ReminderManagementView: View {
                         }) {
                             Image(systemName: "arrow.up.arrow.down")
                         }
+                        .accessibilityLabel("Sort reminders")
 
                         Button(action: {
                             activeSheet = .createReminder
                         }) {
                             Image(systemName: "plus")
                         }
+                        .accessibilityLabel("Create reminder")
                     }
                 }
             }
@@ -139,7 +141,7 @@ struct ReminderManagementView: View {
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                         }
-                        .foregroundColor(selectedSection == section ? .white : .blue)
+                        .foregroundStyle(selectedSection == section ? .white : .blue)
                         .padding(.vertical, 8)
                         .padding(.horizontal, 16)
                         .background(
@@ -150,11 +152,11 @@ struct ReminderManagementView: View {
                         if let count = viewModel.sectionCounts[section] {
                             Text("\(count)")
                                 .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.plain)
                 
                 if section != ManagementSection.allCases.last {
                     Spacer()
@@ -175,7 +177,7 @@ struct ReminderManagementView: View {
             // Search field
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 TextField("Search reminders...", text: $searchText)
                     .textFieldStyle(PlainTextFieldStyle())
@@ -185,7 +187,7 @@ struct ReminderManagementView: View {
                         searchText = ""
                     }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -202,7 +204,7 @@ struct ReminderManagementView: View {
             }) {
                 HStack(spacing: 4) {
                     Image(systemName: "line.horizontal.3.decrease.circle")
-                        .foregroundColor(viewModel.hasActiveFilters ? .blue : .secondary)
+                        .foregroundStyle(viewModel.hasActiveFilters ? .blue : .secondary)
                     
                     if viewModel.hasActiveFilters {
                         Circle()
@@ -216,21 +218,21 @@ struct ReminderManagementView: View {
                         .fill(Color(.tertiarySystemBackground))
                 )
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(.plain)
             
             // Selection mode toggle
             Button(action: {
                 toggleSelectionMode()
             }) {
                 Image(systemName: isSelectionMode ? "checkmark.circle.fill" : "checkmark.circle")
-                    .foregroundColor(isSelectionMode ? .blue : .secondary)
+                    .foregroundStyle(isSelectionMode ? .blue : .secondary)
                     .padding(8)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
                             .fill(Color(.tertiarySystemBackground))
                     )
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(.plain)
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
@@ -258,7 +260,7 @@ struct ReminderManagementView: View {
                     HStack {
                         Text("\(viewModel.displayedReminders.count) reminders found")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                         
                         Spacer()
                         
@@ -267,7 +269,7 @@ struct ReminderManagementView: View {
                                 viewModel.clearFilters()
                             }
                             .font(.caption)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                         }
                     }
                     .listRowBackground(Color.clear)
@@ -279,7 +281,7 @@ struct ReminderManagementView: View {
             if selectedSection == .archive {
                 // Seasonal archive organization - temporarily simplified
                 Text("Archive view temporarily disabled due to Swift 6 concurrency issues")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .padding()
             } else {
                 // Regular list for active/triggered sections
@@ -316,7 +318,7 @@ struct ReminderManagementView: View {
                         viewModel.loadMoreTriggeredHistory()
                     }
                     .frame(maxWidth: .infinity)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                     .listRowBackground(Color.clear)
                 }
             }

@@ -61,7 +61,7 @@ struct SortOptionsView: View {
     private func sortOptionRow(icon: String, title: String, isSelected: Bool) -> some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
                 .frame(width: 20)
 
             Text(title)
@@ -71,7 +71,7 @@ struct SortOptionsView: View {
 
             if isSelected {
                 Image(systemName: "checkmark")
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
             }
         }
     }

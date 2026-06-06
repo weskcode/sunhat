@@ -41,11 +41,11 @@ struct ReminderDetailView: View {
             HStack {
                 Image(systemName: reminder.category.iconName)
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
 
                 Text(reminder.category.displayName)
                     .font(.subheadline)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
             }
 
             Text(reminder.displayTitle)
@@ -55,7 +55,7 @@ struct ReminderDetailView: View {
             if !reminder.reminderDescription.isEmpty {
                 Text(reminder.reminderDescription)
                     .font(.body)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -73,7 +73,7 @@ struct ReminderDetailView: View {
 
                 Text(reminder.statusText)
                     .font(.subheadline)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
             }
         }
     }
@@ -88,7 +88,7 @@ struct ReminderDetailView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         Image(systemName: "thermometer")
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                         Text("Temperature: \(condition.comparisonType.rawValue) \(Int(condition.targetTemperature))°F")
                             .font(.subheadline)
                     }
@@ -96,7 +96,7 @@ struct ReminderDetailView: View {
                     if condition.useFeelsLike {
                         Text("Uses 'feels like' temperature")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -150,11 +150,11 @@ private struct StatCard: View {
             Text(value)
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
 
             Text(title)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -172,13 +172,13 @@ private struct DateRow: View {
         HStack {
             Text(label)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
             Spacer()
 
             Text(date, format: .dateTime.weekday().month().day().hour().minute())
                 .font(.subheadline)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
         }
     }
 }

@@ -169,18 +169,18 @@ struct LocationManagementView: View {
                         
                         Image(systemName: "location.fill")
                             .font(.title2)
-                            .foregroundColor(locationAccuracyColor)
+                            .foregroundStyle(locationAccuracyColor)
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(viewModel.currentLocationName)
                             .font(.headline)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                             .lineLimit(2)
                         
                         Text("Accuracy: \(viewModel.currentLocationAccuracy)")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     
                     Spacer()
@@ -203,22 +203,19 @@ struct LocationManagementView: View {
                     HStack {
                         Text("Coordinates:")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                         
                         Spacer()
                         
                         Text("\(location.coordinate.latitude, specifier: "%.6f"), \(location.coordinate.longitude, specifier: "%.6f")")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .textSelection(.enabled)
                     }
                 }
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.regularMaterial)
-            )
+            .glassEffect(in: .rect(cornerRadius: 12))
         }
     }
     
@@ -237,17 +234,17 @@ struct LocationManagementView: View {
                 HStack(spacing: 16) {
                     Image(systemName: permissionStatusIcon)
                         .font(.title2)
-                        .foregroundColor(permissionStatusColor)
+                        .foregroundStyle(permissionStatusColor)
                         .frame(width: 30)
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(permissionStatusText)
                             .font(.headline)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         
                         Text(permissionStatusDescription)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     
                     Spacer()
@@ -266,10 +263,7 @@ struct LocationManagementView: View {
                 }
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.regularMaterial)
-            )
+            .glassEffect(in: .rect(cornerRadius: 12))
         }
     }
     
@@ -403,7 +397,7 @@ struct LocationManagementView: View {
                         viewModel.clearLocationHistory()
                     }
                     .font(.caption)
-                    .foregroundColor(.red)
+                    .foregroundStyle(.red)
                 }
             }
             
@@ -457,14 +451,11 @@ struct LocationManagementView: View {
                     activeSheet = .privacyInfo
                 }
                 .font(.caption)
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
                 .padding(.top, 8)
             }
             .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.regularMaterial)
-            )
+            .glassEffect(in: .rect(cornerRadius: 12))
         }
     }
     

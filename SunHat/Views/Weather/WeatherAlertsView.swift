@@ -48,32 +48,32 @@ struct WeatherAlertDetailCard: View {
             HStack {
                 Image(systemName: alert.iconName)
                     .font(AppFontStyle.title2.font)
-                    .foregroundColor(alert.severityColor)
+                    .foregroundStyle(alert.severityColor)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(alert.title)
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     
                     Text(alert.severity.rawValue.capitalized)
                         .font(.caption)
-                        .foregroundColor(alert.severityColor)
+                        .foregroundStyle(alert.severityColor)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
                         .background(alert.severityColor.opacity(0.1))
-                        .cornerRadius(4)
+                        .clipShape(.rect(cornerRadius: 4))
                 }
                 
                 Spacer()
                 
                 Text(alert.timestamp, style: .time)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Text(alert.description)
                 .font(.body)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 8)
     }

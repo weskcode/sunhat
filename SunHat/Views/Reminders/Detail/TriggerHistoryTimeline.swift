@@ -29,15 +29,15 @@ struct TriggerHistoryTimeline: View {
         VStack(spacing: 8) {
             Image(systemName: "clock.arrow.circlepath")
                 .font(.title2)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
             Text("No recent activity")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
             Text("History will appear here when the reminder triggers")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -69,31 +69,31 @@ private struct TriggerHistoryRow: View {
                     Text(entry.action.displayName)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
 
                     Spacer()
 
                     Text(entry.timestamp, style: .time)
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
 
                 if !entry.details.isEmpty {
                     Text(entry.details)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(isCompact ? 1 : 2)
                 }
 
                 if let temperature = entry.temperatureAtTime {
                     Text("Temperature: \(Int(temperature))°F")
                         .font(.caption2)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
                 }
 
                 Text(entry.timestamp, format: .dateTime.weekday().month().day())
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()

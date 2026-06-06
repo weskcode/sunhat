@@ -11,17 +11,15 @@ import CoreLocation
 
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
-    @EnvironmentObject private var onboardingCoordinator: OnboardingCoordinator
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var activeSheet: ActiveSheet?
     @State private var showingDetailedWeather = false
-    @State private var selectedForecastDays: ForecastRange = .sevenDay
 
     private enum ActiveSheet: Identifiable {
-        case quickCreate
         case allReminders
         case weatherAlerts
 
@@ -45,13 +43,14 @@ struct DashboardView: View {
 
                             if showingDetailedWeather {
                                 detailedWeatherMetrics
-                                    .transition(.asymmetric(
-                                        insertion: .scale(scale: 0.95).combined(with: .opacity),
-                                        removal: .scale(scale: 0.95).combined(with: .opacity)
-                                    ))
+                                    .transition(detailsTransition)
                             }
 
-                            readyNowSection
+                            if !viewModel.activeReminders.isEmpty {
+                                readyNowSection
+                                    .transition(detailsTransition)
+                            }
+
                             activeRemindersSection
                         }
                         .padding(.horizontal, 16)
@@ -61,19 +60,8 @@ struct DashboardView: View {
             }
             .navigationTitle("SunHat")
             .navigationBarTitleDisplayMode(.large)
-            .safeAreaInset(edge: .bottom, alignment: .trailing, spacing: 0) {
-                quickCreateButton
-                    .padding(.trailing, 18)
-                    .padding(.bottom, 10)
-            }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
-                case .quickCreate:
-                    StreamlinedReminderCreationView(onReminderCreated: {
-                        if !onboardingCoordinator.hasCreatedFirstReminder {
-                            onboardingCoordinator.markFirstReminderCreated()
-                        }
-                    })
                 case .allReminders:
                     AllRemindersView()
                 case .weatherAlerts:
@@ -90,13 +78,13 @@ struct DashboardView: View {
 
     private var currentTemperatureWidget: some View {
         Button(action: {
-            withAnimation(.interpolatingSpring(duration: 0.35, bounce: 0.2)) {
+            withAnimation(cardToggleAnimation) {
                 showingDetailedWeather.toggle()
             }
         }) {
             temperatureWidgetContent
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
     }
     
     private var temperatureWidgetContent: some View {
@@ -107,18 +95,24 @@ struct DashboardView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "location.fill")
                             .font(AppFontStyle.caption.font)
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                         
                         Text(viewModel.currentLocationName)
                             .font(AppFontStyle.subheadline.font)
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
                     }
                     
                     if let lastUpdate = viewModel.lastUpdateTime {
                         Text("Updated \(lastUpdate, style: .relative) ago")
                             .font(AppFontStyle.caption2.font)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
+                    } else if viewModel.isLoading {
+                        Text("Updating weather")
+                            .font(AppFontStyle.caption.font)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 
@@ -132,7 +126,7 @@ struct DashboardView: View {
 
                     Image(systemName: "chevron.down.circle.fill")
                         .font(AppFontStyle.title3.font)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                         .rotationEffect(.degrees(showingDetailedWeather ? 180 : 0))
                         .animation(.interpolatingSpring(duration: 0.3, bounce: 0.25), value: showingDetailedWeather)
                 }
@@ -140,96 +134,100 @@ struct DashboardView: View {
             .padding(.horizontal, 20)
             .padding(.top, 16)
             
-            // Main temperature display
-            HStack(alignment: .top, spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
-                    // Current temperature
-                    HStack(alignment: .top, spacing: 4) {
-                        Text("\(viewModel.currentTemperature, specifier: "%.0f")")
-                            .font(AppFont.inter(size: dynamicTypeSize.isAccessibilitySize ? 64 : 72, weight: .thin))
-                            .foregroundColor(.primary)
-                        
-                        Text("°")
-                            .font(AppFont.inter(size: 24, weight: .light))
-                            .foregroundColor(.primary)
-                            .offset(y: 8)
-                    }
-                    
-                    // Feels like temperature
-                    Text("Feels like \(viewModel.feelsLikeTemperature, specifier: "%.0f")°")
-                        .font(AppFontStyle.callout.font)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 12) {
-                    // Weather icon and condition
-                    VStack(alignment: .trailing, spacing: 8) {
-                        Image(systemName: viewModel.weatherIconName)
-                            .font(AppFont.inter(size: 44))
-                            .foregroundStyle(viewModel.weatherIconColor)
-                            .symbolRenderingMode(.hierarchical)
-                        
-                        Text(viewModel.weatherDescription)
-                            .font(AppFontStyle.caption.font)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.trailing)
-                    }
-                    
-                    // High/Low
-                    VStack(alignment: .trailing, spacing: 2) {
-                        Text("H: \(viewModel.highTemperature, specifier: "%.0f")°")
-                            .font(AppFontStyle.callout.font)
-                            .foregroundColor(.primary)
-                        
-                        Text("L: \(viewModel.lowTemperature, specifier: "%.0f")°")
-                            .font(AppFontStyle.callout.font)
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            weatherSummaryContent
         }
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.regularMaterial)
-                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
-        )
+        .glassEffect(in: .rect(cornerRadius: 20))
+        .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Current weather: \(viewModel.currentTemperature, specifier: "%.0f") degrees, feels like \(viewModel.feelsLikeTemperature, specifier: "%.0f") degrees, \(viewModel.weatherDescription)")
+        .accessibilityLabel(weatherAccessibilityLabel)
     }
-    
-    // MARK: - Weather Alerts Section
-    
-    private var weatherAlertsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("Weather Alerts", systemImage: "exclamationmark.triangle.fill")
-                    .font(AppFontStyle.headline.font)
-                    .foregroundColor(.orange)
-                
-                Spacer()
-                
-                Button("View All") {
-                    activeSheet = .weatherAlerts
+
+    @ViewBuilder
+    private var weatherSummaryContent: some View {
+        if viewModel.hasWeatherData {
+            availableWeatherSummary
+        } else {
+            unavailableWeatherSummary
+        }
+    }
+
+    private var availableWeatherSummary: some View {
+        HStack(alignment: .top, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top, spacing: 4) {
+                    Text(viewModel.currentTemperatureDisplay)
+                        .font(AppFont.system(size: dynamicTypeSize.isAccessibilitySize ? 64 : 72, weight: .thin))
+                        .foregroundStyle(.primary)
+                        .contentTransition(.numericText())
+
+                    Text("°")
+                        .font(AppFont.system(size: 24, weight: .light))
+                        .foregroundStyle(.primary)
+                        .offset(y: 8)
                 }
-                .font(AppFontStyle.callout.font)
-                .foregroundColor(.blue)
+
+                Text("Feels like \(viewModel.feelsLikeTemperatureDisplay)°")
+                    .font(AppFontStyle.callout.font)
+                    .foregroundStyle(.secondary)
+                    .contentTransition(.numericText())
             }
-            
-            LazyVStack(spacing: 8) {
-                ForEach(Array(viewModel.activeAlerts.prefix(2)), id: \.id) { alert in
-                    WeatherAlertCard(alert: alert)
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 12) {
+                VStack(alignment: .trailing, spacing: 8) {
+                    Image(systemName: viewModel.weatherIconName)
+                        .font(AppFont.system(size: 44))
+                        .foregroundStyle(viewModel.weatherIconColor)
+                        .symbolRenderingMode(.hierarchical)
+
+                    Text(viewModel.weatherDescription)
+                        .font(AppFontStyle.caption.font)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.trailing)
+                }
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("H: \(viewModel.highTemperatureDisplay)°")
+                        .font(AppFontStyle.callout.font)
+                        .foregroundStyle(.primary)
+                        .contentTransition(.numericText())
+
+                    Text("L: \(viewModel.lowTemperatureDisplay)°")
+                        .font(AppFontStyle.callout.font)
+                        .foregroundStyle(.secondary)
+                        .contentTransition(.numericText())
                 }
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.regularMaterial)
-        )
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+    }
+
+    private var unavailableWeatherSummary: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "cloud.slash.fill")
+                .font(.system(size: 34, weight: .regular))
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(.secondary)
+                .frame(width: 46, height: 46)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Weather unavailable")
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+
+                Text(viewModel.errorMessage ?? "Pull down to refresh once weather access is available.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 22)
     }
     
     // MARK: - Active Reminders Section
@@ -238,17 +236,17 @@ struct DashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Ready Now", systemImage: "checkmark.circle.fill")
                 .font(AppFontStyle.headline.font)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
 
             if viewModel.activeReminders.isEmpty {
                 Text("Create a weather task and SunHat will watch for matching conditions.")
                     .font(AppFontStyle.callout.font)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else if viewModel.activeAlerts.isEmpty {
                 Text("No tasks match the weather right now. SunHat is still watching.")
                     .font(AppFontStyle.callout.font)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 LazyVStack(spacing: 8) {
@@ -259,10 +257,7 @@ struct DashboardView: View {
             }
         }
         .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.regularMaterial)
-        )
+        .glassEffect(in: .rect(cornerRadius: 16))
     }
     
     private var activeRemindersSection: some View {
@@ -270,7 +265,7 @@ struct DashboardView: View {
             HStack {
                 Label("Watching", systemImage: "bell.badge.fill")
                     .font(AppFontStyle.headline.font)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
@@ -278,7 +273,7 @@ struct DashboardView: View {
                     activeSheet = .allReminders
                 }
                 .font(AppFontStyle.callout.font)
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
             }
             
             if viewModel.activeReminders.isEmpty {
@@ -292,246 +287,23 @@ struct DashboardView: View {
             }
         }
         .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.regularMaterial)
-        )
+        .glassEffect(in: .rect(cornerRadius: 16))
     }
     
-    // MARK: - Temperature Trend Section
-    
-    private var temperatureTrendSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Label("7-Day Forecast", systemImage: "chart.line.uptrend.xyaxis")
-                    .font(AppFontStyle.headline.font)
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
-                Text("°\(viewModel.temperatureUnit.symbol.dropFirst())")
-                    .font(AppFontStyle.caption.font)
-                    .foregroundColor(.secondary)
-            }
-            
-            if viewModel.forecastData.isEmpty {
-                Text("Forecast data unavailable")
-                    .font(AppFontStyle.callout.font)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 120)
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(12)
-            } else {
-                TemperatureTrendChart(forecastData: viewModel.forecastData)
-                    .frame(height: 120)
-            }
+    private var cardToggleAnimation: Animation {
+        reduceMotion ? .easeInOut(duration: 0.14) : .smooth(duration: 0.28)
+    }
+
+    private var detailsTransition: AnyTransition {
+        reduceMotion ? .opacity : .scale(scale: 0.96).combined(with: .opacity)
+    }
+
+    private var weatherAccessibilityLabel: String {
+        guard viewModel.hasWeatherData else {
+            return "Weather unavailable for \(viewModel.currentLocationName)"
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.regularMaterial)
-        )
-    }
-    
-    // MARK: - Quick Stats Section
-    
-    private var quickStatsSection: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible()),
-            GridItem(.flexible())
-        ], spacing: 12) {
-            QuickStatCard(
-                icon: "humidity.fill",
-                title: "Humidity",
-                value: "\(viewModel.humidity)%",
-                color: .cyan
-            )
-            
-            QuickStatCard(
-                icon: "wind",
-                title: "Wind",
-                value: "\(String(format: "%.0f", viewModel.windSpeed)) mph",
-                color: .green
-            )
-            
-            QuickStatCard(
-                icon: "eye.fill",
-                title: "Visibility",
-                value: "\(String(format: "%.1f", viewModel.visibility)) mi",
-                color: .purple
-            )
-            
-            QuickStatCard(
-                icon: "sun.max.fill",
-                title: "UV Index",
-                value: "\(String(format: "%.0f", viewModel.uvIndex))",
-                color: .orange
-            )
-        }
-    }
-    
-    // MARK: - Quick Create Button
-    
-    private var quickCreateButton: some View {
-        GlassCreateTaskButton {
-            activeSheet = .quickCreate
-        }
-    }
-    
-    // MARK: - Hourly Forecast Section
 
-    private var hourlyForecastSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Label("Hourly Forecast", systemImage: "clock.fill")
-                    .font(AppFontStyle.headline.font)
-                    .foregroundColor(.primary)
-
-                Spacer()
-            }
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(0..<24, id: \.self) { hour in
-                        HourlyWeatherCard(
-                            hour: hour,
-                            temperature: viewModel.currentTemperature + Double.random(in: -5...5),
-                            condition: viewModel.weatherIconName,
-                            precipChance: Int.random(in: 0...30)
-                        )
-                    }
-                }
-                .padding(.horizontal, 4)
-            }
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.regularMaterial)
-        )
-    }
-
-    // MARK: - Enhanced Forecast Section
-
-    private var enhancedForecastSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Label("Forecast", systemImage: "calendar")
-                    .font(AppFontStyle.headline.font)
-                    .foregroundColor(.primary)
-
-                Spacer()
-
-                // Forecast range picker
-                Picker("Range", selection: $selectedForecastDays) {
-                    Text("5 Day").tag(ForecastRange.fiveDay)
-                    Text("7 Day").tag(ForecastRange.sevenDay)
-                    Text("10 Day").tag(ForecastRange.tenDay)
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 200)
-                .animation(.interpolatingSpring(duration: 0.25, bounce: 0.15), value: selectedForecastDays)
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-
-            if viewModel.forecastData.isEmpty {
-                EmptyForecastView()
-                    .padding(.horizontal, 16)
-            } else {
-                LazyVStack(spacing: 8) {
-                    ForEach(Array(viewModel.forecastData.prefix(selectedForecastDays.rawValue)), id: \.id) { day in
-                        EnhancedDayForecastRow(
-                            forecast: day,
-                            minTemp: calculateMinTemp(),
-                            maxTemp: calculateMaxTemp()
-                        )
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 12)
-            }
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.regularMaterial)
-        )
-    }
-
-    private func calculateMinTemp() -> Double {
-        guard !viewModel.forecastData.isEmpty else { return 50 }
-        let allLows = viewModel.forecastData.map { $0.lowTemperature }
-        return allLows.min() ?? 50
-    }
-
-    private func calculateMaxTemp() -> Double {
-        guard !viewModel.forecastData.isEmpty else { return 90 }
-        let allHighs = viewModel.forecastData.map { $0.highTemperature }
-        return allHighs.max() ?? 90
-    }
-
-    // MARK: - Comprehensive Weather Metrics
-
-    private var comprehensiveWeatherMetrics: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible()),
-            GridItem(.flexible())
-        ], spacing: 12) {
-            // Precipitation
-            WeatherMetricCard(
-                icon: "cloud.rain.fill",
-                title: "Precipitation",
-                value: "0%",
-                subtitle: "in last 24h",
-                color: .blue
-            )
-
-            // Feels Like
-            WeatherMetricCard(
-                icon: "thermometer.medium",
-                title: "Feels Like",
-                value: "\(String(format: "%.0f", viewModel.feelsLikeTemperature))°",
-                subtitle: "Similar to actual",
-                color: .orange
-            )
-
-            // Sunrise/Sunset
-            WeatherMetricCard(
-                icon: "sunrise.fill",
-                title: "Sunrise",
-                value: "6:45 AM",
-                subtitle: "Sunset: 7:30 PM",
-                color: .yellow
-            )
-
-            // Air Quality
-            WeatherMetricCard(
-                icon: "aqi.medium",
-                title: "Air Quality",
-                value: "Good",
-                subtitle: "AQI: 45",
-                color: .green
-            )
-
-            // Pressure
-            WeatherMetricCard(
-                icon: "barometer",
-                title: "Pressure",
-                value: "29.92",
-                subtitle: "inHg",
-                color: .indigo
-            )
-
-            // Cloud Cover
-            WeatherMetricCard(
-                icon: "cloud.fill",
-                title: "Cloud Cover",
-                value: "25%",
-                subtitle: "Mostly clear",
-                color: .gray
-            )
-        }
+        return "Current weather for \(viewModel.currentLocationName): \(viewModel.currentTemperatureDisplay) degrees, feels like \(viewModel.feelsLikeTemperatureDisplay) degrees, \(viewModel.weatherDescription)"
     }
 
     // MARK: - Detailed Weather Metrics
@@ -542,7 +314,7 @@ struct DashboardView: View {
             HStack {
                 Label("More Details", systemImage: "info.circle.fill")
                     .font(AppFontStyle.headline.font)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
 
                 Spacer()
 
@@ -552,7 +324,7 @@ struct DashboardView: View {
                     }
                 }
                 .font(AppFontStyle.callout.font)
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
             }
 
             // Additional context about weather
@@ -560,7 +332,7 @@ struct DashboardView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "thermometer.medium")
                         .font(AppFontStyle.title2.font)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
                         .frame(width: 36)
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -568,13 +340,13 @@ struct DashboardView: View {
                             .font(AppFontStyle.subheadline.font)
                             .fontWeight(.medium)
 
-                        Text("Current: \(String(format: "%.1f", viewModel.currentTemperature))° • Feels like: \(String(format: "%.1f", viewModel.feelsLikeTemperature))°")
+                        Text("Current: \(viewModel.currentTemperatureDisplay)° • Feels like: \(viewModel.feelsLikeTemperatureDisplay)°")
                             .font(AppFontStyle.caption.font)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
 
-                        Text("High: \(String(format: "%.0f", viewModel.highTemperature))° • Low: \(String(format: "%.0f", viewModel.lowTemperature))°")
+                        Text("High: \(viewModel.highTemperatureDisplay)° • Low: \(viewModel.lowTemperatureDisplay)°")
                             .font(AppFontStyle.caption.font)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -583,7 +355,7 @@ struct DashboardView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "cloud.fill")
                         .font(AppFontStyle.title2.font)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                         .frame(width: 36)
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -595,19 +367,19 @@ struct DashboardView: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "humidity.fill")
                                     .font(AppFontStyle.caption.font)
-                                    .foregroundColor(.cyan)
+                                    .foregroundStyle(.cyan)
                                 Text("\(viewModel.humidity)%")
                                     .font(AppFontStyle.caption.font)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                             }
 
                             HStack(spacing: 4) {
                                 Image(systemName: "wind")
                                     .font(AppFontStyle.caption.font)
-                                    .foregroundColor(.green)
-                                Text("\(String(format: "%.0f", viewModel.windSpeed)) mph")
+                                    .foregroundStyle(.green)
+                                Text(viewModel.windSpeedDisplay)
                                     .font(AppFontStyle.caption.font)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -618,7 +390,7 @@ struct DashboardView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "eye.fill")
                         .font(AppFontStyle.title2.font)
-                        .foregroundColor(.purple)
+                        .foregroundStyle(.purple)
                         .frame(width: 36)
 
                     VStack(alignment: .leading, spacing: 4) {
@@ -630,19 +402,19 @@ struct DashboardView: View {
                             HStack(spacing: 4) {
                                 Text("Visibility:")
                                     .font(AppFontStyle.caption.font)
-                                    .foregroundColor(.secondary)
-                                Text("\(String(format: "%.1f", viewModel.visibility)) mi")
+                                    .foregroundStyle(.secondary)
+                                Text(viewModel.visibilityDisplay)
                                     .font(AppFontStyle.caption.font)
-                                    .foregroundColor(.primary)
+                                    .foregroundStyle(.primary)
                             }
 
                             HStack(spacing: 4) {
                                 Text("UV Index:")
                                     .font(AppFontStyle.caption.font)
-                                    .foregroundColor(.secondary)
-                                Text("\(String(format: "%.0f", viewModel.uvIndex))")
+                                    .foregroundStyle(.secondary)
+                                Text(viewModel.uvIndexDisplay)
                                     .font(AppFontStyle.caption.font)
-                                    .foregroundColor(.primary)
+                                    .foregroundStyle(.primary)
                             }
                         }
                     }
@@ -655,10 +427,7 @@ struct DashboardView: View {
             )
         }
         .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.regularMaterial)
-        )
+        .glassEffect(in: .rect(cornerRadius: 16))
     }
 
     // MARK: - Computed Properties

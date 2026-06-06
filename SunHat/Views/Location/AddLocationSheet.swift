@@ -43,7 +43,7 @@ struct AddLocationSheet: View {
     private var searchBar: some View {
         HStack(spacing: 12) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
             TextField("Search for a location", text: $searchText)
                 .textFieldStyle(.plain)
@@ -55,7 +55,7 @@ struct AddLocationSheet: View {
                     searchText = ""
                 }
                 .font(.caption)
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
             }
         }
         .padding(.horizontal, 16)
@@ -82,15 +82,15 @@ struct AddLocationSheet: View {
             VStack(spacing: 20) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 50))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
 
                 Text("Search for locations")
                     .font(.headline)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
 
                 Text("Enter a city name, address, or point of interest to add it to your saved locations")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 40)
             }
@@ -108,18 +108,18 @@ private struct SearchResultRow: View {
             HStack(spacing: 12) {
                 Image(systemName: "mappin.circle")
                     .font(.title3)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(result.title)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
 
                     Text(result.subtitle)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
 
@@ -127,7 +127,7 @@ private struct SearchResultRow: View {
 
                 Image(systemName: "plus.circle")
                     .font(.body)
-                    .foregroundColor(.green)
+                    .foregroundStyle(.green)
             }
             .padding(.vertical, 4)
         }

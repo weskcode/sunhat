@@ -14,7 +14,7 @@ struct EditableNotificationSettingsView: View {
                 Text("Notification Title")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
 
                 TextField("Enter notification title", text: $config.title)
                     .textFieldStyle(.roundedBorder)
@@ -24,7 +24,7 @@ struct EditableNotificationSettingsView: View {
                 Text("Message")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
 
                 TextField("Enter notification message", text: $config.message, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
@@ -35,7 +35,7 @@ struct EditableNotificationSettingsView: View {
                 Text("Cooldown Period")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
 
                 Stepper("\(config.cooldownPeriodHours) hours", value: $config.cooldownPeriodHours, in: 0...24)
                     .font(.subheadline)

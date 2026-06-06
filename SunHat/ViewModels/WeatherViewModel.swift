@@ -64,6 +64,8 @@ final class WeatherViewModel: ObservableObject {
     }()
 
     // MARK: - Initialization
+
+    /// Test/DI initializer: a model container is supplied up front and data loads immediately.
     init(
         modelContainer: ModelContainer,
         weatherService: any WeatherProviding,
@@ -79,27 +81,34 @@ final class WeatherViewModel: ObservableObject {
         }
     }
 
-    // Convenience initializer that uses shared instances
-    convenience init(modelContainer: ModelContainer) {
-        let locationManager = LocationPermissionManagerAdapter(locationPermissionManager: LocationPermissionManager.shared)
-        self.init(
-            modelContainer: modelContainer,
-            weatherService: WeatherService.shared,
-            locationManager: locationManager
+    /// Production initializer for `@StateObject`. The model container is not yet
+    /// available (the SwiftUI environment can't be read in a view `init`), so the
+    /// owning view must call `configure(modelContainer:)` from `.task`/`.onAppear`.
+    /// This avoids the previous `try! ModelContainer(...)` throwaway container that
+    /// was disconnected from the app-group store.
+    init(
+        weatherService: any WeatherProviding = WeatherService.shared,
+        locationManager: LocationManaging = LocationPermissionManagerAdapter(
+            locationPermissionManager: LocationPermissionManager.shared
         )
+    ) {
+        self.weatherModelActor = nil
+        self.weatherService = weatherService
+        self.locationManager = locationManager
+
+        Task { @MainActor in
+            bindService()
+        }
     }
 
-    // Initializer with LocationPermissionManager for better control
-    convenience init(
-        modelContainer: ModelContainer,
-        locationPermissionManager: LocationPermissionManager
-    ) {
-        let locationManager = LocationPermissionManagerAdapter(locationPermissionManager: locationPermissionManager)
-        self.init(
-            modelContainer: modelContainer,
-            weatherService: WeatherService.shared,
-            locationManager: locationManager
-        )
+    /// Supplies the real (shared, app-group) model container and kicks off the first load.
+    /// Safe to call multiple times — only the first call wires up the actor.
+    func configure(modelContainer: ModelContainer) {
+        guard weatherModelActor == nil else { return }
+        weatherModelActor = WeatherModelActor(modelContainer: modelContainer)
+        Task { @MainActor in
+            await loadAllData(forceRefresh: false)
+        }
     }
 
     // MARK: - Service Bindings

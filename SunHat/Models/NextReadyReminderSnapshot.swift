@@ -5,7 +5,10 @@
 
 import Foundation
 
-struct NextReadyReminderSnapshot: Equatable, Sendable {
+/// Compact, transport-ready description of the highest-priority ready reminder.
+/// `Codable` so it can back a WidgetKit `TimelineEntry` and travel over
+/// `WatchConnectivity` to a watch complication. `Sendable` for actor/timeline boundaries.
+struct NextReadyReminderSnapshot: Equatable, Sendable, Codable {
     let id: UUID?
     let title: String
     let subtitle: String

@@ -21,7 +21,7 @@ struct SunHatApp: App {
             ReminderHistory.self,
             UserPreferences.self,
             SavedLocation.self,
-            LocationHistory.self,
+            LocationHistory.self,   
         ])
         // CloudKit sync is disabled for now - can be re-enabled in the future
         let modelConfiguration = ModelConfiguration(
@@ -38,6 +38,17 @@ struct SunHatApp: App {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
+
+    init() {
+        let container = sharedModelContainer
+        BackgroundWeatherManager.shared.configure(modelContainer: container)
+        Task {
+            // Configure the weather service before any background refresh can run,
+            // so BackgroundWeatherManager's refresh path never hits an unconfigured actor.
+            await WeatherService.shared.configure(modelContainer: container)
+            await TriggerEngineManager.shared.configure(modelContainer: container)
+        }
+    }
 
     var body: some Scene {
         WindowGroup {

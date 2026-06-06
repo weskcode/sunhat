@@ -190,7 +190,7 @@ struct TemperatureGauge: View {
             Text("\(Int(animatedTemperature))°")
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
                 .contentTransition(.numericText())
                 .animation(.easeInOut(duration: 1.0), value: animatedTemperature)
         }
@@ -258,8 +258,8 @@ struct WeatherTransitionView: View {
                     .scaleEffect(0.7 + transitionProgress * 0.3)
             }
         }
-        .onAppear {
-            startTransition()
+        .task {
+            await startTransition()
         }
     }
     
@@ -282,13 +282,19 @@ struct WeatherTransitionView: View {
         }
     }
     
-    private func startTransition() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+    private func startTransition() async {
+        do {
+            try await Task.sleep(for: .seconds(1))
             showSecondWeather = true
-            
+
             withAnimation(.easeInOut(duration: 2.0)) {
                 transitionProgress = 1.0
             }
+        } catch is CancellationError {
+            // View disappeared before the transition began.
+        } catch {
+            showSecondWeather = true
+            transitionProgress = 1.0
         }
     }
 }
