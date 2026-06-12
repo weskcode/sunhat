@@ -86,8 +86,9 @@ final class AppleWeatherKitAPI: WeatherAPI {
     func fetchForecast(for location: CLLocation, days: Int = 7) async throws -> [ForecastDayDTO] {
         do {
             let weather = try await weatherService.weather(for: location)
+            let aggregates = hourlyAggregatesByDay(weather.hourlyForecast.forecast)
             return weather.dailyForecast.forecast.prefix(days).map { dailyWeather in
-                mapDailyWeather(dailyWeather)
+                mapDailyWeather(dailyWeather, hourlyAggregates: aggregates)
             }
         } catch {
             throw mapWeatherKitError(error)
@@ -98,8 +99,9 @@ final class AppleWeatherKitAPI: WeatherAPI {
         do {
             let weather = try await weatherService.weather(for: location)
             let current = mapCurrentWeather(weather.currentWeather, at: location)
+            let aggregates = hourlyAggregatesByDay(weather.hourlyForecast.forecast)
             let forecast = weather.dailyForecast.forecast.prefix(10).map { dailyWeather in
-                mapDailyWeather(dailyWeather)
+                mapDailyWeather(dailyWeather, hourlyAggregates: aggregates)
             }
 
             return WeatherDataDTO(
@@ -150,10 +152,33 @@ final class AppleWeatherKitAPI: WeatherAPI {
         )
     }
     
-    private func mapDailyWeather(_ daily: DayWeather) -> ForecastDayDTO {
+    /// Daily mean humidity and cloud cover (both 0–100), averaged from the
+    /// hourly forecast in the same WeatherKit response. `DayWeather` itself
+    /// exposes no daily aggregate for either.
+    private struct HourlyDayAggregates {
+        let humidity: Int
+        let cloudCover: Int
+    }
+
+    private func hourlyAggregatesByDay(_ hours: [HourWeather]) -> [Date: HourlyDayAggregates] {
+        let calendar = Calendar.current
+        let grouped = Dictionary(grouping: hours) { calendar.startOfDay(for: $0.date) }
+        return grouped.mapValues { dayHours in
+            HourlyDayAggregates(
+                humidity: Int((dayHours.map { $0.humidity * 100 }.average()).rounded()),
+                cloudCover: Int((dayHours.map { $0.cloudCover * 100 }.average()).rounded())
+            )
+        }
+    }
+
+    private func mapDailyWeather(
+        _ daily: DayWeather,
+        hourlyAggregates: [Date: HourlyDayAggregates]
+    ) -> ForecastDayDTO {
         // For daily forecast, we can use precipitation chance and infer type from condition
         let precipType = mapPrecipitationType(daily.condition)
-        
+        let aggregates = hourlyAggregates[Calendar.current.startOfDay(for: daily.date)]
+
         return ForecastDayDTO(
             date: daily.date,
             highTemperature: daily.highTemperature.fahrenheitValue,
@@ -166,13 +191,12 @@ final class AppleWeatherKitAPI: WeatherAPI {
             precipitationType: precipType,
             windSpeed: daily.wind.speed.milesPerHourValue,
             windDirection: Int(daily.wind.direction.value),
-            // NOTE: WeatherKit's DayWeather exposes no daily humidity or cloud-cover
-            // aggregate. These are placeholders — forecast-based humidity/cloud triggers
-            // should treat them as unknown. Proper fix (optional fields + averaging the
-            // hourlyForecast) is tracked in IMPROVEMENT_PLAN.md §4.
-            humidity: 50,
+            // Averaged from real hourly data; hourly coverage (~10 days) can end
+            // before the daily forecast does, so distant days fall back to neutral
+            // values. Optional fields are tracked in IMPROVEMENT_PLAN.md §4.
+            humidity: aggregates?.humidity ?? 50,
             uvIndex: Double(daily.uvIndex.value),
-            cloudCover: 20
+            cloudCover: aggregates?.cloudCover ?? 20
         )
     }
     
