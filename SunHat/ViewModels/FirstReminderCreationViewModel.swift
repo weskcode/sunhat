@@ -19,6 +19,7 @@ final class FirstReminderCreationViewModel: ObservableObject {
     @Published var weatherForecast: [WeatherForecastDay] = []
     @Published var triggerLikelihood: TriggerLikelihood?
     @Published var isCreatingReminder = false
+    @Published var creationErrorMessage: String?
     @Published var showLocationPicker = false
 
     // Real current-weather display for the selected location (no hardcoded values).
@@ -287,8 +288,11 @@ final class FirstReminderCreationViewModel: ObservableObject {
         }
     }
     
-    func createReminder() {
-        guard isReminderValid, let modelContext else { return }
+    /// Saves the reminder. Returns whether the save succeeded; on failure
+    /// `creationErrorMessage` is set for the view to surface.
+    @discardableResult
+    func createReminder() -> Bool {
+        guard isReminderValid, let modelContext else { return false }
 
         isCreatingReminder = true
 
@@ -348,10 +352,14 @@ final class FirstReminderCreationViewModel: ObservableObject {
         do {
             try modelContext.save()
         } catch {
-            print("Failed to save reminder: \(error.localizedDescription)")
+            modelContext.delete(reminder)
+            creationErrorMessage = "Couldn't save your reminder. Please try again."
+            isCreatingReminder = false
+            return false
         }
 
         isCreatingReminder = false
+        return true
     }
     
 }
