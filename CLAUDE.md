@@ -242,8 +242,8 @@ As of June 2026:
 - ✅ **Zero `DispatchQueue.main.asyncAfter`** in production code — all replaced with cancellable `Task.sleep`
 - ✅ Dependency seams: `WeatherProviding`, `LocationManaging`, and `SettingsOpening` are in place for selected ViewModels
 - ✅ Observation migration started: `UserPreferencesViewModel` uses `@Observable`
-- ✅ Unit verification: `SunHatTests` passed with 147 tests on June 5, 2026
+- ✅ Unit verification: `SunHatTests` passed with 230 tests on June 12, 2026
 - 🔲 Actual WidgetKit/watchOS targets (shared compact view exists; targets are not present yet)
-- 🔲 UI smoke verification on the single configured simulator
+- ✅ Launch smoke verification on the configured simulator (boots to dashboard, light/dark render, relaunch stable, live error states — June 12, 2026); 🔲 interactive tap-through QA still pending
 - 🔲 Continue ViewModel migration from `ObservableObject` → `@Observable`
 - 🔲 CloudKit sync re-enablement (prepared, needs provisioning)

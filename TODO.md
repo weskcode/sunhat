@@ -1,11 +1,11 @@
 # SunHat TODO
 
-Last updated: June 6, 2026
+Last updated: June 12, 2026
 
 ## Build Status
 
-- [x] Compile-only simulator build: **passing** (verified June 6, 2026)
-- [x] Unit tests: **222 passing, 0 failed** (verified June 6, 2026; added reminder lifecycle, settings model/enums, Codable transport, and live-forecast mapping coverage)
+- [x] Compile-only simulator build: **passing** (verified June 12, 2026)
+- [x] Unit tests: **230 passing, 0 failed** (verified June 12, 2026; added background-task registration/fallback, notification-permission dependency, and data-privacy coverage)
 - [x] Create-task button verified on simulator (detached search-slot glass button; opens create sheet from any tab)
 - [ ] UI smoke tests: not yet run (XCTest UI runner previously timed out)
 - [ ] Visual QA: broader pass not yet performed on simulator
@@ -28,14 +28,14 @@ These must be resolved before submission. Ordered by risk.
 - [x] Fix background task expiration handler race condition (double `setTaskCompleted` crash)
 - [x] Fix latent `WeatherService.weatherActor!` crash reachable from background refresh before configuration (configure at startup + guard the force-unwraps)
 - [ ] **Device-verify the full loop**: create a reminder whose condition is currently true, background the app, confirm a notification arrives (BGTaskScheduler can't be trusted from simulator/unit tests)
-- [ ] Add tests: duplicate registration guard, unavailable background refresh fallback
+- [x] Add tests: duplicate registration guard, unavailable background refresh fallback (`BackgroundWeatherManagerTests`)
 
 ### 2. Production URLs and Contact Info
 
-`AppSupportLinks.swift` points to `sunhat.app` domain and email addresses that may not exist yet.
+`AppSupportLinks.swift` points to the `sunhat.app` domain and email addresses.
 
-- [ ] Confirm `sunhat.app` domain is registered and hosting privacy/terms pages
-- [ ] Confirm `support@sunhat.app`, `feedback@sunhat.app`, `privacy@sunhat.app` inboxes are active
+- [x] `sunhat.app` is registered and live; `https://sunhat.app/privacy` and `https://sunhat.app/terms` both return 200 (verified June 12, 2026). Note: the site is a JS-rendered SPA — open both pages in a browser to confirm the policy text actually renders (App Review loads them in a real browser, so 200 + rendered content should pass).
+- [ ] Confirm `support@sunhat.app`, `feedback@sunhat.app`, `privacy@sunhat.app` inboxes are active — MX records exist (Google Workspace), but send a test email to each to confirm delivery
 - [ ] Verify App Store Connect metadata matches (support URL, privacy policy URL)
 
 ### 3. Visual QA and Onboarding Verification
@@ -68,7 +68,8 @@ These must be resolved before submission. Ordered by risk.
 ### Error Handling
 
 - [x] **Settings link failures** — `SettingsOpening.open` now returns success (`async -> Bool`); `SettingsViewModel` surfaces a "Couldn't Open" alert when Contact Support / Send Feedback / Terms / Open Settings can't launch (e.g. mailto with no mail account). Covered by `SettingsViewModelDependencyTests` (success + failure paths).
-- [ ] Remaining silent failures to surface: notification-permission request failures (`SettingsViewModel`/`NotificationPreferencesViewModel`), data-export failures (`DataPrivacyViewModel`), and the direct `UIApplication.shared.open` calls in `PrivacyContactView`/`HelpFAQView`/`DataPrivacyView` (route through the opener + alert).
+- [x] Remaining silent failures surfaced (June 12, 2026): notification-permission request failures (`SettingsViewModel`/`NotificationPreferencesViewModel`), data-export failures (`DataPrivacyViewModel` + alert in `DataExportOptionsView`), and the direct `UIApplication.shared.open` calls in `PrivacyContactView`/`HelpFAQView` (routed through opener + alert) / `DataPrivacyView` (converted to `Link`).
+- [x] **Reminder save failures** — `FirstReminderCreationViewModel.createReminder()` now returns success; the create sheet shows a "Couldn't Save" alert and stays open instead of silently dismissing (was a bare `print`).
 
 ---
 
@@ -86,13 +87,13 @@ These must be resolved before submission. Ordered by risk.
 - [x] `WeatherProviding` protocol
 - [x] `LocationManaging` protocol
 - [x] `SettingsOpening` protocol
-- [ ] `NotificationPermissionProviding` protocol
-- [ ] `AppContainer` composition root (after protocols are complete)
+- [x] `NotificationPermissionProviding` protocol (injected into `SettingsViewModel` + `NotificationPreferencesViewModel`; covered by `NotificationPermissionDependencyTests`)
+- [ ] `AppContainer` composition root (protocols complete — now unblocked)
 
 ### File Organization
 
 Continue splitting large files (one primary type per file):
-- [ ] `StreamlinedReminderCreationView.swift`
+- [x] `StreamlinedReminderCreationView.swift` — split into `StreamlinedCurrentWeatherSection`, `StreamlinedWeatherConditionsSection`, `StreamlinedTimePreferencesSection`, plus shared `SelectableTileLabel` and `liquidGlassFieldBackground(tint:)` components (736 → ~230 lines)
 - [ ] Long settings/privacy views
 - [ ] Remaining dashboard sections in `DashboardView.swift`
 
@@ -127,6 +128,20 @@ Continue splitting large files (one primary type per file):
 ---
 
 ## Completed (Reference)
+
+<details>
+<summary>Live Data, Error Surfacing, and Speed Pass (June 12, 2026)</summary>
+
+- [x] **Deleted dead `ReminderManagementView` subtree** (~1,800 lines / 6 files: the view, `ReminderManagementViewModel`, and the whole `Views/Reminders/Management/` folder) — unreachable from the app (the Reminders tab uses `AllRemindersView`) and contained the last placeholder action (`editReminder` was a bare `print`)
+- [x] **WeatherKit daily humidity/cloud cover are now real data** — averaged per-day from the hourly forecast in the same response (was hardcoded `humidity: 50, cloudCover: 20`); neutral fallback only beyond hourly coverage (~10 days)
+- [x] **Fixed wrong-store bug**: `DataPrivacyViewModel` and `NotificationPreferencesViewModel` were building their *own* `ModelContainer` (a separate store from the app's) — both now require `configure(modelContext:)` with the environment context, so export/delete/preferences hit the real data
+- [x] **Fixed FAQ falsely claiming iCloud sync works** (sync is prepared but disabled)
+- [x] Removed placeholder `getBackgroundRefreshStatus()`; `registerBackgroundTask`/`scheduleBackgroundRefresh` now report success and guard duplicate registration (tested)
+- [x] **Animation speed pass** — onboarding primary buttons now appear by ~0.5 s (were delayed 2.6–3.4 s on Location/Notification permission screens); Welcome/Preferences/Celebration staging compressed ~50–60%; splash dwell 1.5 s → 0.8 s; tutorial bubble 0.8 s → 0.4 s; reminder edit-mode transitions 0.5 s → 0.3 s; trend chart draw 1.0 s → 0.6 s. Reduce Motion paths unchanged.
+- [x] Surfaced reminder-save failures in the create sheet (alert + sheet stays open; success haptic only on actual success)
+- [x] Removed boilerplate `SunHatTests.swift` (Xcode template tests)
+
+</details>
 
 <details>
 <summary>Product Simplification</summary>
