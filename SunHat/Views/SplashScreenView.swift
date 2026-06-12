@@ -39,11 +39,11 @@ struct SplashScreenView: View {
             }
         }
         .onAppear {
-            withAnimation(.easeOut(duration: 0.5)) {
+            withAnimation(.easeOut(duration: 0.35)) {
                 logoScale = 1.0
                 logoOpacity = 1.0
             }
-            withAnimation(.easeOut(duration: 0.5).delay(0.3)) {
+            withAnimation(.easeOut(duration: 0.35).delay(0.2)) {
                 titleOpacity = 1.0
                 titleOffset = 0
             }

@@ -59,7 +59,7 @@ struct CelebrationView: View {
                 }
                 .scaleEffect(showCheckmark ? 1.0 : 0.3)
                 .opacity(showCheckmark ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.8).delay(0.2), value: showCheckmark)
+                .animation(.easeOut(duration: 0.5).delay(0.1), value: showCheckmark)
                 .accessibilityHidden(true)
                 
                 // Celebration text with enhanced animations
@@ -73,7 +73,7 @@ struct CelebrationView: View {
                         .accessibilityAddTraits(.isHeader)
                         .scaleEffect(showText ? 1.0 : 0.8)
                         .opacity(showText ? 1.0 : 0.0)
-                        .animation(.spring(response: 0.6, dampingFraction: 0.6).delay(1.0), value: showText)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.4), value: showText)
                     
                     // Success message with slide up
                     Text("Your first weather reminder is ready!")
@@ -82,7 +82,7 @@ struct CelebrationView: View {
                         .multilineTextAlignment(.center)
                         .offset(y: showText ? 0 : 30)
                         .opacity(showText ? 1.0 : 0.0)
-                        .animation(.easeOut(duration: 0.8).delay(1.3), value: showText)
+                        .animation(.easeOut(duration: 0.4).delay(0.55), value: showText)
                     
                     // Description with fade in
                     Text("You'll be notified when conditions are perfect for your activity")
@@ -91,7 +91,7 @@ struct CelebrationView: View {
                         .multilineTextAlignment(.center)
                         .lineLimit(nil)
                         .opacity(showText ? 1.0 : 0.0)
-                        .animation(.easeOut(duration: 0.8).delay(1.6), value: showText)
+                        .animation(.easeOut(duration: 0.4).delay(0.7), value: showText)
                     
                     // Quick preview card
                     if showText {
@@ -132,7 +132,7 @@ struct CelebrationView: View {
                         )
                         .scaleEffect(showText ? 1.0 : 0.9)
                         .opacity(showText ? 1.0 : 0.0)
-                        .animation(.spring(response: 0.8, dampingFraction: 0.7).delay(1.9), value: showText)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.85), value: showText)
                         .transition(.scale.combined(with: .opacity))
                     }
                 }
@@ -147,7 +147,7 @@ struct CelebrationView: View {
                             .opacity(showText ? 1.0 : 0.0)
                             .animation(
                                 .easeOut(duration: 0.6)
-                                .delay(1.2 + Double(index) * 0.1),
+                                .delay(0.5 + Double(index) * 0.05),
                                 value: showText
                             )
                     }
@@ -182,20 +182,20 @@ struct CelebrationView: View {
         }
 
         Task {
-            try? await Task.sleep(for: .milliseconds(200))
+            try? await Task.sleep(for: .milliseconds(100))
             guard !Task.isCancelled else { return }
             withAnimation {
                 showCheckmark = true
                 pulseScale = 1.1
             }
 
-            try? await Task.sleep(for: .milliseconds(800))
+            try? await Task.sleep(for: .milliseconds(400))
             guard !Task.isCancelled else { return }
             withAnimation {
                 showText = true
             }
 
-            try? await Task.sleep(for: .milliseconds(1500))
+            try? await Task.sleep(for: .milliseconds(900))
             guard !Task.isCancelled else { return }
             withAnimation(.easeOut(duration: 0.5)) {
                 confettiOpacity = 0.0

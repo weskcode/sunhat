@@ -93,7 +93,7 @@ struct DetailedReminderView: View {
                     .scrollTargetLayout()
                     .coordinateSpace(name: "scroll")
                     .onAppear {
-                        withAnimation(.easeInOut(duration: 0.8)) {
+                        withAnimation(.easeInOut(duration: 0.4)) {
                             proxy.scrollTo("header", anchor: .top)
                         }
                     }
@@ -101,7 +101,7 @@ struct DetailedReminderView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .animation(.smooth(duration: 0.5), value: isEditMode)
+        .animation(.smooth(duration: 0.3), value: isEditMode)
         .overlay(alignment: .topLeading) {
             // Custom navigation bar
             customNavigationBar
@@ -528,24 +528,24 @@ struct DetailedReminderView: View {
     // MARK: - Helper Methods
     
     private func enterEditMode() {
-        withAnimation(.smooth(duration: 0.5)) {
+        withAnimation(.smooth(duration: 0.3)) {
             isEditMode = true
             isAnimatingTransition = true
         }
         Task {
-            try? await Task.sleep(for: .milliseconds(500))
+            try? await Task.sleep(for: .milliseconds(300))
             isAnimatingTransition = false
         }
     }
 
     private func cancelEditing() {
         editedReminder = EditableReminder(from: reminder)
-        withAnimation(.smooth(duration: 0.5)) {
+        withAnimation(.smooth(duration: 0.3)) {
             isEditMode = false
             isAnimatingTransition = true
         }
         Task {
-            try? await Task.sleep(for: .milliseconds(500))
+            try? await Task.sleep(for: .milliseconds(300))
             isAnimatingTransition = false
         }
     }
@@ -554,11 +554,11 @@ struct DetailedReminderView: View {
         Task {
             let success = await viewModel.saveChanges(editedReminder)
             if success {
-                withAnimation(.smooth(duration: 0.5)) {
+                withAnimation(.smooth(duration: 0.3)) {
                     isEditMode = false
                     isAnimatingTransition = true
                 }
-                try? await Task.sleep(for: .milliseconds(500))
+                try? await Task.sleep(for: .milliseconds(300))
                 isAnimatingTransition = false
             }
         }
