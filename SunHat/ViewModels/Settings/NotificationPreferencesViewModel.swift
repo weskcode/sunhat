@@ -9,7 +9,6 @@ import Foundation
 import SwiftUI
 import SwiftData
 @preconcurrency import UserNotifications
-import Combine
 import UIKit
 
 @MainActor
@@ -37,29 +36,28 @@ final class NotificationPreferencesViewModel {
     var hasUnsavedChanges: Bool = false
     
     // MARK: - Private Properties
-    
+
     private var modelContext: ModelContext?
     private var userPreferences: UserPreferences?
-    private var cancellables = Set<AnyCancellable>()
-    
+    private let settingsOpener: SettingsOpening
+    private let notificationPermissions: NotificationPermissionProviding
+
     // MARK: - Initialization
-    
-    init() {
-        setupObservers()
+
+    init(
+        settingsOpener: SettingsOpening = ApplicationSettingsOpener(),
+        notificationPermissions: NotificationPermissionProviding = UserNotificationPermissionProvider()
+    ) {
+        self.settingsOpener = settingsOpener
+        self.notificationPermissions = notificationPermissions
     }
-    
-    private func setupObservers() {
-        // Monitor changes to mark as unsaved
-        let mirror = Mirror(reflecting: self)
-        for child in mirror.children {
-            if let propertyName = child.label,
-               !["isLoading", "errorMessage", "hasUnsavedChanges", "modelContext", "userPreferences", "cancellables"].contains(propertyName) {
-                // Set up change tracking for relevant properties
-                // This would be implemented with proper property observation
-            }
-        }
+
+    /// Must be called with the app's shared model context so preference
+    /// reads and writes hit the same app-group store as the rest of the app.
+    func configure(modelContext: ModelContext) {
+        self.modelContext = modelContext
     }
-    
+
     // MARK: - Public Methods
     
     func loadSettings() async {
@@ -191,65 +189,33 @@ final class NotificationPreferencesViewModel {
     }
     
     private func fetchUserPreferences() async throws -> UserPreferences? {
-        guard let context = getModelContext() else {
+        guard let context = modelContext else {
             throw NotificationError.noModelContext
         }
-        
+
         let descriptor = FetchDescriptor<UserPreferences>()
         let preferences = try context.fetch(descriptor)
         return preferences.first
     }
-    
+
     private func saveUserPreferences(_ preferences: UserPreferences) async throws {
-        guard let context = getModelContext() else {
+        guard let context = modelContext else {
             throw NotificationError.noModelContext
         }
-        
+
         context.insert(preferences)
         try context.save()
     }
-    
-    private func getModelContext() -> ModelContext? {
-        // This would typically be injected through the environment
-        // For now, we'll create a temporary context or use app's shared context
-        do {
-            let schema = Schema([
-                UserPreferences.self,
-                WeatherReminder.self,
-                TriggerCondition.self,
-                LocationData.self,
-                WeatherData.self,
-                ForecastDay.self,
-                NotificationConfig.self,
-                ReminderHistory.self
-            ])
-            
-            let modelConfiguration = ModelConfiguration(
-                schema: schema,
-                isStoredInMemoryOnly: false,
-                cloudKitDatabase: .automatic
-            )
-            
-            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
-            return ModelContext(container)
-            
-        } catch {
-            print("Failed to create model context: \(error)")
-            return nil
-        }
-    }
-    
+
     private func requestNotificationPermissions() async {
-        let center = UNUserNotificationCenter.current()
-        
         var options: UNAuthorizationOptions = [.alert, .sound, .badge]
-        
+
         if criticalAlertsEnabled {
             options.insert(.criticalAlert)
         }
-        
+
         do {
-            let granted = try await center.requestAuthorization(options: options)
+            let granted = try await notificationPermissions.requestAuthorization(options: options)
             if !granted {
                 errorMessage = "Notification permissions are required for weather alerts"
             }
@@ -434,15 +400,16 @@ extension NotificationPreferencesViewModel {
     }
     
     func checkNotificationPermissions() async -> UNAuthorizationStatus {
-        let center = UNUserNotificationCenter.current()
-        let settings = await center.notificationSettings()
-        return settings.authorizationStatus
+        await notificationPermissions.authorizationStatus()
     }
     
     func openNotificationSettings() {
         if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
-            Task { @MainActor in
-                UIApplication.shared.open(settingsUrl)
+            Task {
+                let opened = await settingsOpener.open(settingsUrl)
+                if opened == false {
+                    errorMessage = "Couldn't open Settings. Open the Settings app manually to change SunHat's notification permissions."
+                }
             }
         }
     }

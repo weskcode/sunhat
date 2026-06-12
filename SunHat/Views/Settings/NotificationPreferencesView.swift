@@ -11,6 +11,7 @@ import UserNotifications
 
 struct NotificationPreferencesView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @State private var viewModel = NotificationPreferencesViewModel()
     
     @State private var showingResetAlert = false
@@ -54,7 +55,9 @@ struct NotificationPreferencesView: View {
                     Button("Save") {
                         Task {
                             await viewModel.saveSettings()
-                            dismiss()
+                            if viewModel.errorMessage == nil {
+                                dismiss()
+                            }
                         }
                     }
                     .fontWeight(.semibold)
@@ -77,10 +80,20 @@ struct NotificationPreferencesView: View {
                 }
             }
         }
-        .onAppear {
-            Task {
-                await viewModel.loadSettings()
-            }
+        .task {
+            viewModel.configure(modelContext: modelContext)
+            await viewModel.loadSettings()
+        }
+        .alert(
+            "Something Went Wrong",
+            isPresented: Binding(
+                get: { viewModel.errorMessage != nil },
+                set: { if !$0 { viewModel.errorMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(viewModel.errorMessage ?? "")
         }
     }
     
