@@ -185,7 +185,7 @@ struct ReminderPreviewCard: View {
         .opacity(isVisible ? 1.0 : 0.0)
         .onAppear {
             if !reduceMotion {
-                withAnimation(.easeOut(duration: 0.6).delay(animationDelay)) {
+                withAnimation(.easeOut(duration: 0.4).delay(animationDelay)) {
                     isVisible = true
                 }
             } else {

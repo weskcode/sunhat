@@ -61,7 +61,7 @@ struct TutorialBubbleView: View {
                 isVisible = true
             } else {
                 do {
-                    try await Task.sleep(for: .milliseconds(800))
+                    try await Task.sleep(for: .milliseconds(400))
                     withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                         isVisible = true
                     }

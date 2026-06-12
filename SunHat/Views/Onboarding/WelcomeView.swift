@@ -74,7 +74,7 @@ struct WelcomeView: View {
             weatherIconWithGlow
                 .scaleEffect(showHeroText ? 1.0 : 0.8)
                 .opacity(showHeroText ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.8).delay(0.2), value: showHeroText)
+                .animation(.easeOut(duration: 0.4).delay(0.1), value: showHeroText)
             
             // Main headline
             VStack(spacing: 16) {
@@ -111,7 +111,7 @@ struct WelcomeView: View {
             }
             .opacity(showHeroText ? 1.0 : 0.0)
             .offset(y: showHeroText ? 0 : 30)
-            .animation(.easeOut(duration: 0.8).delay(0.5), value: showHeroText)
+            .animation(.easeOut(duration: 0.4).delay(0.2), value: showHeroText)
             
             // Subtitle
             Text("Perfect conditions for your outdoor activities, gardening, and daily tasks")
@@ -122,7 +122,7 @@ struct WelcomeView: View {
                 .lineLimit(nil)
                 .opacity(showHeroText ? 1.0 : 0.0)
                 .offset(y: showHeroText ? 0 : 20)
-                .animation(.easeOut(duration: 0.8).delay(0.8), value: showHeroText)
+                .animation(.easeOut(duration: 0.4).delay(0.3), value: showHeroText)
                 .accessibilityLabel("Perfect conditions for your outdoor activities, gardening, and daily tasks")
         }
     }
@@ -241,7 +241,7 @@ struct WelcomeView: View {
         }
         .opacity(showUseCases ? 1.0 : 0.0)
         .offset(y: showUseCases ? 0 : 20)
-        .animation(.easeOut(duration: 0.6).delay(0.2), value: showUseCases)
+        .animation(.easeOut(duration: 0.4).delay(0.15), value: showUseCases)
     }
 
     // MARK: - Example Notification Card
@@ -356,7 +356,7 @@ struct WelcomeView: View {
         }
         .opacity(showActionButtons ? 1.0 : 0.0)
         .offset(y: showActionButtons ? 0 : 30)
-        .animation(.easeOut(duration: 0.8).delay(0.6), value: showActionButtons)
+        .animation(.easeOut(duration: 0.4).delay(0.3), value: showActionButtons)
     }
     
     // MARK: - Helper Methods

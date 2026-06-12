@@ -23,7 +23,7 @@ struct TemperatureTrendChart: View {
             }
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 1.0).delay(0.5)) {
+            withAnimation(.easeInOut(duration: 0.6).delay(0.15)) {
                 animateChart = true
             }
         }
@@ -115,7 +115,7 @@ struct TemperatureTrendChart: View {
         .chartPlotStyle { plot in
             plot.frame(height: 120)
         }
-        .animation(.easeInOut(duration: 1.0), value: animateChart)
+        .animation(.easeInOut(duration: 0.6), value: animateChart)
     }
     
     private var dayFormatter: DateFormatter {

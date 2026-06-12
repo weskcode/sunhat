@@ -173,7 +173,7 @@ struct TemperatureGauge: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(temperatureGradient)
                     .frame(width: 12, height: temperatureFillHeight)
-                    .animation(.easeInOut(duration: 1.0), value: animatedTemperature)
+                    .animation(.easeInOut(duration: 0.6), value: animatedTemperature)
                 
                 // Trigger indicator
                 if isTriggered {
@@ -192,10 +192,10 @@ struct TemperatureGauge: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(.primary)
                 .contentTransition(.numericText())
-                .animation(.easeInOut(duration: 1.0), value: animatedTemperature)
+                .animation(.easeInOut(duration: 0.6), value: animatedTemperature)
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 1.5)) {
+            withAnimation(.easeInOut(duration: 0.8)) {
                 animatedTemperature = temperature
             }
             
@@ -284,10 +284,10 @@ struct WeatherTransitionView: View {
     
     private func startTransition() async {
         do {
-            try await Task.sleep(for: .seconds(1))
+            try await Task.sleep(for: .seconds(0.6))
             showSecondWeather = true
 
-            withAnimation(.easeInOut(duration: 2.0)) {
+            withAnimation(.easeInOut(duration: 1.0)) {
                 transitionProgress = 1.0
             }
         } catch is CancellationError {

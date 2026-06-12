@@ -113,7 +113,7 @@ struct LocationPermissionView: View {
                         .scaleEffect(showLocationVisual ? 1.0 : 0.3)
                         .opacity(showLocationVisual ? 0.6 : 0.0)
                         .animation(
-                            .easeOut(duration: 1.0 + Double(index) * 0.2).delay(0.3 + Double(index) * 0.2),
+                            .easeOut(duration: 0.5 + Double(index) * 0.1).delay(0.1 + Double(index) * 0.1),
                             value: showLocationVisual
                         )
                 }
@@ -137,7 +137,7 @@ struct LocationPermissionView: View {
                 }
                 .scaleEffect(showLocationVisual ? 1.0 : 0.5)
                 .opacity(showLocationVisual ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.8).delay(0.1), value: showLocationVisual)
+                .animation(.easeOut(duration: 0.4).delay(0.05), value: showLocationVisual)
             }
             .accessibilityHidden(true)
             
@@ -158,7 +158,7 @@ struct LocationPermissionView: View {
             }
             .opacity(showExplanation ? 1.0 : 0.0)
             .offset(y: showExplanation ? 0 : 20)
-            .animation(.easeOut(duration: 0.8).delay(0.8), value: showExplanation)
+            .animation(.easeOut(duration: 0.4).delay(0.15), value: showExplanation)
         }
     }
     
@@ -171,7 +171,7 @@ struct LocationPermissionView: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
                 .opacity(showLocationVisual ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.6).delay(1.2), value: showLocationVisual)
+                .animation(.easeOut(duration: 0.35).delay(0.25), value: showLocationVisual)
             
             HStack(spacing: 16) {
                 // Location 1: Sunny
@@ -181,7 +181,7 @@ struct LocationPermissionView: View {
                     condition: .clear,
                     iconName: "sun.max.fill",
                     iconColor: .orange,
-                    animationDelay: 1.4
+                    animationDelay: 0.3
                 )
                 
                 // Location 2: Rainy
@@ -191,7 +191,7 @@ struct LocationPermissionView: View {
                     condition: .rain,
                     iconName: "cloud.rain.fill",
                     iconColor: .blue,
-                    animationDelay: 1.6
+                    animationDelay: 0.4
                 )
                 
                 // Location 3: Snowy
@@ -201,12 +201,12 @@ struct LocationPermissionView: View {
                     condition: .snow,
                     iconName: "cloud.snow.fill",
                     iconColor: .gray,
-                    animationDelay: 1.8
+                    animationDelay: 0.5
                 )
             }
             .opacity(showLocationVisual ? 1.0 : 0.0)
             .offset(y: showLocationVisual ? 0 : 30)
-            .animation(.easeOut(duration: 0.8).delay(1.4), value: showLocationVisual)
+            .animation(.easeOut(duration: 0.4).delay(0.3), value: showLocationVisual)
         }
     }
     
@@ -220,7 +220,7 @@ struct LocationPermissionView: View {
                     title: "Precise Weather Data",
                     description: "Get hyper-local weather conditions specific to your neighborhood, not just your city.",
                     color: .blue,
-                    animationDelay: 2.0
+                    animationDelay: 0.4
                 )
                 
                 ExplanationCard(
@@ -228,12 +228,12 @@ struct LocationPermissionView: View {
                     title: "Smart Notifications",
                     description: "Receive reminders exactly when conditions are right for your outdoor activities.",
                     color: .green,
-                    animationDelay: 2.2
+                    animationDelay: 0.5
                 )
             }
             .opacity(showExplanation ? 1.0 : 0.0)
             .offset(y: showExplanation ? 0 : 30)
-            .animation(.easeOut(duration: 0.8).delay(2.0), value: showExplanation)
+            .animation(.easeOut(duration: 0.4).delay(0.4), value: showExplanation)
         }
     }
     
@@ -311,7 +311,7 @@ struct LocationPermissionView: View {
         }
         .opacity(showButtons ? 1.0 : 0.0)
         .offset(y: showButtons ? 0 : 30)
-        .animation(.easeOut(duration: 0.8).delay(2.6), value: showButtons)
+        .animation(.easeOut(duration: 0.4).delay(0.5), value: showButtons)
     }
     
     private var privacyNotice: some View {
@@ -489,7 +489,7 @@ struct LocationWeatherCard: View {
         .opacity(isVisible ? 1.0 : 0.0)
         .onAppear {
             if !reduceMotion {
-                withAnimation(.easeOut(duration: 0.6).delay(animationDelay)) {
+                withAnimation(.easeOut(duration: 0.4).delay(animationDelay)) {
                     isVisible = true
                 }
             } else {
@@ -550,7 +550,7 @@ struct ExplanationCard: View {
         .offset(x: isVisible ? 0 : -30)
         .onAppear {
             if !reduceMotion {
-                withAnimation(.easeOut(duration: 0.6).delay(animationDelay)) {
+                withAnimation(.easeOut(duration: 0.4).delay(animationDelay)) {
                     isVisible = true
                 }
             } else {

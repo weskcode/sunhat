@@ -105,7 +105,7 @@ struct UserPreferencesOnboardingView: View {
             }
             .scaleEffect(showContent ? 1.0 : 0.8)
             .opacity(showContent ? 1.0 : 0.0)
-            .animation(.easeOut(duration: 0.8).delay(0.2), value: showContent)
+            .animation(.easeOut(duration: 0.4).delay(0.05), value: showContent)
             .accessibilityHidden(true)
             
             VStack(spacing: 8) {
@@ -124,7 +124,7 @@ struct UserPreferencesOnboardingView: View {
             }
             .opacity(showContent ? 1.0 : 0.0)
             .offset(y: showContent ? 0 : 15)
-            .animation(.easeOut(duration: 0.8).delay(0.4), value: showContent)
+            .animation(.easeOut(duration: 0.4).delay(0.15), value: showContent)
         }
     }
     
@@ -136,7 +136,7 @@ struct UserPreferencesOnboardingView: View {
             MinimalPreferenceSection(
                 icon: "thermometer.medium",
                 title: "Temperature Unit",
-                animationDelay: 0.6
+                animationDelay: 0.2
             ) {
                 CompactTemperatureSelector(
                     selectedUnit: $viewModel.preferences.temperatureUnit
@@ -148,7 +148,7 @@ struct UserPreferencesOnboardingView: View {
                 icon: "heart.fill",
                 title: "Activity Interests",
                 subtitle: "What would you like weather reminders for?",
-                animationDelay: 0.8
+                animationDelay: 0.3
             ) {
                 CompactActivitySelector(
                     selectedInterests: $viewModel.selectedActivityInterests
@@ -159,7 +159,7 @@ struct UserPreferencesOnboardingView: View {
             MinimalPreferenceSection(
                 icon: "bell.badge",
                 title: "Notification Timing",
-                animationDelay: 1.0
+                animationDelay: 0.4
             ) {
                 CompactTimingSelector(
                     selectedTiming: $viewModel.preferences.defaultNotificationTiming
@@ -171,7 +171,7 @@ struct UserPreferencesOnboardingView: View {
                 icon: "moon.zzz",
                 title: "Quiet Hours",
                 subtitle: "Avoid notifications during sleep time",
-                animationDelay: 1.2
+                animationDelay: 0.5
             ) {
                 CompactQuietHoursToggle(
                     enabled: $viewModel.preferences.quietHoursEnabled,
@@ -181,7 +181,7 @@ struct UserPreferencesOnboardingView: View {
             }
         }
         .opacity(showContent ? 1.0 : 0.0)
-        .animation(.easeOut(duration: 0.8).delay(0.6), value: showContent)
+        .animation(.easeOut(duration: 0.4).delay(0.2), value: showContent)
     }
     
     // MARK: - Finish Button
@@ -222,7 +222,7 @@ struct UserPreferencesOnboardingView: View {
         .buttonStyle(PrimaryButtonStyle())
         .disabled(isSaving)
         .opacity(showContent ? 1.0 : 0.0)
-        .animation(.easeOut(duration: 0.8).delay(1.4), value: showContent)
+        .animation(.easeOut(duration: 0.4).delay(0.5), value: showContent)
         .accessibilityLabel("Finish setup and save preferences")
         .accessibilityHint("Complete onboarding and save your personalized settings")
     }
@@ -336,7 +336,7 @@ struct MinimalPreferenceSection<Content: View>: View {
         .offset(y: isVisible ? 0 : 15)
         .onAppear {
             if !reduceMotion {
-                withAnimation(.easeOut(duration: 0.6).delay(animationDelay)) {
+                withAnimation(.easeOut(duration: 0.4).delay(animationDelay)) {
                     isVisible = true
                 }
             } else {

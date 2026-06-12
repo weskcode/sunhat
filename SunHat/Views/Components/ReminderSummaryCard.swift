@@ -39,7 +39,7 @@ struct ReminderSummaryCard: View {
                         .frame(width: 80, height: 80)
                         .scaleEffect(showContent ? 1.0 : 0.8)
                         .opacity(showContent ? 1.0 : 0.0)
-                        .animation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.2), value: showContent)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1), value: showContent)
                     
                     Circle()
                         .fill(reminder.iconColor.opacity(0.15))
@@ -53,7 +53,7 @@ struct ReminderSummaryCard: View {
                         .font(.title)
                         .foregroundStyle(reminder.iconColor)
                         .scaleEffect(showContent ? 1.0 : 0.5)
-                        .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.4), value: showContent)
+                        .animation(.spring(response: 0.45, dampingFraction: 0.7).delay(0.2), value: showContent)
                 }
                 .accessibilityHidden(true)
                 
@@ -65,14 +65,14 @@ struct ReminderSummaryCard: View {
                         .foregroundStyle(.primary)
                         .opacity(showContent ? 1.0 : 0.0)
                         .offset(x: showContent ? 0 : 20)
-                        .animation(.easeOut(duration: 0.6).delay(0.3), value: showContent)
+                        .animation(.easeOut(duration: 0.35).delay(0.15), value: showContent)
                     
                     Text("Weather-triggered reminder")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .opacity(showContent ? 1.0 : 0.0)
                         .offset(x: showContent ? 0 : 20)
-                        .animation(.easeOut(duration: 0.6).delay(0.5), value: showContent)
+                        .animation(.easeOut(duration: 0.35).delay(0.25), value: showContent)
                     
                     // Status badge
                     HStack(spacing: 6) {
@@ -93,7 +93,7 @@ struct ReminderSummaryCard: View {
                     )
                     .opacity(showContent ? 1.0 : 0.0)
                     .offset(x: showContent ? 0 : 20)
-                    .animation(.easeOut(duration: 0.6).delay(0.7), value: showContent)
+                    .animation(.easeOut(duration: 0.35).delay(0.3), value: showContent)
                 }
                 
                 Spacer()
@@ -105,7 +105,7 @@ struct ReminderSummaryCard: View {
             Divider()
                 .padding(.vertical, 20)
                 .opacity(showContent ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.4).delay(0.8), value: showContent)
+                .animation(.easeOut(duration: 0.3).delay(0.35), value: showContent)
             
             // Conditions summary
             VStack(spacing: 16) {
@@ -115,7 +115,7 @@ struct ReminderSummaryCard: View {
                     title: "Temperature",
                     value: reminder.temperatureDescription,
                     color: .blue,
-                    animationDelay: 0.9
+                    animationDelay: 0.4
                 )
 
                 // Sky conditions
@@ -125,7 +125,7 @@ struct ReminderSummaryCard: View {
                         title: "Sky Conditions",
                         value: reminder.skyConditionDescription,
                         color: reminder.conditionMode == .include ? .cyan : .gray,
-                        animationDelay: 0.95
+                        animationDelay: 0.45
                     )
                 }
 
@@ -135,7 +135,7 @@ struct ReminderSummaryCard: View {
                     title: "Time",
                     value: reminder.preferredTimeRange.displayName,
                     color: .orange,
-                    animationDelay: 1.0
+                    animationDelay: 0.5
                 )
 
                 // Quiet hours
@@ -145,7 +145,7 @@ struct ReminderSummaryCard: View {
                         title: "Quiet Hours",
                         value: "Respected",
                         color: .purple,
-                        animationDelay: 1.1
+                        animationDelay: 0.55
                     )
                 }
 
@@ -156,7 +156,7 @@ struct ReminderSummaryCard: View {
                         title: "Notes",
                         value: reminder.notes,
                         color: .gray,
-                        animationDelay: 1.15
+                        animationDelay: 0.6
                     )
                 }
             }
@@ -211,7 +211,7 @@ struct ReminderSummaryCard: View {
             .padding(.bottom, 24)
             .opacity(showContent ? 1.0 : 0.0)
             .offset(y: showContent ? 0 : 20)
-            .animation(.easeOut(duration: 0.6).delay(1.3), value: showContent)
+            .animation(.easeOut(duration: 0.35).delay(0.65), value: showContent)
         }
         .background(
             RoundedRectangle(cornerRadius: 20)
@@ -287,7 +287,7 @@ struct ConditionSummaryRow: View {
         .offset(x: isVisible ? 0 : 30)
         .onAppear {
             if !reduceMotion {
-                withAnimation(.easeOut(duration: 0.6).delay(animationDelay)) {
+                withAnimation(.easeOut(duration: 0.4).delay(animationDelay)) {
                     isVisible = true
                 }
             } else {

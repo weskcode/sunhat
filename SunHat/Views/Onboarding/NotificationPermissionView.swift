@@ -121,7 +121,7 @@ struct NotificationPermissionView: View {
                         .scaleEffect(showHeader ? 1.0 : 0.3)
                         .opacity(showHeader ? 0.6 : 0.0)
                         .animation(
-                            .easeOut(duration: 1.0 + Double(index) * 0.2).delay(0.2 + Double(index) * 0.15),
+                            .easeOut(duration: 0.5 + Double(index) * 0.1).delay(0.1 + Double(index) * 0.1),
                             value: showHeader
                         )
                 }
@@ -145,7 +145,7 @@ struct NotificationPermissionView: View {
                 }
                 .scaleEffect(showHeader ? 1.0 : 0.5)
                 .opacity(showHeader ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.8).delay(0.1), value: showHeader)
+                .animation(.easeOut(duration: 0.4).delay(0.05), value: showHeader)
             }
             .accessibilityHidden(true)
             
@@ -167,7 +167,7 @@ struct NotificationPermissionView: View {
             }
             .opacity(showHeader ? 1.0 : 0.0)
             .offset(y: showHeader ? 0 : 20)
-            .animation(.easeOut(duration: 0.8).delay(0.6), value: showHeader)
+            .animation(.easeOut(duration: 0.4).delay(0.15), value: showHeader)
         }
     }
     
@@ -180,27 +180,27 @@ struct NotificationPermissionView: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
                 .opacity(showMockNotifications ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.6).delay(1.0), value: showMockNotifications)
+                .animation(.easeOut(duration: 0.35).delay(0.2), value: showMockNotifications)
             
             VStack(spacing: 12) {
                 MockNotificationCard(
                     type: .weatherTrigger,
-                    animationDelay: 1.2
+                    animationDelay: 0.25
                 )
                 
                 MockNotificationCard(
                     type: .dailySummary,
-                    animationDelay: 1.4
+                    animationDelay: 0.3
                 )
                 
                 MockNotificationCard(
                     type: .severalWeather,
-                    animationDelay: 1.6
+                    animationDelay: 0.35
                 )
             }
             .opacity(showMockNotifications ? 1.0 : 0.0)
             .offset(y: showMockNotifications ? 0 : 30)
-            .animation(.easeOut(duration: 0.8).delay(1.2), value: showMockNotifications)
+            .animation(.easeOut(duration: 0.4).delay(0.25), value: showMockNotifications)
         }
     }
     
@@ -214,7 +214,7 @@ struct NotificationPermissionView: View {
                     title: "Perfect Timing",
                     description: "Notifications arrive exactly when weather conditions match your preferences",
                     color: .blue,
-                    animationDelay: 1.8
+                    animationDelay: 0.4
                 )
                 
                 NotificationBenefit(
@@ -222,7 +222,7 @@ struct NotificationPermissionView: View {
                     title: "Respect Your Schedule",
                     description: "Smart delivery times that won't disturb your sleep or quiet hours",
                     color: .purple,
-                    animationDelay: 2.0
+                    animationDelay: 0.45
                 )
                 
                 NotificationBenefit(
@@ -230,7 +230,7 @@ struct NotificationPermissionView: View {
                     title: "Fully Customizable",
                     description: "Choose which reminders to receive and when you want them",
                     color: .green,
-                    animationDelay: 2.2
+                    animationDelay: 0.5
                 )
                 
                 NotificationBenefit(
@@ -238,12 +238,12 @@ struct NotificationPermissionView: View {
                     title: "Privacy Protected",
                     description: "All notifications are generated locally on your device",
                     color: .orange,
-                    animationDelay: 2.4
+                    animationDelay: 0.55
                 )
             }
             .opacity(showExplanation ? 1.0 : 0.0)
             .offset(y: showExplanation ? 0 : 30)
-            .animation(.easeOut(duration: 0.8).delay(1.8), value: showExplanation)
+            .animation(.easeOut(duration: 0.4).delay(0.4), value: showExplanation)
         }
     }
     
@@ -321,7 +321,7 @@ struct NotificationPermissionView: View {
         }
         .opacity(showButtons ? 1.0 : 0.0)
         .offset(y: showButtons ? 0 : 30)
-        .animation(.easeOut(duration: 0.8).delay(2.6), value: showButtons)
+        .animation(.easeOut(duration: 0.4).delay(0.5), value: showButtons)
     }
     
     private var privacyNotice: some View {
@@ -474,7 +474,7 @@ struct MockNotificationCard: View {
         .opacity(isVisible ? 1.0 : 0.0)
         .onAppear {
             if !reduceMotion {
-                withAnimation(.easeOut(duration: 0.6).delay(animationDelay)) {
+                withAnimation(.easeOut(duration: 0.4).delay(animationDelay)) {
                     isVisible = true
                 }
             } else {
@@ -534,7 +534,7 @@ struct NotificationBenefit: View {
         .offset(x: isVisible ? 0 : -30)
         .onAppear {
             if !reduceMotion {
-                withAnimation(.easeOut(duration: 0.6).delay(animationDelay)) {
+                withAnimation(.easeOut(duration: 0.4).delay(animationDelay)) {
                     isVisible = true
                 }
             } else {
