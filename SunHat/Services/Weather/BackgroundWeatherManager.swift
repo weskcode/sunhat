@@ -25,6 +25,8 @@ final class BackgroundWeatherManager: ObservableObject {
     @Published var lastBackgroundRefresh: Date?
     @Published var backgroundRefreshCount = 0
 
+    private(set) var isBackgroundTaskRegistered = false
+
     private var modelContainer: ModelContainer?
 
     private init() {
@@ -36,8 +38,19 @@ final class BackgroundWeatherManager: ObservableObject {
         self.modelContainer = modelContainer
         logger.info("BackgroundWeatherManager configured with shared ModelContainer")
     }
-    
-    private func registerBackgroundTask() {
+
+    /// Registers the BG refresh launch handler. Safe to call more than once —
+    /// a second `BGTaskScheduler.register` for the same identifier raises
+    /// `NSInternalInconsistencyException`, so duplicates are ignored.
+    /// Returns whether this call performed the registration.
+    @discardableResult
+    func registerBackgroundTask() -> Bool {
+        guard !isBackgroundTaskRegistered else {
+            logger.warning("Background task already registered — ignoring duplicate registration")
+            return false
+        }
+        isBackgroundTaskRegistered = true
+
         BGTaskScheduler.shared.register(forTaskWithIdentifier: self.taskIdentifier, using: nil) { task in
             Task {
                 guard let refreshTask = task as? BGAppRefreshTask else {
@@ -49,6 +62,7 @@ final class BackgroundWeatherManager: ObservableObject {
             }
         }
         logger.info("Registered background task: \(self.taskIdentifier)")
+        return true
     }
     
     private func updateBackgroundRefreshStatus() {
@@ -60,20 +74,27 @@ final class BackgroundWeatherManager: ObservableObject {
         }
     }
     
-    func scheduleBackgroundRefresh() {
+    /// Schedules the next background refresh. Returns whether a request was
+    /// actually submitted — `false` when background refresh is unavailable
+    /// (user disabled it / Low Power Mode) or submission fails, in which case
+    /// the app falls back to foreground-only refreshes.
+    @discardableResult
+    func scheduleBackgroundRefresh() -> Bool {
         guard isBackgroundRefreshEnabled else {
-            logger.warning("Background refresh is disabled")
-            return
+            logger.warning("Background refresh is disabled — relying on foreground refresh only")
+            return false
         }
-        
+
         let request = BGAppRefreshTaskRequest(identifier: self.taskIdentifier)
         request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60) // 15 minutes
-        
+
         do {
             try BGTaskScheduler.shared.submit(request)
             logger.info("Scheduled background weather refresh for 15 minutes from now")
+            return true
         } catch {
             logger.error("Failed to schedule background refresh: \(error.localizedDescription)")
+            return false
         }
     }
     
@@ -229,10 +250,6 @@ final class BackgroundWeatherManager: ObservableObject {
         await WeatherService.shared.handleBackgroundRefresh()
         await checkTriggeredConditions()
         lastBackgroundRefresh = Date()
-    }
-    
-    func getBackgroundRefreshStatus() -> String {
-        return "Available" // Placeholder - would need proper implementation
     }
     
     func cancelScheduledRefresh() {
