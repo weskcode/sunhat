@@ -109,10 +109,10 @@ This is the **highest-leverage architectural move** and a prerequisite for widge
 The WeatherKit→model mapping has silent placeholders that will make condition triggers misfire:
 
 - **[DONE]** `mapDailyWeather` now uses real `daily.precipitationAmount` (converted to inches) instead of hardcoded `0.0` — forecast "will it rain" triggers (`precipitationAmount > 0`) now work. Build-verified against the iOS 26.4 SDK.
-- **[PENDING — needs model refactor]** `mapDailyWeather` still defaults `humidity: 50`, `cloudCover: 20` — WeatherKit's `DayWeather` genuinely exposes neither. Proper fix: make those DTO/model fields optional (`Int?`) to mean "unknown," or average the `hourlyForecast`, and have the trigger engine skip humidity/cloud conditions when the forecast value is unknown. (Inline comment added pointing here.)
+- **[DONE — June 12, 2026]** `mapDailyWeather` now averages `humidity` and `cloudCover` per day from the `hourlyForecast` in the same WeatherKit response (no extra quota cost). Neutral 50/20 fallback remains only for days beyond hourly coverage (~10 days); making the fields optional (`Int?` = "unknown") so the trigger engine can skip them is still a possible refinement.
 - `mapCurrentWeather` sets `precipitationAmount: 0.0`, but current precipitation presence is already carried by `precipitationType` (mapped from the condition), so the current-weather "is it raining" checks still work.
 - OpenWeatherMap forecast hardcodes `precipitationProbability: 0`, `dewPoint: 0` (backup provider is dormant — no API key — so low impact).
-- `getBackgroundRefreshStatus()` returns the literal string `"Available"` (stub).
+- **[DONE — June 12, 2026]** `getBackgroundRefreshStatus()` stub deleted; `registerBackgroundTask`/`scheduleBackgroundRefresh` now report real success/failure and guard duplicate registration (tested in `BackgroundWeatherManagerTests`).
 
 ---
 
