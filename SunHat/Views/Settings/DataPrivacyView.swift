@@ -10,6 +10,7 @@ import SwiftData
 
 struct DataPrivacyView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
     @State private var viewModel = DataPrivacyViewModel()
     
     @State private var showingDeleteConfirmation = false
@@ -60,10 +61,20 @@ struct DataPrivacyView: View {
                     .fontWeight(.semibold)
                 }
             }
-            .onAppear {
-                Task {
-                    await viewModel.loadDataSummary()
-                }
+            .task {
+                viewModel.configure(modelContext: modelContext)
+                await viewModel.loadDataSummary()
+            }
+            .alert(
+                "Something Went Wrong",
+                isPresented: Binding(
+                    get: { viewModel.errorMessage != nil },
+                    set: { if !$0 { viewModel.errorMessage = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(viewModel.errorMessage ?? "")
             }
             .alert("Delete All Data", isPresented: $showingDeleteConfirmation) {
                 TextField("Type DELETE to confirm", text: $viewModel.deleteConfirmationText)
@@ -565,15 +576,11 @@ struct WeatherSourceCard: View {
             }
             .font(.caption)
             
-            Button("View Privacy Policy") {
-                if let url = URL(string: privacyPolicy) {
-                    Task { @MainActor in
-                        UIApplication.shared.open(url)
-                    }
-                }
+            if let url = URL(string: privacyPolicy) {
+                Link("View Privacy Policy", destination: url)
+                    .font(.caption)
+                    .foregroundStyle(.blue)
             }
-            .font(.caption)
-            .foregroundStyle(.blue)
         }
         .padding(12)
         .background(Color(.secondarySystemBackground))
@@ -601,15 +608,11 @@ struct ThirdPartyServiceCard: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             
-            Button("Privacy Policy") {
-                if let url = URL(string: privacyPolicy) {
-                    Task { @MainActor in
-                        UIApplication.shared.open(url)
-                    }
-                }
+            if let url = URL(string: privacyPolicy) {
+                Link("Privacy Policy", destination: url)
+                    .font(.caption)
+                    .foregroundStyle(.blue)
             }
-            .font(.caption)
-            .foregroundStyle(.blue)
         }
         .padding(12)
         .background(Color(.secondarySystemBackground))

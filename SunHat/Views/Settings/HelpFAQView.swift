@@ -11,6 +11,9 @@ struct HelpFAQView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var expandedSections: Set<Int> = []
+    @State private var isShowingMailFailure = false
+
+    private let urlOpener: SettingsOpening = ApplicationSettingsOpener()
 
     private let faqItems = [
         FAQItem(
@@ -30,8 +33,8 @@ struct HelpFAQView: View {
             answer: "Location access is required for weather-based reminders. We only use your location to fetch relevant weather data and never share it with third parties."
         ),
         FAQItem(
-            question: "How does iCloud sync work?",
-            answer: "When signed in to iCloud, your reminders and preferences automatically sync across all your devices. All data remains private and encrypted."
+            question: "Is my data synced to iCloud?",
+            answer: "Not yet. Your reminders and preferences are stored locally on this device. iCloud sync is planned for a future update."
         ),
         FAQItem(
             question: "What's the difference between temperature and 'feels like'?",
@@ -56,6 +59,11 @@ struct HelpFAQView: View {
             }
             .navigationTitle("Help & FAQ")
             .navigationBarTitleDisplayMode(.inline)
+            .alert("Couldn't Open Mail", isPresented: $isShowingMailFailure) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Set up a mail account, or email \(AppSupportLinks.supportEmail) directly.")
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
@@ -128,8 +136,11 @@ struct HelpFAQView: View {
         let subject = "SunHat Support Request"
 
         if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
-            Task { @MainActor in
-                UIApplication.shared.open(url)
+            Task {
+                let opened = await urlOpener.open(url)
+                if opened == false {
+                    isShowingMailFailure = true
+                }
             }
         }
     }

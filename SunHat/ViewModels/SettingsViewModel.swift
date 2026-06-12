@@ -50,12 +50,17 @@ final class SettingsViewModel {
     private var userPreferences: UserPreferences?
     private let locationDelegate: SettingsLocationDelegate
     let settingsOpener: SettingsOpening
+    private let notificationPermissions: NotificationPermissionProviding
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "SettingsViewModel")
 
     // MARK: - Initialization
 
-    init(settingsOpener: SettingsOpening = ApplicationSettingsOpener()) {
+    init(
+        settingsOpener: SettingsOpening = ApplicationSettingsOpener(),
+        notificationPermissions: NotificationPermissionProviding = UserNotificationPermissionProvider()
+    ) {
         self.settingsOpener = settingsOpener
+        self.notificationPermissions = notificationPermissions
         let delegate = SettingsLocationDelegate()
         self.locationDelegate = delegate
 
@@ -165,18 +170,20 @@ final class SettingsViewModel {
 
     private func checkNotificationStatus() {
         Task {
-            let settings = await UNUserNotificationCenter.current().notificationSettings()
-            self.notificationsEnabled = settings.authorizationStatus == .authorized
+            let status = await notificationPermissions.authorizationStatus()
+            self.notificationsEnabled = status == .authorized
         }
     }
 
     func requestNotificationPermission() {
         Task {
             do {
-                let granted = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound])
+                let granted = try await notificationPermissions.requestAuthorization(options: [.alert, .badge, .sound])
                 self.notificationsEnabled = granted
             } catch {
                 logger.error("Failed to request notification permission: \(error)")
+                actionError = "Couldn't request notification permission. Enable notifications for SunHat in the Settings app."
+                isShowingActionError = true
             }
         }
     }

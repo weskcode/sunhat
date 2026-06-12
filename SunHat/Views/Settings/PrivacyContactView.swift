@@ -15,7 +15,10 @@ struct PrivacyContactView: View {
     @State private var userEmail = ""
     @State private var showingMailComposer = false
     @State private var canSendEmail = false
-    
+    @State private var statusAlert: PrivacyContactStatusAlert?
+
+    private let urlOpener: SettingsOpening = ApplicationSettingsOpener()
+
     var body: some View {
         NavigationStack {
             Form {
@@ -57,6 +60,18 @@ struct PrivacyContactView: View {
                         userEmail: userEmail
                     )
                 }
+            }
+            .alert(
+                statusAlert?.title ?? "",
+                isPresented: Binding(
+                    get: { statusAlert != nil },
+                    set: { if !$0 { statusAlert = nil } }
+                ),
+                presenting: statusAlert
+            ) { _ in
+                Button("OK", role: .cancel) {}
+            } message: { alert in
+                Text(alert.message)
             }
         }
     }
@@ -282,18 +297,26 @@ struct PrivacyContactView: View {
         if let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let url = URL(string: "mailto:\(AppSupportLinks.privacyEmail)?subject=\(encodedSubject)&body=\(encodedBody)") {
-            Task { @MainActor in
-                UIApplication.shared.open(url)
+            Task {
+                let opened = await urlOpener.open(url)
+                if opened == false {
+                    statusAlert = PrivacyContactStatusAlert(
+                        title: "Couldn't Open Mail",
+                        message: "Set up a mail account, or email \(AppSupportLinks.privacyEmail) directly. You can also use Copy Email Template."
+                    )
+                }
             }
         }
     }
-    
+
     private func copyEmailTemplate() {
         let template = generateEmailBody()
         UIPasteboard.general.string = template
-        
-        // Show confirmation (would need to implement proper toast/alert)
-        print("Email template copied to clipboard")
+
+        statusAlert = PrivacyContactStatusAlert(
+            title: "Copied",
+            message: "The email template was copied to your clipboard. Paste it into any email to \(AppSupportLinks.privacyEmail)."
+        )
     }
     
     private func generateEmailBody() -> String {
@@ -322,10 +345,24 @@ struct PrivacyContactView: View {
     }
     
     private func openPrivacyPolicy() {
-        Task { @MainActor in
-            UIApplication.shared.open(AppSupportLinks.privacyPolicyURL)
+        Task {
+            let opened = await urlOpener.open(AppSupportLinks.privacyPolicyURL)
+            if opened == false {
+                statusAlert = PrivacyContactStatusAlert(
+                    title: "Couldn't Open",
+                    message: "Visit \(AppSupportLinks.privacyPolicyURL.absoluteString) in a browser."
+                )
+            }
         }
     }
+}
+
+/// Typed alert state for `PrivacyContactView` — one alert surface for
+/// open-failure and clipboard-confirmation messages.
+private struct PrivacyContactStatusAlert: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
 }
 
 // MARK: - Supporting Views
