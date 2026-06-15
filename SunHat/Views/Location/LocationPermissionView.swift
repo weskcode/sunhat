@@ -7,11 +7,12 @@
 
 import SwiftUI
 import CoreLocation
+import SwiftData
 
 struct LocationPermissionView: View {
-    @StateObject private var locationManager = LocationPermissionManager()
+    @ObservedObject private var locationManager = LocationPermissionManager.shared
     @EnvironmentObject private var coordinator: OnboardingCoordinator
-    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
@@ -57,6 +58,7 @@ struct LocationPermissionView: View {
                         isPresented: $showManualEntry,
                         onLocationSelected: { location in
                             locationManager.manualLocation = location
+                            saveManualLocationToPreferences(location)
                             coordinator.nextStep()
                         }
                     )
@@ -110,7 +112,7 @@ struct LocationPermissionView: View {
                         .scaleEffect(showLocationVisual ? 1.0 : 0.3)
                         .opacity(showLocationVisual ? 0.6 : 0.0)
                         .animation(
-                            .easeOut(duration: 1.0 + Double(index) * 0.2).delay(0.3 + Double(index) * 0.2),
+                            .easeOut(duration: 0.5 + Double(index) * 0.1).delay(0.1 + Double(index) * 0.1),
                             value: showLocationVisual
                         )
                 }
@@ -130,32 +132,32 @@ struct LocationPermissionView: View {
                     
                     Image(systemName: "location.fill")
                         .font(.system(size: 35, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .scaleEffect(showLocationVisual ? 1.0 : 0.5)
                 .opacity(showLocationVisual ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.8).delay(0.1), value: showLocationVisual)
+                .animation(.easeOut(duration: 0.4).delay(0.05), value: showLocationVisual)
             }
             .accessibilityHidden(true)
             
             // Title
             VStack(spacing: 12) {
                 Text("Get Accurate Weather")
-                    .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 28 : 34, relativeTo: .largeTitle))
+                    .font(dynamicTypeSize.isAccessibilitySize ? .title : .largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 
                 Text("For Your Exact Location")
                     .font(.title2)
                     .fontWeight(.medium)
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                     .multilineTextAlignment(.center)
             }
             .opacity(showExplanation ? 1.0 : 0.0)
             .offset(y: showExplanation ? 0 : 20)
-            .animation(.easeOut(duration: 0.8).delay(0.8), value: showExplanation)
+            .animation(.easeOut(duration: 0.4).delay(0.15), value: showExplanation)
         }
     }
     
@@ -166,9 +168,9 @@ struct LocationPermissionView: View {
             Text("Weather varies by location")
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .opacity(showLocationVisual ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.6).delay(1.2), value: showLocationVisual)
+                .animation(.easeOut(duration: 0.35).delay(0.25), value: showLocationVisual)
             
             HStack(spacing: 16) {
                 // Location 1: Sunny
@@ -178,7 +180,7 @@ struct LocationPermissionView: View {
                     condition: .clear,
                     iconName: "sun.max.fill",
                     iconColor: .orange,
-                    animationDelay: 1.4
+                    animationDelay: 0.3
                 )
                 
                 // Location 2: Rainy
@@ -188,7 +190,7 @@ struct LocationPermissionView: View {
                     condition: .rain,
                     iconName: "cloud.rain.fill",
                     iconColor: .blue,
-                    animationDelay: 1.6
+                    animationDelay: 0.4
                 )
                 
                 // Location 3: Snowy
@@ -198,12 +200,12 @@ struct LocationPermissionView: View {
                     condition: .snow,
                     iconName: "cloud.snow.fill",
                     iconColor: .gray,
-                    animationDelay: 1.8
+                    animationDelay: 0.5
                 )
             }
             .opacity(showLocationVisual ? 1.0 : 0.0)
             .offset(y: showLocationVisual ? 0 : 30)
-            .animation(.easeOut(duration: 0.8).delay(1.4), value: showLocationVisual)
+            .animation(.easeOut(duration: 0.4).delay(0.3), value: showLocationVisual)
         }
     }
     
@@ -217,7 +219,7 @@ struct LocationPermissionView: View {
                     title: "Precise Weather Data",
                     description: "Get hyper-local weather conditions specific to your neighborhood, not just your city.",
                     color: .blue,
-                    animationDelay: 2.0
+                    animationDelay: 0.4
                 )
                 
                 ExplanationCard(
@@ -225,20 +227,12 @@ struct LocationPermissionView: View {
                     title: "Smart Notifications",
                     description: "Receive reminders exactly when conditions are right for your outdoor activities.",
                     color: .green,
-                    animationDelay: 2.2
-                )
-                
-                ExplanationCard(
-                    icon: "lock.shield.fill",
-                    title: "Privacy Protected",
-                    description: "Your location stays on your device. We only fetch weather data when needed.",
-                    color: .purple,
-                    animationDelay: 2.4
+                    animationDelay: 0.5
                 )
             }
             .opacity(showExplanation ? 1.0 : 0.0)
             .offset(y: showExplanation ? 0 : 30)
-            .animation(.easeOut(duration: 0.8).delay(2.0), value: showExplanation)
+            .animation(.easeOut(duration: 0.4).delay(0.4), value: showExplanation)
         }
     }
     
@@ -264,7 +258,7 @@ struct LocationPermissionView: View {
                         .font(.title3)
                         .fontWeight(.semibold)
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(
@@ -295,7 +289,7 @@ struct LocationPermissionView: View {
                         .font(.body)
                         .fontWeight(.medium)
                 }
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
                 .background(
@@ -316,59 +310,32 @@ struct LocationPermissionView: View {
         }
         .opacity(showButtons ? 1.0 : 0.0)
         .offset(y: showButtons ? 0 : 30)
-        .animation(.easeOut(duration: 0.8).delay(2.6), value: showButtons)
+        .animation(.easeOut(duration: 0.4).delay(0.5), value: showButtons)
     }
     
     private var privacyNotice: some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 8) {
-                Image(systemName: "hand.raised.fill")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Text("Your privacy matters")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.secondary)
-            }
-            
-            Text("Location data is only used for weather updates and never shared with third parties.")
-                .font(.caption2)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+        HStack(spacing: 8) {
+            Image(systemName: "lock.shield.fill")
+                .font(.subheadline)
+                .foregroundStyle(.green)
+
+            Text("Only **you** have your location data — it's used solely for accurate weather, nothing else.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.leading)
                 .lineLimit(nil)
         }
         .padding(.top, 8)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Privacy notice: Your privacy matters. Location data is only used for weather updates and never shared with third parties.")
+        .accessibilityLabel("Privacy notice: Only you have your location data. It's used solely for accurate weather, nothing else.")
     }
     
     // MARK: - Helper Methods
     
     private func startAnimationSequence() {
-        guard !reduceMotion else {
-            // Show all content immediately for reduced motion
-            showLocationVisual = true
-            showExplanation = true
-            showButtons = true
-            return
-        }
-        
-        withAnimation {
-            showLocationVisual = true
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            withAnimation {
-                showExplanation = true
-            }
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
-            withAnimation {
-                showButtons = true
-            }
-        }
+        showLocationVisual = true
+        showExplanation = true
+        showButtons = true
     }
     
     private func requestLocationPermission() {
@@ -385,6 +352,9 @@ struct LocationPermissionView: View {
                 isProcessingPermission = false
                 
                 if granted {
+                    // Save GPS mode to UserPreferences
+                    saveGPSLocationToPreferences()
+
                     // Success haptic
                     let notificationFeedback = UINotificationFeedbackGenerator()
                     notificationFeedback.notificationOccurred(.success)
@@ -395,6 +365,36 @@ struct LocationPermissionView: View {
                 // Error handling is done through the location manager's alert
             }
         }
+    }
+
+    private func saveGPSLocationToPreferences() {
+        let prefs = fetchOrCreatePreferences()
+        prefs.locationMode = "gps"
+        prefs.manualLocationLatitude = 0
+        prefs.manualLocationLongitude = 0
+        prefs.manualLocationName = ""
+        prefs.updateTimestamp()
+        try? modelContext.save()
+    }
+
+    private func saveManualLocationToPreferences(_ location: ManualLocationData) {
+        let prefs = fetchOrCreatePreferences()
+        prefs.locationMode = "manual"
+        prefs.manualLocationLatitude = location.coordinate.latitude
+        prefs.manualLocationLongitude = location.coordinate.longitude
+        prefs.manualLocationName = location.displayName
+        prefs.updateTimestamp()
+        try? modelContext.save()
+    }
+
+    private func fetchOrCreatePreferences() -> UserPreferences {
+        let descriptor = FetchDescriptor<UserPreferences>()
+        if let existing = try? modelContext.fetch(descriptor).first {
+            return existing
+        }
+        let newPrefs = UserPreferences()
+        modelContext.insert(newPrefs)
+        return newPrefs
     }
     
     private func handleLocationStatusChange(_ status: CLAuthorizationStatus) {
@@ -414,20 +414,8 @@ struct LocationPermissionView: View {
     
     // MARK: - Computed Properties
     
-    private var backgroundGradient: LinearGradient {
-        LinearGradient(
-            colors: colorScheme == .dark ? [
-                Color.black,
-                Color.blue.opacity(0.05),
-                Color.black
-            ] : [
-                Color(red: 0.97, green: 0.98, blue: 1.0),
-                Color(red: 0.93, green: 0.96, blue: 1.0),
-                Color(red: 0.97, green: 0.98, blue: 1.0)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+    private var backgroundGradient: some View {
+        Color(.systemBackground)
     }
 }
 
@@ -467,14 +455,14 @@ struct LocationWeatherCard: View {
             Text(cityName)
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
                 .lineLimit(1)
             
             // Temperature
             Text("\(temperature)°")
                 .font(.title3)
                 .fontWeight(.bold)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
@@ -488,7 +476,7 @@ struct LocationWeatherCard: View {
         .opacity(isVisible ? 1.0 : 0.0)
         .onAppear {
             if !reduceMotion {
-                withAnimation(.easeOut(duration: 0.6).delay(animationDelay)) {
+                withAnimation(.easeOut(duration: 0.4).delay(animationDelay)) {
                     isVisible = true
                 }
             } else {
@@ -521,7 +509,7 @@ struct ExplanationCard: View {
                 
                 Image(systemName: icon)
                     .font(.title3)
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             }
             .accessibilityHidden(true)
             
@@ -530,11 +518,11 @@ struct ExplanationCard: View {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(nil)
             }
             
@@ -549,7 +537,7 @@ struct ExplanationCard: View {
         .offset(x: isVisible ? 0 : -30)
         .onAppear {
             if !reduceMotion {
-                withAnimation(.easeOut(duration: 0.6).delay(animationDelay)) {
+                withAnimation(.easeOut(duration: 0.4).delay(animationDelay)) {
                     isVisible = true
                 }
             } else {

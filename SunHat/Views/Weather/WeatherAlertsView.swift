@@ -12,24 +12,14 @@ struct WeatherAlertsView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 if alerts.isEmpty {
-                    VStack(spacing: 16) {
-                        Image(systemName: "checkmark.shield.fill")
-                            .font(.system(size: 48))
-                            .foregroundColor(.green)
-                        
-                        Text("No Active Alerts")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                        
-                        Text("All weather conditions are normal")
-                            .font(.callout)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 40)
+                    ContentUnavailableView(
+                        "No Active Alerts",
+                        systemImage: "checkmark.shield",
+                        description: Text("All weather conditions are normal.")
+                    )
                     .listRowBackground(Color.clear)
                 } else {
                     ForEach(alerts) { alert in
@@ -40,7 +30,7 @@ struct WeatherAlertsView: View {
             .navigationTitle("Weather Alerts")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
@@ -57,33 +47,33 @@ struct WeatherAlertDetailCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: alert.iconName)
-                    .font(.title2)
-                    .foregroundColor(alert.severityColor)
+                    .font(AppFontStyle.title2.font)
+                    .foregroundStyle(alert.severityColor)
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(alert.title)
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     
                     Text(alert.severity.rawValue.capitalized)
                         .font(.caption)
-                        .foregroundColor(alert.severityColor)
+                        .foregroundStyle(alert.severityColor)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
                         .background(alert.severityColor.opacity(0.1))
-                        .cornerRadius(4)
+                        .clipShape(.rect(cornerRadius: 4))
                 }
                 
                 Spacer()
                 
                 Text(alert.timestamp, style: .time)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Text(alert.description)
                 .font(.body)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 8)
     }

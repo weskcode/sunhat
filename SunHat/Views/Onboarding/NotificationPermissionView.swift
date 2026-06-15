@@ -75,7 +75,7 @@ struct NotificationPermissionView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Notification permission request")
-        .accessibilityHint("Step 3 of 5 in the onboarding process")
+        .accessibilityHint("Step 3 of 4 in the onboarding process")
     }
     
     // MARK: - Progress Indicator
@@ -83,7 +83,7 @@ struct NotificationPermissionView: View {
     private var progressIndicator: some View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
-                ForEach(0..<5, id: \.self) { index in
+                ForEach(0..<4, id: \.self) { index in
                     Circle()
                         .fill(index < 3 ? Color.blue : Color.gray.opacity(0.3))
                         .frame(width: 8, height: 8)
@@ -91,13 +91,13 @@ struct NotificationPermissionView: View {
                         .animation(.easeInOut(duration: 0.3), value: index == 2)
                 }
             }
-            
-            Text("Step 3 of 5")
-                .font(.caption2)
-                .foregroundColor(.secondary)
+
+            Text("Step 3 of 4")
+                .font(AppFontStyle.caption2.font)
+                .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Progress: Step 3 of 5")
+        .accessibilityLabel("Progress: Step 3 of 4")
     }
     
     // MARK: - Header Section
@@ -121,7 +121,7 @@ struct NotificationPermissionView: View {
                         .scaleEffect(showHeader ? 1.0 : 0.3)
                         .opacity(showHeader ? 0.6 : 0.0)
                         .animation(
-                            .easeOut(duration: 1.0 + Double(index) * 0.2).delay(0.2 + Double(index) * 0.15),
+                            .easeOut(duration: 0.5 + Double(index) * 0.1).delay(0.1 + Double(index) * 0.1),
                             value: showHeader
                         )
                 }
@@ -141,33 +141,33 @@ struct NotificationPermissionView: View {
                     
                     Image(systemName: "bell.fill")
                         .font(.system(size: 35, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .scaleEffect(showHeader ? 1.0 : 0.5)
                 .opacity(showHeader ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.8).delay(0.1), value: showHeader)
+                .animation(.easeOut(duration: 0.4).delay(0.05), value: showHeader)
             }
             .accessibilityHidden(true)
             
             // Title and subtitle
             VStack(spacing: 12) {
                 Text("Stay in the Loop")
-                    .font(.custom("SF Pro Display", size: dynamicTypeSize.isAccessibilitySize ? 28 : 34, relativeTo: .largeTitle))
+                    .font(dynamicTypeSize.isAccessibilitySize ? .title : .largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 
                 Text("Get notified when weather conditions are perfect for your activities")
                     .font(.title3)
                     .fontWeight(.medium)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(nil)
             }
             .opacity(showHeader ? 1.0 : 0.0)
             .offset(y: showHeader ? 0 : 20)
-            .animation(.easeOut(duration: 0.8).delay(0.6), value: showHeader)
+            .animation(.easeOut(duration: 0.4).delay(0.15), value: showHeader)
         }
     }
     
@@ -178,29 +178,29 @@ struct NotificationPermissionView: View {
             Text("Here's what you'll receive:")
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .opacity(showMockNotifications ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.6).delay(1.0), value: showMockNotifications)
+                .animation(.easeOut(duration: 0.35).delay(0.2), value: showMockNotifications)
             
             VStack(spacing: 12) {
                 MockNotificationCard(
                     type: .weatherTrigger,
-                    animationDelay: 1.2
+                    animationDelay: 0.25
                 )
                 
                 MockNotificationCard(
                     type: .dailySummary,
-                    animationDelay: 1.4
+                    animationDelay: 0.3
                 )
                 
                 MockNotificationCard(
                     type: .severalWeather,
-                    animationDelay: 1.6
+                    animationDelay: 0.35
                 )
             }
             .opacity(showMockNotifications ? 1.0 : 0.0)
             .offset(y: showMockNotifications ? 0 : 30)
-            .animation(.easeOut(duration: 0.8).delay(1.2), value: showMockNotifications)
+            .animation(.easeOut(duration: 0.4).delay(0.25), value: showMockNotifications)
         }
     }
     
@@ -214,7 +214,7 @@ struct NotificationPermissionView: View {
                     title: "Perfect Timing",
                     description: "Notifications arrive exactly when weather conditions match your preferences",
                     color: .blue,
-                    animationDelay: 1.8
+                    animationDelay: 0.4
                 )
                 
                 NotificationBenefit(
@@ -222,7 +222,7 @@ struct NotificationPermissionView: View {
                     title: "Respect Your Schedule",
                     description: "Smart delivery times that won't disturb your sleep or quiet hours",
                     color: .purple,
-                    animationDelay: 2.0
+                    animationDelay: 0.45
                 )
                 
                 NotificationBenefit(
@@ -230,7 +230,7 @@ struct NotificationPermissionView: View {
                     title: "Fully Customizable",
                     description: "Choose which reminders to receive and when you want them",
                     color: .green,
-                    animationDelay: 2.2
+                    animationDelay: 0.5
                 )
                 
                 NotificationBenefit(
@@ -238,12 +238,12 @@ struct NotificationPermissionView: View {
                     title: "Privacy Protected",
                     description: "All notifications are generated locally on your device",
                     color: .orange,
-                    animationDelay: 2.4
+                    animationDelay: 0.55
                 )
             }
             .opacity(showExplanation ? 1.0 : 0.0)
             .offset(y: showExplanation ? 0 : 30)
-            .animation(.easeOut(duration: 0.8).delay(1.8), value: showExplanation)
+            .animation(.easeOut(duration: 0.4).delay(0.4), value: showExplanation)
         }
     }
     
@@ -269,7 +269,7 @@ struct NotificationPermissionView: View {
                         .font(.title3)
                         .fontWeight(.semibold)
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(
@@ -300,7 +300,7 @@ struct NotificationPermissionView: View {
                         .font(.body)
                         .fontWeight(.medium)
                 }
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
                 .background(
@@ -321,7 +321,7 @@ struct NotificationPermissionView: View {
         }
         .opacity(showButtons ? 1.0 : 0.0)
         .offset(y: showButtons ? 0 : 30)
-        .animation(.easeOut(duration: 0.8).delay(2.6), value: showButtons)
+        .animation(.easeOut(duration: 0.4).delay(0.5), value: showButtons)
     }
     
     private var privacyNotice: some View {
@@ -329,17 +329,17 @@ struct NotificationPermissionView: View {
             HStack(spacing: 8) {
                 Image(systemName: "info.circle.fill")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Text("About notifications")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Text("You can always change notification settings later in the app or device Settings.")
-                .font(.caption2)
-                .foregroundColor(.secondary)
+                .font(AppFontStyle.caption2.font)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(nil)
         }
@@ -351,36 +351,10 @@ struct NotificationPermissionView: View {
     // MARK: - Helper Methods
     
     private func startAnimationSequence() {
-        guard !reduceMotion else {
-            // Show all content immediately for reduced motion
-            showHeader = true
-            showMockNotifications = true
-            showExplanation = true
-            showButtons = true
-            return
-        }
-        
-        withAnimation {
-            showHeader = true
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            withAnimation {
-                showMockNotifications = true
-            }
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
-            withAnimation {
-                showExplanation = true
-            }
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) {
-            withAnimation {
-                showButtons = true
-            }
-        }
+        showHeader = true
+        showMockNotifications = true
+        showExplanation = true
+        showButtons = true
     }
     
     private func requestNotificationPermission() {
@@ -414,20 +388,8 @@ struct NotificationPermissionView: View {
     
     // MARK: - Computed Properties
     
-    private var backgroundGradient: LinearGradient {
-        LinearGradient(
-            colors: colorScheme == .dark ? [
-                Color.black,
-                Color.blue.opacity(0.05),
-                Color.black
-            ] : [
-                Color(red: 0.97, green: 0.98, blue: 1.0),
-                Color(red: 0.93, green: 0.96, blue: 1.0),
-                Color(red: 0.97, green: 0.98, blue: 1.0)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+    private var backgroundGradient: some View {
+        Color(.systemBackground)
     }
 }
 
@@ -457,7 +419,7 @@ struct MockNotificationCard: View {
                 
                 Image(systemName: "cloud.sun.fill")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
             }
             .accessibilityHidden(true)
             
@@ -467,24 +429,24 @@ struct MockNotificationCard: View {
                     Text("SunHat")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     
                     Spacer()
                     
                     Text(type.time)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .font(AppFontStyle.caption2.font)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Text(type.title)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .lineLimit(2)
                 
                 Text(type.body)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
             
@@ -500,7 +462,7 @@ struct MockNotificationCard: View {
         .opacity(isVisible ? 1.0 : 0.0)
         .onAppear {
             if !reduceMotion {
-                withAnimation(.easeOut(duration: 0.6).delay(animationDelay)) {
+                withAnimation(.easeOut(duration: 0.4).delay(animationDelay)) {
                     isVisible = true
                 }
             } else {
@@ -532,7 +494,7 @@ struct NotificationBenefit: View {
                 
                 Image(systemName: icon)
                     .font(.title3)
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             }
             .accessibilityHidden(true)
             
@@ -541,11 +503,11 @@ struct NotificationBenefit: View {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(nil)
             }
             
@@ -560,7 +522,7 @@ struct NotificationBenefit: View {
         .offset(x: isVisible ? 0 : -30)
         .onAppear {
             if !reduceMotion {
-                withAnimation(.easeOut(duration: 0.6).delay(animationDelay)) {
+                withAnimation(.easeOut(duration: 0.4).delay(animationDelay)) {
                     isVisible = true
                 }
             } else {

@@ -23,6 +23,8 @@ final class TriggerEngineManager: ObservableObject {
     @Published var evaluationResults: [TriggerEvaluationResult] = []
     
     private var triggerEngine: TriggerEngine?
+    private var modelContainer: ModelContainer?
+    private var scheduledEvaluationTask: Task<Void, Never>?
     private let notificationManager = TriggerNotificationManager.shared
     private let backgroundTaskIdentifier = "org.wesley.sunhat.trigger-evaluation"
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "TriggerEngineManager")
@@ -37,6 +39,7 @@ final class TriggerEngineManager: ObservableObject {
     }
     
     func configure(modelContainer: ModelContainer) async {
+        self.modelContainer = modelContainer
         self.triggerEngine = await TriggerEngine.shared(modelContainer: modelContainer)
         await notificationManager.configure()
         logger.info("TriggerEngineManager configured")
@@ -103,7 +106,12 @@ final class TriggerEngineManager: ObservableObject {
     private func registerBackgroundTask() {
         BGTaskScheduler.shared.register(forTaskWithIdentifier: backgroundTaskIdentifier, using: nil) { task in
             Task {
-                await self.handleBackgroundEvaluation(task as! BGAppRefreshTask)
+                guard let refreshTask = task as? BGAppRefreshTask else {
+                    task.setTaskCompleted(success: false)
+                    return
+                }
+
+                await self.handleBackgroundEvaluation(refreshTask)
             }
         }
         logger.info("Registered background task: \(self.backgroundTaskIdentifier)")
@@ -123,42 +131,36 @@ final class TriggerEngineManager: ObservableObject {
     
     private func handleBackgroundEvaluation(_ task: BGAppRefreshTask) async {
         logger.info("Starting background trigger evaluation")
-        
-        let startTime = Date()
-        
-        // Set up task completion handler
-        task.expirationHandler = {
-            self.logger.warning("Background evaluation task expired")
-            task.setTaskCompleted(success: false)
-        }
-        
+
         guard let triggerEngine = triggerEngine else {
             logger.error("TriggerEngine not configured for background evaluation")
             task.setTaskCompleted(success: false)
             return
         }
 
+        let startTime = Date()
 
-        // Perform the evaluation
-        let results = await triggerEngine.evaluateAllActiveReminders()
-
-        // Process results and send notifications
-        await processEvaluationResults(results, isBackground: true)
-
-        let duration = Date().timeIntervalSince(startTime)
-
-        await MainActor.run {
-            self.lastEvaluationTime = Date()
-            self.evaluationResults = results
-            self.updatePerformanceMetrics(duration: duration)
+        let workTask = Task {
+            let results = await triggerEngine.evaluateAllActiveReminders()
+            await processEvaluationResults(results, isBackground: true)
+            return results
         }
 
+        task.expirationHandler = {
+            self.logger.warning("Background evaluation task expired")
+            workTask.cancel()
+        }
+
+        let results = await workTask.value
+        let duration = Date().timeIntervalSince(startTime)
+
+        lastEvaluationTime = Date()
+        evaluationResults = results
+        updatePerformanceMetrics(duration: duration)
+
         logger.info("Background evaluation completed: \(results.count) reminders in \(duration)s")
-
-        // Schedule next evaluation
         scheduleBackgroundEvaluation()
-
-        task.setTaskCompleted(success: true)
+        task.setTaskCompleted(success: !workTask.isCancelled)
     }
     
     // MARK: - Result Processing
@@ -201,6 +203,17 @@ final class TriggerEngineManager: ObservableObject {
     }
     
     private func sendNotificationForResult(_ result: TriggerEvaluationResult, isBackground: Bool) async {
+        // Honor the user's app-level notification preferences (master switch,
+        // quiet hours, weekend rule).
+        if let modelContainer {
+            let context = ModelContext(modelContainer)
+            if let preferences = try? context.fetch(FetchDescriptor<UserPreferences>()).first,
+               !preferences.allowsNotificationDelivery() {
+                logger.info("Suppressed notification for \(result.reminderId) — notifications are off or quiet hours are active")
+                return
+            }
+        }
+
         do {
             try await notificationManager.sendTriggerNotification(for: result, isBackground: isBackground)
             logger.info("Sent notification for triggered reminder: \(result.reminderId)")
@@ -223,11 +236,15 @@ final class TriggerEngineManager: ObservableObject {
             let timeInterval = earliestNext.timeIntervalSince(Date())
             
             if timeInterval > 0 && timeInterval < 24 * 3600 { // Within next 24 hours
-                // Schedule a more specific evaluation
-                DispatchQueue.main.asyncAfter(deadline: .now() + timeInterval) {
-                    Task {
-                        await self.evaluateAllReminders()
-                    }
+                scheduledEvaluationTask?.cancel()
+                let delayMilliseconds = max(1, Int(timeInterval * 1000))
+
+                scheduledEvaluationTask = Task { [weak self] in
+                    do {
+                        try await Task.sleep(for: .milliseconds(delayMilliseconds))
+                        guard !Task.isCancelled else { return }
+                        await self?.evaluateAllReminders()
+                    } catch { }
                 }
                 
                 logger.debug("Scheduled next evaluation in \(String(format: "%.1f", timeInterval / 3600)) hours")
@@ -472,12 +489,14 @@ actor TriggerNotificationManager {
         }
         
         // Schedule re-evaluation after snooze period
-        DispatchQueue.main.asyncAfter(deadline: .now() + TimeInterval(hours * 3600)) {
-            Task {
-                // Re-evaluate this specific reminder after snooze
-                // This would typically involve fetching the reminder from the database
+        Task {
+            do {
+                try await Task.sleep(for: .seconds(hours * 3600))
+                guard !Task.isCancelled else { return }
+                // Re-evaluate this specific reminder after snooze.
+                // This would typically involve fetching the reminder from the database.
                 self.logger.info("Re-evaluating snoozed reminder \(reminderId)")
-            }
+            } catch { }
         }
     }
     

@@ -10,8 +10,8 @@ This guide documents the comprehensive upgrade of the SunHat weather-based remin
 
 #### iOS Deployment Target
 - **File:** `SunHat.xcodeproj/project.pbxproj`
-- **Change:** Updated `IPHONEOS_DEPLOYMENT_TARGET` from `18.5` to `26.0` in all build configurations
-- **Impact:** Ensures app targets iOS 26 minimum and can use iOS 26 APIs
+- **Change:** Updated `IPHONEOS_DEPLOYMENT_TARGET` from `18.5` to `26.4` in all build configurations
+- **Impact:** Ensures app targets iOS 26.4 minimum and can use iOS 26 APIs
 
 #### Info.plist Updates
 - **File:** `SunHat/Info.plist`
@@ -59,7 +59,7 @@ This guide documents the comprehensive upgrade of the SunHat weather-based remin
   - Maintained backward compatibility with existing WeatherKit APIs
 
 #### SwiftData Compatibility
-- **File:** `SunHat/SunHatApp.swift`
+- **File:** `SunHat/sunhat.swift`
 - **Changes:**
   - Updated SwiftData schema for iOS 26 compatibility
   - Added iOS 26 specific model configurations:
@@ -73,17 +73,23 @@ This guide documents the comprehensive upgrade of the SunHat weather-based remin
 - **Changes:**
   - Standardized ViewModel initialization patterns
   - Improved error handling consistency
-  - Added proper dependency injection throughout
+  - Added targeted dependency seams for weather, location, and settings-opening actions
   - Created `LocationPermissionManagerAdapter` for better separation of concerns
 
 #### Service Layer Updates
 - **Files:** All Service classes
 - **Changes:**
-  - Added proper protocol definitions (already existed as `WeatherAPI`)
+  - Added proper protocol definitions such as `WeatherAPI`, `WeatherProviding`, `LocationManaging`, and `SettingsOpening`
   - Improved actor isolation patterns
   - Standardized logging approach using `Logger` throughout
 
 ### Testing and Validation
+
+#### Current Verification Snapshot
+- `SunHatTests` passed on June 2, 2026: `131 passed, 0 failed`.
+- Verification used the existing configured iPhone 17 Pro simulator only.
+- UI tests still need a stable XCTest run on that same simulator.
+- Swift Testing is used for new unit and integration tests; UI tests remain XCTest-based.
 
 #### Unit Tests
 - **File:** `SunHatTests/SunHatTests.swift`
@@ -180,15 +186,18 @@ This guide documents the comprehensive upgrade of the SunHat weather-based remin
 - **Background Task Prioritization:** Implement more sophisticated background task scheduling
 - **Enhanced Weather Visualizations:** Use iOS 26 weather visualization APIs
 - **Improved Notifications:** Adopt iOS 26 notification enhancements
+- **WidgetKit/watchOS Targets:** Add actual targets only if they remain in scope. Keep them minimal: next ready reminder plus an unavailable state.
+- **Observation Migration:** `UserPreferencesViewModel` is migrated; continue incrementally with other low-risk ViewModels.
 
 ## Success Criteria
 
 - ✅ App compiles and runs on iOS 26
-- ✅ All incomplete features completed
-- ✅ All tests passing (including new iOS 26 tests)
-- ✅ No deprecated API warnings
+- 🔲 Product scope follow-ups tracked in the HIG and architecture audit plans
+- ✅ Unit tests passing, including iOS 26 tests
+- 🔲 UI tests need a stable single-simulator run
+- 🔲 Deprecated API warning audit needs a fresh build log review before release
 - ✅ Proper error handling for all scenarios
-- ✅ Clean, maintainable codebase following iOS 26 best practices
+- 🔲 Clean, maintainable codebase work is ongoing through the architecture cleanup plan
 
 ## Migration Checklist
 
@@ -212,11 +221,13 @@ This guide documents the comprehensive upgrade of the SunHat weather-based remin
 5. **Testing**
    - [x] Update unit tests for iOS 26
    - [x] Update UI tests for iOS 26
+   - [x] Add Swift Testing coverage for activity defaults, compact next-ready reminder selection, and weather/settings dependency seams
+   - [ ] Re-run UI smoke tests on the single configured simulator
 
 6. **Finalization**
    - [x] Create migration documentation
    - [x] Clean up deprecated code
-   - [x] Final code review and verification completed
+   - [ ] Final release code review and verification completed
 
 ## Troubleshooting
 

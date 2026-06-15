@@ -77,22 +77,6 @@ struct MagicalButtonStyle: ButtonStyle {
     }
 }
 
-// MARK: - Floating Action Button Style
-
-struct FloatingActionButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.9 : 1.0)
-            .shadow(
-                color: .black.opacity(configuration.isPressed ? 0.1 : 0.2),
-                radius: configuration.isPressed ? 4 : 8,
-                x: 0,
-                y: configuration.isPressed ? 2 : 4
-            )
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-    }
-}
-
 // MARK: - Card Button Style
 
 struct CardButtonStyle: ButtonStyle {
@@ -219,7 +203,7 @@ struct WeatherButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .frame(height: 50)
             .background(Color.blue)
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         
         Button("Enhanced Button") {}
@@ -227,7 +211,7 @@ struct WeatherButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .frame(height: 50)
             .background(Color.purple)
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         
         Button("Magical Button") {}
@@ -241,14 +225,14 @@ struct WeatherButtonStyle: ButtonStyle {
                     endPoint: .bottomTrailing
                 )
             )
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .clipShape(RoundedRectangle(cornerRadius: 16))
         
         Button("Weather Button") {}
             .buttonStyle(WeatherButtonStyle(weatherCondition: .sunny))
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .clipShape(RoundedRectangle(cornerRadius: 12))
     }
     .padding()

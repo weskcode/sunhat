@@ -55,11 +55,11 @@ struct CelebrationView: View {
                     
                     Image(systemName: "checkmark")
                         .font(.system(size: 50, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .scaleEffect(showCheckmark ? 1.0 : 0.3)
                 .opacity(showCheckmark ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.8).delay(0.2), value: showCheckmark)
+                .animation(.easeOut(duration: 0.5).delay(0.1), value: showCheckmark)
                 .accessibilityHidden(true)
                 
                 // Celebration text with enhanced animations
@@ -68,47 +68,47 @@ struct CelebrationView: View {
                     Text("Congratulations! 🎉")
                         .font(.title)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .multilineTextAlignment(.center)
                         .accessibilityAddTraits(.isHeader)
                         .scaleEffect(showText ? 1.0 : 0.8)
                         .opacity(showText ? 1.0 : 0.0)
-                        .animation(.spring(response: 0.6, dampingFraction: 0.6).delay(1.0), value: showText)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.4), value: showText)
                     
                     // Success message with slide up
                     Text("Your first weather reminder is ready!")
                         .font(.title3)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .offset(y: showText ? 0 : 30)
                         .opacity(showText ? 1.0 : 0.0)
-                        .animation(.easeOut(duration: 0.8).delay(1.3), value: showText)
+                        .animation(.easeOut(duration: 0.4).delay(0.55), value: showText)
                     
                     // Description with fade in
                     Text("You'll be notified when conditions are perfect for your activity")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .lineLimit(nil)
                         .opacity(showText ? 1.0 : 0.0)
-                        .animation(.easeOut(duration: 0.8).delay(1.6), value: showText)
+                        .animation(.easeOut(duration: 0.4).delay(0.7), value: showText)
                     
                     // Quick preview card
                     if showText {
                         HStack(spacing: 12) {
                             Image(systemName: "thermometer.sun.fill")
                                 .font(.title2)
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                             
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("Your reminder is active!")
                                     .font(.subheadline)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.primary)
+                                    .foregroundStyle(.primary)
                                 
                                 Text("Monitoring weather conditions now")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                             }
                             
                             Spacer()
@@ -121,7 +121,7 @@ struct CelebrationView: View {
                                 Image(systemName: "checkmark")
                                     .font(.subheadline)
                                     .fontWeight(.bold)
-                                    .foregroundColor(.green)
+                                    .foregroundStyle(.green)
                             }
                         }
                         .padding(16)
@@ -132,7 +132,7 @@ struct CelebrationView: View {
                         )
                         .scaleEffect(showText ? 1.0 : 0.9)
                         .opacity(showText ? 1.0 : 0.0)
-                        .animation(.spring(response: 0.8, dampingFraction: 0.7).delay(1.9), value: showText)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.85), value: showText)
                         .transition(.scale.combined(with: .opacity))
                     }
                 }
@@ -142,12 +142,12 @@ struct CelebrationView: View {
                     ForEach(0..<3, id: \.self) { index in
                         Image(systemName: "sparkles")
                             .font(.title2)
-                            .foregroundColor(.yellow)
+                            .foregroundStyle(.yellow)
                             .scaleEffect(showText ? 1.0 : 0.5)
                             .opacity(showText ? 1.0 : 0.0)
                             .animation(
                                 .easeOut(duration: 0.6)
-                                .delay(1.2 + Double(index) * 0.1),
+                                .delay(0.5 + Double(index) * 0.05),
                                 value: showText
                             )
                     }
@@ -171,35 +171,32 @@ struct CelebrationView: View {
     
     private func startCelebration() {
         if reduceMotion {
-            // Show all elements immediately for reduced motion
             showConfetti = true
             showCheckmark = true
             showText = true
             return
         }
-        
-        // Start confetti immediately
+
         withAnimation(.easeOut(duration: 0.5)) {
             showConfetti = true
         }
-        
-        // Show checkmark
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+
+        Task {
+            try? await Task.sleep(for: .milliseconds(100))
+            guard !Task.isCancelled else { return }
             withAnimation {
                 showCheckmark = true
                 pulseScale = 1.1
             }
-        }
-        
-        // Show text
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled else { return }
             withAnimation {
                 showText = true
             }
-        }
-        
-        // Fade out confetti
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+
+            try? await Task.sleep(for: .milliseconds(900))
+            guard !Task.isCancelled else { return }
             withAnimation(.easeOut(duration: 0.5)) {
                 confettiOpacity = 0.0
             }
@@ -337,7 +334,7 @@ struct SimpleCelebrationView: View {
                     
                     Image(systemName: "checkmark")
                         .font(.system(size: 35, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
                 .accessibilityHidden(true)
                 
@@ -346,11 +343,11 @@ struct SimpleCelebrationView: View {
                     Text("Success!")
                         .font(.title)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     
                     Text("Your first reminder is ready")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                 }
             }

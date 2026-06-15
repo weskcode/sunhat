@@ -27,8 +27,8 @@ struct ReminderSummaryCard: View {
                         .fill(
                             RadialGradient(
                                 colors: [
-                                    reminder.activity.color.opacity(0.3),
-                                    reminder.activity.color.opacity(0.1),
+                                    reminder.iconColor.opacity(0.3),
+                                    reminder.iconColor.opacity(0.1),
                                     Color.clear
                                 ],
                                 center: .center,
@@ -39,21 +39,21 @@ struct ReminderSummaryCard: View {
                         .frame(width: 80, height: 80)
                         .scaleEffect(showContent ? 1.0 : 0.8)
                         .opacity(showContent ? 1.0 : 0.0)
-                        .animation(.spring(response: 0.8, dampingFraction: 0.6).delay(0.2), value: showContent)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.1), value: showContent)
                     
                     Circle()
-                        .fill(reminder.activity.color.opacity(0.15))
+                        .fill(reminder.iconColor.opacity(0.15))
                         .frame(width: 60, height: 60)
                         .overlay(
                             Circle()
-                                .stroke(reminder.activity.color.opacity(0.3), lineWidth: 2)
+                                .stroke(reminder.iconColor.opacity(0.3), lineWidth: 2)
                         )
                     
-                    Image(systemName: reminder.activity.icon)
+                    Image(systemName: reminder.selectedIcon)
                         .font(.title)
-                        .foregroundColor(reminder.activity.color)
+                        .foregroundStyle(reminder.iconColor)
                         .scaleEffect(showContent ? 1.0 : 0.5)
-                        .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.4), value: showContent)
+                        .animation(.spring(response: 0.45, dampingFraction: 0.7).delay(0.2), value: showContent)
                 }
                 .accessibilityHidden(true)
                 
@@ -62,17 +62,17 @@ struct ReminderSummaryCard: View {
                     Text(reminder.displayTitle)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .opacity(showContent ? 1.0 : 0.0)
                         .offset(x: showContent ? 0 : 20)
-                        .animation(.easeOut(duration: 0.6).delay(0.3), value: showContent)
+                        .animation(.easeOut(duration: 0.35).delay(0.15), value: showContent)
                     
                     Text("Weather-triggered reminder")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .opacity(showContent ? 1.0 : 0.0)
                         .offset(x: showContent ? 0 : 20)
-                        .animation(.easeOut(duration: 0.6).delay(0.5), value: showContent)
+                        .animation(.easeOut(duration: 0.35).delay(0.25), value: showContent)
                     
                     // Status badge
                     HStack(spacing: 6) {
@@ -83,7 +83,7 @@ struct ReminderSummaryCard: View {
                         Text("Active & Monitoring")
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(.green)
+                            .foregroundStyle(.green)
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
@@ -93,7 +93,7 @@ struct ReminderSummaryCard: View {
                     )
                     .opacity(showContent ? 1.0 : 0.0)
                     .offset(x: showContent ? 0 : 20)
-                    .animation(.easeOut(duration: 0.6).delay(0.7), value: showContent)
+                    .animation(.easeOut(duration: 0.35).delay(0.3), value: showContent)
                 }
                 
                 Spacer()
@@ -105,7 +105,7 @@ struct ReminderSummaryCard: View {
             Divider()
                 .padding(.vertical, 20)
                 .opacity(showContent ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.4).delay(0.8), value: showContent)
+                .animation(.easeOut(duration: 0.3).delay(0.35), value: showContent)
             
             // Conditions summary
             VStack(spacing: 16) {
@@ -115,18 +115,29 @@ struct ReminderSummaryCard: View {
                     title: "Temperature",
                     value: reminder.temperatureDescription,
                     color: .blue,
-                    animationDelay: 0.9
+                    animationDelay: 0.4
                 )
-                
+
+                // Sky conditions
+                if !reminder.selectedSkyConditions.isEmpty {
+                    ConditionSummaryRow(
+                        icon: "cloud.sun.fill",
+                        title: "Sky Conditions",
+                        value: reminder.skyConditionDescription,
+                        color: reminder.conditionMode == .include ? .cyan : .gray,
+                        animationDelay: 0.45
+                    )
+                }
+
                 // Time preference
                 ConditionSummaryRow(
                     icon: reminder.preferredTimeRange.icon,
                     title: "Time",
                     value: reminder.preferredTimeRange.displayName,
                     color: .orange,
-                    animationDelay: 1.0
+                    animationDelay: 0.5
                 )
-                
+
                 // Quiet hours
                 if reminder.respectQuietHours {
                     ConditionSummaryRow(
@@ -134,56 +145,22 @@ struct ReminderSummaryCard: View {
                         title: "Quiet Hours",
                         value: "Respected",
                         color: .purple,
-                        animationDelay: 1.1
+                        animationDelay: 0.55
+                    )
+                }
+
+                // User notes
+                if !reminder.notes.isEmpty {
+                    ConditionSummaryRow(
+                        icon: "note.text",
+                        title: "Notes",
+                        value: reminder.notes,
+                        color: .gray,
+                        animationDelay: 0.6
                     )
                 }
             }
             .padding(.horizontal, 24)
-            
-            // Likelihood summary
-            if let likelihood = triggerLikelihood {
-                VStack(spacing: 12) {
-                    Divider()
-                        .padding(.vertical, 16)
-                    
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Next 7 Days")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundColor(.primary)
-                            
-                            Text(likelihood.description)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        // Circular progress
-                        ZStack {
-                            Circle()
-                                .stroke(likelihood.color.opacity(0.2), lineWidth: 4)
-                                .frame(width: 50, height: 50)
-                            
-                            Circle()
-                                .trim(from: 0, to: showContent ? likelihood.percentage / 100 : 0)
-                                .stroke(likelihood.color, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                                .frame(width: 50, height: 50)
-                                .rotationEffect(.degrees(-90))
-                                .animation(.easeInOut(duration: 1.5).delay(1.2), value: showContent)
-                            
-                            Text("\(Int(likelihood.percentage))%")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(likelihood.color)
-                        }
-                    }
-                }
-                .padding(.horizontal, 24)
-                .opacity(showContent ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.6).delay(1.1), value: showContent)
-            }
             
             // Action buttons
             HStack(spacing: 12) {
@@ -198,7 +175,7 @@ struct ReminderSummaryCard: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
                     .background(
@@ -206,7 +183,7 @@ struct ReminderSummaryCard: View {
                             .fill(Color.blue.opacity(0.1))
                     )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.plain)
                 
                 Button(action: {
                     // Edit action
@@ -219,7 +196,7 @@ struct ReminderSummaryCard: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
                     .background(
@@ -227,14 +204,14 @@ struct ReminderSummaryCard: View {
                             .fill(Color(.tertiarySystemBackground))
                     )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(.plain)
             }
             .padding(.top, 20)
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
             .opacity(showContent ? 1.0 : 0.0)
             .offset(y: showContent ? 0 : 20)
-            .animation(.easeOut(duration: 0.6).delay(1.3), value: showContent)
+            .animation(.easeOut(duration: 0.35).delay(0.65), value: showContent)
         }
         .background(
             RoundedRectangle(cornerRadius: 20)
@@ -280,7 +257,7 @@ struct ConditionSummaryRow: View {
                 
                 Image(systemName: icon)
                     .font(.body)
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             }
             .accessibilityHidden(true)
             
@@ -288,12 +265,12 @@ struct ConditionSummaryRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Text(value)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
             }
             
             Spacer()
@@ -301,7 +278,7 @@ struct ConditionSummaryRow: View {
             // Checkmark
             Image(systemName: "checkmark.circle.fill")
                 .font(.body)
-                .foregroundColor(.green)
+                .foregroundStyle(.green)
                 .scaleEffect(isVisible ? 1.0 : 0.5)
                 .opacity(isVisible ? 1.0 : 0.0)
                 .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(animationDelay), value: isVisible)
@@ -310,7 +287,7 @@ struct ConditionSummaryRow: View {
         .offset(x: isVisible ? 0 : 30)
         .onAppear {
             if !reduceMotion {
-                withAnimation(.easeOut(duration: 0.6).delay(animationDelay)) {
+                withAnimation(.easeOut(duration: 0.4).delay(animationDelay)) {
                     isVisible = true
                 }
             } else {
@@ -328,19 +305,19 @@ struct ReminderDetailsView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     // Header
                     VStack(spacing: 16) {
                         ZStack {
                             Circle()
-                                .fill(reminder.activity.color.opacity(0.15))
+                                .fill(reminder.iconColor.opacity(0.15))
                                 .frame(width: 80, height: 80)
                             
-                            Image(systemName: reminder.activity.icon)
+                            Image(systemName: reminder.selectedIcon)
                                 .font(.title)
-                                .foregroundColor(reminder.activity.color)
+                                .foregroundStyle(reminder.iconColor)
                         }
                         
                         VStack(spacing: 8) {
@@ -351,7 +328,7 @@ struct ReminderDetailsView: View {
                             
                             Text("Created just now")
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .padding(.top, 20)
@@ -366,14 +343,23 @@ struct ReminderDetailsView: View {
                                     value: reminder.temperatureDescription,
                                     color: .blue
                                 )
-                                
+
+                                if !reminder.selectedSkyConditions.isEmpty {
+                                    DetailRow(
+                                        icon: "cloud.sun.fill",
+                                        title: "Sky Conditions",
+                                        value: reminder.skyConditionDescription,
+                                        color: reminder.conditionMode == .include ? .cyan : .gray
+                                    )
+                                }
+
                                 DetailRow(
                                     icon: reminder.preferredTimeRange.icon,
                                     title: "Time Range",
                                     value: reminder.preferredTimeRange.displayName,
                                     color: .orange
                                 )
-                                
+
                                 if reminder.respectQuietHours {
                                     DetailRow(
                                         icon: "moon.zzz",
@@ -382,36 +368,45 @@ struct ReminderDetailsView: View {
                                         color: .purple
                                     )
                                 }
+
+                                if !reminder.notes.isEmpty {
+                                    DetailRow(
+                                        icon: "note.text",
+                                        title: "Notes",
+                                        value: reminder.notes,
+                                        color: .gray
+                                    )
+                                }
                             }
                         }
-                        
+
                         if let likelihood = likelihood {
                             DetailSection(title: "Forecast Analysis") {
                                 VStack(spacing: 12) {
                                     HStack {
                                         Text("Trigger Likelihood")
                                             .font(.subheadline)
-                                            .foregroundColor(.secondary)
+                                            .foregroundStyle(.secondary)
                                         
                                         Spacer()
                                         
                                         Text(likelihood.description)
                                             .font(.subheadline)
                                             .fontWeight(.semibold)
-                                            .foregroundColor(likelihood.color)
+                                            .foregroundStyle(likelihood.color)
                                     }
                                     
                                     HStack {
                                         Text("Expected Triggers")
                                             .font(.subheadline)
-                                            .foregroundColor(.secondary)
+                                            .foregroundStyle(.secondary)
                                         
                                         Spacer()
                                         
                                         Text("\(likelihood.triggerDays.count) days this week")
                                             .font(.subheadline)
                                             .fontWeight(.semibold)
-                                            .foregroundColor(.primary)
+                                            .foregroundStyle(.primary)
                                     }
                                 }
                             }
@@ -447,7 +442,7 @@ struct ReminderDetailsView: View {
             .navigationTitle("Reminder Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
@@ -473,7 +468,7 @@ struct DetailSection<Content: View>: View {
             Text(title)
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             content
         }
@@ -496,18 +491,18 @@ struct DetailRow: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.body)
-                .foregroundColor(color)
+                .foregroundStyle(color)
                 .frame(width: 20)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Text(value)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
             }
             
             Spacer()
@@ -530,18 +525,18 @@ struct HowItWorksStep: View {
                 Text("\(number)")
                     .font(.caption)
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             

@@ -34,11 +34,16 @@ final class WeatherService: ObservableObject {
     }
     
     func fetchWeatherData(for location: CLLocation, forceRefresh: Bool = false) async throws -> WeatherData {
+        guard let weatherActor else {
+            logger.error("WeatherService used before configure(modelContainer:) — returning serviceUnavailable")
+            throw WeatherError.serviceUnavailable(provider: .appleWeatherKit)
+        }
+
         isLoading = true
         defer { isLoading = false }
 
         do {
-            let weatherData = try await self.weatherActor!.fetchWeatherData(for: location, forceRefresh: forceRefresh)
+            let weatherData = try await weatherActor.fetchWeatherData(for: location, forceRefresh: forceRefresh)
             lastUpdateTime = Date()
             connectionStatus = .connected
             return weatherData
@@ -48,27 +53,37 @@ final class WeatherService: ObservableObject {
             throw error
         }
     }
-    
+
     func fetchCurrentWeather(for location: CLLocation, forceRefresh: Bool = false) async throws -> WeatherData {
         try await fetchWeatherData(for: location, forceRefresh: forceRefresh)
     }
-    
+
     func scheduleBackgroundRefresh() {
+        guard let weatherActor else {
+            logger.warning("scheduleBackgroundRefresh called before WeatherService was configured")
+            return
+        }
         Task {
-            self.weatherActor!.scheduleBackgroundRefresh()
+            weatherActor.scheduleBackgroundRefresh()
         }
     }
 
     func handleBackgroundRefresh() async {
-        await self.weatherActor!.handleBackgroundRefresh()
+        guard let weatherActor else {
+            logger.warning("handleBackgroundRefresh called before WeatherService was configured — skipping")
+            return
+        }
+        await weatherActor.handleBackgroundRefresh()
     }
 
     func getCachedWeatherData(for location: CLLocation) async -> WeatherData? {
-        await self.weatherActor!.getCachedWeatherData(for: location)
+        guard let weatherActor else { return nil }
+        return await weatherActor.getCachedWeatherData(for: location)
     }
 
     func clearCache() async {
-        await self.weatherActor!.clearCache()
+        guard let weatherActor else { return }
+        await weatherActor.clearCache()
     }
 }
 

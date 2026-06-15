@@ -23,7 +23,7 @@ struct TemperatureTrendChart: View {
             }
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 1.0).delay(0.5)) {
+            withAnimation(.easeInOut(duration: 0.6).delay(0.15)) {
                 animateChart = true
             }
         }
@@ -91,8 +91,8 @@ struct TemperatureTrendChart: View {
                 if let date = value.as(Date.self) {
                     AxisValueLabel {
                         Text(dayFormatter.string(from: date))
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .font(AppFontStyle.caption2.font)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
@@ -104,8 +104,8 @@ struct TemperatureTrendChart: View {
                 if let temp = value.as(Double.self) {
                     AxisValueLabel {
                         Text("\(Int(temp))°")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .font(AppFontStyle.caption2.font)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
@@ -115,7 +115,7 @@ struct TemperatureTrendChart: View {
         .chartPlotStyle { plot in
             plot.frame(height: 120)
         }
-        .animation(.easeInOut(duration: 1.0), value: animateChart)
+        .animation(.easeInOut(duration: 0.6), value: animateChart)
     }
     
     private var dayFormatter: DateFormatter {
@@ -130,16 +130,16 @@ struct EmptyChartView: View {
         VStack(spacing: 8) {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .font(.title2)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Text("Forecast Unavailable")
                 .font(.callout)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
         .frame(height: 120)
         .background(Color(.secondarySystemBackground))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 

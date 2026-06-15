@@ -42,17 +42,30 @@ final class DataPrivacyViewModel {
     }
     
     // MARK: - Private Properties
-    
+
     private var modelContext: ModelContext?
-    
+    private let settingsOpener: SettingsOpening
+
     // MARK: - Initialization
-    
-    init() {}
-    
+
+    init(settingsOpener: SettingsOpening = ApplicationSettingsOpener()) {
+        self.settingsOpener = settingsOpener
+    }
+
+    /// Must be called with the app's shared model context before any data
+    /// operation — summary, export, and delete must all hit the same
+    /// app-group store the rest of the app reads and writes.
+    func configure(modelContext: ModelContext) {
+        self.modelContext = modelContext
+    }
+
     // MARK: - Public Methods
-    
+
     func loadDataSummary() async {
-        guard let context = getModelContext() else { return }
+        guard let context = modelContext else {
+            errorMessage = DataPrivacyError.noModelContext.errorDescription
+            return
+        }
         
         do {
             // Count reminders
@@ -129,7 +142,7 @@ final class DataPrivacyViewModel {
         errorMessage = nil
 
         do {
-            guard let context = getModelContext() else {
+            guard let context = modelContext else {
                 throw DataPrivacyError.noModelContext
             }
 
@@ -169,7 +182,7 @@ final class DataPrivacyViewModel {
     }
     
     func contactPrivacyOfficer() {
-        let email = "placeholder@example.com" // TODO: Replace with actual privacy email
+        let email = AppSupportLinks.privacyEmail
         let subject = "Privacy Inquiry - SunHat App"
         let body = """
         Hello,
@@ -183,44 +196,19 @@ final class DataPrivacyViewModel {
         """
         
         if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&body=\(body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
-            Task { @MainActor in
-                UIApplication.shared.open(url)
+            Task {
+                let opened = await settingsOpener.open(url)
+                if opened == false {
+                    errorMessage = "Couldn't open Mail. Set up a mail account, or email \(email) directly."
+                }
             }
         }
     }
-    
+
     // MARK: - Private Methods
-    
-    private func getModelContext() -> ModelContext? {
-        // This would typically be injected through the environment
-        do {
-            let schema = Schema([
-                UserPreferences.self,
-                WeatherReminder.self,
-                TriggerCondition.self,
-                LocationData.self,
-                WeatherData.self,
-                ForecastDay.self,
-                NotificationConfig.self,
-                ReminderHistory.self
-            ])
 
-            let modelConfiguration = ModelConfiguration(
-                schema: schema,
-                isStoredInMemoryOnly: false
-            )
-
-            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
-            return ModelContext(container)
-
-        } catch {
-            print("Failed to create model context: \(error)")
-            return nil
-        }
-    }
-    
     private func generateExportData() async throws -> [String: Any] {
-        guard let context = getModelContext() else {
+        guard let context = modelContext else {
             throw DataPrivacyError.noModelContext
         }
         
@@ -294,7 +282,7 @@ final class DataPrivacyViewModel {
     }
     
     private func generateCSVExport() async throws -> Data {
-        guard let context = getModelContext() else {
+        guard let context = modelContext else {
             throw DataPrivacyError.noModelContext
         }
         
@@ -364,13 +352,28 @@ final class DataPrivacyViewModel {
         for history in histories {
             context.delete(history)
         }
-        
+
+        // Delete saved locations
+        let savedLocationDescriptor = FetchDescriptor<SavedLocation>()
+        let savedLocations = try context.fetch(savedLocationDescriptor)
+        for savedLocation in savedLocations {
+            context.delete(savedLocation)
+        }
+
+        // Delete location history
+        let locationHistoryDescriptor = FetchDescriptor<LocationHistory>()
+        let locationHistories = try context.fetch(locationHistoryDescriptor)
+        for locationHistory in locationHistories {
+            context.delete(locationHistory)
+        }
+
         try context.save()
     }
     
     private func resetAppState() async {
         // Reset app to initial onboarding state
         UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
+        UserDefaults.standard.removeObject(forKey: "hasCreatedFirstReminder")
         UserDefaults.standard.removeObject(forKey: "lastLaunchVersion")
         
         // Clear any cached data
@@ -378,7 +381,7 @@ final class DataPrivacyViewModel {
     }
     
     private func fetchUserPreferences() async throws -> UserPreferences? {
-        guard let context = getModelContext() else {
+        guard let context = modelContext else {
             throw DataPrivacyError.noModelContext
         }
         

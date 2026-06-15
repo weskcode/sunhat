@@ -17,26 +17,52 @@ import os
 @MainActor
 final class BackgroundWeatherManager: ObservableObject {
     static let shared = BackgroundWeatherManager()
-    
+
     private let taskIdentifier = "org.wesley.sunhat.weather-refresh"
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "BackgroundWeatherManager")
-    
+
     @Published var isBackgroundRefreshEnabled = false
     @Published var lastBackgroundRefresh: Date?
     @Published var backgroundRefreshCount = 0
-    
+
+    private(set) var isBackgroundTaskRegistered = false
+
+    private var modelContainer: ModelContainer?
+
     private init() {
         registerBackgroundTask()
         updateBackgroundRefreshStatus()
     }
-    
-    private func registerBackgroundTask() {
+
+    func configure(modelContainer: ModelContainer) {
+        self.modelContainer = modelContainer
+        logger.info("BackgroundWeatherManager configured with shared ModelContainer")
+    }
+
+    /// Registers the BG refresh launch handler. Safe to call more than once —
+    /// a second `BGTaskScheduler.register` for the same identifier raises
+    /// `NSInternalInconsistencyException`, so duplicates are ignored.
+    /// Returns whether this call performed the registration.
+    @discardableResult
+    func registerBackgroundTask() -> Bool {
+        guard !isBackgroundTaskRegistered else {
+            logger.warning("Background task already registered — ignoring duplicate registration")
+            return false
+        }
+        isBackgroundTaskRegistered = true
+
         BGTaskScheduler.shared.register(forTaskWithIdentifier: self.taskIdentifier, using: nil) { task in
             Task {
-                await self.handleBackgroundTask(task as! BGAppRefreshTask)
+                guard let refreshTask = task as? BGAppRefreshTask else {
+                    task.setTaskCompleted(success: false)
+                    return
+                }
+
+                await self.handleBackgroundTask(refreshTask)
             }
         }
         logger.info("Registered background task: \(self.taskIdentifier)")
+        return true
     }
     
     private func updateBackgroundRefreshStatus() {
@@ -48,20 +74,27 @@ final class BackgroundWeatherManager: ObservableObject {
         }
     }
     
-    func scheduleBackgroundRefresh() {
+    /// Schedules the next background refresh. Returns whether a request was
+    /// actually submitted — `false` when background refresh is unavailable
+    /// (user disabled it / Low Power Mode) or submission fails, in which case
+    /// the app falls back to foreground-only refreshes.
+    @discardableResult
+    func scheduleBackgroundRefresh() -> Bool {
         guard isBackgroundRefreshEnabled else {
-            logger.warning("Background refresh is disabled")
-            return
+            logger.warning("Background refresh is disabled — relying on foreground refresh only")
+            return false
         }
-        
+
         let request = BGAppRefreshTaskRequest(identifier: self.taskIdentifier)
         request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60) // 15 minutes
-        
+
         do {
             try BGTaskScheduler.shared.submit(request)
             logger.info("Scheduled background weather refresh for 15 minutes from now")
+            return true
         } catch {
             logger.error("Failed to schedule background refresh: \(error.localizedDescription)")
+            return false
         }
     }
     
@@ -69,21 +102,24 @@ final class BackgroundWeatherManager: ObservableObject {
         logger.info("Starting background weather refresh task")
         let startTime = Date()
         backgroundRefreshCount += 1
-        // Set up task completion
+
+        let workTask = Task {
+            await WeatherService.shared.handleBackgroundRefresh()
+            await checkTriggeredConditions()
+        }
+
         task.expirationHandler = {
             self.logger.warning("Background task expired")
-            task.setTaskCompleted(success: false)
+            workTask.cancel()
         }
-        // Perform the background refresh
-        await WeatherService.shared.handleBackgroundRefresh()
-        // Check for triggered conditions and send notifications
-        await checkTriggeredConditions()
+
+        await workTask.value
+
         lastBackgroundRefresh = Date()
         let duration = Date().timeIntervalSince(startTime)
-        logger.info("Background refresh completed successfully in \(duration) seconds")
-        // Schedule next refresh
+        logger.info("Background refresh completed in \(duration) seconds")
         scheduleBackgroundRefresh()
-        task.setTaskCompleted(success: true)
+        task.setTaskCompleted(success: !workTask.isCancelled)
     }
     
     private func checkTriggeredConditions() async {
@@ -94,25 +130,39 @@ final class BackgroundWeatherManager: ObservableObject {
             return
         }
         
+        // Honor the user's app-level notification preferences (master switch,
+        // quiet hours, weekend rule) before evaluating anything. The reminder
+        // stays eligible — its cooldown is only consumed when we actually fire.
+        do {
+            let preferences = try modelContext.fetch(FetchDescriptor<UserPreferences>()).first
+            if let preferences, !preferences.allowsNotificationDelivery() {
+                logger.info("Skipping trigger check — notifications are off or quiet hours are active")
+                return
+            }
+        } catch {
+            logger.warning("Couldn't load notification preferences; proceeding with defaults: \(error)")
+        }
+
         // Fetch all reminders and filter programmatically due to MainActor isolation
         let descriptor: FetchDescriptor<WeatherReminder> = FetchDescriptor<WeatherReminder>()
-        
+
         do {
             let fetchedReminders: [WeatherReminder] = try modelContext.fetch(descriptor)
-            
-            // Filter reminders using MainActor-isolated properties
-            var activeReminders: [WeatherReminder] = []
-            for reminder in fetchedReminders {
-                if reminder.isActive && !reminder.isCompleted && !reminder.isPaused {
-                    activeReminders.append(reminder)
-                }
-            }
-            
-            logger.debug("Checking \(activeReminders.count) active reminders (filtered from \(fetchedReminders.count) total)")
-            
+
+            // Only consider reminders that can actually fire right now. `canTrigger`
+            // encapsulates the active/paused/completed/snoozed/scheduled/max-trigger
+            // checks AND the persistent cooldown (lastTriggered + cooldownPeriodHours).
+            // Gating here prevents re-notifying the same reminder on every background
+            // refresh while its condition stays true, and the cooldown survives app
+            // launches because it is stored in SwiftData. It also avoids fetching
+            // weather for reminders that are in cooldown.
+            let eligibleReminders = fetchedReminders.filter { $0.canTrigger }
+
+            logger.debug("Checking \(eligibleReminders.count) eligible reminders (filtered from \(fetchedReminders.count) total)")
+
             var triggeredCount = 0
-            
-            for reminder in activeReminders {
+
+            for reminder in eligibleReminders {
                 if await evaluateReminderCondition(reminder) {
                    await sendNotificationForReminder(reminder)
                    reminder.trigger(with: nil)
@@ -185,32 +235,11 @@ final class BackgroundWeatherManager: ObservableObject {
     }
     
     private func getModelContext() async -> ModelContext? {
-        // This would typically be injected or accessed through the app's container
-        // For now, we'll create a temporary context
-        do {
-            let schema = Schema([
-                WeatherReminder.self,
-                TriggerCondition.self,
-                LocationData.self,
-                WeatherData.self,
-                ForecastDay.self,
-                NotificationConfig.self,
-                ReminderHistory.self
-            ])
-            
-            let modelConfiguration = ModelConfiguration(
-                schema: schema,
-                isStoredInMemoryOnly: false,
-                cloudKitDatabase: .automatic
-            )
-            
-            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
-            return ModelContext(container)
-            
-        } catch {
-            logger.error("Failed to create model context: \(error)")
+        guard let modelContainer else {
+            logger.error("ModelContainer not configured — call configure(modelContainer:) from the app entry point")
             return nil
         }
+        return ModelContext(modelContainer)
     }
     
     // MARK: - Public Interface
@@ -234,10 +263,6 @@ final class BackgroundWeatherManager: ObservableObject {
         await WeatherService.shared.handleBackgroundRefresh()
         await checkTriggeredConditions()
         lastBackgroundRefresh = Date()
-    }
-    
-    func getBackgroundRefreshStatus() -> String {
-        return "Available" // Placeholder - would need proper implementation
     }
     
     func cancelScheduledRefresh() {

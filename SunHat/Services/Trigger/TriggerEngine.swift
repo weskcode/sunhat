@@ -247,34 +247,49 @@ actor TriggerEngine {
             }
         }
         
-        let result: TriggerEvaluationResult
-        
+        var result: TriggerEvaluationResult
+
         switch conditionData.triggerType {
         case .exactTemperature:
             result = await evaluateExactTemperature(conditionData, reminderId: reminderId, weatherData: currentWeatherData)
-            
+
         case .temperatureRange:
             result = await evaluateTemperatureRange(conditionData, reminderId: reminderId, weatherData: currentWeatherData)
-            
+
         case .consecutiveDays:
             result = await evaluateConsecutiveDays(conditionData, reminderId: reminderId, location: location, currentWeather: currentWeatherData)
-            
+
         case .averageTemperature:
             result = await evaluateAverageTemperature(conditionData, reminderId: reminderId, location: location, currentWeather: currentWeatherData)
-            
+
         case .seasonalMarker:
             result = await evaluateSeasonalMarker(conditionData, reminderId: reminderId, location: location, currentWeather: currentWeatherData)
-            
+
         case .composite:
             result = await evaluateComposite(conditionData, reminderId: reminderId, location: location, weatherData: currentWeatherData)
-            
+
         case .historicalComparison:
             result = await evaluateHistoricalComparison(conditionData, reminderId: reminderId, location: location, currentWeather: currentWeatherData)
         }
-        
+
+        // Apply sky condition filter — only when temperature already matched
+        if conditionData.hasSkyConditionFilter && result.triggered {
+            let skyMatch = evaluateSkyCondition(conditionData, weatherData: currentWeatherData)
+            if !skyMatch {
+                result = TriggerEvaluationResult(
+                    reminderId: reminderId,
+                    conditionData: conditionData,
+                    triggered: false,
+                    confidence: result.confidence,
+                    weatherData: currentWeatherData,
+                    triggerReason: "Temperature matched but sky conditions didn't (\(conditionData.conditionModeRaw): \(conditionData.selectedSkyConditionsRaw))"
+                )
+            }
+        }
+
         // Cache the result
         setCachedResult(result, for: reminderId)
-        
+
         return result
     }
     
@@ -290,6 +305,44 @@ actor TriggerEngine {
     
     private func setCachedResult(_ result: TriggerEvaluationResult, for reminderId: UUID) {
         evaluationCache[reminderId] = result
+    }
+
+    // MARK: - Sky Condition Evaluation
+
+    /// Evaluates whether the current weather condition matches the sky condition filter
+    private func evaluateSkyCondition(
+        _ conditionData: TriggerConditionData,
+        weatherData: WeatherDataTransfer
+    ) -> Bool {
+        guard conditionData.hasSkyConditionFilter,
+              !conditionData.selectedSkyConditionsRaw.isEmpty else {
+            return true // No sky filter = always matches
+        }
+
+        // Parse stored sky conditions
+        let rawValues = conditionData.selectedSkyConditionsRaw.components(separatedBy: ",")
+        let selectedConditions = Set(rawValues.compactMap { SkyCondition(rawValue: $0) })
+        guard !selectedConditions.isEmpty else { return true }
+
+        // Map real weather condition to SkyCondition (inline to avoid actor isolation)
+        let currentSky: SkyCondition
+        switch weatherData.weatherCondition {
+        case .clear: currentSky = .sunny
+        case .partlyCloudy: currentSky = .partlyCloudy
+        case .cloudy, .overcast, .fog: currentSky = .cloudy
+        case .rain, .drizzle, .thunderstorm: currentSky = .rainy
+        case .snow, .sleet, .hail: currentSky = .snowy
+        case .windy, .unknown: currentSky = .sunny
+        }
+
+        // Evaluate based on mode
+        let mode = ConditionSelectionMode(rawValue: conditionData.conditionModeRaw) ?? .include
+        switch mode {
+        case .include:
+            return selectedConditions.contains(currentSky)
+        case .exclude:
+            return !selectedConditions.contains(currentSky)
+        }
     }
 }
 

@@ -44,10 +44,15 @@ class TriggerCondition {
     var requiresPrecipitation: Bool = false
     var precipitationRequirement: PrecipitationRequirement = PrecipitationRequirement.none
     
+    // Sky condition filtering
+    var selectedSkyConditionsRaw: String = ""  // Comma-separated SkyCondition rawValues
+    var conditionModeRaw: String = "include"   // "include" or "exclude"
+    var hasSkyConditionFilter: Bool = false
+
     // Time constraints
     var timeOfDayStart: Date?
     var timeOfDayEnd: Date?
-    
+
     // Advanced settings
     var isEnabled: Bool = true
     var createdAt: Date = Date()
@@ -71,6 +76,31 @@ class TriggerCondition {
         self.comparisonType = comparisonType
     }
 }
+
+// MARK: - TriggerCondition Computed Sky Condition Helpers
+
+extension TriggerCondition {
+    /// Parsed set of sky conditions from the raw string
+    var selectedSkyConditions: Set<SkyCondition> {
+        get {
+            guard !selectedSkyConditionsRaw.isEmpty else { return [] }
+            let values = selectedSkyConditionsRaw.components(separatedBy: ",")
+            return Set(values.compactMap { SkyCondition(rawValue: $0) })
+        }
+        set {
+            selectedSkyConditionsRaw = newValue.map(\.rawValue).sorted().joined(separator: ",")
+            hasSkyConditionFilter = !newValue.isEmpty
+        }
+    }
+
+    /// Parsed condition mode from the raw string
+    var conditionMode: ConditionSelectionMode {
+        get { ConditionSelectionMode(rawValue: conditionModeRaw) ?? .include }
+        set { conditionModeRaw = newValue.rawValue }
+    }
+}
+
+// MARK: - Trigger Enums
 
 enum TriggerType: String, Codable, CaseIterable {
     case exactTemperature = "exact"

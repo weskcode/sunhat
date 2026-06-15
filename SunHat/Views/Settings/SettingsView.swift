@@ -11,47 +11,32 @@ import UserNotifications
 import CoreLocation
 
 struct SettingsView: View {
-    @StateObject private var viewModel = SettingsViewModel()
+    @State private var viewModel = SettingsViewModel()
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
-    
-    @State private var showingLocationPicker = false
-    @State private var showingManualLocationEntry = false
-    @State private var showingNotificationInfo = false
-    @State private var showingNotificationPreferences = false
-    @State private var showingCloudKitInfo = false
-    @State private var showingPrivacyPolicy = false
-    @State private var showingAbout = false
-    @State private var selectedLocation = ReminderLocation.currentLocation
+
+    @State private var activeSheet: ActiveSheet?
     @StateObject private var locationViewModel = LocationManagementViewModel()
-    
+
+    private enum ActiveSheet: Identifiable {
+        case manualLocationEntry
+        case helpFAQ
+        case dataPrivacy
+        case about
+
+        var id: Self { self }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
-                // Account/Storage Section - hidden until iCloud backup support is added
-                // accountSection
-
-                // Notification Preferences
-                notificationSection
-                
-                // Location Settings
+                notificationsSection
                 locationSection
-                
-                // Temperature Units
-                temperatureSection
-                
-                // App Appearance
-                appearanceSection
-                
-                // Privacy Settings
-                privacySection
-                
-                // Support & Feedback
+                generalSection
                 supportSection
-                
-                // About Section
+                privacySection
                 aboutSection
+                resetSection
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
@@ -59,312 +44,221 @@ struct SettingsView: View {
                 viewModel.configure(modelContext: modelContext)
                 locationViewModel.configure(modelContext: modelContext)
             }
-            .sheet(isPresented: $showingLocationPicker) {
-                LocationPickerView(selectedLocation: $selectedLocation)
-            }
-            .sheet(isPresented: $showingManualLocationEntry) {
-                ManualLocationEntrySheet(viewModel: locationViewModel)
-            }
-            .alert("Notification Settings", isPresented: $showingNotificationInfo) {
-                Button("Settings") {
+            .alert("Notifications Are Off", isPresented: $viewModel.isShowingPermissionDeniedAlert) {
+                Button("Open Settings") {
                     viewModel.openAppSettings()
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("To receive weather-based reminders, please enable notifications in Settings.")
+                Text("To get weather reminders, allow notifications for SunHat in Settings.")
             }
-            .alert("Sync Status", isPresented: $showingCloudKitInfo) {
+            .alert(
+                "Couldn't Open",
+                isPresented: $viewModel.isShowingActionError,
+                presenting: viewModel.actionError
+            ) { _ in
                 Button("OK", role: .cancel) { }
-            } message: {
-                Text(viewModel.syncStatusMessage)
+            } message: { message in
+                Text(message)
             }
-            .sheet(isPresented: $showingPrivacyPolicy) {
-                PrivacyPolicyView()
-            }
-            .sheet(isPresented: $showingAbout) {
-                AboutView()
-            }
-        }
-    }
-    
-    // MARK: - Account Section
-    
-    private var accountSection: some View {
-        Section("Storage") {
-            // Sync status
-            HStack {
-                Label("Data Storage", systemImage: "internaldrive.fill")
-                    .foregroundColor(.blue)
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Circle()
-                            .fill(viewModel.syncStatusColor)
-                            .frame(width: 8, height: 8)
-
-                        Text(viewModel.syncStatusText)
-                            .font(.callout)
-                            .foregroundColor(.secondary)
-                    }
+            .sheet(item: $activeSheet) { sheet in
+                switch sheet {
+                case .manualLocationEntry:
+                    ManualLocationEntrySheet(viewModel: locationViewModel)
+                case .helpFAQ:
+                    HelpFAQView()
+                case .dataPrivacy:
+                    DataPrivacyView()
+                case .about:
+                    AboutView()
                 }
             }
-            .contentShape(Rectangle())
-            .onTapGesture {
-                showingCloudKitInfo = true
-            }
-
-            // Storage info
-            HStack {
-                Label("Storage Mode", systemImage: "doc.fill")
-                    .foregroundColor(.green)
-
-                Spacer()
-
-                Text(viewModel.userAccountInfo)
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-            }
         }
     }
-    
-    // MARK: - Notification Section
-    
-    private var notificationSection: some View {
+
+    // MARK: - Notifications
+
+    private var notificationsSection: some View {
         Section {
-            // Notification status
-            HStack {
-                Label("Notifications", systemImage: "bell.fill")
-                    .foregroundColor(.red)
-                
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(viewModel.notificationStatusText)
-                        .font(.callout)
-                        .foregroundColor(viewModel.notificationsEnabled ? .primary : .secondary)
-                    
-                    if !viewModel.notificationsEnabled {
-                        Button("Enable") {
-                            showingNotificationInfo = true
-                        }
-                        .font(.caption)
-                        .foregroundColor(.blue)
-                    }
-                }
+            Toggle(isOn: $viewModel.notificationsToggleIsOn) {
+                SettingsIconLabel(title: "Allow Notifications", systemImage: "bell.badge.fill", color: .red)
             }
-            
+
             if viewModel.notificationsEnabled {
-                // Default notification timing
-                Picker("Default Timing", selection: $viewModel.defaultNotificationTiming) {
-                    ForEach(NotificationTiming.allCases, id: \.self) { timing in
-                        HStack {
-                            Image(systemName: timing.icon)
-                                .foregroundColor(.blue)
-                            Text(timing.displayName)
-                        }
-                        .tag(timing)
-                    }
-                }
-                .pickerStyle(.menu)
-                .onChange(of: viewModel.defaultNotificationTiming) {
-                    viewModel.handleNotificationTimingChange()
-                }
-                
-                // Quiet hours
                 Toggle("Quiet Hours", isOn: $viewModel.quietHoursEnabled)
                     .onChange(of: viewModel.quietHoursEnabled) {
                         viewModel.handleQuietHoursChange()
                     }
-                
+
                 if viewModel.quietHoursEnabled {
+                    DatePicker("From", selection: $viewModel.quietHoursStart, displayedComponents: .hourAndMinute)
+                        .onChange(of: viewModel.quietHoursStart) {
+                            viewModel.handleQuietHoursChange()
+                        }
+
+                    DatePicker("To", selection: $viewModel.quietHoursEnd, displayedComponents: .hourAndMinute)
+                        .onChange(of: viewModel.quietHoursEnd) {
+                            viewModel.handleQuietHoursChange()
+                        }
+                }
+
+                Stepper(value: $viewModel.maximumDailyNotifications, in: 1...10) {
                     HStack {
-                        Text("From")
+                        Text("Daily Limit")
                         Spacer()
-                        DatePicker("", selection: $viewModel.quietHoursStart, displayedComponents: .hourAndMinute)
-                            .labelsHidden()
-                    }
-                    
-                    HStack {
-                        Text("To")
-                        Spacer()
-                        DatePicker("", selection: $viewModel.quietHoursEnd, displayedComponents: .hourAndMinute)
-                            .labelsHidden()
+                        Text("\(viewModel.maximumDailyNotifications)")
+                            .foregroundStyle(.secondary)
                     }
                 }
-                
-                // Weekend notifications
-                Toggle("Weekend Notifications", isOn: $viewModel.allowWeekendNotifications)
-                    .onChange(of: viewModel.allowWeekendNotifications) {
-                        viewModel.handleWeekendNotificationsChange()
-                    }
-                
-                // Maximum daily notifications
-                Stepper("Daily Limit: \(viewModel.maximumDailyNotifications)", 
-                       value: $viewModel.maximumDailyNotifications, 
-                       in: 1...20)
-                    .onChange(of: viewModel.maximumDailyNotifications) {
-                        viewModel.handleDailyLimitChange()
-                    }
-                
-                // Advanced notification preferences
-                NavigationLink("Advanced Settings") {
-                    NotificationPreferencesView()
+                .onChange(of: viewModel.maximumDailyNotifications) {
+                    viewModel.handleDailyLimitChange()
                 }
             }
         } header: {
             Text("Notifications")
         } footer: {
-            if viewModel.quietHoursEnabled && viewModel.notificationsEnabled {
-                Text("Notifications will be silenced during quiet hours: \(viewModel.quietHoursDescription)")
+            if !viewModel.notificationsEnabled {
+                Text("SunHat won't send weather reminders while notifications are off.")
+            } else if viewModel.quietHoursEnabled {
+                Text("Notifications are silenced from \(viewModel.quietHoursDescription).")
             }
         }
     }
-    
-    // MARK: - Location Section
-    
+
+    // MARK: - Location
+
     private var locationSection: some View {
         Section {
-            // Location permission status
             HStack {
-                Label("Location Access", systemImage: "location.fill")
-                    .foregroundColor(.blue)
-                
+                SettingsIconLabel(title: "Location Access", systemImage: "location.fill", color: .blue)
                 Spacer()
-                
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text(viewModel.locationStatusText)
-                        .font(.callout)
-                        .foregroundColor(viewModel.locationEnabled ? .primary : .secondary)
-                    
-                    if !viewModel.locationEnabled {
-                        Button("Enable") {
-                            viewModel.requestLocationPermission()
-                        }
-                        .font(.caption)
-                        .foregroundColor(.blue)
-                    }
-                }
+                Text(viewModel.locationEnabled ? "While Using" : "Off")
+                    .foregroundStyle(.secondary)
             }
-            
+
             if viewModel.locationEnabled {
-                // Current location
-                HStack {
-                    Text("Current Location")
-                    Spacer()
-                    Text(viewModel.currentLocationName)
-                        .font(.callout)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
+                LabeledContent("Current Location", value: viewModel.currentLocationName)
 
-                // Set custom location
-                Button {
-                    showingManualLocationEntry = true
-                } label: {
-                    HStack {
-                        Label("Set Custom Location", systemImage: "pencil.circle.fill")
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
+                Button("Choose City Manually…") {
+                    activeSheet = .manualLocationEntry
                 }
-                .foregroundColor(.primary)
-
-                // Manage locations
-                NavigationLink("Manage Locations") {
-                    LocationManagementView()
+            } else {
+                Button("Allow Location Access") {
+                    viewModel.requestLocationPermission()
                 }
-
-                // Background location updates
-                Toggle("Background Updates", isOn: $viewModel.backgroundLocationEnabled)
             }
         } header: {
             Text("Location")
         } footer: {
-            Text("Location access is required for weather-based reminders. We only access your location to provide relevant weather data.")
+            Text("Your location is only used to fetch weather for your reminders and never leaves your device.")
         }
     }
-    
-    // MARK: - Temperature Section
-    
-    private var temperatureSection: some View {
-        Section {
-            Picker("Temperature Unit", selection: $viewModel.temperatureUnit) {
+
+    // MARK: - General
+
+    private var generalSection: some View {
+        Section("General") {
+            Picker(selection: $viewModel.temperatureUnit) {
                 ForEach(TemperatureUnit.allCases, id: \.self) { unit in
-                    HStack {
-                        Text(unit.symbol)
-                            .fontWeight(.medium)
-                            .foregroundColor(.orange)
-                        Text(unit.shortName)
-                    }
-                    .tag(unit)
+                    Text("\(unit.shortName) (\(unit.symbol))")
+                        .tag(unit)
                 }
+            } label: {
+                SettingsIconLabel(title: "Temperature", systemImage: "thermometer.medium", color: .orange)
             }
-            .pickerStyle(.menu)
             .onChange(of: viewModel.temperatureUnit) {
                 viewModel.handleTemperatureUnitChange()
             }
-        } header: {
-            Text("Temperature")
-        } footer: {
-            Text("Choose your preferred temperature unit for all weather displays and reminders.")
-        }
-    }
-    
-    // MARK: - Appearance Section
-    
-    private var appearanceSection: some View {
-        Section {
-            Picker("Theme", selection: $viewModel.selectedAppearance) {
+
+            Picker(selection: $viewModel.selectedAppearance) {
                 ForEach(AppearanceMode.allCases, id: \.self) { mode in
-                    HStack {
-                        Image(systemName: mode.iconName)
-                            .foregroundColor(mode.color)
-                        Text(mode.displayName)
-                    }
-                    .tag(mode)
+                    Text(mode.displayName)
+                        .tag(mode)
                 }
+            } label: {
+                SettingsIconLabel(title: "Appearance", systemImage: "circle.lefthalf.filled", color: .indigo)
             }
-            .pickerStyle(.menu)
             .onChange(of: viewModel.selectedAppearance) {
                 viewModel.handleAppearanceChange()
             }
-            
-            if viewModel.selectedAppearance == .system {
-                HStack {
-                    Text("Current Mode")
-                    Spacer()
-                    Text(colorScheme == .dark ? "Dark" : "Light")
-                        .font(.callout)
-                        .foregroundColor(.secondary)
-                }
-            }
-        } header: {
-            Text("Appearance")
-        } footer: {
-            Text("Choose how the app appears. System matches your device settings.")
         }
     }
-    
-    // MARK: - Privacy Section
-    
+
+    // MARK: - Support
+
+    private var supportSection: some View {
+        Section("Support") {
+            Button {
+                activeSheet = .helpFAQ
+            } label: {
+                SettingsIconLabel(title: "Help & FAQ", systemImage: "questionmark", color: .teal)
+            }
+
+            Button {
+                viewModel.contactSupport()
+            } label: {
+                SettingsIconLabel(title: "Contact Support", systemImage: "envelope.fill", color: .blue)
+            }
+
+            Button {
+                viewModel.sendFeedback()
+            } label: {
+                SettingsIconLabel(title: "Send Feedback", systemImage: "bubble.left.fill", color: .green)
+            }
+
+            Button {
+                viewModel.rateApp()
+            } label: {
+                SettingsIconLabel(title: "Rate SunHat", systemImage: "star.fill", color: .yellow)
+            }
+        }
+        .foregroundStyle(.primary)
+    }
+
+    // MARK: - Privacy
+
     private var privacySection: some View {
         Section("Privacy") {
-            NavigationLink("Data & Privacy") {
-                DataPrivacyView()
+            Button {
+                activeSheet = .dataPrivacy
+            } label: {
+                SettingsIconLabel(title: "Data & Privacy", systemImage: "hand.raised.fill", color: .blue)
             }
-            
-            NavigationLink("Privacy Policy") {
+            .foregroundStyle(.primary)
+
+            NavigationLink {
                 PrivacyPolicyView()
+            } label: {
+                Text("Privacy Policy")
             }
-            
-            Button("Reset All Settings") {
+
+            Button("Terms of Service") {
+                viewModel.openTermsOfService()
+            }
+            .foregroundStyle(.primary)
+        }
+    }
+
+    // MARK: - About
+
+    private var aboutSection: some View {
+        Section("About") {
+            LabeledContent("Version", value: "\(viewModel.appVersion) (\(viewModel.buildNumber))")
+
+            Button("Acknowledgments") {
+                activeSheet = .about
+            }
+            .foregroundStyle(.primary)
+        }
+    }
+
+    // MARK: - Reset
+
+    private var resetSection: some View {
+        Section {
+            Button("Reset All Settings", role: .destructive) {
                 viewModel.showResetConfirmation = true
             }
-            .foregroundColor(.red)
             .alert("Reset Settings", isPresented: $viewModel.showResetConfirmation) {
                 Button("Reset", role: .destructive) {
                     viewModel.resetAllSettings()
@@ -373,73 +267,11 @@ struct SettingsView: View {
             } message: {
                 Text("This will reset all app settings to their defaults. Your reminders will not be affected.")
             }
-        }
-    }
-    
-    // MARK: - Support Section
-    
-    private var supportSection: some View {
-        Section("Support & Feedback") {
-            Button("Send Feedback") {
-                viewModel.sendFeedback()
-            }
-            
-            Button("Contact Support") {
-                viewModel.contactSupport()
-            }
-            
-            Button("Rate SunHat") {
-                viewModel.rateApp()
-            }
-            
-            NavigationLink("Help & FAQ") {
-                HelpFAQView()
-            }
-        }
-    }
-    
-    // MARK: - About Section
-    
-    private var aboutSection: some View {
-        Section {
-            HStack {
-                Text("Version")
-                Spacer()
-                Text(viewModel.appVersion)
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-            }
-            
-            HStack {
-                Text("Build")
-                Spacer()
-                Text(viewModel.buildNumber)
-                    .font(.callout)
-                    .foregroundColor(.secondary)
-            }
-            
-            Button("Acknowledgments") {
-                showingAbout = true
-            }
-            
-            Button("Terms of Service") {
-                viewModel.openTermsOfService()
-            }
-        } header: {
-            Text("About")
         } footer: {
-            VStack(spacing: 8) {
-                Text("Made with ❤️ for weather enthusiasts")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Text("© 2026 SunHat. All rights reserved.")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-            .frame(maxWidth: .infinity)
-            .multilineTextAlignment(.center)
-            .padding(.top, 20)
+            Text("© 2026 SunHat")
+                .frame(maxWidth: .infinity)
+                .multilineTextAlignment(.center)
+                .padding(.top, 12)
         }
     }
 }
@@ -450,7 +282,7 @@ enum AppearanceMode: String, CaseIterable {
     case system = "system"
     case light = "light"
     case dark = "dark"
-    
+
     var displayName: String {
         switch self {
         case .system:
@@ -459,28 +291,6 @@ enum AppearanceMode: String, CaseIterable {
             return "Light"
         case .dark:
             return "Dark"
-        }
-    }
-    
-    var iconName: String {
-        switch self {
-        case .system:
-            return "gear"
-        case .light:
-            return "sun.max.fill"
-        case .dark:
-            return "moon.fill"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .system:
-            return .blue
-        case .light:
-            return .orange
-        case .dark:
-            return .purple
         }
     }
 }
