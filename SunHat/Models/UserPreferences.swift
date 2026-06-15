@@ -15,6 +15,10 @@ final class UserPreferences {
     var temperatureUnit: TemperatureUnit = TemperatureUnit.fahrenheit
     var defaultNotificationTiming: NotificationTiming = NotificationTiming.immediate
     var selectedActivityInterests: [String] = []
+    /// App-level master switch for reminder notifications. Distinct from the
+    /// system permission: the user can silence SunHat without revoking the
+    /// permission in Settings. Checked by every notification send path.
+    var notificationsEnabled: Bool = true
     var quietHoursEnabled: Bool = true
     var quietHoursStart: Date = Calendar.current.date(from: DateComponents(hour: 22, minute: 0)) ?? Date()
     var quietHoursEnd: Date = Calendar.current.date(from: DateComponents(hour: 7, minute: 0)) ?? Date()
@@ -68,6 +72,39 @@ final class UserPreferences {
         return formatter.string(from: quietHoursEnd)
     }
     
+    // MARK: - Notification Delivery Policy
+
+    /// Whether a reminder notification may be delivered at `date` according to
+    /// the user's app-level notification preferences: the master switch, quiet
+    /// hours (handling windows that cross midnight, e.g. 22:00–07:00), and the
+    /// weekend rule. System permission is checked separately by the senders.
+    func allowsNotificationDelivery(at date: Date = Date(), calendar: Calendar = .current) -> Bool {
+        guard notificationsEnabled else { return false }
+        if !allowWeekendNotifications && calendar.isDateInWeekend(date) { return false }
+        if quietHoursEnabled && isInQuietHours(date, calendar: calendar) { return false }
+        return true
+    }
+
+    /// Whether `date` falls inside the quiet-hours window, comparing only the
+    /// time of day. A window whose end is earlier than its start (22:00–07:00)
+    /// wraps past midnight.
+    func isInQuietHours(_ date: Date = Date(), calendar: Calendar = .current) -> Bool {
+        func minutesIntoDay(_ d: Date) -> Int {
+            let components = calendar.dateComponents([.hour, .minute], from: d)
+            return (components.hour ?? 0) * 60 + (components.minute ?? 0)
+        }
+
+        let now = minutesIntoDay(date)
+        let start = minutesIntoDay(quietHoursStart)
+        let end = minutesIntoDay(quietHoursEnd)
+
+        if start == end { return false }
+        if start < end {
+            return now >= start && now < end
+        }
+        return now >= start || now < end
+    }
+
     var quietHoursDescription: String {
         if quietHoursEnabled {
             return "\(quietHoursStartTime) - \(quietHoursEndTime)"

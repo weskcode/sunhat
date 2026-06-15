@@ -386,7 +386,7 @@ struct TriggerPredictionCard: View {
             // Reminder category icon
             Image(systemName: prediction.reminderIcon)
                 .font(AppFontStyle.title3.font)
-                .foregroundStyle(.blue)
+                .foregroundStyle(Color.accentColor)
                 .frame(width: 28)
             
             VStack(alignment: .leading, spacing: 4) {

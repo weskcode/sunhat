@@ -13,26 +13,26 @@ import Testing
 struct NotificationPermissionDependencyTests {
     // MARK: - SettingsViewModel
 
-    @Test("Granted permission enables notifications")
+    @Test("Turning the toggle on requests permission and enables when granted")
     func grantedPermissionEnablesNotifications() async throws {
         let permissions = StubNotificationPermissionProvider()
         permissions.grantsAuthorization = true
         let viewModel = SettingsViewModel(notificationPermissions: permissions)
 
-        viewModel.requestNotificationPermission()
+        viewModel.setNotificationsEnabled(true)
 
         try await waitUntil { viewModel.notificationsEnabled }
         #expect(permissions.requestedOptions.contains([.alert, .badge, .sound]))
         #expect(viewModel.actionError == nil)
     }
 
-    @Test("Denied permission leaves notifications disabled without an error")
+    @Test("A denied permission request leaves the toggle off without an error")
     func deniedPermissionLeavesNotificationsDisabled() async throws {
         let permissions = StubNotificationPermissionProvider()
         permissions.grantsAuthorization = false
         let viewModel = SettingsViewModel(notificationPermissions: permissions)
 
-        viewModel.requestNotificationPermission()
+        viewModel.setNotificationsEnabled(true)
 
         try await waitUntil { permissions.requestedOptions.isEmpty == false }
         try await Task.sleep(for: .milliseconds(20))
@@ -46,10 +46,56 @@ struct NotificationPermissionDependencyTests {
         permissions.errorToThrow = StubPermissionError.requestFailed
         let viewModel = SettingsViewModel(notificationPermissions: permissions)
 
-        viewModel.requestNotificationPermission()
+        viewModel.setNotificationsEnabled(true)
 
         try await waitUntil { viewModel.actionError != nil }
         #expect(viewModel.isShowingActionError == true)
+        #expect(viewModel.notificationsEnabled == false)
+    }
+
+    @Test("Toggling on with permission already denied shows the Open Settings alert")
+    func deniedStatusShowsOpenSettingsAlert() async throws {
+        let permissions = StubNotificationPermissionProvider()
+        permissions.status = .denied
+        let viewModel = SettingsViewModel(notificationPermissions: permissions)
+
+        viewModel.setNotificationsEnabled(true)
+
+        try await waitUntil { viewModel.isShowingPermissionDeniedAlert }
+        #expect(viewModel.notificationsEnabled == false)
+        #expect(permissions.requestedOptions.isEmpty, "Should not re-request a denied permission")
+    }
+
+    @Test("Turning the toggle off persists the app-level preference")
+    func turningOffPersistsAppPreference() async throws {
+        let permissions = StubNotificationPermissionProvider()
+        permissions.status = .authorized
+        let viewModel = SettingsViewModel(notificationPermissions: permissions)
+        let context = try makeInMemoryContext()
+        viewModel.configure(modelContext: context)
+        try await waitUntil { viewModel.notificationsEnabled }
+
+        viewModel.setNotificationsEnabled(false)
+
+        try await waitUntil { viewModel.notificationsEnabled == false }
+        let preferences = try context.fetch(FetchDescriptor<UserPreferences>()).first
+        #expect(preferences?.notificationsEnabled == false)
+    }
+
+    @Test("The toggle stays off after relaunch when the master switch is off")
+    func masterSwitchOffKeepsToggleOffDespiteAuthorization() async throws {
+        let permissions = StubNotificationPermissionProvider()
+        permissions.status = .authorized
+        let context = try makeInMemoryContext()
+        let preferences = UserPreferences()
+        preferences.notificationsEnabled = false
+        context.insert(preferences)
+        try context.save()
+
+        let viewModel = SettingsViewModel(notificationPermissions: permissions)
+        viewModel.configure(modelContext: context)
+
+        try await Task.sleep(for: .milliseconds(50))
         #expect(viewModel.notificationsEnabled == false)
     }
 

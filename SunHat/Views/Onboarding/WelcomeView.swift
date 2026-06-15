@@ -253,7 +253,7 @@ struct WelcomeView: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(
                         LinearGradient(
-                            colors: [Color.blue, Color.blue.opacity(0.8)],
+                            colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -327,13 +327,13 @@ struct WelcomeView: View {
                 .frame(height: 56)
                 .background(
                     LinearGradient(
-                        colors: [Color.blue, Color.blue.opacity(0.8)],
+                        colors: [Color.accentColor, Color.accentColor.opacity(0.85)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 16))
-                .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                .shadow(color: Color.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
             }
             .buttonStyle(PrimaryButtonStyle())
             .accessibilityLabel("Get Started")
@@ -369,20 +369,8 @@ struct WelcomeView: View {
     
     // MARK: - Computed Properties
     
-    private var backgroundGradient: LinearGradient {
-        LinearGradient(
-            colors: colorScheme == .dark ? [
-                Color.black,
-                Color.blue.opacity(0.1),
-                Color.black
-            ] : [
-                Color(red: 0.95, green: 0.97, blue: 1.0),
-                Color(red: 0.90, green: 0.95, blue: 1.0),
-                Color(red: 0.95, green: 0.97, blue: 1.0)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+    private var backgroundGradient: some View {
+        Color(.systemBackground)
     }
     
     private var primaryTextGradient: LinearGradient {
@@ -395,7 +383,7 @@ struct WelcomeView: View {
     
     private var accentGradient: LinearGradient {
         LinearGradient(
-            colors: [Color.blue, Color.blue.opacity(0.7)],
+            colors: [Color.accentColor, Color.accentColor.opacity(0.7)],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )

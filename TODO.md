@@ -1,6 +1,6 @@
 # SunHat TODO
 
-Last updated: June 12, 2026
+Last updated: June 15, 2026
 
 ## Build Status
 
@@ -101,6 +101,10 @@ Continue splitting large files (one primary type per file):
 
 - [ ] Replace remaining ad hoc alert booleans with typed alert state where conflicts are possible
 
+### Notification Delivery
+
+- [ ] Enforce `maximumDailyNotifications` — needs a per-day delivered-count ledger (e.g. on `UserPreferences` or a small SwiftData entity) checked in the same `allowsNotificationDelivery` gate; quiet hours / master switch / weekends are already enforced
+
 ---
 
 ## Low Priority (Post-Launch / Nice-to-Have)
@@ -128,6 +132,17 @@ Continue splitting large files (one primary type per file):
 ---
 
 ## Completed (Reference)
+
+<details>
+<summary>Native Settings Redesign + Real Notifications Toggle (June 12, 2026)</summary>
+
+- [x] **"Allow Notifications" is now a real toggle** in Settings (was a status row with a tiny caption "Enable" button). ON requests the system permission when undetermined; when the permission was previously denied the toggle snaps back off and offers "Open Settings"; OFF persists an app-level master switch without touching the system permission.
+- [x] **The notification settings are now enforced** — `UserPreferences.notificationsEnabled` (new) plus `allowsNotificationDelivery(at:)` (master switch, quiet hours with midnight wraparound, weekend rule) is checked by both send paths (`BackgroundWeatherManager`, `TriggerEngineManager`). Quiet hours and the master switch were previously decorative. Daily-limit enforcement still needs a delivered-count ledger — tracked under Medium Priority.
+- [x] **SettingsView redesigned to Apple-native patterns**: Settings-app-style icon chips (`SettingsIconLabel`), native labeled `DatePicker`s for quiet hours (start/end changes now actually save), `LabeledContent` for values, plain menu pickers, destructive Reset in its own bottom section, decorative footers and the "Current Mode" row removed.
+- [x] **Wired in orphaned screens**: Help & FAQ, Data & Privacy (export / delete-all — needed for the GDPR/CCPA claims), Contact Support, Send Feedback, and Rate SunHat are now reachable from Settings (none were reachable anywhere before).
+- [x] Tests: `NotificationDeliveryPolicyTests` (quiet-hours wraparound, boundaries, weekend, master switch) and expanded toggle-flow coverage in `NotificationPermissionDependencyTests` (denied → Open Settings alert, off persists preference, master switch survives relaunch).
+
+</details>
 
 <details>
 <summary>Live Data, Error Surfacing, and Speed Pass (June 12, 2026)</summary>

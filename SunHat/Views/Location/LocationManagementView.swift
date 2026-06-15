@@ -14,8 +14,7 @@ struct LocationManagementView: View {
     @StateObject private var viewModel = LocationManagementViewModel()
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
-    
+
     @State private var activeSheet: ActiveSheet?
     @State private var editingLocation: SavedLocation?
     @State private var newLocationName = ""
@@ -479,20 +478,8 @@ struct LocationManagementView: View {
     
     // MARK: - Computed Properties
     
-    private var backgroundGradient: LinearGradient {
-        LinearGradient(
-            colors: colorScheme == .dark ? [
-                Color.black,
-                Color.blue.opacity(0.05),
-                Color.black
-            ] : [
-                Color(red: 0.97, green: 0.98, blue: 1.0),
-                Color(red: 0.93, green: 0.96, blue: 1.0),
-                Color(red: 0.97, green: 0.98, blue: 1.0)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+    private var backgroundGradient: some View {
+        Color(.systemBackground)
     }
     
     private var locationAccuracyColor: Color {

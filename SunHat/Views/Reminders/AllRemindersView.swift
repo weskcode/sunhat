@@ -105,9 +105,7 @@ struct AllRemindersView: View {
     // MARK: - Liquid Glass Background
 
     private var liquidGlassBackground: some View {
-        colorScheme == .dark
-            ? Color.black
-            : Color(red: 0.97, green: 0.98, blue: 1.0)
+        Color(.systemBackground)
     }
 
     // MARK: - Search Bar
@@ -241,12 +239,12 @@ struct ReminderGlassCard: View {
                     // Activity icon
                     ZStack {
                         Circle()
-                            .fill(.blue.opacity(0.15))
+                            .fill(Color.accentColor.opacity(0.15))
                             .frame(width: 44, height: 44)
 
                         Image(systemName: reminder.category.iconName)
                             .font(AppFontStyle.title3.font)
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(Color.accentColor)
                     }
 
                     // Title and description
@@ -327,7 +325,7 @@ struct FilterChip: View {
                         .fill(
                             isSelected ?
                             LinearGradient(
-                                colors: [.blue, .cyan],
+                                colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             ) :
