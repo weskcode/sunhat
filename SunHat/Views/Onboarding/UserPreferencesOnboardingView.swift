@@ -11,7 +11,6 @@ import SwiftData
 struct UserPreferencesOnboardingView: View {
     @State private var viewModel = UserPreferencesViewModel()
     @EnvironmentObject private var coordinator: OnboardingCoordinator
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.modelContext) private var modelContext
@@ -258,20 +257,8 @@ struct UserPreferencesOnboardingView: View {
     
     // MARK: - Computed Properties
     
-    private var backgroundGradient: LinearGradient {
-        LinearGradient(
-            colors: colorScheme == .dark ? [
-                Color.black,
-                Color.blue.opacity(0.04),
-                Color.black
-            ] : [
-                Color(red: 0.98, green: 0.99, blue: 1.0),
-                Color(red: 0.95, green: 0.97, blue: 1.0),
-                Color(red: 0.98, green: 0.99, blue: 1.0)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
+    private var backgroundGradient: some View {
+        Color(.systemBackground)
     }
 }
 

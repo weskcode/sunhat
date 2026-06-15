@@ -23,6 +23,7 @@ final class TriggerEngineManager: ObservableObject {
     @Published var evaluationResults: [TriggerEvaluationResult] = []
     
     private var triggerEngine: TriggerEngine?
+    private var modelContainer: ModelContainer?
     private var scheduledEvaluationTask: Task<Void, Never>?
     private let notificationManager = TriggerNotificationManager.shared
     private let backgroundTaskIdentifier = "org.wesley.sunhat.trigger-evaluation"
@@ -38,6 +39,7 @@ final class TriggerEngineManager: ObservableObject {
     }
     
     func configure(modelContainer: ModelContainer) async {
+        self.modelContainer = modelContainer
         self.triggerEngine = await TriggerEngine.shared(modelContainer: modelContainer)
         await notificationManager.configure()
         logger.info("TriggerEngineManager configured")
@@ -201,6 +203,17 @@ final class TriggerEngineManager: ObservableObject {
     }
     
     private func sendNotificationForResult(_ result: TriggerEvaluationResult, isBackground: Bool) async {
+        // Honor the user's app-level notification preferences (master switch,
+        // quiet hours, weekend rule).
+        if let modelContainer {
+            let context = ModelContext(modelContainer)
+            if let preferences = try? context.fetch(FetchDescriptor<UserPreferences>()).first,
+               !preferences.allowsNotificationDelivery() {
+                logger.info("Suppressed notification for \(result.reminderId) — notifications are off or quiet hours are active")
+                return
+            }
+        }
+
         do {
             try await notificationManager.sendTriggerNotification(for: result, isBackground: isBackground)
             logger.info("Sent notification for triggered reminder: \(result.reminderId)")

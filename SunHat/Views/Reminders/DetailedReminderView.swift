@@ -14,8 +14,7 @@ struct DetailedReminderView: View {
     @StateObject private var viewModel: DetailedReminderViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.colorScheme) private var colorScheme
-    
+
     @State private var isEditMode = false
     @State private var showingDeleteConfirmation = false
     @State private var activeSheet: ActiveSheet?
@@ -566,20 +565,8 @@ struct DetailedReminderView: View {
     
     // MARK: - Computed Properties
     
-    private var backgroundGradient: LinearGradient {
-        LinearGradient(
-            colors: colorScheme == .dark ? [
-                Color.black,
-                Color.blue.opacity(0.03),
-                Color.black
-            ] : [
-                Color(red: 0.98, green: 0.99, blue: 1.0),
-                Color(red: 0.96, green: 0.98, blue: 1.0),
-                Color(red: 0.98, green: 0.99, blue: 1.0)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
+    private var backgroundGradient: some View {
+        Color(.systemBackground)
     }
 }
 

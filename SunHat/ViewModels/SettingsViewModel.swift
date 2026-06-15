@@ -16,13 +16,15 @@ import os
 @MainActor @Observable
 final class SettingsViewModel {
     // Sync status (CloudKit disabled - prepared for future use)
-    var syncEnabled: Bool = false
     var lastSyncTime: Date?
-    var isSyncing = false
-    var userAccountInfo = "Local storage only"
 
     // Notifications
+    /// Whether the in-app master switch is on AND the system permission is
+    /// granted — the single source of truth the toggle displays.
     var notificationsEnabled = false
+    /// True when the user has denied the system permission, so the toggle
+    /// can explain that enabling requires a trip to the Settings app.
+    var isShowingPermissionDeniedAlert = false
     var defaultNotificationTiming: NotificationTiming = .immediate
     var quietHoursEnabled = true
     var quietHoursStart = Calendar.current.date(from: DateComponents(hour: 22, minute: 0)) ?? Date()
@@ -33,7 +35,6 @@ final class SettingsViewModel {
     // Location
     var locationEnabled = false
     var currentLocationName = "Unknown"
-    var backgroundLocationEnabled = true
 
     // Preferences
     var temperatureUnit: TemperatureUnit = .fahrenheit
@@ -160,31 +161,55 @@ final class SettingsViewModel {
         }
     }
 
-    // MARK: - Sync Methods (CloudKit disabled - prepared for future use)
-
-    func forceSyncNow() async {
-        logger.info("Sync is currently disabled - data is stored locally only")
-    }
-
     // MARK: - Notification Methods
+
+    /// Binding target for the "Allow Notifications" toggle. Setting it runs
+    /// the permission flow asynchronously; the stored property only flips
+    /// once the outcome is known, so a denied request visibly snaps the
+    /// toggle back off.
+    var notificationsToggleIsOn: Bool {
+        get { notificationsEnabled }
+        set { setNotificationsEnabled(newValue) }
+    }
 
     private func checkNotificationStatus() {
         Task {
             let status = await notificationPermissions.authorizationStatus()
-            self.notificationsEnabled = status == .authorized
+            let masterSwitchOn = userPreferences?.notificationsEnabled ?? true
+            self.notificationsEnabled = masterSwitchOn && status == .authorized
         }
     }
 
-    func requestNotificationPermission() {
+    func setNotificationsEnabled(_ enabled: Bool) {
+        guard enabled else {
+            notificationsEnabled = false
+            userPreferences?.notificationsEnabled = false
+            savePreferences()
+            return
+        }
+
         Task {
-            do {
-                let granted = try await notificationPermissions.requestAuthorization(options: [.alert, .badge, .sound])
-                self.notificationsEnabled = granted
-            } catch {
-                logger.error("Failed to request notification permission: \(error)")
-                actionError = "Couldn't request notification permission. Enable notifications for SunHat in the Settings app."
-                isShowingActionError = true
+            let status = await notificationPermissions.authorizationStatus()
+            switch status {
+            case .notDetermined:
+                do {
+                    let granted = try await notificationPermissions.requestAuthorization(options: [.alert, .badge, .sound])
+                    notificationsEnabled = granted
+                    userPreferences?.notificationsEnabled = granted
+                } catch {
+                    logger.error("Failed to request notification permission: \(error)")
+                    notificationsEnabled = false
+                    actionError = "Couldn't request notification permission. Enable notifications for SunHat in the Settings app."
+                    isShowingActionError = true
+                }
+            case .denied:
+                notificationsEnabled = false
+                isShowingPermissionDeniedAlert = true
+            default: // .authorized, .provisional, .ephemeral
+                notificationsEnabled = true
+                userPreferences?.notificationsEnabled = true
             }
+            savePreferences()
         }
     }
 
@@ -238,6 +263,7 @@ final class SettingsViewModel {
 
         preferences.temperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
         preferences.defaultNotificationTiming = .immediate
+        preferences.notificationsEnabled = true
         preferences.quietHoursEnabled = true
         preferences.quietHoursStart = Calendar.current.date(from: DateComponents(hour: 22, minute: 0)) ?? Date()
         preferences.quietHoursEnd = Calendar.current.date(from: DateComponents(hour: 7, minute: 0)) ?? Date()
@@ -251,6 +277,7 @@ final class SettingsViewModel {
         applyPreferences(preferences)
         savePreferences()
         applyAppearance()
+        checkNotificationStatus()
 
         logger.info("All settings reset to defaults")
     }
@@ -322,26 +349,6 @@ final class SettingsViewModel {
 
     // MARK: - Computed Properties
 
-    var syncStatusText: String {
-        syncEnabled ? "Enabled" : "Disabled"
-    }
-
-    var syncStatusColor: Color {
-        syncEnabled ? .green : .gray
-    }
-
-    var syncStatusMessage: String {
-        "Your data is stored locally on this device. iCloud sync will be available in a future update."
-    }
-
-    var notificationStatusText: String {
-        notificationsEnabled ? "Enabled" : "Disabled"
-    }
-
-    var locationStatusText: String {
-        locationEnabled ? "Enabled" : "Disabled"
-    }
-
     var quietHoursDescription: String {
         if quietHoursEnabled {
             let formatter = DateFormatter()
@@ -368,15 +375,7 @@ extension SettingsViewModel {
         savePreferences()
     }
 
-    func handleNotificationTimingChange() {
-        savePreferences()
-    }
-
     func handleQuietHoursChange() {
-        savePreferences()
-    }
-
-    func handleWeekendNotificationsChange() {
         savePreferences()
     }
 

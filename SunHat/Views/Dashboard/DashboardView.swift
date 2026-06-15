@@ -12,12 +12,12 @@ import CoreLocation
 struct DashboardView: View {
     @StateObject private var viewModel = DashboardViewModel()
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var activeSheet: ActiveSheet?
     @State private var showingDetailedWeather = false
+    @State private var cardsVisible = false
 
     private enum ActiveSheet: Identifiable {
         case allReminders
@@ -40,6 +40,9 @@ struct DashboardView: View {
                         LazyVStack(spacing: 20) {
                             currentTemperatureWidget
                                 .padding(.top, 16)
+                                .opacity(cardsVisible ? 1 : 0)
+                                .offset(y: cardsVisible ? 0 : 16)
+                                .animation(reduceMotion ? nil : .easeOut(duration: 0.4), value: cardsVisible)
 
                             if showingDetailedWeather {
                                 detailedWeatherMetrics
@@ -49,9 +52,15 @@ struct DashboardView: View {
                             if !viewModel.activeReminders.isEmpty {
                                 readyNowSection
                                     .transition(detailsTransition)
+                                    .opacity(cardsVisible ? 1 : 0)
+                                    .offset(y: cardsVisible ? 0 : 16)
+                                    .animation(reduceMotion ? nil : .easeOut(duration: 0.4).delay(0.08), value: cardsVisible)
                             }
 
                             activeRemindersSection
+                                .opacity(cardsVisible ? 1 : 0)
+                                .offset(y: cardsVisible ? 0 : 16)
+                                .animation(reduceMotion ? nil : .easeOut(duration: 0.4).delay(0.15), value: cardsVisible)
                         }
                         .padding(.horizontal, 16)
                         .padding(.bottom, 24)
@@ -70,6 +79,7 @@ struct DashboardView: View {
             }
             .onAppear {
                 viewModel.configure(modelContext: modelContext)
+                cardsVisible = true
             }
         }
     }
@@ -95,7 +105,7 @@ struct DashboardView: View {
                     HStack(spacing: 6) {
                         Image(systemName: "location.fill")
                             .font(AppFontStyle.caption.font)
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(Color.accentColor)
                         
                         Text(viewModel.currentLocationName)
                             .font(AppFontStyle.subheadline.font)
@@ -126,7 +136,7 @@ struct DashboardView: View {
 
                     Image(systemName: "chevron.down.circle.fill")
                         .font(AppFontStyle.title3.font)
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(Color.accentColor)
                         .rotationEffect(.degrees(showingDetailedWeather ? 180 : 0))
                         .animation(.interpolatingSpring(duration: 0.3, bounce: 0.25), value: showingDetailedWeather)
                 }
@@ -180,6 +190,8 @@ struct DashboardView: View {
                         .font(AppFont.system(size: 44))
                         .foregroundStyle(viewModel.weatherIconColor)
                         .symbolRenderingMode(.hierarchical)
+                        .symbolEffect(.bounce, value: viewModel.hasWeatherData)
+                        .contentTransition(.symbolEffect(.replace))
 
                     Text(viewModel.weatherDescription)
                         .font(AppFontStyle.caption.font)
@@ -273,7 +285,7 @@ struct DashboardView: View {
                     activeSheet = .allReminders
                 }
                 .font(AppFontStyle.callout.font)
-                .foregroundStyle(.blue)
+                .foregroundStyle(Color.accentColor)
             }
             
             if viewModel.activeReminders.isEmpty {
@@ -324,7 +336,7 @@ struct DashboardView: View {
                     }
                 }
                 .font(AppFontStyle.callout.font)
-                .foregroundStyle(.blue)
+                .foregroundStyle(Color.accentColor)
             }
 
             // Additional context about weather
@@ -432,20 +444,8 @@ struct DashboardView: View {
 
     // MARK: - Computed Properties
 
-    private var backgroundGradient: LinearGradient {
-        LinearGradient(
-            colors: colorScheme == .dark ? [
-                Color.black,
-                Color.blue.opacity(0.03),
-                Color.black
-            ] : [
-                Color(red: 0.98, green: 0.99, blue: 1.0),
-                Color(red: 0.95, green: 0.97, blue: 1.0),
-                Color(red: 0.98, green: 0.99, blue: 1.0)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
+    private var backgroundGradient: some View {
+        Color(.systemBackground)
     }
 }
 

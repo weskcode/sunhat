@@ -65,7 +65,7 @@ The app is a sophisticated weather-triggered reminder system with:
 - **Background Processing**: iOS 26 BackgroundTasks framework for weather monitoring
 - **Modern Concurrency**: Swift 6.2 async/await, actors, structured concurrency with approachable concurrency
 - **Location Services**: iOS 26 CoreLocation with temporary location permission support
-- **Liquid Glass UI**: iOS 26.4 `.glassEffect()` is the preferred direction for primary card surfaces and interactive elements; some older `.regularMaterial` surfaces still remain and should be migrated deliberately.
+- **Liquid Glass UI**: iOS 26.4 `.glassEffect()` on primary card surfaces and interactive elements; all views use `Color(.systemBackground)` (no custom warm-tinted backgrounds)
 
 ### Key Data Models
 ```swift
@@ -92,7 +92,7 @@ class WeatherData {
 
 ### iOS 26.4 Liquid Glass UI
 
-**Use `.glassEffect()` for all card surfaces**. The `.regularMaterial` sweep is done and the clear `.ultraThinMaterial` card surfaces are migrated (AllRemindersView search bar + `ReminderGlassCard`, DetailedReminderView header, `DashboardComponents` cards). Remaining: 2 `.ultraThinMaterial` (the `TutorialBubbleView` tooltip, intentionally left) and ~29 `Color(.secondarySystemBackground)` in secondary/nested contexts — convert those case-by-case only where a true top-level card surface is identified (avoid glass-in-glass). `GlassEffectContainer` wrapping and `.searchable` are deferred to visual QA.
+**Use `.glassEffect()` for all card surfaces** and `Color(.systemBackground)` for page backgrounds (standard iOS white/dark). No custom warm-tinted or gradient backgrounds. Remaining ~29 `Color(.secondarySystemBackground)` are in secondary/nested contexts — convert case-by-case only where a true top-level card surface is identified (avoid glass-in-glass). `GlassEffectContainer` wrapping and `.searchable` are deferred to visual QA.
 
 ```swift
 // ✅ iOS 26.4 — correct
@@ -224,7 +224,8 @@ The app implements sophisticated weather triggers including:
 
 As of June 2026:
 - ✅ Deployment target: iOS 26.4, Swift 6.2
-- ✅ **Liquid Glass**: `.regularMaterial` removed and clear `.ultraThinMaterial` card surfaces migrated to `.glassEffect()`; remaining 2 `.ultraThinMaterial` (tooltip) + ~29 `secondarySystemBackground` are secondary/nested fills left deliberately. `GlassEffectContainer`/`.searchable` deferred to visual QA
+- ✅ **Liquid Glass**: `.glassEffect()` on card surfaces; all page backgrounds use `Color(.systemBackground)` (standard iOS); remaining ~29 `secondarySystemBackground` are secondary/nested fills left deliberately
+- ✅ **Native settings**: Apple-native `SettingsView` with icon chips, real notification toggle, enforced quiet hours and master switch
 - ✅ **Glass tab bar**: `MainTabView` with `.tabBarMinimizeBehavior(.onScrollDown)`
 - ✅ **Glass create button**: a `Tab("New Task", systemImage: "plus", role: .search)` renders as the detached circular glass button on the trailing side of the tab bar (the slot Apple Music uses for search). `MainTabView` intercepts its selection in `.onChange` — reverts the selection and presents the create sheet — so it acts as a button, not a tab. (Earlier `tabViewBottomAccessory` and over-content FAB approaches were rejected.)
 - ✅ **Glass buttons**: Welcome screen "Get Started" uses `.buttonStyle(.glass)`
@@ -240,8 +241,8 @@ As of June 2026:
 - ✅ **Background task plist**: `BGTaskSchedulerPermittedIdentifiers` and `fetch` background mode configured
 - ✅ **ModelContainer injection**: `BackgroundWeatherManager` and `TriggerEngineManager` use the shared container from app entry point
 - ✅ **Zero `DispatchQueue.main.asyncAfter`** in production code — all replaced with cancellable `Task.sleep`
-- ✅ Dependency seams: `WeatherProviding`, `LocationManaging`, and `SettingsOpening` are in place for selected ViewModels
-- ✅ Observation migration started: `UserPreferencesViewModel` uses `@Observable`
+- ✅ Dependency seams: `WeatherProviding`, `LocationManaging`, `SettingsOpening`, `NotificationPermissionProviding` protocols
+- ✅ Observation migration: `UserPreferencesViewModel`, `SettingsViewModel`, `LocationPickerViewModel` use `@Observable`
 - ✅ Unit verification: `SunHatTests` passed with 230 tests on June 12, 2026
 - 🔲 Actual WidgetKit/watchOS targets (shared compact view exists; targets are not present yet)
 - ✅ Launch smoke verification on the configured simulator (boots to dashboard, light/dark render, relaunch stable, live error states — June 12, 2026); 🔲 interactive tap-through QA still pending

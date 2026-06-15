@@ -48,7 +48,7 @@ struct ActiveReminderCard: View {
         HStack(spacing: 12) {
             Image(systemName: reminder.category.iconName)
                 .font(AppFontStyle.title3.font)
-                .foregroundStyle(.blue)
+                .foregroundStyle(Color.accentColor)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 4) {

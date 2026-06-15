@@ -130,9 +130,22 @@ final class BackgroundWeatherManager: ObservableObject {
             return
         }
         
+        // Honor the user's app-level notification preferences (master switch,
+        // quiet hours, weekend rule) before evaluating anything. The reminder
+        // stays eligible — its cooldown is only consumed when we actually fire.
+        do {
+            let preferences = try modelContext.fetch(FetchDescriptor<UserPreferences>()).first
+            if let preferences, !preferences.allowsNotificationDelivery() {
+                logger.info("Skipping trigger check — notifications are off or quiet hours are active")
+                return
+            }
+        } catch {
+            logger.warning("Couldn't load notification preferences; proceeding with defaults: \(error)")
+        }
+
         // Fetch all reminders and filter programmatically due to MainActor isolation
         let descriptor: FetchDescriptor<WeatherReminder> = FetchDescriptor<WeatherReminder>()
-        
+
         do {
             let fetchedReminders: [WeatherReminder] = try modelContext.fetch(descriptor)
 

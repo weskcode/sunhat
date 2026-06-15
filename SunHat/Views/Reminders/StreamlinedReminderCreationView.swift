@@ -13,7 +13,6 @@ import CoreLocation
 struct StreamlinedReminderCreationView: View {
     @StateObject private var viewModel = FirstReminderCreationViewModel()
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.modelContext) private var modelContext
 
     var onReminderCreated: (() -> Void)?
@@ -221,11 +220,8 @@ struct StreamlinedReminderCreationView: View {
     // MARK: - Background
 
     private var backgroundGradient: some View {
-        ZStack {
-            (colorScheme == .dark ? Color.black : Color(red: 0.97, green: 0.98, blue: 1.0))
-                .ignoresSafeArea()
-
-        }
+        Color(.systemBackground)
+            .ignoresSafeArea()
     }
 }
 
