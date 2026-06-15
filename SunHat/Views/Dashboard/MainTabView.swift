@@ -9,41 +9,71 @@ import SwiftUI
 import SwiftData
 
 struct MainTabView: View {
-    @State private var selectedTab = 0
+    @State private var selectedTab: AppTab = .home
+    @State private var showingCreate = false
+    @EnvironmentObject private var onboardingCoordinator: OnboardingCoordinator
+
+    private enum AppTab: Hashable {
+        case home
+        case reminders
+        case settings
+        case add
+    }
+
+    // Intercept selection of the `.add` "tab" without ever changing the real
+    // selection, so the trailing glass button acts as a button (opens the create
+    // sheet) and the current tab stays put. Using a custom binding avoids the
+    // re-entrancy of reverting the selection inside `.onChange`.
+    private var tabSelection: Binding<AppTab> {
+        Binding(
+            get: { selectedTab },
+            set: { newValue in
+                if newValue == .add {
+                    showingCreate = true
+                } else {
+                    selectedTab = newValue
+                }
+            }
+        )
+    }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            // Home Tab - Consolidated home and weather view
-            DashboardView()
-                .tabItem {
-                    Label("Home", systemImage: selectedTab == 0 ? "house.fill" : "house")
-                }
-                .tag(0)
+        TabView(selection: tabSelection) {
+            Tab("Home", systemImage: "house", value: AppTab.home) {
+                DashboardView()
+            }
 
-            // All Reminders Tab
-            NavigationStack {
+            Tab("Reminders", systemImage: "list.bullet.rectangle", value: AppTab.reminders) {
                 AllRemindersView()
             }
-            .tabItem {
-                Label("Reminders", systemImage: selectedTab == 1 ? "list.bullet.rectangle.fill" : "list.bullet.rectangle")
-            }
-            .tag(1)
 
-            // Settings Tab
-            NavigationStack {
+            Tab("Settings", systemImage: "gearshape", value: AppTab.settings) {
                 SettingsView()
             }
-            .tabItem {
-                Label("Settings", systemImage: selectedTab == 2 ? "gearshape.fill" : "gearshape")
+
+            // `role: .search` renders as a detached circular glass button on the
+            // trailing side of the tab bar (the slot Apple Music uses for search).
+            // We repurpose it as "New Task": selecting it opens the create sheet and
+            // reverts the selection, so it behaves like a button rather than a tab.
+            Tab("New Task", systemImage: "plus", value: AppTab.add, role: .search) {
+                Color.clear
             }
-            .tag(2)
         }
         .tint(Color.accentColor)
+        .tabBarMinimizeBehavior(.onScrollDown)
+        .sheet(isPresented: $showingCreate) {
+            StreamlinedReminderCreationView(onReminderCreated: {
+                if !onboardingCoordinator.hasCreatedFirstReminder {
+                    onboardingCoordinator.markFirstReminderCreated()
+                }
+            })
+        }
     }
 }
 
 #Preview {
     MainTabView()
+        .environmentObject(OnboardingCoordinator())
         .modelContainer(for: [
             WeatherReminder.self,
             WeatherData.self,

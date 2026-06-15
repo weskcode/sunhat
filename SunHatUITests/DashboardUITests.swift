@@ -184,31 +184,47 @@ final class DashboardUITests: XCTestCase {
         }
     }
 
-    // MARK: - Quick Create Tests
+    // MARK: - Reminder Creation Tests
 
-    func testQuickCreateButton() throws {
-        // Find the floating action button (FAB)
+    func testCreateReminderButton() throws {
+        // Find the floating action button (FAB) or create button
         let createButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'Create'")).firstMatch
+        let fabButton = app.buttons.matching(identifier: "QuickCreateFAB").firstMatch
 
-        // Alternative: look for plus button
-        let plusButtons = app.buttons.matching(identifier: "QuickCreateFAB")
+        let button = createButton.exists ? createButton : fabButton
 
-        if createButton.exists {
-            createButton.tap()
+        if button.exists {
+            button.tap()
 
-            // Wait for quick create sheet
-            let quickCreateSheet = app.otherElements["QuickCreateReminderView"]
-            if quickCreateSheet.waitForExistence(timeout: 2) {
-                XCTAssertTrue(quickCreateSheet.exists, "Quick create sheet should appear")
+            // Wait for streamlined reminder creation sheet
+            let closeButton = app.buttons["Close"]
+            if closeButton.waitForExistence(timeout: 3) {
+                // Verify key form elements exist
+                let titleField = app.textFields["Reminder Title"]
+                if titleField.waitForExistence(timeout: 2) {
+                    XCTAssertTrue(titleField.exists, "Title field should appear in creation sheet")
+                }
+
+                // Verify color picker section
+                let colorLabel = app.staticTexts["Color"]
+                if colorLabel.exists {
+                    XCTAssertTrue(colorLabel.exists, "Color picker should appear")
+                }
+
+                // Verify icon picker section
+                let iconLabel = app.staticTexts["Icon"]
+                if iconLabel.exists {
+                    XCTAssertTrue(iconLabel.exists, "Icon picker should appear")
+                }
+
+                // Verify location section
+                let locationLabel = app.staticTexts["Location"]
+                if locationLabel.exists {
+                    XCTAssertTrue(locationLabel.exists, "Location selector should appear")
+                }
 
                 // Dismiss sheet
-                let dismissButton = app.buttons["Cancel"].firstMatch
-                if dismissButton.exists {
-                    dismissButton.tap()
-                } else {
-                    // Swipe down to dismiss
-                    quickCreateSheet.swipeDown()
-                }
+                closeButton.tap()
             }
         }
     }

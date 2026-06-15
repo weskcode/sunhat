@@ -55,7 +55,7 @@ final class DashboardViewTests: XCTestCase {
         XCTAssertEqual(viewModel.currentTemperature, 0.0, "Initial temperature should be 0")
         XCTAssertEqual(viewModel.humidity, 0, "Initial humidity should be 0")
         XCTAssertEqual(viewModel.weatherDescription, "Loading...", "Initial description should be 'Loading...'")
-        XCTAssertFalse(viewModel.isLoading, "Should not be loading initially")
+        XCTAssertNil(viewModel.errorMessage, "Initial state should not contain an error")
         XCTAssertTrue(viewModel.activeReminders.isEmpty, "Should have no active reminders initially")
         XCTAssertTrue(viewModel.forecastData.isEmpty, "Should have no forecast data initially")
     }

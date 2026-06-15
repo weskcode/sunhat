@@ -17,7 +17,7 @@ struct DataExportOptionsView: View {
     @State private var dateRange: ExportDateRange = .last30Days
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 // Export Format Section
                 Section {
@@ -25,13 +25,13 @@ struct DataExportOptionsView: View {
                         ForEach(ExportFormat.allCases, id: \.self) { format in
                             HStack {
                                 Image(systemName: format.icon)
-                                    .foregroundColor(format.color)
+                                    .foregroundStyle(format.color)
                                 VStack(alignment: .leading) {
                                     Text(format.displayName)
                                         .font(.body)
                                     Text(format.description)
                                         .font(.caption)
-                                        .foregroundColor(.secondary)
+                                        .foregroundStyle(.secondary)
                                 }
                             }
                             .tag(format)
@@ -51,7 +51,7 @@ struct DataExportOptionsView: View {
                         Text("Always Included")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                         
                         VStack(alignment: .leading, spacing: 6) {
                             ExportDataRow(
@@ -87,7 +87,7 @@ struct DataExportOptionsView: View {
                         Text("Optional Data")
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                         
                         VStack(alignment: .leading, spacing: 6) {
                             ExportDataRow(
@@ -133,7 +133,7 @@ struct DataExportOptionsView: View {
                             Text("Estimated Size")
                             Spacer()
                             Text(estimatedExportSize)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                         .font(.caption)
                         
@@ -158,7 +158,7 @@ struct DataExportOptionsView: View {
                             ProgressView()
                                 .scaleEffect(0.8)
                             Text("Preparing export...")
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                         .font(.caption)
                     }
@@ -170,7 +170,7 @@ struct DataExportOptionsView: View {
                         if selectedFormat == .json {
                             Text("💡 JSON exports can be imported into other apps or used for backup purposes.")
                                 .font(.caption)
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                         }
                     }
                 }
@@ -180,7 +180,7 @@ struct DataExportOptionsView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Image(systemName: "shield.checkered")
-                                .foregroundColor(.green)
+                                .foregroundStyle(.green)
                             Text("Privacy Notice")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
@@ -193,7 +193,7 @@ struct DataExportOptionsView: View {
                             Text("• We don't track or access your exported data")
                         }
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 4)
                     
@@ -204,11 +204,22 @@ struct DataExportOptionsView: View {
             .navigationTitle("Export Options")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
+            }
+            .alert(
+                "Export Failed",
+                isPresented: Binding(
+                    get: { viewModel.errorMessage != nil },
+                    set: { if !$0 { viewModel.errorMessage = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(viewModel.errorMessage ?? "")
             }
         }
     }
@@ -280,7 +291,7 @@ struct ExportDataRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(isIncluded ? .blue : .secondary)
+                .foregroundStyle(isIncluded ? .blue : .secondary)
                 .frame(width: 20)
             
             VStack(alignment: .leading, spacing: 2) {
@@ -293,11 +304,11 @@ struct ExportDataRow: View {
                         Text("Required")
                             .font(.caption2)
                             .fontWeight(.medium)
-                            .foregroundColor(.red)
+                            .foregroundStyle(.red)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(Color.red.opacity(0.1))
-                            .cornerRadius(4)
+                            .clipShape(.rect(cornerRadius: 4))
                     }
                     
                     Spacer()
@@ -305,18 +316,18 @@ struct ExportDataRow: View {
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             if !isRequired {
-                Toggle("", isOn: .constant(isIncluded))
+                Toggle("", isOn: Binding(
+                    get: { isIncluded },
+                    set: { _ in onToggle?() }
+                ))
                     .labelsHidden()
-                    .onTapGesture {
-                        onToggle?()
-                    }
             } else {
                 Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.green)
+                    .foregroundStyle(.green)
             }
         }
     }

@@ -173,7 +173,7 @@ struct TemperatureGauge: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(temperatureGradient)
                     .frame(width: 12, height: temperatureFillHeight)
-                    .animation(.easeInOut(duration: 1.0), value: animatedTemperature)
+                    .animation(.easeInOut(duration: 0.6), value: animatedTemperature)
                 
                 // Trigger indicator
                 if isTriggered {
@@ -190,12 +190,12 @@ struct TemperatureGauge: View {
             Text("\(Int(animatedTemperature))°")
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
                 .contentTransition(.numericText())
-                .animation(.easeInOut(duration: 1.0), value: animatedTemperature)
+                .animation(.easeInOut(duration: 0.6), value: animatedTemperature)
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 1.5)) {
+            withAnimation(.easeInOut(duration: 0.8)) {
                 animatedTemperature = temperature
             }
             
@@ -258,8 +258,8 @@ struct WeatherTransitionView: View {
                     .scaleEffect(0.7 + transitionProgress * 0.3)
             }
         }
-        .onAppear {
-            startTransition()
+        .task {
+            await startTransition()
         }
     }
     
@@ -282,13 +282,19 @@ struct WeatherTransitionView: View {
         }
     }
     
-    private func startTransition() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+    private func startTransition() async {
+        do {
+            try await Task.sleep(for: .seconds(0.6))
             showSecondWeather = true
-            
-            withAnimation(.easeInOut(duration: 2.0)) {
+
+            withAnimation(.easeInOut(duration: 1.0)) {
                 transitionProgress = 1.0
             }
+        } catch is CancellationError {
+            // View disappeared before the transition began.
+        } catch {
+            showSecondWeather = true
+            transitionProgress = 1.0
         }
     }
 }

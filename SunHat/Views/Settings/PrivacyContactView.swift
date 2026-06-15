@@ -15,9 +15,12 @@ struct PrivacyContactView: View {
     @State private var userEmail = ""
     @State private var showingMailComposer = false
     @State private var canSendEmail = false
-    
+    @State private var statusAlert: PrivacyContactStatusAlert?
+
+    private let urlOpener: SettingsOpening = ApplicationSettingsOpener()
+
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 // Contact Information Section
                 contactInfoSection
@@ -40,7 +43,7 @@ struct PrivacyContactView: View {
             .navigationTitle("Privacy Contact")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
@@ -58,6 +61,18 @@ struct PrivacyContactView: View {
                     )
                 }
             }
+            .alert(
+                statusAlert?.title ?? "",
+                isPresented: Binding(
+                    get: { statusAlert != nil },
+                    set: { if !$0 { statusAlert = nil } }
+                ),
+                presenting: statusAlert
+            ) { _ in
+                Button("OK", role: .cancel) {}
+            } message: { alert in
+                Text(alert.message)
+            }
         }
     }
     
@@ -68,7 +83,7 @@ struct PrivacyContactView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image(systemName: "person.badge.shield.checkmark")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                         .font(.title2)
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -78,7 +93,7 @@ struct PrivacyContactView: View {
                         
                         Text("SunHat Privacy Team")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 
@@ -86,7 +101,7 @@ struct PrivacyContactView: View {
                     ContactDetailRow(
                         icon: "envelope.fill",
                         title: "Email",
-                        value: "placeholder@example.com", // TODO: Replace with actual privacy email
+                        value: AppSupportLinks.privacyEmail,
                         isLink: true
                     ) {
                         openEmailClient()
@@ -125,13 +140,13 @@ struct PrivacyContactView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack {
                             Image(systemName: type.icon)
-                                .foregroundColor(type.color)
+                                .foregroundStyle(type.color)
                             Text(type.displayName)
                                 .font(.body)
                         }
                         Text(type.description)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .tag(type)
                 }
@@ -142,7 +157,7 @@ struct PrivacyContactView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         Image(systemName: "scale.3d")
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                         Text("Legal Basis")
                             .font(.subheadline)
                             .fontWeight(.medium)
@@ -150,11 +165,11 @@ struct PrivacyContactView: View {
                     
                     Text(selectedInquiryType.legalBasis)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 .padding(12)
                 .background(Color.blue.opacity(0.05))
-                .cornerRadius(8)
+                .clipShape(.rect(cornerRadius: 8))
             }
             
         } header: {
@@ -263,7 +278,7 @@ struct PrivacyContactView: View {
                 if !canSendEmail {
                     Text("📧 Email app not configured. We'll copy the details to your clipboard.")
                         .font(.caption)
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
                 }
             }
         }
@@ -281,19 +296,27 @@ struct PrivacyContactView: View {
         
         if let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
            let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-           let url = URL(string: "mailto:placeholder@example.com?subject=\(encodedSubject)&body=\(encodedBody)") { // TODO: Replace with actual privacy email
-            Task { @MainActor in
-                UIApplication.shared.open(url)
+           let url = URL(string: "mailto:\(AppSupportLinks.privacyEmail)?subject=\(encodedSubject)&body=\(encodedBody)") {
+            Task {
+                let opened = await urlOpener.open(url)
+                if opened == false {
+                    statusAlert = PrivacyContactStatusAlert(
+                        title: "Couldn't Open Mail",
+                        message: "Set up a mail account, or email \(AppSupportLinks.privacyEmail) directly. You can also use Copy Email Template."
+                    )
+                }
             }
         }
     }
-    
+
     private func copyEmailTemplate() {
         let template = generateEmailBody()
         UIPasteboard.general.string = template
-        
-        // Show confirmation (would need to implement proper toast/alert)
-        print("Email template copied to clipboard")
+
+        statusAlert = PrivacyContactStatusAlert(
+            title: "Copied",
+            message: "The email template was copied to your clipboard. Paste it into any email to \(AppSupportLinks.privacyEmail)."
+        )
     }
     
     private func generateEmailBody() -> String {
@@ -322,12 +345,24 @@ struct PrivacyContactView: View {
     }
     
     private func openPrivacyPolicy() {
-        if let url = URL(string: "https://example.com/privacy") { // TODO: Replace with actual privacy policy URL
-            Task { @MainActor in
-                UIApplication.shared.open(url)
+        Task {
+            let opened = await urlOpener.open(AppSupportLinks.privacyPolicyURL)
+            if opened == false {
+                statusAlert = PrivacyContactStatusAlert(
+                    title: "Couldn't Open",
+                    message: "Visit \(AppSupportLinks.privacyPolicyURL.absoluteString) in a browser."
+                )
             }
         }
     }
+}
+
+/// Typed alert state for `PrivacyContactView` — one alert surface for
+/// open-failure and clipboard-confirmation messages.
+private struct PrivacyContactStatusAlert: Identifiable {
+    let id = UUID()
+    let title: String
+    let message: String
 }
 
 // MARK: - Supporting Views
@@ -348,19 +383,30 @@ struct ContactDetailRow: View {
     }
     
     var body: some View {
+        if isLink {
+            Button(action: { action?() }) {
+                rowContent
+            }
+            .buttonStyle(.plain)
+        } else {
+            rowContent
+        }
+    }
+
+    private var rowContent: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
                 .frame(width: 20)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 Text(value)
                     .font(.subheadline)
-                    .foregroundColor(isLink ? .blue : .primary)
+                    .foregroundStyle(isLink ? .blue : .primary)
             }
             
             Spacer()
@@ -368,13 +414,7 @@ struct ContactDetailRow: View {
             if isLink {
                 Image(systemName: "arrow.up.right.square")
                     .font(.caption)
-                    .foregroundColor(.blue)
-            }
-        }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            if isLink {
-                action?()
+                    .foregroundStyle(.blue)
             }
         }
     }
@@ -390,7 +430,7 @@ struct ResponseTimeCard: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(color)
+                .foregroundStyle(color)
                 .font(.title3)
                 .frame(width: 24)
             
@@ -402,18 +442,18 @@ struct ResponseTimeCard: View {
                 Text(timeframe)
                     .font(.caption)
                     .fontWeight(.semibold)
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
         }
         .padding(12)
         .background(color.opacity(0.05))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -429,7 +469,7 @@ struct MailComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> MFMailComposeViewController {
         let composer = MFMailComposeViewController()
         composer.mailComposeDelegate = context.coordinator
-        composer.setToRecipients(["placeholder@example.com"]) // TODO: Replace with actual privacy email
+        composer.setToRecipients([AppSupportLinks.privacyEmail])
         composer.setSubject("Privacy Inquiry - \(inquiryType.displayName)")
         
         let body = generateEmailBody()

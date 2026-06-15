@@ -12,6 +12,7 @@ import MapKit
 struct ManualLocationEntryView: View {
     @Binding var isPresented: Bool
     let onLocationSelected: (ManualLocationData) -> Void
+    var onUseCurrentLocation: (() -> Void)? = nil
     
     @State private var searchText = ""
     @State private var searchResults: [LocationSearchResult] = []
@@ -19,15 +20,14 @@ struct ManualLocationEntryView: View {
     @State private var searchError: String?
     @State private var selectedLocation: LocationSearchResult?
     
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     
     @FocusState private var isSearchFieldFocused: Bool
-    @State private var searchWorkItem: DispatchWorkItem?
+    @State private var searchTask: Task<Void, Never>?
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 // Background
                 backgroundGradient
@@ -37,10 +37,17 @@ struct ManualLocationEntryView: View {
                     // Header section
                     headerSection
                         .padding(.top, 20)
-                    
+
+                    // "Use Current Location" option (when available)
+                    if let onUseCurrentLocation {
+                        currentLocationButton(action: onUseCurrentLocation)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 20)
+                    }
+
                     // Search section
                     searchSection
-                        .padding(.top, 30)
+                        .padding(.top, onUseCurrentLocation == nil ? 30 : 16)
                     
                     // Results section
                     if isSearching {
@@ -65,11 +72,11 @@ struct ManualLocationEntryView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismissView()
                     }
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                 }
             }
         }
@@ -87,8 +94,53 @@ struct ManualLocationEntryView: View {
         }
     }
     
+    // MARK: - Current Location Button
+
+    private func currentLocationButton(action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.blue.opacity(0.1))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "location.fill")
+                        .font(.body)
+                        .foregroundStyle(.blue)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Use Current Location")
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.primary)
+                    Text("Monitor weather at your device location")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "arrow.right.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.blue)
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.secondarySystemBackground))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Use current location")
+        .accessibilityHint("Monitor weather at your device's current GPS location")
+    }
+
     // MARK: - Header Section
-    
+
     private var headerSection: some View {
         VStack(spacing: 16) {
             // Search icon
@@ -114,13 +166,13 @@ struct ManualLocationEntryView: View {
                 Text("Search for Your City")
                     .font(.title2)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 
                 Text("Enter your city name to get accurate weather data")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
         }
@@ -134,7 +186,7 @@ struct ManualLocationEntryView: View {
             HStack(spacing: 12) {
                 Image(systemName: "magnifyingglass")
                     .font(.body)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 TextField("City name (e.g., San Francisco)", text: $searchText)
                     .textFieldStyle(PlainTextFieldStyle())
@@ -157,7 +209,7 @@ struct ManualLocationEntryView: View {
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.body)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .accessibilityLabel("Clear search")
                 }
@@ -181,12 +233,12 @@ struct ManualLocationEntryView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "lightbulb.fill")
                             .font(.caption)
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                         
                         Text("Search tips")
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                         
                         Spacer()
                     }
@@ -220,7 +272,7 @@ struct ManualLocationEntryView: View {
             
             Text(text)
                 .font(.caption2)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             
             Spacer()
         }
@@ -236,7 +288,7 @@ struct ManualLocationEntryView: View {
             
             Text("Searching for cities...")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Searching for cities")
@@ -251,13 +303,13 @@ struct ManualLocationEntryView: View {
                 Text("Search Results")
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
                 Text("\(searchResults.count) found")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             .padding(.horizontal, 4)
             .padding(.bottom, 12)
@@ -285,18 +337,18 @@ struct ManualLocationEntryView: View {
         VStack(spacing: 20) {
             Image(systemName: "location.slash")
                 .font(.system(size: 50))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
             
             VStack(spacing: 8) {
                 Text("No cities found")
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 
                 Text("Try searching with a different spelling or include the state/country")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             
@@ -318,12 +370,12 @@ struct ManualLocationEntryView: View {
                 Text("Popular Cities")
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .accessibilityAddTraits(.isHeader)
                 
                 Text("Tap a city below or search for your location")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             
@@ -344,7 +396,8 @@ struct ManualLocationEntryView: View {
     // MARK: - Helper Methods
     
     private func focusSearchField() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(500))
             isSearchFieldFocused = true
         }
     }
@@ -356,19 +409,18 @@ struct ManualLocationEntryView: View {
     }
     
     private func debounceSearch() {
-        searchWorkItem?.cancel()
-        
+        searchTask?.cancel()
+
         guard !searchText.isEmpty else {
             searchResults = []
             return
         }
-        
-        let workItem = DispatchWorkItem {
+
+        searchTask = Task {
+            try? await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled else { return }
             performSearch()
         }
-        
-        searchWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: workItem)
     }
     
     private func performSearch() {
@@ -459,20 +511,8 @@ struct ManualLocationEntryView: View {
     
     // MARK: - Computed Properties
     
-    private var backgroundGradient: LinearGradient {
-        LinearGradient(
-            colors: colorScheme == .dark ? [
-                Color.black,
-                Color.blue.opacity(0.05),
-                Color.black
-            ] : [
-                Color(red: 0.97, green: 0.98, blue: 1.0),
-                Color(red: 0.93, green: 0.96, blue: 1.0),
-                Color(red: 0.97, green: 0.98, blue: 1.0)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+    private var backgroundGradient: some View {
+        Color(.systemBackground)
     }
 }
 
@@ -496,7 +536,7 @@ struct LocationResultCard: View {
                     
                     Image(systemName: "location.fill")
                         .font(.body)
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                 }
                 .accessibilityHidden(true)
                 
@@ -505,13 +545,13 @@ struct LocationResultCard: View {
                     Text(result.city)
                         .font(.body)
                         .fontWeight(.semibold)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                         .lineLimit(1)
                     
                     if let subtitle = result.subtitle {
                         Text(subtitle)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
                 }
@@ -522,11 +562,11 @@ struct LocationResultCard: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.title3)
-                        .foregroundColor(.green)
+                        .foregroundStyle(.green)
                 } else {
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
             .padding(16)
@@ -539,7 +579,7 @@ struct LocationResultCard: View {
                     )
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(result.displayName)")
         .accessibilityHint("Select this city for weather data")
@@ -561,12 +601,12 @@ struct PopularCityCard: View {
                 Text(city.name)
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                     .lineLimit(1)
                 
                 Text(city.country)
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
@@ -577,7 +617,7 @@ struct PopularCityCard: View {
                     .fill(Color(.tertiarySystemBackground))
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(city.name), \(city.country)")
         .accessibilityHint("Search for this city")
@@ -646,8 +686,7 @@ private let popularCities: [PopularCity] = [
 // MARK: - Preview
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         Text("Manual Location Entry View")
     }
 }
-

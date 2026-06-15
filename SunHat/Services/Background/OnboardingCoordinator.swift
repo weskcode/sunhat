@@ -17,6 +17,12 @@ final class OnboardingCoordinator: ObservableObject {
         }
     }
     
+    @Published var hasCreatedFirstReminder: Bool {
+        didSet {
+            UserDefaults.standard.set(hasCreatedFirstReminder, forKey: "hasCreatedFirstReminder")
+        }
+    }
+
     @Published var shouldShowWelcome: Bool = false
     @Published var currentStep: OnboardingStep = .welcome
     @Published var isReturningUser: Bool = false
@@ -27,10 +33,8 @@ final class OnboardingCoordinator: ObservableObject {
         case welcome = "welcome"
         case location = "location"
         case permissions = "permissions"
-        case setup = "setup"
         case preferences = "preferences"
-        case complete = "complete"
-        
+
         var title: String {
             switch self {
             case .welcome:
@@ -39,15 +43,11 @@ final class OnboardingCoordinator: ObservableObject {
                 return "Location Access"
             case .permissions:
                 return "Enable Notifications"
-            case .setup:
-                return "Create Your First Reminder"
             case .preferences:
                 return "Personalize Your Experience"
-            case .complete:
-                return "You're All Set!"
             }
         }
-        
+
         var accessibilityLabel: String {
             switch self {
             case .welcome:
@@ -56,18 +56,15 @@ final class OnboardingCoordinator: ObservableObject {
                 return "Location permission setup"
             case .permissions:
                 return "Notification permissions setup"
-            case .setup:
-                return "First reminder creation"
             case .preferences:
                 return "User preferences setup"
-            case .complete:
-                return "Onboarding completion"
             }
         }
     }
     
     init() {
         self.hasCompletedOnboarding = userDefaults.bool(forKey: "hasCompletedOnboarding")
+        self.hasCreatedFirstReminder = userDefaults.bool(forKey: "hasCreatedFirstReminder")
         self.isReturningUser = userDefaults.bool(forKey: "isReturningUser")
         
         // Show welcome screen for new users or if explicitly requested
@@ -87,9 +84,15 @@ final class OnboardingCoordinator: ObservableObject {
     func completeOnboarding() {
         hasCompletedOnboarding = true
         shouldShowWelcome = false
-        currentStep = .complete
-        
+
         // Haptic feedback for completion
+        let notificationFeedback = UINotificationFeedbackGenerator()
+        notificationFeedback.notificationOccurred(.success)
+    }
+
+    func markFirstReminderCreated() {
+        hasCreatedFirstReminder = true
+
         let notificationFeedback = UINotificationFeedbackGenerator()
         notificationFeedback.notificationOccurred(.success)
     }
@@ -132,9 +135,11 @@ final class OnboardingCoordinator: ObservableObject {
     
     func resetOnboarding() {
         hasCompletedOnboarding = false
+        hasCreatedFirstReminder = false
         currentStep = .welcome
         shouldShowWelcome = true
         userDefaults.removeObject(forKey: "isReturningUser")
+        userDefaults.removeObject(forKey: "hasCreatedFirstReminder")
     }
     
     var progress: Double {
@@ -156,26 +161,14 @@ final class OnboardingCoordinator: ObservableObject {
 // MARK: - Onboarding Container View
 
 struct OnboardingContainerView: View {
-    @StateObject private var coordinator = OnboardingCoordinator()
-    @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var coordinator: OnboardingCoordinator
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
-    
+
     var body: some View {
-        Group {
-            if coordinator.shouldShowWelcome {
-                onboardingFlow
-                    .transition(reduceMotion ? .opacity : .weatherSlide)
-            } else {
-                // Main app content would go here
-                ContentView()
-                    .transition(reduceMotion ? .opacity : .move(edge: .trailing))
-            }
-        }
-        .animation(.easeInOut(duration: reduceMotion ? 0.2 : 0.5), value: coordinator.shouldShowWelcome)
-        .environmentObject(coordinator)
+        onboardingFlow
+            .animation(.easeInOut(duration: reduceMotion ? 0.2 : 0.4), value: coordinator.currentStep)
     }
-    
+
     private var onboardingFlow: some View {
         Group {
             switch coordinator.currentStep {
@@ -188,89 +181,10 @@ struct OnboardingContainerView: View {
             case .permissions:
                 NotificationPermissionView()
                     .transition(reduceMotion ? .opacity : .weatherSlide)
-            case .setup:
-                FirstReminderCreationView()
-                    .transition(reduceMotion ? .opacity : .weatherSlide)
             case .preferences:
                 UserPreferencesOnboardingView()
                     .transition(reduceMotion ? .opacity : .weatherSlide)
-            case .complete:
-                CompletionView()
-                    .transition(reduceMotion ? .opacity : .move(edge: .trailing))
             }
-        }
-        .animation(.easeInOut(duration: reduceMotion ? 0.2 : 0.4), value: coordinator.currentStep)
-    }
-}
-
-// MARK: - Placeholder Views for Future Implementation
-
-// NOTE: PermissionsView has been replaced by NotificationPermissionView
-// The comprehensive notification permission screen is now implemented in NotificationPermissionView.swift
-
-struct SetupView: View {
-    @EnvironmentObject private var coordinator: OnboardingCoordinator
-    
-    var body: some View {
-        VStack(spacing: 32) {
-            Text("Create Your First Reminder")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .multilineTextAlignment(.center)
-                .accessibilityAddTraits(.isHeader)
-            
-            Text("Let's set up a simple weather reminder")
-                .font(.title3)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-            
-            Button("Create Reminder") {
-                coordinator.nextStep()
-            }
-            .buttonStyle(PrimaryButtonStyle())
-            
-            Button("Skip") {
-                coordinator.nextStep()
-            }
-            .buttonStyle(SecondaryButtonStyle())
-        }
-        .padding()
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("First reminder setup")
-    }
-}
-
-struct CompletionView: View {
-    @EnvironmentObject private var coordinator: OnboardingCoordinator
-    
-    var body: some View {
-        VStack(spacing: 32) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 80))
-                .foregroundColor(.green)
-                .accessibilityHidden(true)
-            
-            Text("You're All Set!")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .multilineTextAlignment(.center)
-                .accessibilityAddTraits(.isHeader)
-            
-            Text("SunHat is ready to send you smart weather reminders")
-                .font(.title3)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-            
-            Button("Get Started") {
-                coordinator.completeOnboarding()
-            }
-            .buttonStyle(PrimaryButtonStyle())
-        }
-        .padding()
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Onboarding complete")
-        .accessibilityAction(named: "Complete setup") {
-            coordinator.completeOnboarding()
         }
     }
 }
@@ -307,13 +221,6 @@ extension View {
             .accessibilityValue(temperature)
     }
     
-    func accessibilityComparisonCard(title: String, weatherBased: String, timeBased: String) -> some View {
-        self
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(title) comparison")
-            .accessibilityValue("Weather-based: \(weatherBased). Time-based: \(timeBased)")
-            .accessibilityHint("Shows the advantage of weather-based reminders")
-    }
 }
 
 // MARK: - Reduced Motion Support

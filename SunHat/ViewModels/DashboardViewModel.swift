@@ -11,11 +11,10 @@ import SwiftData
 import CoreLocation
 import CoreData
 import Combine
-import MapKit
 import os
 
 @MainActor
-final class DashboardViewModel: NSObject, ObservableObject {
+final class DashboardViewModel: ObservableObject {
     // MARK: - Published Properties
     
     @Published var currentTemperature: Double = 0.0
@@ -35,6 +34,7 @@ final class DashboardViewModel: NSObject, ObservableObject {
     @Published var forecastData: [ForecastDay] = []
     @Published var activeReminders: [WeatherReminderDisplay] = []
     @Published var activeAlerts: [WeatherAlertDisplay] = []
+    @Published var hasWeatherData = false
     
     @Published var isLoading: Bool = false
     @Published var lastUpdateTime: Date?
@@ -42,12 +42,40 @@ final class DashboardViewModel: NSObject, ObservableObject {
     @Published var connectionStatus: ConnectionStatus = .unknown
     
     @Published var temperatureUnit: TemperatureUnit = .fahrenheit
+
+    var currentTemperatureDisplay: String {
+        formattedTemperature(currentTemperature)
+    }
+
+    var feelsLikeTemperatureDisplay: String {
+        formattedTemperature(feelsLikeTemperature)
+    }
+
+    var highTemperatureDisplay: String {
+        formattedTemperature(highTemperature)
+    }
+
+    var lowTemperatureDisplay: String {
+        formattedTemperature(lowTemperature)
+    }
+
+    var windSpeedDisplay: String {
+        hasWeatherData ? "\(windSpeed.formatted(.number.precision(.fractionLength(0)))) mph" : "--"
+    }
+
+    var visibilityDisplay: String {
+        hasWeatherData ? "\(visibility.formatted(.number.precision(.fractionLength(1)))) mi" : "--"
+    }
+
+    var uvIndexDisplay: String {
+        hasWeatherData ? uvIndex.formatted(.number.precision(.fractionLength(0))) : "--"
+    }
     
     // MARK: - Private Properties
     
     private var modelContext: ModelContext?
     private var weatherModelActor: WeatherModelActor?
-    private var locationManager = CLLocationManager()
+    private var locationPermissionManager = LocationPermissionManager.shared
     private var weatherService = WeatherService.shared
     private var cancellables = Set<AnyCancellable>()
     
@@ -59,9 +87,7 @@ final class DashboardViewModel: NSObject, ObservableObject {
     
     // MARK: - Initialization
     
-    override init() {
-        super.init()
-        setupLocationManager()
+    init() {
         setupBindings()
         loadTemperatureUnit()
     }
@@ -94,66 +120,77 @@ final class DashboardViewModel: NSObject, ObservableObject {
             logger.error("No model context available")
             return
         }
-        
+
         isLoading = true
         errorMessage = nil
-        
+
         do {
             // Get current location
             let location = await getCurrentLocation()
-            
+
+            // Validate location is not the (0,0) fallback
+            if location.coordinate.latitude == 0 && location.coordinate.longitude == 0 {
+                logger.error("Location unavailable — cannot fetch weather for (0,0)")
+                errorMessage = "Unable to determine your location. Please check location permissions in Settings."
+                connectionStatus = .disconnected
+                isLoading = false
+                return
+            }
+
+            logger.info("Fetching weather for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+
             // Fetch weather data
             let weatherData = try await weatherService.fetchCurrentWeather(for: location, forceRefresh: true)
-            
-            await MainActor.run {
-                updateWeatherData(weatherData)
-                loadActiveReminders()
-                loadWeatherAlerts()
-                lastUpdateTime = Date()
-                connectionStatus = .connected
-            }
-            
+
+            // refreshWeatherData() is already isolated to @MainActor (inherited from the class),
+            // so no MainActor.run hop is needed — these assignments are safe as-is.
+            updateWeatherData(weatherData)
+            loadActiveReminders()
+            loadWeatherAlerts()
+            lastUpdateTime = Date()
+            connectionStatus = .connected
+
             logger.info("Weather data refresh completed successfully")
-            
+
         } catch {
-            await MainActor.run {
-                errorMessage = error.localizedDescription
-                connectionStatus = .disconnected
+            errorMessage = "Weather data unavailable: \(error.localizedDescription)"
+            connectionStatus = .disconnected
+            if !hasWeatherData {
+                weatherDescription = "Weather unavailable"
+                activeAlerts = []
+                forecastData = []
             }
-            logger.error("Weather data refresh failed: \(error.localizedDescription)")
+            logger.error("Weather data refresh failed: \(error)")
         }
-        
+
         isLoading = false
     }
     
     // MARK: - Private Methods
     
-    private func setupLocationManager() {
-        locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.requestWhenInUseAuthorization()
-    }
-    
     private func setupBindings() {
-        // Weather service bindings
+        // Weather service bindings — use RunLoop.main as the Combine scheduler
+        // so Swift 6 can verify we're delivering on the @MainActor thread.
         weatherService.$isLoading
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.isLoading, on: self)
             .store(in: &cancellables)
-        
+
         weatherService.$lastUpdateTime
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.lastUpdateTime, on: self)
             .store(in: &cancellables)
-        
+
         weatherService.$connectionStatus
-            .receive(on: DispatchQueue.main)
+            .receive(on: RunLoop.main)
             .assign(to: \.connectionStatus, on: self)
             .store(in: &cancellables)
-        
-        // Reactive updates when active reminders change
+
+        // Reactive updates when SwiftData model context saves.
+        // SwiftData surfaces changes via NSManagedObjectContextDidSave
+        // because it is backed by Core Data internally.
         NotificationCenter.default.publisher(for: .NSManagedObjectContextDidSave)
-            .debounce(for: .milliseconds(500), scheduler: DispatchQueue.main)
+            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .sink { [weak self] _ in
                 self?.loadActiveReminders()
             }
@@ -183,61 +220,76 @@ final class DashboardViewModel: NSObject, ObservableObject {
     }
     
     private func getCurrentLocation() async -> CLLocation {
-        // First try to get last known location
-        if let lastLocation = locationManager.location {
-            await updateLocationName(for: lastLocation)
-            return lastLocation
+        // 1) Check UserPreferences for saved manual location
+        if let modelContext = modelContext {
+            let descriptor = FetchDescriptor<UserPreferences>()
+            if let prefs = try? modelContext.fetch(descriptor).first,
+               prefs.locationMode == "manual",
+               prefs.manualLocationLatitude != 0 || prefs.manualLocationLongitude != 0 {
+                let loc = CLLocation(latitude: prefs.manualLocationLatitude, longitude: prefs.manualLocationLongitude)
+                currentLocationName = prefs.manualLocationName.isEmpty
+                    ? "Manual Location"
+                    : LocationDisplayFormatter.privacyPreservingName(from: prefs.manualLocationName)
+                return loc
+            }
         }
-        
-        // Request location if not available
-        locationManager.requestLocation()
-        
-        // Return default location if location services fail
-        let defaultLocation = CLLocation(latitude: 37.7749, longitude: -122.4194) // San Francisco
-        await updateLocationName(for: defaultLocation)
-        return defaultLocation
+
+        // 2) Check if the shared manager already has a manual location
+        if let manual = locationPermissionManager.manualLocation {
+            let loc = CLLocation(latitude: manual.coordinate.latitude, longitude: manual.coordinate.longitude)
+            currentLocationName = LocationDisplayFormatter.privacyPreservingName(from: manual.displayName)
+            return loc
+        }
+
+        // 3) Check if we already have a GPS location
+        if let loc = locationPermissionManager.currentLocation {
+            await updateLocationName(for: loc)
+            return loc
+        }
+
+        // 4) Request GPS location and wait with timeout
+        if locationPermissionManager.authorizationStatus == .authorizedWhenInUse ||
+           locationPermissionManager.authorizationStatus == .authorizedAlways {
+            locationPermissionManager.getCurrentLocation()
+
+            // Poll up to 10 seconds
+            for _ in 0..<20 {
+                try? await Task.sleep(for: .milliseconds(500))
+                if let loc = locationPermissionManager.currentLocation {
+                    await updateLocationName(for: loc)
+                    return loc
+                }
+            }
+        }
+
+        // 5) Last resort: request permission and try one more time
+        if locationPermissionManager.authorizationStatus == .notDetermined {
+            await withCheckedContinuation { continuation in
+                locationPermissionManager.requestLocationPermission { _ in
+                    continuation.resume()
+                }
+            }
+            if let loc = locationPermissionManager.currentLocation {
+                await updateLocationName(for: loc)
+                return loc
+            }
+        }
+
+        // 6) Real fallback - use last known or log warning
+        logger.warning("Could not obtain location, using default")
+        currentLocationName = "Location Unavailable"
+        // Return a zero-coordinate so weather fetch will fail gracefully
+        return CLLocation(latitude: 0, longitude: 0)
     }
     
     private func updateLocationName(for location: CLLocation) async {
-        if #available(iOS 26.0, *) {
-            // Use MKReverseGeocodingRequest for iOS 26+
-            let request = MKLocalSearch.Request()
-            request.region = MKCoordinateRegion(
-                center: location.coordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-            )
-
-            do {
-                let search = MKLocalSearch(request: request)
-                let response = try await search.start()
-                if let item = response.mapItems.first {
-                    currentLocationName = item.name ?? "Current Location"
-                }
-            } catch {
-                logger.warning("Failed to reverse geocode location: \(error.localizedDescription)")
-                currentLocationName = "Current Location"
-            }
-        } else {
-            // Fallback to CLGeocoder for iOS 25 and below
-            let geocoder = CLGeocoder()
-
-            do {
-                let placemarks = try await geocoder.reverseGeocodeLocation(location)
-                if let placemark = placemarks.first {
-                    let city = placemark.locality ?? ""
-                    let state = placemark.administrativeArea ?? ""
-                    currentLocationName = "\(city), \(state)"
-                }
-            } catch {
-                logger.warning("Failed to reverse geocode location: \(error.localizedDescription)")
-                currentLocationName = "Current Location"
-            }
-        }
+        currentLocationName = await LocationDisplayFormatter.reverseGeocodedName(for: location)
     }
     
     @MainActor
     private func updateWeatherData(_ weatherData: WeatherData) {
         currentWeatherData = ModelDataConverter.convertWeatherData(weatherData)
+        hasWeatherData = true
         currentTemperature = convertTemperature(weatherData.temperature)
         feelsLikeTemperature = convertTemperature(weatherData.feelsLike)
         humidity = weatherData.humidity
@@ -431,45 +483,14 @@ final class DashboardViewModel: NSObject, ObservableObject {
             return (fahrenheit - 32) * 5 / 9
         }
     }
+
+    private func formattedTemperature(_ temperature: Double) -> String {
+        hasWeatherData ? temperature.formatted(.number.precision(.fractionLength(0))) : "--"
+    }
 }
 
 // MARK: - CLLocationManagerDelegate
-
-extension DashboardViewModel: CLLocationManagerDelegate {
-    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
-        
-        Task { @MainActor in
-            await updateLocationName(for: location)
-            await refreshWeatherData()
-        }
-    }
-    
-    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        logger.error("Location manager failed with error: \(error.localizedDescription)")
-        
-        // Use default location
-        Task { @MainActor in
-            let defaultLocation = CLLocation(latitude: 37.7749, longitude: -122.4194)
-            await updateLocationName(for: defaultLocation)
-        }
-    }
-    
-    nonisolated func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-        Task { @MainActor in
-            switch status {
-            case .authorizedWhenInUse, .authorizedAlways:
-                locationManager.requestLocation()
-            case .denied, .restricted:
-                logger.warning("Location access denied")
-                currentLocationName = "Location Access Denied"
-            case .notDetermined:
-                locationManager.requestWhenInUseAuthorization()
-            @unknown default:
-                logger.warning("Unknown location authorization status")
-            }
-        }
-    }
-}
+// Location delegate logic is now handled by the shared LocationPermissionManager.
+// DashboardViewModel observes its published properties instead.
 
 // Note: WeatherAlert model moved to WeatherAlert.swift for consistency
