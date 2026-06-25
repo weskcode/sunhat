@@ -287,7 +287,9 @@ final class WeatherViewModel: ObservableObject {
 
     private func loadHistorical() async {
         func temp(daysAgo: Int) async -> Double {
-            let date = Self.calendar.date(byAdding: .day, value: -daysAgo, to: Date())!
+            guard let date = Self.calendar.date(byAdding: .day, value: -daysAgo, to: Date()) else {
+                return currentTemperature
+            }
             return await getHistoricalTemp(for: date) ?? currentTemperature
         }
         yesterdayTemp = await temp(daysAgo: 1)

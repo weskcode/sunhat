@@ -134,7 +134,7 @@ struct AllRemindersView: View {
     // MARK: - Filter Chips
 
     private var filterChips: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        ScrollView(.horizontal) {
             HStack(spacing: 8) {
                 ForEach(ReminderFilter.allCases, id: \.self) { filter in
                     FilterChip(
@@ -148,6 +148,7 @@ struct AllRemindersView: View {
                 }
             }
         }
+        .scrollIndicators(.hidden)
     }
 
     // MARK: - Empty State

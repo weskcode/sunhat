@@ -238,20 +238,24 @@ final class WeatherReminder {
     
     func trigger(with weatherData: WeatherData? = nil) {
         guard canTrigger else { return }
-        
-        lastTriggered = Date()
-        triggerCount += 1
-        totalNotificationsSent += 1
-        
-        // Update consecutive trigger days
-        if let lastTrigger = lastTriggered {
-            let calendar = Calendar.current
-            if calendar.isDate(lastTrigger, inSameDayAs: Date()) {
+
+        let now = Date()
+        let calendar = Calendar.current
+
+        if let previousTrigger = lastTriggered {
+            let yesterday = calendar.date(byAdding: .day, value: -1, to: now)!
+            if calendar.isDate(previousTrigger, inSameDayAs: yesterday) {
                 consecutiveTriggerDays += 1
-            } else {
+            } else if !calendar.isDate(previousTrigger, inSameDayAs: now) {
                 consecutiveTriggerDays = 1
             }
+        } else {
+            consecutiveTriggerDays = 1
         }
+
+        lastTriggered = now
+        triggerCount += 1
+        totalNotificationsSent += 1
         
         addHistoryEntry(.triggered, details: "Reminder triggered", weatherData: weatherData)
     }

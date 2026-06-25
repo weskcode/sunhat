@@ -27,7 +27,7 @@ open SunHat.xcodeproj
 xcodebuild -scheme SunHat -configuration Debug build
 
 # Run tests
-xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,id=C3E7115C-C029-4352-A255-EFB6CB69367A' test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,id=20465D2E-7941-46FD-BAE2-21335FE5F0B1' test
 
 # Build for release
 xcodebuild -scheme SunHat -configuration Release build
@@ -36,16 +36,16 @@ xcodebuild -scheme SunHat -configuration Release build
 ### Testing Commands
 ```bash
 # Run unit tests only
-xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,id=C3E7115C-C029-4352-A255-EFB6CB69367A' -only-testing:SunHatTests test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,id=20465D2E-7941-46FD-BAE2-21335FE5F0B1' -only-testing:SunHatTests test
 
 # Run UI tests only
-xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,id=C3E7115C-C029-4352-A255-EFB6CB69367A' -only-testing:SunHatUITests test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,id=20465D2E-7941-46FD-BAE2-21335FE5F0B1' -only-testing:SunHatUITests test
 
 # Run specific test
-xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,id=C3E7115C-C029-4352-A255-EFB6CB69367A' -only-testing:SunHatTests/SunHatTests/testExample test
+xcodebuild -scheme SunHat -destination 'platform=iOS Simulator,id=20465D2E-7941-46FD-BAE2-21335FE5F0B1' -only-testing:SunHatTests/SunHatTests/testExample test
 ```
 
-Use the existing configured simulator only: `iPhone 17 Pro` (`C3E7115C-C029-4352-A255-EFB6CB69367A`). Do not clone or repeatedly launch additional simulators for routine validation.
+Use the existing configured simulator only: `iPhone 17 Pro` (`20465D2E-7941-46FD-BAE2-21335FE5F0B1`). Do not clone or repeatedly launch additional simulators for routine validation.
 
 ## Project Architecture
 

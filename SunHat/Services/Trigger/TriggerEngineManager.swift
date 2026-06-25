@@ -204,12 +204,12 @@ final class TriggerEngineManager: ObservableObject {
     
     private func sendNotificationForResult(_ result: TriggerEvaluationResult, isBackground: Bool) async {
         // Honor the user's app-level notification preferences (master switch,
-        // quiet hours, weekend rule).
+        // quiet hours, weekend rule, daily limit).
         if let modelContainer {
             let context = ModelContext(modelContainer)
             if let preferences = try? context.fetch(FetchDescriptor<UserPreferences>()).first,
                !preferences.allowsNotificationDelivery() {
-                logger.info("Suppressed notification for \(result.reminderId) — notifications are off or quiet hours are active")
+                logger.info("Suppressed notification for \(result.reminderId) — notifications are off, quiet hours active, or daily limit reached")
                 return
             }
         }
@@ -217,15 +217,42 @@ final class TriggerEngineManager: ObservableObject {
         do {
             try await notificationManager.sendTriggerNotification(for: result, isBackground: isBackground)
             logger.info("Sent notification for triggered reminder: \(result.reminderId)")
+            recordDelivery()
         } catch {
             logger.error("Failed to send notification for reminder \(result.reminderId): \(error)")
         }
     }
-    
+
+    private func recordDelivery() {
+        guard let modelContainer else { return }
+        let context = ModelContext(modelContainer)
+        if let preferences = try? context.fetch(FetchDescriptor<UserPreferences>()).first {
+            preferences.recordNotificationDelivered()
+            try? context.save()
+        }
+    }
+
     private func updateReminderWithResult(_ result: TriggerEvaluationResult) async {
-        // This would typically update the reminder in the database
-        // For now, we'll log the trigger event
-        logger.debug("Reminder \(result.reminderId) triggered: \(result.triggerReason)")
+        guard let modelContainer else {
+            logger.warning("Cannot persist trigger for \(result.reminderId) — ModelContainer not configured")
+            return
+        }
+        let context = ModelContext(modelContainer)
+        do {
+            let id = result.reminderId
+            let descriptor = FetchDescriptor<WeatherReminder>(
+                predicate: #Predicate { $0.id == id }
+            )
+            guard let reminder = try context.fetch(descriptor).first else {
+                logger.warning("Reminder \(result.reminderId) not found for trigger persistence")
+                return
+            }
+            reminder.trigger()
+            try context.save()
+            logger.info("Persisted trigger cooldown for reminder \(result.reminderId)")
+        } catch {
+            logger.error("Failed to persist trigger for reminder \(result.reminderId): \(error)")
+        }
     }
     
     private func scheduleNextEvaluations(_ results: [TriggerEvaluationResult]) async {

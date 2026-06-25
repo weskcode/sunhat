@@ -185,9 +185,7 @@ final class AppleWeatherKitAPI: WeatherAPI {
             lowTemperature: daily.lowTemperature.fahrenheitValue,
             weatherCondition: mapWeatherKitCondition(daily.condition),
             precipitationProbability: Int(daily.precipitationChance * 100),
-            // Real total liquid-equivalent precipitation, in inches to match the app's
-            // US-unit convention (and the 0.1" thresholds in WeatherData descriptions).
-            precipitationAmount: daily.precipitationAmount.converted(to: .inches).value,
+            precipitationAmount: daily.precipitationAmountByType.precipitation.converted(to: .inches).value,
             precipitationType: precipType,
             windSpeed: daily.wind.speed.milesPerHourValue,
             windDirection: Int(daily.wind.direction.value),

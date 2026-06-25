@@ -46,7 +46,7 @@ struct DetailedReminderView: View {
 
                 // Scroll view content
                 ScrollViewReader { proxy in
-                    ScrollView(.vertical, showsIndicators: false) {
+                    ScrollView(.vertical) {
                         LazyVStack(spacing: 0) {
                             // Large weather condition display
                             weatherConditionHeader
@@ -89,6 +89,7 @@ struct DetailedReminderView: View {
                             .padding(.top, 20)
                         }
                     }
+                    .scrollIndicators(.hidden)
                     .scrollTargetLayout()
                     .coordinateSpace(name: "scroll")
                     .onAppear {

@@ -127,12 +127,10 @@ extension NotificationConfig {
         case .high:
             content.interruptionLevel = .timeSensitive
         case .critical:
-            content.interruptionLevel = .critical
+            content.interruptionLevel = .timeSensitive
         }
-        
-        if criticalAlert {
-            content.sound = .defaultCritical
-        } else if let customSound = customSound {
+
+        if let customSound = customSound {
             content.sound = UNNotificationSound(named: UNNotificationSoundName(customSound))
         } else {
             content.sound = .default
@@ -171,9 +169,7 @@ extension NotificationConfig {
             if let customDate = calendar.date(from: components), customDate > date {
                 return customDate
             } else {
-                // Next day
-                components.day! += 1
-                return calendar.date(from: components)
+                return calendar.date(byAdding: .day, value: 1, to: date)
             }
         case .morning:
             return nextDeliveryTime(at: 8, after: date)
@@ -193,12 +189,11 @@ extension NotificationConfig {
         var components = calendar.dateComponents([.year, .month, .day], from: date)
         components.hour = hour
         components.minute = 0
-        
+
         if let targetDate = calendar.date(from: components), targetDate > date {
             return targetDate
         } else {
-            components.day! += 1
-            return calendar.date(from: components)
+            return calendar.date(byAdding: .day, value: 1, to: date)
         }
     }
 }

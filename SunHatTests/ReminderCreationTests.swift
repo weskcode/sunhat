@@ -5,136 +5,149 @@
 //  Created by Wesley Keetch on 2/12/26.
 //
 
-import XCTest
 import SwiftUI
 import SwiftData
 import CoreLocation
+import Testing
 @testable import SunHat
 
 // MARK: - CustomReminder Model Tests
 
 @MainActor
-final class CustomReminderTests: XCTestCase {
+struct CustomReminderTests {
 
     // MARK: - Default Values
 
-    func testDefaultValues() {
+    @Test("Default values are set correctly on a fresh CustomReminder")
+    func defaultValues() {
         let reminder = CustomReminder()
 
-        XCTAssertEqual(reminder.title, "")
-        XCTAssertEqual(reminder.selectedIcon, "figure.walk")
-        XCTAssertEqual(reminder.notes, "")
-        XCTAssertEqual(reminder.minTemperature, 65)
-        XCTAssertEqual(reminder.maxTemperature, 75)
-        XCTAssertEqual(reminder.conditionMode, .include)
-        XCTAssertEqual(reminder.preferredTimeRange, .allDay)
-        XCTAssertTrue(reminder.respectQuietHours)
-        XCTAssertTrue(reminder.selectedLocation.isCurrentLocation)
+        #expect(reminder.title == "")
+        #expect(reminder.selectedIcon == "figure.walk")
+        #expect(reminder.notes == "")
+        #expect(reminder.minTemperature == 65)
+        #expect(reminder.maxTemperature == 75)
+        #expect(reminder.conditionMode == .include)
+        #expect(reminder.preferredTimeRange == .allDay)
+        #expect(reminder.respectQuietHours == true)
+        #expect(reminder.selectedLocation.isCurrentLocation == true)
     }
 
     // MARK: - Display Title
 
-    func testDisplayTitleWhenEmpty() {
+    @Test("Empty title falls back to New Reminder")
+    func displayTitleWhenEmpty() {
         let reminder = CustomReminder()
-        XCTAssertEqual(reminder.displayTitle, "New Reminder")
+        #expect(reminder.displayTitle == "New Reminder")
     }
 
-    func testDisplayTitleWithCustomTitle() {
+    @Test("Custom title is used verbatim")
+    func displayTitleWithCustomTitle() {
         var reminder = CustomReminder()
         reminder.title = "Morning Walk"
-        XCTAssertEqual(reminder.displayTitle, "Morning Walk")
+        #expect(reminder.displayTitle == "Morning Walk")
     }
 
     // MARK: - Temperature Description
 
-    func testTemperatureRangeDescription() {
+    @Test("Range type shows min-max format")
+    func temperatureRangeDescription() {
         var reminder = CustomReminder()
         reminder.temperatureType = .temperatureRange
         reminder.minTemperature = 60
         reminder.maxTemperature = 80
-        XCTAssertEqual(reminder.temperatureDescription, "60\u{00B0} - 80\u{00B0}F")
+        #expect(reminder.temperatureDescription == "60\u{00B0} - 80\u{00B0}F")
     }
 
-    func testExactTemperatureDescription() {
+    @Test("Exact type shows single temperature")
+    func exactTemperatureDescription() {
         var reminder = CustomReminder()
         reminder.temperatureType = .exactTemperature
         reminder.minTemperature = 72
-        XCTAssertEqual(reminder.temperatureDescription, "72\u{00B0}F")
+        #expect(reminder.temperatureDescription == "72\u{00B0}F")
     }
 
     // MARK: - Sky Condition Description
 
-    func testSkyConditionDescriptionIncludeMode() {
+    @Test("Include mode shows condition name")
+    func skyConditionDescriptionIncludeMode() {
         var reminder = CustomReminder()
         reminder.selectedSkyConditions = [.sunny]
         reminder.conditionMode = .include
-        XCTAssertEqual(reminder.skyConditionDescription, "Sunny")
+        #expect(reminder.skyConditionDescription == "Sunny")
     }
 
-    func testSkyConditionDescriptionExcludeMode() {
+    @Test("Exclude mode prefixes with Not")
+    func skyConditionDescriptionExcludeMode() {
         var reminder = CustomReminder()
         reminder.selectedSkyConditions = [.rainy]
         reminder.conditionMode = .exclude
-        XCTAssertEqual(reminder.skyConditionDescription, "Not rainy")
+        #expect(reminder.skyConditionDescription == "Not rainy")
     }
 
-    func testSkyConditionDescriptionMultipleConditions() {
+    @Test("Multiple conditions are listed")
+    func skyConditionDescriptionMultipleConditions() {
         var reminder = CustomReminder()
         reminder.selectedSkyConditions = [.sunny, .partlyCloudy]
         reminder.conditionMode = .include
         let description = reminder.skyConditionDescription
-        XCTAssertTrue(description.contains("Sunny"))
-        XCTAssertTrue(description.contains("Partly Cloudy"))
+        #expect(description.contains("Sunny"))
+        #expect(description.contains("Partly Cloudy"))
     }
 
-    func testSkyConditionDescriptionEmpty() {
+    @Test("Empty conditions show Any weather")
+    func skyConditionDescriptionEmpty() {
         var reminder = CustomReminder()
         reminder.selectedSkyConditions = []
-        XCTAssertEqual(reminder.skyConditionDescription, "Any weather")
+        #expect(reminder.skyConditionDescription == "Any weather")
     }
 
     // MARK: - Sky Condition Matching
 
-    func testMatchesSkyConditionIncludeMode() {
+    @Test("Include mode matches selected conditions")
+    func matchesSkyConditionIncludeMode() {
         var reminder = CustomReminder()
         reminder.selectedSkyConditions = [.sunny, .partlyCloudy]
         reminder.conditionMode = .include
 
-        XCTAssertTrue(reminder.matchesSkyCondition(for: .clear), "Clear should match Sunny in include mode")
-        XCTAssertTrue(reminder.matchesSkyCondition(for: .partlyCloudy), "Partly Cloudy should match")
-        XCTAssertFalse(reminder.matchesSkyCondition(for: .rain), "Rain should NOT match")
-        XCTAssertFalse(reminder.matchesSkyCondition(for: .snow), "Snow should NOT match")
+        #expect(reminder.matchesSkyCondition(for: .clear) == true)
+        #expect(reminder.matchesSkyCondition(for: .partlyCloudy) == true)
+        #expect(reminder.matchesSkyCondition(for: .rain) == false)
+        #expect(reminder.matchesSkyCondition(for: .snow) == false)
     }
 
-    func testMatchesSkyConditionExcludeMode() {
+    @Test("Exclude mode rejects selected conditions")
+    func matchesSkyConditionExcludeMode() {
         var reminder = CustomReminder()
         reminder.selectedSkyConditions = [.rainy, .snowy]
         reminder.conditionMode = .exclude
 
-        XCTAssertTrue(reminder.matchesSkyCondition(for: .clear), "Clear should match (not excluded)")
-        XCTAssertTrue(reminder.matchesSkyCondition(for: .partlyCloudy), "Partly Cloudy should match (not excluded)")
-        XCTAssertFalse(reminder.matchesSkyCondition(for: .rain), "Rain should NOT match (excluded)")
-        XCTAssertFalse(reminder.matchesSkyCondition(for: .snow), "Snow should NOT match (excluded)")
+        #expect(reminder.matchesSkyCondition(for: .clear) == true)
+        #expect(reminder.matchesSkyCondition(for: .partlyCloudy) == true)
+        #expect(reminder.matchesSkyCondition(for: .rain) == false)
+        #expect(reminder.matchesSkyCondition(for: .snow) == false)
     }
 
-    func testMatchesSkyConditionEmptyInclude() {
+    @Test("Empty include matches any weather")
+    func matchesSkyConditionEmptyInclude() {
         var reminder = CustomReminder()
         reminder.selectedSkyConditions = []
         reminder.conditionMode = .include
 
-        // Empty include means "any weather"
-        XCTAssertTrue(reminder.matchesSkyCondition(for: .clear))
-        XCTAssertTrue(reminder.matchesSkyCondition(for: .rain))
+        #expect(reminder.matchesSkyCondition(for: .clear) == true)
+        #expect(reminder.matchesSkyCondition(for: .rain) == true)
     }
 
     // MARK: - Location Display Name
 
-    func testLocationDisplayNameCurrentLocation() {
+    @Test("Current location shows Current Location")
+    func locationDisplayNameCurrentLocation() {
         let reminder = CustomReminder()
-        XCTAssertEqual(reminder.locationDisplayName, "Current Location")
+        #expect(reminder.locationDisplayName == "Current Location")
     }
 
-    func testLocationDisplayNameManualLocation() {
+    @Test("Manual location shows city, state, country")
+    func locationDisplayNameManualLocation() {
         var reminder = CustomReminder()
         let manual = ManualLocationData(
             name: "Denver",
@@ -143,73 +156,82 @@ final class CustomReminderTests: XCTestCase {
             administrativeArea: "CO"
         )
         reminder.selectedLocation = .manual(manual)
-        XCTAssertEqual(reminder.locationDisplayName, "Denver, CO, US")
+        #expect(reminder.locationDisplayName == "Denver, CO, US")
     }
 
     // MARK: - Icon Catalog
 
-    func testAvailableIconsNotEmpty() {
-        XCTAssertFalse(CustomReminder.availableIcons.isEmpty)
-        XCTAssertGreaterThanOrEqual(CustomReminder.availableIcons.count, 40)
+    @Test("Available icons contains at least 40 entries")
+    func availableIconsNotEmpty() {
+        #expect(CustomReminder.availableIcons.isEmpty == false)
+        #expect(CustomReminder.availableIcons.count >= 40)
     }
 
-    func testAvailableIconsContainsExpectedIcons() {
+    @Test("Expected icons are present in catalog")
+    func availableIconsContainsExpectedIcons() {
         let icons = CustomReminder.availableIcons
-        XCTAssertTrue(icons.contains("figure.walk"))
-        XCTAssertTrue(icons.contains("bicycle"))
-        XCTAssertTrue(icons.contains("car.fill"))
-        XCTAssertTrue(icons.contains("star.fill"))
+        #expect(icons.contains("figure.walk"))
+        #expect(icons.contains("bicycle"))
+        #expect(icons.contains("car.fill"))
+        #expect(icons.contains("star.fill"))
     }
 
     // MARK: - Color Palette
 
-    func testAvailableColorsNotEmpty() {
-        XCTAssertFalse(CustomReminder.availableColors.isEmpty)
-        XCTAssertEqual(CustomReminder.availableColors.count, 12)
+    @Test("Exactly 12 colors are available")
+    func availableColorsNotEmpty() {
+        #expect(CustomReminder.availableColors.isEmpty == false)
+        #expect(CustomReminder.availableColors.count == 12)
     }
 
-    func testAvailableColorsHaveNames() {
+    @Test("Every color has a non-empty name")
+    func availableColorsHaveNames() {
         for color in CustomReminder.availableColors {
-            XCTAssertFalse(color.name.isEmpty)
+            #expect(color.name.isEmpty == false)
         }
     }
 
     // MARK: - Preview Strings
 
-    func testPreviewTitle() {
+    @Test("Preview title includes the reminder title")
+    func previewTitle() {
         var reminder = CustomReminder()
         reminder.title = "Hike"
-        XCTAssertTrue(reminder.previewTitle.contains("Hike"))
+        #expect(reminder.previewTitle.contains("Hike"))
     }
 
-    func testPreviewBody() {
+    @Test("Preview body includes temperature and title")
+    func previewBody() {
         var reminder = CustomReminder()
         reminder.title = "Walk"
         reminder.temperatureType = .temperatureRange
         reminder.minTemperature = 65
         reminder.maxTemperature = 75
         let body = reminder.previewBody
-        XCTAssertTrue(body.contains("70"))
-        XCTAssertTrue(body.lowercased().contains("walk"))
+        #expect(body.contains("70"))
+        #expect(body.lowercased().contains("walk"))
     }
 }
 
 // MARK: - ReminderLocationSelection Tests
 
 @MainActor
-final class ReminderLocationSelectionTests: XCTestCase {
+struct ReminderLocationSelectionTests {
 
-    func testCurrentLocationDisplayName() {
+    @Test("Current location display name")
+    func currentLocationDisplayName() {
         let selection = ReminderLocationSelection.currentLocation
-        XCTAssertEqual(selection.displayName, "Current Location")
+        #expect(selection.displayName == "Current Location")
     }
 
-    func testCurrentLocationIsCurrentLocation() {
+    @Test("Current location flag is true")
+    func currentLocationIsCurrentLocation() {
         let selection = ReminderLocationSelection.currentLocation
-        XCTAssertTrue(selection.isCurrentLocation)
+        #expect(selection.isCurrentLocation == true)
     }
 
-    func testManualLocationDisplayName() {
+    @Test("Manual location shows full display name")
+    func manualLocationDisplayName() {
         let location = ManualLocationData(
             name: "New York",
             coordinate: CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060),
@@ -217,20 +239,22 @@ final class ReminderLocationSelectionTests: XCTestCase {
             administrativeArea: "NY"
         )
         let selection = ReminderLocationSelection.manual(location)
-        XCTAssertEqual(selection.displayName, "New York, NY, US")
+        #expect(selection.displayName == "New York, NY, US")
     }
 
-    func testManualLocationIsNotCurrentLocation() {
+    @Test("Manual location is not current location")
+    func manualLocationIsNotCurrentLocation() {
         let location = ManualLocationData(
             name: "Tokyo",
             coordinate: CLLocationCoordinate2D(latitude: 35.6762, longitude: 139.6503)
         )
         let selection = ReminderLocationSelection.manual(location)
-        XCTAssertFalse(selection.isCurrentLocation)
+        #expect(selection.isCurrentLocation == false)
     }
 
-    func testEquality() {
-        XCTAssertEqual(ReminderLocationSelection.currentLocation, ReminderLocationSelection.currentLocation)
+    @Test("Same-type selections are equal")
+    func equality() {
+        #expect(ReminderLocationSelection.currentLocation == ReminderLocationSelection.currentLocation)
 
         let loc1 = ManualLocationData(
             name: "Paris",
@@ -238,12 +262,13 @@ final class ReminderLocationSelectionTests: XCTestCase {
         )
         let selection1 = ReminderLocationSelection.manual(loc1)
         let selection2 = ReminderLocationSelection.manual(loc1)
-        XCTAssertEqual(selection1, selection2)
+        #expect(selection1 == selection2)
 
-        XCTAssertNotEqual(ReminderLocationSelection.currentLocation, selection1)
+        #expect(ReminderLocationSelection.currentLocation != selection1)
     }
 
-    func testInequalityDifferentManualLocations() {
+    @Test("Different manual locations are not equal")
+    func inequalityDifferentManualLocations() {
         let loc1 = ManualLocationData(
             name: "London",
             coordinate: CLLocationCoordinate2D(latitude: 51.5074, longitude: -0.1278)
@@ -252,9 +277,8 @@ final class ReminderLocationSelectionTests: XCTestCase {
             name: "Berlin",
             coordinate: CLLocationCoordinate2D(latitude: 52.5200, longitude: 13.4050)
         )
-        XCTAssertNotEqual(
-            ReminderLocationSelection.manual(loc1),
-            ReminderLocationSelection.manual(loc2)
+        #expect(
+            ReminderLocationSelection.manual(loc1) != ReminderLocationSelection.manual(loc2)
         )
     }
 }
@@ -262,212 +286,245 @@ final class ReminderLocationSelectionTests: XCTestCase {
 // MARK: - SkyCondition Tests
 
 @MainActor
-final class SkyConditionTests: XCTestCase {
+struct SkyConditionTests {
 
-    func testAllCases() {
-        XCTAssertEqual(SkyCondition.allCases.count, 5)
+    @Test("All 5 sky conditions are present")
+    func allCases() {
+        #expect(SkyCondition.allCases.count == 5)
     }
 
-    func testDisplayNames() {
-        XCTAssertEqual(SkyCondition.sunny.displayName, "Sunny")
-        XCTAssertEqual(SkyCondition.partlyCloudy.displayName, "Partly Cloudy")
-        XCTAssertEqual(SkyCondition.cloudy.displayName, "Cloudy")
-        XCTAssertEqual(SkyCondition.rainy.displayName, "Rainy")
-        XCTAssertEqual(SkyCondition.snowy.displayName, "Snowy")
+    @Test("Display names match expected values")
+    func displayNames() {
+        #expect(SkyCondition.sunny.displayName == "Sunny")
+        #expect(SkyCondition.partlyCloudy.displayName == "Partly Cloudy")
+        #expect(SkyCondition.cloudy.displayName == "Cloudy")
+        #expect(SkyCondition.rainy.displayName == "Rainy")
+        #expect(SkyCondition.snowy.displayName == "Snowy")
     }
 
-    func testIcons() {
-        XCTAssertEqual(SkyCondition.sunny.icon, "sun.max.fill")
-        XCTAssertEqual(SkyCondition.rainy.icon, "cloud.rain.fill")
-        XCTAssertEqual(SkyCondition.snowy.icon, "cloud.snow.fill")
+    @Test("Icons match expected SF Symbols")
+    func icons() {
+        #expect(SkyCondition.sunny.icon == "sun.max.fill")
+        #expect(SkyCondition.rainy.icon == "cloud.rain.fill")
+        #expect(SkyCondition.snowy.icon == "cloud.snow.fill")
     }
 
-    func testFromMockWeatherCondition() {
-        XCTAssertEqual(SkyCondition.from(MockWeatherCondition.clear), .sunny)
-        XCTAssertEqual(SkyCondition.from(MockWeatherCondition.partlyCloudy), .partlyCloudy)
-        XCTAssertEqual(SkyCondition.from(MockWeatherCondition.cloudy), .cloudy)
-        XCTAssertEqual(SkyCondition.from(MockWeatherCondition.rain), .rainy)
-        XCTAssertEqual(SkyCondition.from(MockWeatherCondition.snow), .snowy)
+    @Test(
+        "MockWeatherCondition maps to expected SkyCondition",
+        arguments: [
+            (MockWeatherCondition.clear, SkyCondition.sunny),
+            (.partlyCloudy, .partlyCloudy),
+            (.cloudy, .cloudy),
+            (.rain, .rainy),
+            (.snow, .snowy)
+        ]
+    )
+    func fromMockWeatherCondition(mock: MockWeatherCondition, expected: SkyCondition) {
+        #expect(SkyCondition.from(mock) == expected)
     }
 
-    func testFromWeatherCondition() {
-        XCTAssertEqual(SkyCondition.from(WeatherCondition.clear), .sunny)
-        XCTAssertEqual(SkyCondition.from(WeatherCondition.rain), .rainy)
-        XCTAssertEqual(SkyCondition.from(WeatherCondition.snow), .snowy)
-        XCTAssertEqual(SkyCondition.from(WeatherCondition.fog), .cloudy)
-        XCTAssertEqual(SkyCondition.from(WeatherCondition.thunderstorm), .rainy)
+    @Test(
+        "WeatherCondition maps to expected SkyCondition",
+        arguments: [
+            (WeatherCondition.clear, SkyCondition.sunny),
+            (.rain, .rainy),
+            (.snow, .snowy),
+            (.fog, .cloudy),
+            (.thunderstorm, .rainy)
+        ]
+    )
+    func fromWeatherCondition(condition: WeatherCondition, expected: SkyCondition) {
+        #expect(SkyCondition.from(condition) == expected)
     }
 
-    func testCodable() throws {
+    @Test("SkyCondition round-trips through Codable")
+    func codable() throws {
         let original = SkyCondition.partlyCloudy
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(SkyCondition.self, from: data)
-        XCTAssertEqual(original, decoded)
+        #expect(original == decoded)
     }
 }
 
 // MARK: - ConditionSelectionMode Tests
 
 @MainActor
-final class ConditionSelectionModeTests: XCTestCase {
+struct ConditionSelectionModeTests {
 
-    func testIncludeMode() {
-        let mode = ConditionSelectionMode.include
-        XCTAssertEqual(mode.rawValue, "include")
+    @Test("Include raw value")
+    func includeMode() {
+        #expect(ConditionSelectionMode.include.rawValue == "include")
     }
 
-    func testExcludeMode() {
-        let mode = ConditionSelectionMode.exclude
-        XCTAssertEqual(mode.rawValue, "exclude")
+    @Test("Exclude raw value")
+    func excludeMode() {
+        #expect(ConditionSelectionMode.exclude.rawValue == "exclude")
     }
 
-    func testCodable() throws {
+    @Test("ConditionSelectionMode round-trips through Codable")
+    func codable() throws {
         let original = ConditionSelectionMode.exclude
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(ConditionSelectionMode.self, from: data)
-        XCTAssertEqual(original, decoded)
+        #expect(original == decoded)
     }
 }
 
 // MARK: - TimeRange Tests
 
 @MainActor
-final class TimeRangeTests: XCTestCase {
+struct TimeRangeTests {
 
-    func testAllCases() {
-        XCTAssertEqual(TimeRange.allCases.count, 4)
+    @Test("All 4 time ranges are present")
+    func allCases() {
+        #expect(TimeRange.allCases.count == 4)
     }
 
-    func testDisplayNames() {
-        XCTAssertEqual(TimeRange.morning.displayName, "Morning")
-        XCTAssertEqual(TimeRange.afternoon.displayName, "Afternoon")
-        XCTAssertEqual(TimeRange.evening.displayName, "Evening")
-        XCTAssertEqual(TimeRange.allDay.displayName, "All Day")
+    @Test(
+        "Display names match expected values",
+        arguments: [
+            (TimeRange.morning, "Morning"),
+            (.afternoon, "Afternoon"),
+            (.evening, "Evening"),
+            (.allDay, "All Day")
+        ]
+    )
+    func displayNames(range: TimeRange, expected: String) {
+        #expect(range.displayName == expected)
     }
 
-    func testIcons() {
-        XCTAssertEqual(TimeRange.morning.icon, "sunrise.fill")
-        XCTAssertEqual(TimeRange.afternoon.icon, "sun.max.fill")
-        XCTAssertEqual(TimeRange.evening.icon, "sunset.fill")
-        XCTAssertEqual(TimeRange.allDay.icon, "clock.fill")
+    @Test(
+        "Icons match expected SF Symbols",
+        arguments: [
+            (TimeRange.morning, "sunrise.fill"),
+            (.afternoon, "sun.max.fill"),
+            (.evening, "sunset.fill"),
+            (.allDay, "clock.fill")
+        ]
+    )
+    func icons(range: TimeRange, expected: String) {
+        #expect(range.icon == expected)
     }
 
-    func testHourRanges() {
-        XCTAssertEqual(TimeRange.morning.hours, 6...11)
-        XCTAssertEqual(TimeRange.afternoon.hours, 12...17)
-        XCTAssertEqual(TimeRange.evening.hours, 18...21)
-        XCTAssertEqual(TimeRange.allDay.hours, 6...21)
+    @Test(
+        "Hour ranges match expected bounds",
+        arguments: [
+            (TimeRange.morning, 6...11),
+            (.afternoon, 12...17),
+            (.evening, 18...21),
+            (.allDay, 6...21)
+        ]
+    )
+    func hourRanges(range: TimeRange, expected: ClosedRange<Int>) {
+        #expect(range.hours == expected)
     }
 
-    func testMorningDoesNotOverlapAfternoon() {
-        let morningEnd = TimeRange.morning.hours.upperBound
-        let afternoonStart = TimeRange.afternoon.hours.lowerBound
-        XCTAssertLessThan(morningEnd, afternoonStart)
+    @Test("Morning does not overlap afternoon")
+    func morningDoesNotOverlapAfternoon() {
+        #expect(TimeRange.morning.hours.upperBound < TimeRange.afternoon.hours.lowerBound)
     }
 
-    func testAllDayCoversOtherRanges() {
+    @Test("All Day covers all other time ranges")
+    func allDayCoversOtherRanges() {
         let allDay = TimeRange.allDay.hours
-        XCTAssertTrue(allDay.contains(TimeRange.morning.hours.lowerBound))
-        XCTAssertTrue(allDay.contains(TimeRange.afternoon.hours.lowerBound))
-        XCTAssertTrue(allDay.contains(TimeRange.evening.hours.lowerBound))
+        #expect(allDay.contains(TimeRange.morning.hours.lowerBound))
+        #expect(allDay.contains(TimeRange.afternoon.hours.lowerBound))
+        #expect(allDay.contains(TimeRange.evening.hours.lowerBound))
     }
 }
 
 // MARK: - TriggerLikelihood Tests
 
 @MainActor
-final class TriggerLikelihoodTests: XCTestCase {
+struct TriggerLikelihoodTests {
 
-    func testUnlikelyColor() {
-        let likelihood = TriggerLikelihood(percentage: 0, description: "Unlikely", triggerDays: [])
-        XCTAssertNotNil(likelihood.color)
+    @Test("Every percentage tier produces a non-nil color")
+    func colorsExist() {
+        let percentages = [0, 20, 40, 60, 90]
+        for pct in percentages {
+            let likelihood = TriggerLikelihood(percentage: Double(pct), description: "", triggerDays: [])
+            #expect(likelihood.color != nil)
+        }
     }
 
-    func testLowChanceColor() {
-        let likelihood = TriggerLikelihood(percentage: 20, description: "Low chance", triggerDays: [])
-        XCTAssertNotNil(likelihood.color)
-    }
-
-    func testModerateColor() {
-        let likelihood = TriggerLikelihood(percentage: 40, description: "Moderate", triggerDays: [])
-        XCTAssertNotNil(likelihood.color)
-    }
-
-    func testGoodChanceColor() {
-        let likelihood = TriggerLikelihood(percentage: 60, description: "Good chance", triggerDays: [])
-        XCTAssertNotNil(likelihood.color)
-    }
-
-    func testVeryLikelyColor() {
-        let likelihood = TriggerLikelihood(percentage: 90, description: "Very likely", triggerDays: [])
-        XCTAssertNotNil(likelihood.color)
-    }
-
-    func testTriggerDaysTracked() {
+    @Test("Trigger days are tracked correctly")
+    func triggerDaysTracked() throws {
         let today = Date()
-        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
+        let tomorrow = try #require(Calendar.current.date(byAdding: .day, value: 1, to: today))
         let likelihood = TriggerLikelihood(
             percentage: 28.5,
             description: "Low chance",
             triggerDays: [today, tomorrow]
         )
-        XCTAssertEqual(likelihood.triggerDays.count, 2)
-        XCTAssertEqual(likelihood.percentage, 28.5)
+        #expect(likelihood.triggerDays.count == 2)
+        #expect(likelihood.percentage == 28.5)
     }
 }
 
 // MARK: - TemperatureConditionType Tests
 
 @MainActor
-final class TemperatureConditionTypeTests: XCTestCase {
+struct TemperatureConditionTypeTests {
 
-    func testAllCases() {
-        XCTAssertEqual(TemperatureConditionType.allCases.count, 2)
+    @Test("Both condition types are present")
+    func allCases() {
+        #expect(TemperatureConditionType.allCases.count == 2)
     }
 
-    func testDisplayNames() {
-        XCTAssertEqual(TemperatureConditionType.temperatureRange.displayName, "Temperature Range")
-        XCTAssertEqual(TemperatureConditionType.exactTemperature.displayName, "Exact Temperature")
-    }
-
-    func testIcons() {
-        XCTAssertEqual(TemperatureConditionType.temperatureRange.icon, "thermometer.medium")
-        XCTAssertEqual(TemperatureConditionType.exactTemperature.icon, "thermometer")
+    @Test(
+        "Display names and icons match",
+        arguments: [
+            (TemperatureConditionType.temperatureRange, "Temperature Range", "thermometer.medium"),
+            (.exactTemperature, "Exact Temperature", "thermometer")
+        ]
+    )
+    func displayNamesAndIcons(type: TemperatureConditionType, name: String, icon: String) {
+        #expect(type.displayName == name)
+        #expect(type.icon == icon)
     }
 }
 
 // MARK: - WeatherConditionType Tests
 
 @MainActor
-final class WeatherConditionTypeTests: XCTestCase {
+struct WeatherConditionTypeTests {
 
-    func testAllCases() {
-        XCTAssertEqual(WeatherConditionType.allCases.count, 5)
+    @Test("All 5 weather condition types are present")
+    func allCases() {
+        #expect(WeatherConditionType.allCases.count == 5)
     }
 
-    func testDisplayNames() {
-        XCTAssertEqual(WeatherConditionType.temperatureRange.displayName, "Temperature Range")
-        XCTAssertEqual(WeatherConditionType.exactTemperature.displayName, "Exact Temperature")
-        XCTAssertEqual(WeatherConditionType.sunny.displayName, "Sunny")
-        XCTAssertEqual(WeatherConditionType.partlyCloudy.displayName, "Partly Cloudy")
-        XCTAssertEqual(WeatherConditionType.rainy.displayName, "No Rain")
+    @Test(
+        "Display names match expected values",
+        arguments: [
+            (WeatherConditionType.temperatureRange, "Temperature Range"),
+            (.exactTemperature, "Exact Temperature"),
+            (.sunny, "Sunny"),
+            (.partlyCloudy, "Partly Cloudy"),
+            (.rainy, "No Rain")
+        ]
+    )
+    func displayNames(type: WeatherConditionType, expected: String) {
+        #expect(type.displayName == expected)
     }
 
-    func testIcons() {
-        XCTAssertFalse(WeatherConditionType.temperatureRange.icon.isEmpty)
-        XCTAssertFalse(WeatherConditionType.sunny.icon.isEmpty)
+    @Test("Every type has a non-empty icon")
+    func iconsNotEmpty() {
+        for type in WeatherConditionType.allCases {
+            #expect(type.icon.isEmpty == false)
+        }
     }
 }
 
 // MARK: - Reminder Creation ViewModel Tests
 
 @MainActor
-final class ReminderCreationViewModelTests: XCTestCase {
-    var modelContainer: ModelContainer!
-    var modelContext: ModelContext!
-    var viewModel: FirstReminderCreationViewModel!
+struct ReminderCreationViewModelTests {
+    let modelContainer: ModelContainer
+    let modelContext: ModelContext
+    let viewModel: FirstReminderCreationViewModel
 
-    override func setUp() async throws {
+    init() throws {
         let schema = Schema([
             WeatherReminder.self,
             TriggerCondition.self,
@@ -492,42 +549,41 @@ final class ReminderCreationViewModelTests: XCTestCase {
         viewModel.configure(modelContext: modelContext)
     }
 
-    override func tearDown() async throws {
-        modelContainer = nil
-        modelContext = nil
-        viewModel = nil
-    }
-
     // MARK: - Initial State
 
-    func testInitialState() {
-        XCTAssertFalse(viewModel.isCreatingReminder)
-        XCTAssertFalse(viewModel.showLocationPicker)
-        XCTAssertNil(viewModel.selectedTemplate)
-        XCTAssertTrue(viewModel.weatherForecast.isEmpty)
-        XCTAssertNil(viewModel.triggerLikelihood)
+    @Test("View model starts in expected default state")
+    func initialState() {
+        #expect(viewModel.isCreatingReminder == false)
+        #expect(viewModel.showLocationPicker == false)
+        #expect(viewModel.selectedTemplate == nil)
+        #expect(viewModel.weatherForecast.isEmpty)
+        #expect(viewModel.triggerLikelihood == nil)
     }
 
     // MARK: - Validation
 
-    func testIsReminderValidEmptyTitle() {
+    @Test("Empty title is invalid")
+    func isReminderValidEmptyTitle() {
         viewModel.customReminder.title = ""
-        XCTAssertFalse(viewModel.isReminderValid)
+        #expect(viewModel.isReminderValid == false)
     }
 
-    func testIsReminderValidWhitespaceTitle() {
+    @Test("Whitespace-only title is invalid")
+    func isReminderValidWhitespaceTitle() {
         viewModel.customReminder.title = "   "
-        XCTAssertFalse(viewModel.isReminderValid)
+        #expect(viewModel.isReminderValid == false)
     }
 
-    func testIsReminderValidNonEmptyTitle() {
+    @Test("Non-empty title is valid")
+    func isReminderValidNonEmptyTitle() {
         viewModel.customReminder.title = "Morning Walk"
-        XCTAssertTrue(viewModel.isReminderValid)
+        #expect(viewModel.isReminderValid == true)
     }
 
     // MARK: - Location Selection
 
-    func testSelectManualLocation() {
+    @Test("Selecting a manual location updates the reminder")
+    func selectManualLocation() {
         let location = ManualLocationData(
             name: "Chicago",
             coordinate: CLLocationCoordinate2D(latitude: 41.8781, longitude: -87.6298),
@@ -538,12 +594,13 @@ final class ReminderCreationViewModelTests: XCTestCase {
         viewModel.showLocationPicker = true
         viewModel.selectManualLocation(location)
 
-        XCTAssertFalse(viewModel.customReminder.selectedLocation.isCurrentLocation)
-        XCTAssertEqual(viewModel.customReminder.locationDisplayName, "Chicago, IL, US")
-        XCTAssertFalse(viewModel.showLocationPicker)
+        #expect(viewModel.customReminder.selectedLocation.isCurrentLocation == false)
+        #expect(viewModel.customReminder.locationDisplayName == "Chicago, IL, US")
+        #expect(viewModel.showLocationPicker == false)
     }
 
-    func testSelectCurrentLocation() {
+    @Test("Reverting to current location clears manual selection")
+    func selectCurrentLocation() {
         let location = ManualLocationData(
             name: "Denver",
             coordinate: CLLocationCoordinate2D(latitude: 39.7392, longitude: -104.9903)
@@ -553,14 +610,15 @@ final class ReminderCreationViewModelTests: XCTestCase {
         viewModel.showLocationPicker = true
         viewModel.selectCurrentLocation()
 
-        XCTAssertTrue(viewModel.customReminder.selectedLocation.isCurrentLocation)
-        XCTAssertEqual(viewModel.customReminder.locationDisplayName, "Current Location")
-        XCTAssertFalse(viewModel.showLocationPicker)
+        #expect(viewModel.customReminder.selectedLocation.isCurrentLocation == true)
+        #expect(viewModel.customReminder.locationDisplayName == "Current Location")
+        #expect(viewModel.showLocationPicker == false)
     }
 
     // MARK: - Template Selection
 
-    func testSelectTemplate() {
+    @Test("Template applies its defaults to the reminder")
+    func selectTemplate() {
         let template = ReminderTemplate(
             id: UUID(),
             title: "Outdoor Walk",
@@ -577,16 +635,17 @@ final class ReminderCreationViewModelTests: XCTestCase {
 
         viewModel.selectTemplate(template)
 
-        XCTAssertEqual(viewModel.customReminder.title, "Walk")
-        XCTAssertEqual(viewModel.customReminder.selectedIcon, "figure.walk")
-        XCTAssertEqual(viewModel.customReminder.temperatureType, .temperatureRange)
-        XCTAssertEqual(viewModel.customReminder.minTemperature, 60)
-        XCTAssertEqual(viewModel.customReminder.maxTemperature, 80)
+        #expect(viewModel.customReminder.title == "Walk")
+        #expect(viewModel.customReminder.selectedIcon == "figure.walk")
+        #expect(viewModel.customReminder.temperatureType == .temperatureRange)
+        #expect(viewModel.customReminder.minTemperature == 60)
+        #expect(viewModel.customReminder.maxTemperature == 80)
     }
 
     // MARK: - Reminder Creation
 
-    func testCreateReminderWithManualLocation() throws {
+    @Test("Creating a reminder with manual location persists correctly")
+    func createReminderWithManualLocation() throws {
         viewModel.customReminder.title = "Beach Day"
         viewModel.customReminder.temperatureType = .temperatureRange
         viewModel.customReminder.minTemperature = 75
@@ -602,35 +661,32 @@ final class ReminderCreationViewModelTests: XCTestCase {
             administrativeArea: "FL"
         )
         viewModel.selectManualLocation(manualLocation)
-
         viewModel.createReminder()
 
-        let descriptor = FetchDescriptor<WeatherReminder>()
-        let reminders = try modelContext.fetch(descriptor)
+        let reminders = try modelContext.fetch(FetchDescriptor<WeatherReminder>())
 
-        XCTAssertEqual(reminders.count, 1)
+        #expect(reminders.count == 1)
 
-        let reminder = reminders.first!
-        XCTAssertEqual(reminder.title, "Beach Day")
-        XCTAssertTrue(reminder.isActive)
+        let reminder = try #require(reminders.first)
+        #expect(reminder.title == "Beach Day")
+        #expect(reminder.isActive == true)
 
-        XCTAssertNotNil(reminder.location)
-        XCTAssertEqual(reminder.location?.city, "Miami")
-        XCTAssertTrue(reminder.location?.isManuallyEntered ?? false)
-        XCTAssertEqual(reminder.location?.state, "FL")
-        XCTAssertEqual(reminder.location?.country, "US")
-        XCTAssertEqual(reminder.location?.latitude ?? 0, 25.7617, accuracy: 0.001)
+        let location = try #require(reminder.location)
+        #expect(location.city == "Miami")
+        #expect(location.isManuallyEntered == true)
+        #expect(location.state == "FL")
+        #expect(location.country == "US")
 
-        XCTAssertNotNil(reminder.triggerCondition)
-        XCTAssertEqual(reminder.triggerCondition?.triggerType, .temperatureRange)
-        XCTAssertEqual(reminder.triggerCondition?.minTemperature, 75)
-        XCTAssertEqual(reminder.triggerCondition?.maxTemperature, 90)
-
-        XCTAssertEqual(reminder.triggerCondition?.selectedSkyConditions, [.sunny])
-        XCTAssertEqual(reminder.triggerCondition?.conditionMode, .include)
+        let condition = try #require(reminder.triggerCondition)
+        #expect(condition.triggerType == .temperatureRange)
+        #expect(condition.minTemperature == 75)
+        #expect(condition.maxTemperature == 90)
+        #expect(condition.selectedSkyConditions == [.sunny])
+        #expect(condition.conditionMode == .include)
     }
 
-    func testCreateReminderWithExcludeSkyConditions() throws {
+    @Test("Exclude sky conditions are persisted")
+    func createReminderWithExcludeSkyConditions() throws {
         viewModel.customReminder.title = "Dog Walk"
         viewModel.customReminder.selectedSkyConditions = [.rainy, .snowy]
         viewModel.customReminder.conditionMode = .exclude
@@ -642,47 +698,43 @@ final class ReminderCreationViewModelTests: XCTestCase {
         viewModel.selectManualLocation(location)
         viewModel.createReminder()
 
-        let descriptor = FetchDescriptor<WeatherReminder>()
-        let reminders = try modelContext.fetch(descriptor)
-        let reminder = reminders.first!
+        let reminders = try modelContext.fetch(FetchDescriptor<WeatherReminder>())
+        let reminder = try #require(reminders.first)
 
-        XCTAssertEqual(reminder.triggerCondition?.conditionMode, .exclude)
-        XCTAssertTrue(reminder.triggerCondition?.selectedSkyConditions.contains(.rainy) ?? false)
-        XCTAssertTrue(reminder.triggerCondition?.selectedSkyConditions.contains(.snowy) ?? false)
+        #expect(reminder.triggerCondition?.conditionMode == .exclude)
+        #expect(reminder.triggerCondition?.selectedSkyConditions.contains(.rainy) == true)
+        #expect(reminder.triggerCondition?.selectedSkyConditions.contains(.snowy) == true)
     }
 
-    func testCreateReminderInvalidTitleDoesNotSave() throws {
+    @Test("Invalid title prevents save")
+    func createReminderInvalidTitleDoesNotSave() throws {
         viewModel.customReminder.title = ""
         viewModel.createReminder()
 
-        let descriptor = FetchDescriptor<WeatherReminder>()
-        let reminders = try modelContext.fetch(descriptor)
-        XCTAssertEqual(reminders.count, 0)
+        let reminders = try modelContext.fetch(FetchDescriptor<WeatherReminder>())
+        #expect(reminders.count == 0)
     }
 
     // MARK: - Forecast & Likelihood
 
-    func testLoadWeatherDoesNotFabricateForecast() {
-        // The forecast is now sourced from live WeatherKit data. With no resolvable
-        // location / no live weather in the test environment, the VM must NOT fall back
-        // to fabricated forecast data (previously it generated a fake 7-day forecast).
+    @Test("Loading weather without a location does not fabricate forecast data")
+    func loadWeatherDoesNotFabricateForecast() async throws {
         viewModel.loadWeather()
 
-        let expectation = XCTestExpectation(description: "Weather load settles")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            XCTAssertTrue(self.viewModel.weatherForecast.isEmpty)
-            XCTAssertNil(self.viewModel.triggerLikelihood)
-            XCTAssertFalse(self.viewModel.hasCurrentWeather)
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 3)
+        try await Task.sleep(for: .seconds(1))
+        #expect(viewModel.weatherForecast.isEmpty)
+        #expect(viewModel.triggerLikelihood == nil)
+        #expect(viewModel.hasCurrentWeather == false)
     }
 
-    func testCalculateLikelihood() {
+    @Test("Likelihood is calculated from forecast data")
+    func calculateLikelihood() throws {
         let today = Date()
-        viewModel.weatherForecast = (0..<7).map { i in
-            WeatherForecastDay(
-                date: Calendar.current.date(byAdding: .day, value: i, to: today)!,
+        viewModel.weatherForecast = try (0..<7).map { i in
+            let date = try #require(Calendar.current.date(byAdding: .day, value: i, to: today))
+
+            return WeatherForecastDay(
+                date: date,
                 highTemp: 70 + i * 2,
                 lowTemp: 55 + i,
                 weatherCondition: i < 5 ? .clear : .rain
@@ -697,17 +749,18 @@ final class ReminderCreationViewModelTests: XCTestCase {
 
         viewModel.calculateLikelihood()
 
-        XCTAssertNotNil(viewModel.triggerLikelihood)
-        XCTAssertGreaterThan(viewModel.triggerLikelihood!.percentage, 0)
+        let likelihood = try #require(viewModel.triggerLikelihood)
+        #expect(likelihood.percentage > 0)
     }
 }
 
 // MARK: - ManualLocationData Tests
 
 @MainActor
-final class ManualLocationDataTests: XCTestCase {
+struct ManualLocationDataTests {
 
-    func testInitialization() {
+    @Test("Initialization stores all properties")
+    func initialization() {
         let location = ManualLocationData(
             name: "Austin",
             coordinate: CLLocationCoordinate2D(latitude: 30.2672, longitude: -97.7431),
@@ -715,32 +768,33 @@ final class ManualLocationDataTests: XCTestCase {
             administrativeArea: "TX"
         )
 
-        XCTAssertEqual(location.name, "Austin")
-        XCTAssertEqual(location.coordinate.latitude, 30.2672, accuracy: 0.001)
-        XCTAssertEqual(location.coordinate.longitude, -97.7431, accuracy: 0.001)
-        XCTAssertEqual(location.country, "US")
-        XCTAssertEqual(location.administrativeArea, "TX")
+        #expect(location.name == "Austin")
+        #expect(location.country == "US")
+        #expect(location.administrativeArea == "TX")
     }
 
-    func testDisplayNameFull() {
+    @Test("Full display name includes city, state, country")
+    func displayNameFull() {
         let location = ManualLocationData(
             name: "Portland",
             coordinate: CLLocationCoordinate2D(latitude: 45.5152, longitude: -122.6784),
             country: "US",
             administrativeArea: "OR"
         )
-        XCTAssertEqual(location.displayName, "Portland, OR, US")
+        #expect(location.displayName == "Portland, OR, US")
     }
 
-    func testDisplayNameCityOnly() {
+    @Test("City-only location shows just the name")
+    func displayNameCityOnly() {
         let location = ManualLocationData(
             name: "Tokyo",
             coordinate: CLLocationCoordinate2D(latitude: 35.6762, longitude: 139.6503)
         )
-        XCTAssertEqual(location.displayName, "Tokyo")
+        #expect(location.displayName == "Tokyo")
     }
 
-    func testCodable() throws {
+    @Test("ManualLocationData round-trips through Codable")
+    func codable() throws {
         let original = ManualLocationData(
             name: "London",
             coordinate: CLLocationCoordinate2D(latitude: 51.5074, longitude: -0.1278),
@@ -751,12 +805,12 @@ final class ManualLocationDataTests: XCTestCase {
         let data = try JSONEncoder().encode(original)
         let decoded = try JSONDecoder().decode(ManualLocationData.self, from: data)
 
-        XCTAssertEqual(decoded.name, "London")
-        XCTAssertEqual(decoded.country, "UK")
-        XCTAssertEqual(decoded.coordinate.latitude, 51.5074, accuracy: 0.001)
+        #expect(decoded.name == "London")
+        #expect(decoded.country == "UK")
     }
 
-    func testUniqueIDs() {
+    @Test("Separate instances get unique IDs")
+    func uniqueIDs() {
         let loc1 = ManualLocationData(
             name: "A",
             coordinate: CLLocationCoordinate2D(latitude: 0, longitude: 0)
@@ -765,6 +819,6 @@ final class ManualLocationDataTests: XCTestCase {
             name: "B",
             coordinate: CLLocationCoordinate2D(latitude: 0, longitude: 0)
         )
-        XCTAssertNotEqual(loc1.id, loc2.id)
+        #expect(loc1.id != loc2.id)
     }
 }

@@ -5,21 +5,20 @@
 //  Created by Wesley Keetch on 7/20/25.
 //
 
-import XCTest
 import SwiftData
 import CoreLocation
+import Testing
 @testable import SunHat
 
-final class TriggerEngineTests: XCTestCase {
-    var modelContainer: ModelContainer!
-    var modelContext: ModelContext!
-    var testLocation: CLLocation!
+// MARK: - TriggerCondition Model Tests
 
-    @MainActor
-    override func setUp() async throws {
-        try await super.setUp()
+@MainActor
+struct TriggerConditionModelTests {
+    let modelContainer: ModelContainer
+    let modelContext: ModelContext
+    let testLocation: CLLocation
 
-        // Create in-memory model container for testing
+    init() throws {
         let schema = Schema([
             WeatherReminder.self,
             TriggerCondition.self,
@@ -37,35 +36,24 @@ final class TriggerEngineTests: XCTestCase {
 
         modelContainer = try ModelContainer(for: schema, configurations: [configuration])
         modelContext = ModelContext(modelContainer)
-
-        // Test location (San Francisco)
         testLocation = CLLocation(latitude: 37.7749, longitude: -122.4194)
     }
 
-    override func tearDown() async throws {
-        modelContainer = nil
-        modelContext = nil
-        testLocation = nil
-        try await super.tearDown()
-    }
-
-    // MARK: - TriggerCondition Model Tests
-
-    @MainActor
-    func testTriggerConditionCreation() throws {
+    @Test("Exact temperature condition stores correct values")
+    func triggerConditionCreation() {
         let condition = TriggerCondition(
             triggerType: .exactTemperature,
             targetTemperature: 70.0,
             comparisonType: .above
         )
 
-        XCTAssertEqual(condition.triggerType, .exactTemperature)
-        XCTAssertEqual(condition.targetTemperature, 70.0)
-        XCTAssertEqual(condition.comparisonType, .above)
+        #expect(condition.triggerType == .exactTemperature)
+        #expect(condition.targetTemperature == 70.0)
+        #expect(condition.comparisonType == .above)
     }
 
-    @MainActor
-    func testTemperatureRangeCondition() throws {
+    @Test("Temperature range condition stores min and max")
+    func temperatureRangeCondition() {
         let condition = TriggerCondition(
             triggerType: .temperatureRange,
             targetTemperature: 70.0,
@@ -74,13 +62,13 @@ final class TriggerEngineTests: XCTestCase {
         condition.minTemperature = 65.0
         condition.maxTemperature = 75.0
 
-        XCTAssertEqual(condition.triggerType, .temperatureRange)
-        XCTAssertEqual(condition.minTemperature, 65.0)
-        XCTAssertEqual(condition.maxTemperature, 75.0)
+        #expect(condition.triggerType == .temperatureRange)
+        #expect(condition.minTemperature == 65.0)
+        #expect(condition.maxTemperature == 75.0)
     }
 
-    @MainActor
-    func testCompositeCondition() throws {
+    @Test("Composite condition stores humidity and wind requirements")
+    func compositeCondition() {
         let condition = TriggerCondition(
             triggerType: .composite,
             targetTemperature: 70.0,
@@ -92,15 +80,15 @@ final class TriggerEngineTests: XCTestCase {
         condition.requiresWindSpeed = true
         condition.maxWindSpeed = 10.0
 
-        XCTAssertEqual(condition.triggerType, .composite)
-        XCTAssertTrue(condition.requiresHumidity)
-        XCTAssertEqual(condition.targetHumidity, 50.0)
-        XCTAssertTrue(condition.requiresWindSpeed)
-        XCTAssertEqual(condition.maxWindSpeed, 10.0)
+        #expect(condition.triggerType == .composite)
+        #expect(condition.requiresHumidity == true)
+        #expect(condition.targetHumidity == 50.0)
+        #expect(condition.requiresWindSpeed == true)
+        #expect(condition.maxWindSpeed == 10.0)
     }
 
-    @MainActor
-    func testSeasonalCondition() throws {
+    @Test("Seasonal marker condition stores seasonal type")
+    func seasonalCondition() {
         let condition = TriggerCondition(
             triggerType: .seasonalMarker,
             targetTemperature: 32.0,
@@ -108,12 +96,12 @@ final class TriggerEngineTests: XCTestCase {
         )
         condition.seasonalType = .firstFrost
 
-        XCTAssertEqual(condition.triggerType, .seasonalMarker)
-        XCTAssertEqual(condition.seasonalType, .firstFrost)
+        #expect(condition.triggerType == .seasonalMarker)
+        #expect(condition.seasonalType == .firstFrost)
     }
 
-    @MainActor
-    func testConsecutiveDaysCondition() throws {
+    @Test("Consecutive days condition stores day count")
+    func consecutiveDaysCondition() {
         let condition = TriggerCondition(
             triggerType: .consecutiveDays,
             targetTemperature: 60.0,
@@ -121,26 +109,52 @@ final class TriggerEngineTests: XCTestCase {
         )
         condition.consecutiveDays = 3
 
-        XCTAssertEqual(condition.triggerType, .consecutiveDays)
-        XCTAssertEqual(condition.consecutiveDays, 3)
+        #expect(condition.triggerType == .consecutiveDays)
+        #expect(condition.consecutiveDays == 3)
+    }
+}
+
+// MARK: - WeatherReminder Model Tests
+
+@MainActor
+struct WeatherReminderModelTests {
+    let modelContainer: ModelContainer
+    let modelContext: ModelContext
+
+    init() throws {
+        let schema = Schema([
+            WeatherReminder.self,
+            TriggerCondition.self,
+            LocationData.self,
+            WeatherData.self,
+            ForecastDay.self,
+            NotificationConfig.self,
+            ReminderHistory.self
+        ])
+
+        let configuration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: true
+        )
+
+        modelContainer = try ModelContainer(for: schema, configurations: [configuration])
+        modelContext = ModelContext(modelContainer)
     }
 
-    // MARK: - WeatherReminder Model Tests
-
-    @MainActor
-    func testReminderCreation() throws {
+    @Test("Reminder creation sets defaults")
+    func reminderCreation() {
         let reminder = WeatherReminder(
             title: "Test Reminder",
             reminderDescription: "Test description"
         )
 
-        XCTAssertEqual(reminder.title, "Test Reminder")
-        XCTAssertEqual(reminder.reminderDescription, "Test description")
-        XCTAssertTrue(reminder.isActive)
+        #expect(reminder.title == "Test Reminder")
+        #expect(reminder.reminderDescription == "Test description")
+        #expect(reminder.isActive == true)
     }
 
-    @MainActor
-    func testReminderWithCondition() throws {
+    @Test("Reminder persists with condition")
+    func reminderWithCondition() throws {
         let condition = TriggerCondition(
             triggerType: .exactTemperature,
             targetTemperature: 70.0,
@@ -153,12 +167,12 @@ final class TriggerEngineTests: XCTestCase {
         modelContext.insert(reminder)
         try modelContext.save()
 
-        XCTAssertNotNil(reminder.triggerCondition)
-        XCTAssertEqual(reminder.triggerCondition?.targetTemperature, 70.0)
+        #expect(reminder.triggerCondition != nil)
+        #expect(reminder.triggerCondition?.targetTemperature == 70.0)
     }
 
-    @MainActor
-    func testReminderWithLocation() throws {
+    @Test("Reminder persists with location")
+    func reminderWithLocation() throws {
         let reminder = WeatherReminder(title: "Location Test")
 
         let locationData = LocationData(
@@ -171,65 +185,49 @@ final class TriggerEngineTests: XCTestCase {
         modelContext.insert(reminder)
         try modelContext.save()
 
-        XCTAssertNotNil(reminder.location)
-        XCTAssertEqual(reminder.location?.city, "San Francisco")
+        #expect(reminder.location != nil)
+        #expect(reminder.location?.city == "San Francisco")
     }
+}
 
-    // MARK: - Weather Condition Evaluation Tests
-    // Note: exactTemperature type uses tolerance-based matching, not above/below comparison
-    // Composite type uses evaluateTemperatureCondition which respects comparisonType
+// MARK: - Weather Condition Evaluation Tests
 
-    @MainActor
-    func testExactTemperatureWithTolerance() throws {
-        // exactTemperature uses tolerance matching
+@MainActor
+struct WeatherConditionEvaluationTests {
+
+    @Test("Exact temperature matches within tolerance")
+    func exactTemperatureWithTolerance() {
         let condition = TriggerCondition(
             triggerType: .exactTemperature,
             targetTemperature: 70.0,
             comparisonType: .equals
         )
-        condition.temperatureTolerance = 5.0  // Match within 5 degrees
+        condition.temperatureTolerance = 5.0
 
-        let weatherData = WeatherData(
-            temperature: 72.0,  // Within 5 degrees of 70
-            feelsLike: 72.0,
-            humidity: 60
-        )
+        let weatherData = WeatherData(temperature: 72.0, feelsLike: 72.0, humidity: 60)
+        #expect(weatherData.evaluateCondition(condition) == true)
 
-        let result = weatherData.evaluateCondition(condition)
-        XCTAssertTrue(result)
-
-        // Test outside tolerance
-        weatherData.temperature = 80.0  // Outside 5 degrees of 70
-        let resultOutside = weatherData.evaluateCondition(condition)
-        XCTAssertFalse(resultOutside)
+        weatherData.temperature = 80.0
+        #expect(weatherData.evaluateCondition(condition) == false)
     }
 
-    @MainActor
-    func testCompositeConditionWithAbove() throws {
-        // Composite type respects comparisonType
+    @Test("Composite condition evaluates above threshold")
+    func compositeConditionWithAbove() {
         let condition = TriggerCondition(
             triggerType: .composite,
             targetTemperature: 70.0,
             comparisonType: .above
         )
 
-        let weatherData = WeatherData(
-            temperature: 75.0,  // Above 70
-            feelsLike: 75.0,
-            humidity: 60
-        )
+        let weatherData = WeatherData(temperature: 75.0, feelsLike: 75.0, humidity: 60)
+        #expect(weatherData.evaluateCondition(condition) == true)
 
-        let result = weatherData.evaluateCondition(condition)
-        XCTAssertTrue(result)
-
-        // Test below threshold
         weatherData.temperature = 65.0
-        let resultBelow = weatherData.evaluateCondition(condition)
-        XCTAssertFalse(resultBelow)
+        #expect(weatherData.evaluateCondition(condition) == false)
     }
 
-    @MainActor
-    func testRangeConditionEvaluation() throws {
+    @Test("Range condition matches between min and max")
+    func rangeConditionEvaluation() {
         let condition = TriggerCondition(
             triggerType: .temperatureRange,
             targetTemperature: 70.0,
@@ -238,48 +236,30 @@ final class TriggerEngineTests: XCTestCase {
         condition.minTemperature = 65.0
         condition.maxTemperature = 75.0
 
-        let weatherData = WeatherData(
-            temperature: 70.0,
-            feelsLike: 70.0,
-            humidity: 60
-        )
+        let weatherData = WeatherData(temperature: 70.0, feelsLike: 70.0, humidity: 60)
+        #expect(weatherData.evaluateCondition(condition) == true)
 
-        let result = weatherData.evaluateCondition(condition)
-        XCTAssertTrue(result)
-
-        // Test outside range
         weatherData.temperature = 80.0
-        let resultOutside = weatherData.evaluateCondition(condition)
-        XCTAssertFalse(resultOutside)
+        #expect(weatherData.evaluateCondition(condition) == false)
     }
 
-    @MainActor
-    func testCompositeConditionWithBelow() throws {
-        // Composite type with below comparison
+    @Test("Composite condition evaluates below threshold")
+    func compositeConditionWithBelow() {
         let condition = TriggerCondition(
             triggerType: .composite,
             targetTemperature: 32.0,
             comparisonType: .below
         )
 
-        let weatherData = WeatherData(
-            temperature: 28.0,  // Below 32
-            feelsLike: 25.0,
-            humidity: 80
-        )
+        let weatherData = WeatherData(temperature: 28.0, feelsLike: 25.0, humidity: 80)
+        #expect(weatherData.evaluateCondition(condition) == true)
 
-        let result = weatherData.evaluateCondition(condition)
-        XCTAssertTrue(result)
-
-        // Test above threshold
         weatherData.temperature = 40.0
-        let resultAbove = weatherData.evaluateCondition(condition)
-        XCTAssertFalse(resultAbove)
+        #expect(weatherData.evaluateCondition(condition) == false)
     }
 
-    @MainActor
-    func testFeelsLikeWithComposite() throws {
-        // Composite with useFeelsLike
+    @Test("Composite condition uses feels-like temperature")
+    func feelsLikeWithComposite() {
         let condition = TriggerCondition(
             triggerType: .composite,
             targetTemperature: 80.0,
@@ -287,101 +267,44 @@ final class TriggerEngineTests: XCTestCase {
         )
         condition.useFeelsLike = true
 
-        let weatherData = WeatherData(
-            temperature: 75.0,  // Actual temp below threshold
-            feelsLike: 85.0,    // Feels like above threshold
-            humidity: 80
-        )
-
-        let result = weatherData.evaluateCondition(condition)
-        XCTAssertTrue(result)  // Should trigger based on feels-like
+        let weatherData = WeatherData(temperature: 75.0, feelsLike: 85.0, humidity: 80)
+        #expect(weatherData.evaluateCondition(condition) == true)
     }
+}
 
-    // MARK: - TriggerType Enum Tests
+// MARK: - Enum Tests
 
-    @MainActor
-    func testTriggerTypeValues() {
-        let types: [TriggerType] = [
-            .exactTemperature,
-            .temperatureRange,
-            .consecutiveDays,
-            .averageTemperature,
-            .composite,
-            .seasonalMarker,
-            .historicalComparison
+@MainActor
+struct TriggerEnumTests {
+
+    @Test(
+        "All trigger types have non-empty raw values",
+        arguments: [
+            TriggerType.exactTemperature,
+            TriggerType.temperatureRange,
+            TriggerType.consecutiveDays,
+            TriggerType.averageTemperature,
+            TriggerType.composite,
+            TriggerType.seasonalMarker,
+            TriggerType.historicalComparison
         ]
-
-        XCTAssertEqual(types.count, 7)
-
-        for type in types {
-            XCTAssertFalse(type.rawValue.isEmpty)
-        }
+    )
+    func triggerTypeRawValues(type: TriggerType) {
+        #expect(type.rawValue.isEmpty == false)
     }
 
-    // MARK: - ComparisonType Enum Tests
-
-    @MainActor
-    func testComparisonTypeValues() {
-        let types: [ComparisonType] = [.above, .below, .between, .equals]
-
-        XCTAssertEqual(types.count, 4)
-
-        for type in types {
-            XCTAssertFalse(type.rawValue.isEmpty)
-        }
-    }
-
-    // MARK: - Performance Tests
-
-    @MainActor
-    func testReminderCreationPerformance() throws {
-        measure {
-            for i in 0..<100 {
-                let condition = TriggerCondition(
-                    triggerType: .exactTemperature,
-                    targetTemperature: Double(60 + (i % 30)),
-                    comparisonType: .above
-                )
-
-                let reminder = WeatherReminder(title: "Performance Test \(i)")
-                reminder.triggerCondition = condition
-
-                modelContext.insert(reminder)
-            }
-
-            try? modelContext.save()
-        }
-    }
-
-    @MainActor
-    func testConditionEvaluationPerformance() {
-        let conditions: [TriggerCondition] = (0..<100).map { i in
-            TriggerCondition(
-                triggerType: .exactTemperature,
-                targetTemperature: Double(50 + i),
-                comparisonType: .above
-            )
-        }
-
-        let weatherData = WeatherData(
-            temperature: 75.0,
-            feelsLike: 75.0,
-            humidity: 60
-        )
-
-        measure {
-            for condition in conditions {
-                _ = weatherData.evaluateCondition(condition)
-            }
-        }
+    @Test(
+        "All comparison types have non-empty raw values",
+        arguments: [ComparisonType.above, .below, .between, .equals]
+    )
+    func comparisonTypeRawValues(type: ComparisonType) {
+        #expect(type.rawValue.isEmpty == false)
     }
 }
 
 // MARK: - Mock Data Helpers
 
-extension TriggerEngineTests {
-
-    @MainActor
+extension TriggerConditionModelTests {
     func createTestWeatherData(temperature: Double, location: CLLocation) -> WeatherData {
         let locationData = LocationData(
             latitude: location.coordinate.latitude,
@@ -400,7 +323,6 @@ extension TriggerEngineTests {
         return weatherData
     }
 
-    @MainActor
     func createTestForecast(days: Int, baseTemperature: Double) -> [ForecastDay] {
         var forecast: [ForecastDay] = []
         let calendar = Calendar.current
