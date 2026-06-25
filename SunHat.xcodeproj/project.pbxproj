@@ -102,7 +102,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Only runs during Release (Archive uses Release); skipped in Debug.\n# Uses a date-time stamp (YYYYMMDDHHmm) so each archive always gets a\n# build number greater than the previous one. Writes only into the BUILT\n# product's Info.plist — source files are never touched, no git noise.\nif [ \"$CONFIGURATION\" != \"Release\" ]; then\n  exit 0\nfi\n\nBUILD_NUMBER=$(date +%Y%m%d%H%M)\nPLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\necho \"[SunHat] Setting CFBundleVersion to $BUILD_NUMBER\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUILD_NUMBER\" \"$PLIST\"\n";
+			shellScript = "# Only runs during Release (Archive uses Release); skipped in Debug.\n# Sets CFBundleVersion to the total git commit count — monotonically\n# increasing, deterministic (same commit = same number), and stays\n# clean next to build numbers like 5, 6, 7 rather than a timestamp.\n# Writes only into the BUILT product's Info.plist; source files are\n# never touched so there is no git noise.\nif [ \"$CONFIGURATION\" != \"Release\" ]; then\n  exit 0\nfi\n\nBUILD_NUMBER=$(/usr/bin/git -C \"$SRCROOT\" rev-list --count HEAD 2>/dev/null)\nif [ -z \"$BUILD_NUMBER\" ]; then\n  echo \"warning: [SunHat] Could not determine git commit count; skipping build number bump\"\n  exit 0\nfi\n\nPLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\necho \"[SunHat] Setting CFBundleVersion to $BUILD_NUMBER\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUILD_NUMBER\" \"$PLIST\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
