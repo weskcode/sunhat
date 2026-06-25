@@ -30,7 +30,7 @@ struct UserPreferencesOnboardingView: View {
                     progressIndicator
                         .padding(.top, geometry.safeAreaInsets.top + 10)
                     
-                    ScrollView(.vertical, showsIndicators: false) {
+                    ScrollView(.vertical) {
                         VStack(spacing: 0) {
                             // Header
                             headerSection
@@ -47,6 +47,7 @@ struct UserPreferencesOnboardingView: View {
                         }
                         .padding(.horizontal, 20)
                     }
+                    .scrollIndicators(.hidden)
                 }
             }
         }

@@ -131,16 +131,18 @@ final class BackgroundWeatherManager: ObservableObject {
         }
         
         // Honor the user's app-level notification preferences (master switch,
-        // quiet hours, weekend rule) before evaluating anything. The reminder
-        // stays eligible — its cooldown is only consumed when we actually fire.
+        // quiet hours, weekend rule, daily limit) before evaluating anything.
+        // The reminder stays eligible — its cooldown is only consumed when we actually fire.
+        let preferences: UserPreferences?
         do {
-            let preferences = try modelContext.fetch(FetchDescriptor<UserPreferences>()).first
+            preferences = try modelContext.fetch(FetchDescriptor<UserPreferences>()).first
             if let preferences, !preferences.allowsNotificationDelivery() {
-                logger.info("Skipping trigger check — notifications are off or quiet hours are active")
+                logger.info("Skipping trigger check — notifications are off, quiet hours active, or daily limit reached")
                 return
             }
         } catch {
             logger.warning("Couldn't load notification preferences; proceeding with defaults: \(error)")
+            preferences = nil
         }
 
         // Fetch all reminders and filter programmatically due to MainActor isolation
@@ -163,13 +165,20 @@ final class BackgroundWeatherManager: ObservableObject {
             var triggeredCount = 0
 
             for reminder in eligibleReminders {
+                // Re-check the daily limit before each notification in case we've
+                // hit the ceiling mid-loop (e.g. max=2 and this is the 3rd reminder).
+                if let prefs = preferences, !prefs.allowsNotificationDelivery() {
+                    logger.info("Daily notification limit reached — stopping evaluation")
+                    break
+                }
                 if await evaluateReminderCondition(reminder) {
-                   await sendNotificationForReminder(reminder)
-                   reminder.trigger(with: nil)
-                   triggeredCount += 1
-               }
+                    await sendNotificationForReminder(reminder)
+                    reminder.trigger(with: nil)
+                    preferences?.recordNotificationDelivered()
+                    triggeredCount += 1
+                }
             }
-            
+
             if triggeredCount > 0 {
                 try modelContext.save()
                 logger.info("Triggered \(triggeredCount) reminders")

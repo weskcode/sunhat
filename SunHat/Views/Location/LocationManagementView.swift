@@ -69,7 +69,7 @@ struct LocationManagementView: View {
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
+                    Menu("Location options", systemImage: "ellipsis.circle") {
                         Button("Add Location", systemImage: "plus") {
                             activeSheet = .addLocation
                         }
@@ -81,9 +81,8 @@ struct LocationManagementView: View {
                         Button("Privacy Info", systemImage: "hand.raised") {
                             activeSheet = .privacyInfo
                         }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
                     }
+                    .labelStyle(.iconOnly)
                 }
             }
             .onAppear {

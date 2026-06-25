@@ -482,7 +482,7 @@ struct ForecastPreviewView: View {
                 .fontWeight(.medium)
                 .foregroundStyle(.primary)
             
-            ScrollView(.horizontal, showsIndicators: false) {
+            ScrollView(.horizontal) {
                 HStack(spacing: 12) {
                     ForEach(Array(forecast.prefix(7)), id: \.id) { day in
                         ForecastDayView(day: day, willTrigger: evaluateDay(day))
@@ -490,6 +490,7 @@ struct ForecastPreviewView: View {
                 }
                 .padding(.horizontal, 4)
             }
+            .scrollIndicators(.hidden)
         }
     }
     

@@ -24,7 +24,11 @@ final class UserPreferences {
     var quietHoursEnd: Date = Calendar.current.date(from: DateComponents(hour: 7, minute: 0)) ?? Date()
     var allowWeekendNotifications: Bool = true
     var maximumDailyNotifications: Int = 5
-    
+    /// Running count of notifications delivered on `lastNotificationDate`. Resets
+    /// automatically when the calendar day changes so it self-heals across launches.
+    var dailyNotificationCount: Int = 0
+    var lastNotificationDate: Date?
+
     // Advanced notification preferences
     var notificationGrouping: NotificationGrouping = NotificationGrouping.byType
     var lockScreenBehavior: LockScreenBehavior = LockScreenBehavior.showPreviews
@@ -82,7 +86,26 @@ final class UserPreferences {
         guard notificationsEnabled else { return false }
         if !allowWeekendNotifications && calendar.isDateInWeekend(date) { return false }
         if quietHoursEnabled && isInQuietHours(date, calendar: calendar) { return false }
+        let todayCount: Int
+        if let lastDate = lastNotificationDate, calendar.isDate(lastDate, inSameDayAs: date) {
+            todayCount = dailyNotificationCount
+        } else {
+            todayCount = 0
+        }
+        if todayCount >= maximumDailyNotifications { return false }
         return true
+    }
+
+    /// Call after successfully delivering a notification to increment the daily count.
+    /// Automatically resets the counter when the calendar day has changed.
+    func recordNotificationDelivered(at date: Date = Date(), calendar: Calendar = .current) {
+        if let lastDate = lastNotificationDate, calendar.isDate(lastDate, inSameDayAs: date) {
+            dailyNotificationCount += 1
+        } else {
+            dailyNotificationCount = 1
+        }
+        lastNotificationDate = date
+        updateTimestamp()
     }
 
     /// Whether `date` falls inside the quiet-hours window, comparing only the

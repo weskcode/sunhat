@@ -75,10 +75,8 @@ struct WeatherView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(action: {
+                    Button("Change location", systemImage: "location") {
                         activeSheet = .locationPicker
-                    }) {
-                        Image(systemName: "location")
                     }
                 }
             }
@@ -302,7 +300,7 @@ struct WeatherView: View {
         VStack(alignment: .leading, spacing: 16) {
             sectionHeader(title: "24-Hour Forecast", icon: "clock.fill")
             
-            ScrollView(.horizontal, showsIndicators: false) {
+            ScrollView(.horizontal) {
                 LazyHStack(spacing: 16) {
                     ForEach(viewModel.hourlyForecast, id: \.hour) { hourData in
                         HourlyForecastCard(hourData: hourData)
@@ -310,6 +308,7 @@ struct WeatherView: View {
                 }
                 .padding(.horizontal, 20)
             }
+            .scrollIndicators(.hidden)
         }
         .padding(.vertical, 16)
         .glassEffect(in: .rect(cornerRadius: 20))

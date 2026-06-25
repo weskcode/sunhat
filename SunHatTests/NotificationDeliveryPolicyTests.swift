@@ -84,4 +84,46 @@ struct NotificationDeliveryPolicyTests {
         #expect(preferences.allowsNotificationDelivery(at: weekend(at: 12), calendar: calendar) == false)
         #expect(preferences.allowsNotificationDelivery(at: weekday(at: 12), calendar: calendar))
     }
+
+    @Test("Daily limit blocks after the maximum count is reached")
+    func dailyLimitEnforced() {
+        let preferences = makePreferences()
+        preferences.maximumDailyNotifications = 2
+        let now = weekday(at: 12)
+
+        #expect(preferences.allowsNotificationDelivery(at: now, calendar: calendar))
+        preferences.recordNotificationDelivered(at: now, calendar: calendar)
+        #expect(preferences.allowsNotificationDelivery(at: now, calendar: calendar))
+        preferences.recordNotificationDelivered(at: now, calendar: calendar)
+        // At the limit — should now be blocked
+        #expect(preferences.allowsNotificationDelivery(at: now, calendar: calendar) == false)
+    }
+
+    @Test("Daily count resets on a new calendar day")
+    func dailyCountResetsNextDay() {
+        let preferences = makePreferences()
+        preferences.maximumDailyNotifications = 1
+        let today = weekday(at: 12)
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
+
+        preferences.recordNotificationDelivered(at: today, calendar: calendar)
+        #expect(preferences.allowsNotificationDelivery(at: today, calendar: calendar) == false)
+        // New day — count should be treated as 0
+        #expect(preferences.allowsNotificationDelivery(at: tomorrow, calendar: calendar))
+    }
+
+    @Test("recordNotificationDelivered increments within a day and resets on new day")
+    func recordDeliveryCountBehavior() {
+        let preferences = makePreferences()
+        let today = weekday(at: 10)
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: today)!
+
+        preferences.recordNotificationDelivered(at: today, calendar: calendar)
+        #expect(preferences.dailyNotificationCount == 1)
+        preferences.recordNotificationDelivered(at: today, calendar: calendar)
+        #expect(preferences.dailyNotificationCount == 2)
+        // Cross day boundary
+        preferences.recordNotificationDelivered(at: tomorrow, calendar: calendar)
+        #expect(preferences.dailyNotificationCount == 1)
+    }
 }
