@@ -21,7 +21,6 @@ protocol WeatherAPI: Sendable {
 
 // MARK: - Apple WeatherKit Implementation
 
-@MainActor
 final class AppleWeatherKitAPI: WeatherAPI {
     nonisolated let provider: WeatherProvider = .appleWeatherKit
     private let weatherService = WeatherKit.WeatherService.shared
@@ -289,13 +288,13 @@ final class OpenWeatherMapAPI: WeatherAPI {
     }
     
     func fetchCurrentWeather(for location: CLLocation) async throws -> WeatherDataDTO {
-        let url = buildURL(endpoint: "weather", location: location)
+        let url = try buildURL(endpoint: "weather", location: location)
         let response: OpenWeatherCurrentResponse = try await performRequest(url: url)
         return await mapCurrentWeatherResponse(response, at: location)
     }
     
     func fetchForecast(for location: CLLocation, days: Int = 7) async throws -> [ForecastDayDTO] {
-        let url = buildURL(endpoint: "forecast", location: location)
+        let url = try buildURL(endpoint: "forecast", location: location)
         let response: OpenWeatherForecastResponse = try await performRequest(url: url)
         return await mapForecastResponse(response, days: days)
     }
@@ -326,20 +325,25 @@ final class OpenWeatherMapAPI: WeatherAPI {
         return currentWithForecast
     }
     
-    private func buildURL(endpoint: String, location: CLLocation) -> URL {
-        var components = URLComponents(string: "\(baseURL)/\(endpoint)")!
+    private func buildURL(endpoint: String, location: CLLocation) throws -> URL {
+        guard var components = URLComponents(string: "\(baseURL)/\(endpoint)") else {
+            throw URLError(.badURL)
+        }
         components.queryItems = [
             URLQueryItem(name: "lat", value: String(location.coordinate.latitude)),
             URLQueryItem(name: "lon", value: String(location.coordinate.longitude)),
             URLQueryItem(name: "appid", value: apiKey),
             URLQueryItem(name: "units", value: "imperial")
         ]
-        
+
         if endpoint == "forecast" {
             components.queryItems?.append(URLQueryItem(name: "cnt", value: "40")) // 5-day forecast with 3-hour intervals
         }
-        
-        return components.url!
+
+        guard let url = components.url else {
+            throw URLError(.badURL)
+        }
+        return url
     }
     
     private func performRequest<T: Decodable>(url: URL) async throws -> T {
@@ -550,7 +554,7 @@ private extension Measurement where UnitType == UnitSpeed {
 
 // MARK: - Data Transfer Objects
 
-struct WeatherDataDTO: Sendable {
+nonisolated struct WeatherDataDTO: Sendable {
     let temperature: Double
     let feelsLike: Double
     let humidity: Int
@@ -591,7 +595,7 @@ struct WeatherDataDTO: Sendable {
     }
 }
 
-struct ForecastDayDTO: Sendable {
+nonisolated struct ForecastDayDTO: Sendable {
     let date: Date
     let highTemperature: Double
     let lowTemperature: Double

@@ -502,9 +502,7 @@ struct HourlyWeatherData {
     let precipitationProbability: Int
     
     var timeLabel: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "ha"
-        return formatter.string(from: hour).lowercased()
+        hour.formatted(.dateTime.hour(.defaultDigits(amPM: .abbreviated))).lowercased()
     }
 }
 

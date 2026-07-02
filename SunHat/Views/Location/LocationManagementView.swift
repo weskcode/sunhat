@@ -436,7 +436,7 @@ struct LocationManagementView: View {
                 PrivacyInfoRow(
                     icon: "eye.slash.fill",
                     title: "No Tracking",
-                    description: "We never share your location with third parties"
+                    description: "Coordinates are sent only to enabled weather providers for forecasts"
                 )
                 
                 PrivacyInfoRow(

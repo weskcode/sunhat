@@ -368,6 +368,7 @@ final class DataPrivacyViewModel {
         }
 
         try context.save()
+        SunHatSearchIndexer.deleteAll()
     }
     
     private func resetAppState() async {
@@ -391,14 +392,26 @@ final class DataPrivacyViewModel {
     }
     
     private func saveAndShareFile(data: Data, fileName: String, contentType: UTType) async {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let fileURL = documentsPath.appendingPathComponent(fileName)
-        
+        let exportDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("SunHatPrivacyExports", isDirectory: true)
+        let fileURL = exportDirectory.appendingPathComponent(fileName)
+
         do {
-            try data.write(to: fileURL)
-            
+            try FileManager.default.createDirectory(
+                at: exportDirectory,
+                withIntermediateDirectories: true
+            )
+            try data.write(to: fileURL, options: [.atomic, .completeFileProtection])
+            try FileManager.default.setAttributes(
+                [.protectionKey: FileProtectionType.complete],
+                ofItemAtPath: fileURL.path
+            )
+
             await MainActor.run {
                 let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+                activityVC.completionWithItemsHandler = { _, _, _, _ in
+                    try? FileManager.default.removeItem(at: fileURL)
+                }
                 
                 if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                    let window = windowScene.windows.first,
@@ -412,6 +425,8 @@ final class DataPrivacyViewModel {
                     }
                     
                     rootVC.present(activityVC, animated: true)
+                } else {
+                    try? FileManager.default.removeItem(at: fileURL)
                 }
             }
             

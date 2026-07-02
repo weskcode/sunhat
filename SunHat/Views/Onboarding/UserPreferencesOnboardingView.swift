@@ -484,7 +484,8 @@ struct CompactTimingSelector: View {
                             .font(.caption)
                             .foregroundStyle(selectedTiming == timing ? .blue : .secondary)
                     }
-                    .frame(height: 32)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(timing.displayName)

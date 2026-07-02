@@ -49,7 +49,7 @@ struct CelebrationView: View {
                         .shadow(color: .green.opacity(0.3), radius: 20, x: 0, y: 10)
                         .scaleEffect(pulseScale)
                         .animation(
-                            .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
+                            reduceMotion ? nil : .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
                             value: pulseScale
                         )
                     
@@ -171,7 +171,7 @@ struct CelebrationView: View {
     
     private func startCelebration() {
         if reduceMotion {
-            showConfetti = true
+            showConfetti = false
             showCheckmark = true
             showText = true
             return
@@ -211,26 +211,41 @@ struct ConfettiParticles: View {
     let screenHeight: CGFloat
 
     @State private var particles: [ConfettiParticle] = []
-    @State private var timer: Timer?
+    @State private var startDate = Date()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let colors: [Color] = [
         .red, .blue, .green, .yellow, .orange, .purple, .pink, .cyan
     ]
     
     var body: some View {
-        ZStack {
-            ForEach(particles.indices, id: \.self) { index in
-                if index < particles.count {
-                    ConfettiParticleView(particle: particles[index])
+        Group {
+            if reduceMotion {
+                particleLayer(elapsed: 0)
+                    .opacity(0.35)
+            } else {
+                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { context in
+                    particleLayer(elapsed: context.date.timeIntervalSince(startDate))
                 }
             }
         }
-        .onAppear {
+        .task(id: reduceMotion) {
+            startDate = Date()
             generateParticles()
-            startAnimation()
         }
-        .onDisappear {
-            timer?.invalidate()
+    }
+
+    private func particleLayer(elapsed: TimeInterval) -> some View {
+        ZStack {
+            ForEach(particles.indices, id: \.self) { index in
+                ConfettiParticleView(
+                    particle: particles[index].projected(
+                        elapsed: elapsed,
+                        screenWidth: screenWidth,
+                        screenHeight: screenHeight
+                    )
+                )
+            }
         }
     }
     
@@ -249,34 +264,6 @@ struct ConfettiParticles: View {
         }
     }
     
-    private func startAnimation() {
-        timer = Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { _ in
-            Task { @MainActor [self] in
-                self.updateParticles()
-            }
-        }
-    }
-    
-    @MainActor
-    private func updateParticles() {
-        for index in particles.indices {
-            particles[index].update()
-
-            // Reset particle if it goes off screen
-            if particles[index].y > screenHeight + 50 {
-                particles[index] = ConfettiParticle(
-                    x: CGFloat.random(in: 0...screenWidth),
-                    y: -20,
-                    color: colors.randomElement() ?? .blue,
-                    rotation: Double.random(in: 0...360),
-                    size: CGFloat.random(in: 8...16),
-                    velocityX: CGFloat.random(in: -50...50),
-                    velocityY: CGFloat.random(in: 100...200),
-                    angularVelocity: Double.random(in: -180...180)
-                )
-            }
-        }
-    }
 }
 
 struct ConfettiParticleView: View {
@@ -301,17 +288,22 @@ struct ConfettiParticle {
     var velocityY: CGFloat
     let angularVelocity: Double
     
-    mutating func update() {
-        x += velocityX * 0.02
-        y += velocityY * 0.02
-        rotation += angularVelocity * 0.02
-        
-        // Apply gravity
-        velocityY += 300 * 0.02
-        
-        // Apply air resistance
-        velocityX *= 0.99
-        velocityY *= 0.99
+    func projected(elapsed: TimeInterval, screenWidth: CGFloat, screenHeight: CGFloat) -> ConfettiParticle {
+        let cycle = max(1.4, Double(screenHeight) / max(Double(velocityY), 1))
+        let t = elapsed.truncatingRemainder(dividingBy: cycle)
+        let projectedX = (x + velocityX * CGFloat(t)).truncatingRemainder(dividingBy: max(screenWidth, 1))
+        let gravityY = 0.5 * 300 * t * t
+
+        return ConfettiParticle(
+            x: projectedX < 0 ? projectedX + screenWidth : projectedX,
+            y: y + velocityY * CGFloat(t) + CGFloat(gravityY),
+            color: color,
+            rotation: rotation + angularVelocity * t,
+            size: size,
+            velocityX: velocityX,
+            velocityY: velocityY,
+            angularVelocity: angularVelocity
+        )
     }
 }
 

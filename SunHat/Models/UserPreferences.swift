@@ -511,26 +511,38 @@ enum NotificationSound: String, CaseIterable, Codable {
     }
     
     var fileName: String? {
+        let candidate: String?
         switch self {
-        case .default:
-            return nil // Use system default
-        case .none:
-            return nil
+        case .default, .none:
+            candidate = nil // Use system default
         case .chime:
-            return "notification_chime.caf"
+            candidate = "notification_chime.caf"
         case .bell:
-            return "notification_bell.caf"
+            candidate = "notification_bell.caf"
         case .alert:
-            return "notification_alert.caf"
+            candidate = "notification_alert.caf"
         case .gentle:
-            return "notification_gentle.caf"
+            candidate = "notification_gentle.caf"
         case .urgent:
-            return "notification_urgent.caf"
+            candidate = "notification_urgent.caf"
         case .weather:
-            return "notification_weather.caf"
+            candidate = "notification_weather.caf"
         case .nature:
-            return "notification_nature.caf"
+            candidate = "notification_nature.caf"
         }
+
+        // Only use a custom sound when the audio file is actually bundled.
+        // The .caf assets are not yet shipped, so without this guard the UI
+        // would promise distinct sounds while iOS silently plays the default.
+        // Returning nil here cleanly falls back to the system default, and the
+        // custom sounds activate automatically once the files are added.
+        guard let candidate else { return nil }
+        let resource = (candidate as NSString).deletingPathExtension
+        let ext = (candidate as NSString).pathExtension
+        guard Bundle.main.url(forResource: resource, withExtension: ext) != nil else {
+            return nil
+        }
+        return candidate
     }
     
     var icon: String {

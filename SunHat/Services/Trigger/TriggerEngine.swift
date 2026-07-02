@@ -94,7 +94,10 @@ actor TriggerEngine {
     
     @MainActor private static var _instances: [ObjectIdentifier: TriggerEngine] = [:]
     
-    static func shared(modelContainer: ModelContainer) async -> TriggerEngine {
+    static func shared(
+        modelContainer: ModelContainer,
+        weatherAPI: any WeatherAPI = AppleWeatherKitAPI()
+    ) async -> TriggerEngine {
         let key = ObjectIdentifier(modelContainer)
         
         return await MainActor.run {
@@ -102,13 +105,14 @@ actor TriggerEngine {
                 return existing
             }
             
-            let new = TriggerEngine(modelContainer: modelContainer)
+            let new = TriggerEngine(modelContainer: modelContainer, weatherAPI: weatherAPI)
             _instances[key] = new
             return new
         }
     }
     
     internal let modelActor: WeatherModelActor
+    let weatherAPI: any WeatherAPI
     let logger = Logger(subsystem: "org.wesley.sunhat", category: "TriggerEngine")
     
     // Evaluation caches
@@ -121,8 +125,9 @@ actor TriggerEngine {
     private var lastEvaluationTime: Date?
     private var averageEvaluationDuration: TimeInterval = 0
     
-    private init(modelContainer: ModelContainer) {
+    private init(modelContainer: ModelContainer, weatherAPI: any WeatherAPI) {
         self.modelActor = WeatherModelActor(modelContainer: modelContainer)
+        self.weatherAPI = weatherAPI
         logger.info("TriggerEngine initialized with ModelActor")
     }
     
@@ -191,11 +196,7 @@ actor TriggerEngine {
     
     func evaluateRemindersForLocation(_ reminderDataList: [ReminderEvaluationData], at location: CLLocation) async -> [TriggerEvaluationResult] {
         do {
-            // Fetch current weather data for the location using Task isolation
-            let weatherTransfer = try await Task { @MainActor in
-                let weatherData = try await WeatherService.shared.fetchWeatherData(for: location)
-                return ModelDataConverter.convertWeatherData(weatherData)
-            }.value
+            let weatherTransfer = try await fetchWeatherTransfer(for: location)
             
             var results: [TriggerEvaluationResult] = []
             
@@ -237,10 +238,7 @@ actor TriggerEngine {
             currentWeatherData = providedData
         } else {
             do {
-                currentWeatherData = try await Task { @MainActor in
-                    let weather = try await WeatherService.shared.fetchWeatherData(for: location)
-                    return ModelDataConverter.convertWeatherData(weather)
-                }.value
+                currentWeatherData = try await fetchWeatherTransfer(for: location)
             } catch {
                 logger.warning("Failed to fetch weather data for evaluation: \(error)")
                 return nil
@@ -291,6 +289,49 @@ actor TriggerEngine {
         setCachedResult(result, for: reminderId)
 
         return result
+    }
+
+    private func fetchWeatherTransfer(for location: CLLocation) async throws -> WeatherDataTransfer {
+        let weatherData = try await weatherAPI.fetchWeatherData(for: location)
+        return WeatherDataTransfer(
+            timestamp: Date(),
+            temperature: weatherData.temperature,
+            apparentTemperature: weatherData.feelsLike,
+            humidity: weatherData.humidity,
+            windSpeed: weatherData.windSpeed,
+            pressure: weatherData.pressure,
+            visibility: weatherData.visibility,
+            uvIndex: weatherData.uvIndex,
+            dewPoint: weatherData.dewPoint,
+            windDirectionDegrees: Double(weatherData.windDirection),
+            windGust: nil,
+            precipitationAmount: weatherData.precipitationAmount,
+            precipitationProbability: weatherData.forecast.first?.precipitationProbability ?? 0,
+            cloudCoverage: weatherData.cloudCover,
+            airQualityIndex: nil,
+            pm25: nil,
+            sunrise: nil,
+            sunset: nil,
+            weatherCondition: weatherData.weatherCondition,
+            weatherDescription: weatherData.weatherCondition.rawValue,
+            locationLatitude: location.coordinate.latitude,
+            locationLongitude: location.coordinate.longitude,
+            forecastDays: weatherData.forecast.map { forecast in
+                ForecastDayTransfer(
+                    date: forecast.date,
+                    highTemperature: forecast.highTemperature,
+                    lowTemperature: forecast.lowTemperature,
+                    averageTemperature: (forecast.highTemperature + forecast.lowTemperature) / 2,
+                    weatherCondition: forecast.weatherCondition,
+                    precipitationProbability: forecast.precipitationProbability,
+                    precipitationAmount: forecast.precipitationAmount,
+                    precipitationType: forecast.precipitationType,
+                    windSpeed: forecast.windSpeed,
+                    humidity: forecast.humidity,
+                    cloudCover: forecast.cloudCover
+                )
+            }
+        )
     }
     
     // MARK: - Cache Helper Methods

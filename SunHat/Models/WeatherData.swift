@@ -31,8 +31,12 @@ class WeatherData {
     var visibility: Double = 0.0
     var uvIndex: Double = 0.0
     var cloudCover: Int = 0
+    // Unused in code, but retained intentionally. Removing it is a SwiftData
+    // schema change against an existing persistent app-group store; the benefit
+    // (one unused column) does not justify a schema migration for shipped/TestFlight
+    // installs. Safe to remove later alongside a deliberate migration pass.
     var cloudCoverage: Int = 0
-    
+
     // Wind data
     var windSpeed: Double = 0.0
     var windDirection: Int = 0
@@ -155,9 +159,7 @@ class ForecastDay {
         self.precipitationType = .none
         self.confidence = .medium
         
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEEE"
-        self.dayOfWeek = formatter.string(from: date)
+        self.dayOfWeek = date.formatted(.dateTime.weekday(.wide))
     }
 }
 
@@ -403,4 +405,3 @@ extension WeatherData {
         }
     }
 }
-

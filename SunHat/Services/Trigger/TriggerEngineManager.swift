@@ -41,7 +41,7 @@ final class TriggerEngineManager: ObservableObject {
     func configure(modelContainer: ModelContainer) async {
         self.modelContainer = modelContainer
         self.triggerEngine = await TriggerEngine.shared(modelContainer: modelContainer)
-        await notificationManager.configure()
+        await notificationManager.configure(modelContainer: modelContainer)
         logger.info("TriggerEngineManager configured")
     }
     
@@ -322,58 +322,23 @@ actor TriggerNotificationManager {
     
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "TriggerNotificationManager")
     private var isConfigured = false
+    private var modelContainer: ModelContainer?
     
     private init() {}
     
-    func configure() async {
-        // Request notification permissions
-        let center = UNUserNotificationCenter.current()
-        
-        do {
-            let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
-            if granted {
-                await setupNotificationCategories()
-                isConfigured = true
-                logger.info("Notification permissions granted and categories configured")
-            } else {
-                logger.warning("Notification permissions denied")
-            }
-        } catch {
-            logger.error("Failed to request notification permissions: \(error)")
+    func configure(modelContainer: ModelContainer? = nil) async {
+        if let modelContainer {
+            self.modelContainer = modelContainer
         }
+
+        await setupNotificationCategories()
+        isConfigured = true
+        logger.info("Notification categories configured")
     }
     
     private func setupNotificationCategories() async {
         let center = UNUserNotificationCenter.current()
-        
-        // Create actions
-        let completeAction = UNNotificationAction(
-            identifier: "COMPLETE_ACTION",
-            title: "Mark Complete",
-            options: [.foreground]
-        )
-        
-        let snoozeAction = UNNotificationAction(
-            identifier: "SNOOZE_ACTION",
-            title: "Snooze 2h",
-            options: []
-        )
-        
-        let viewAction = UNNotificationAction(
-            identifier: "VIEW_ACTION",
-            title: "View Details",
-            options: [.foreground]
-        )
-        
-        // Create category
-        let triggerCategory = UNNotificationCategory(
-            identifier: "WEATHER_TRIGGER",
-            actions: [completeAction, snoozeAction, viewAction],
-            intentIdentifiers: [],
-            options: [.customDismissAction]
-        )
-        
-        center.setNotificationCategories([triggerCategory])
+        SunHatNotificationCategoryRegistry.register(center: center)
     }
     
     func sendTriggerNotification(for result: TriggerEvaluationResult, isBackground: Bool) async throws {
@@ -384,7 +349,7 @@ actor TriggerNotificationManager {
         let content = UNMutableNotificationContent()
         content.title = "Weather Condition Met!"
         content.body = result.triggerReason
-        content.categoryIdentifier = "WEATHER_TRIGGER"
+        content.categoryIdentifier = SunHatNotificationCategoryIdentifier.weatherTrigger
         content.sound = .default
         
         // Add weather context if available
@@ -430,7 +395,7 @@ actor TriggerNotificationManager {
         let content = UNMutableNotificationContent()
         content.title = "Weather Forecast Alert"
         content.body = "Your weather condition may be met in approximately \(hoursInAdvance) hours"
-        content.categoryIdentifier = "WEATHER_TRIGGER"
+        content.categoryIdentifier = SunHatNotificationCategoryIdentifier.weatherTrigger
         content.sound = .default
         content.subtitle = result.triggerReason
         
@@ -483,11 +448,13 @@ actor TriggerNotificationManager {
         }
         
         switch response.actionIdentifier {
-        case "COMPLETE_ACTION":
+        case SunHatNotificationActionIdentifier.complete:
             await handleCompleteAction(reminderId: reminderId)
-        case "SNOOZE_ACTION":
+        case SunHatNotificationActionIdentifier.snooze:
             await handleSnoozeAction(reminderId: reminderId, hours: 2)
-        case "VIEW_ACTION":
+        case SunHatNotificationActionIdentifier.pause:
+            await handlePauseAction(reminderId: reminderId)
+        case SunHatNotificationActionIdentifier.view, SunHatNotificationActionIdentifier.viewForecast:
             await handleViewAction(reminderId: reminderId)
         case UNNotificationDefaultActionIdentifier:
             await handleViewAction(reminderId: reminderId)
@@ -498,6 +465,10 @@ actor TriggerNotificationManager {
     
     private func handleCompleteAction(reminderId: UUID) async {
         logger.info("User marked reminder \(reminderId) as complete")
+        await persistReminderAction(reminderId: reminderId) { actor in
+            try await actor.completeReminder(id: reminderId)
+        }
+
         // Remove from triggered list
         await MainActor.run {
             TriggerEngineManager.shared.triggeredReminders.removeAll { $0 == reminderId }
@@ -509,6 +480,9 @@ actor TriggerNotificationManager {
     
     private func handleSnoozeAction(reminderId: UUID, hours: Int) async {
         logger.info("User snoozed reminder \(reminderId) for \(hours) hours")
+        await persistReminderAction(reminderId: reminderId) { actor in
+            try await actor.snoozeReminder(id: reminderId, hours: hours)
+        }
         
         // Remove from current triggered list
         await MainActor.run {
@@ -526,10 +500,40 @@ actor TriggerNotificationManager {
             } catch { }
         }
     }
+
+    private func handlePauseAction(reminderId: UUID) async {
+        logger.info("User paused reminder \(reminderId)")
+        await persistReminderAction(reminderId: reminderId) { actor in
+            try await actor.pauseReminder(id: reminderId)
+        }
+
+        await MainActor.run {
+            TriggerEngineManager.shared.triggeredReminders.removeAll { $0 == reminderId }
+        }
+
+        await cancelNotifications(for: reminderId)
+    }
     
     private func handleViewAction(reminderId: UUID) async {
         logger.info("User requested to view details for reminder \(reminderId)")
         // This would typically navigate to the reminder detail view
         // The UI layer would handle this navigation
+    }
+
+    private func persistReminderAction(
+        reminderId: UUID,
+        action: @Sendable (WeatherModelActor) async throws -> Bool
+    ) async {
+        guard let modelContainer else {
+            logger.warning("Cannot persist notification action without a model container: \(reminderId)")
+            return
+        }
+
+        do {
+            let modelActor = WeatherModelActor(modelContainer: modelContainer)
+            _ = try await action(modelActor)
+        } catch {
+            logger.error("Failed to persist notification action for \(reminderId): \(error.localizedDescription)")
+        }
     }
 }

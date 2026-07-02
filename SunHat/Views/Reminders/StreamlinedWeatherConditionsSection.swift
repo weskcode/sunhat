@@ -118,9 +118,10 @@ struct StreamlinedWeatherConditionsSection: View {
             }
             .foregroundStyle(isSelected ? .white : .secondary)
             .frame(maxWidth: .infinity)
-            .frame(height: 32)
+            .frame(minHeight: 44)
             .background(isSelected ? selectedFill : Color(.tertiarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 8))
+            .contentShape(RoundedRectangle(cornerRadius: 8))
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(viewModel.customReminder.conditionMode == mode ? .isSelected : [])

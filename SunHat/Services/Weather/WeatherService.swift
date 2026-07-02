@@ -333,14 +333,15 @@ class WeatherServiceActor {
         logger.info("Handling background weather refresh")
 
         logger.debug("Fetching active reminders")
-        // Get all active weather reminders with locations
-        let descriptor = FetchDescriptor<WeatherReminder>()
+        let descriptor = FetchDescriptor<WeatherReminder>(
+            predicate: #Predicate { reminder in
+                reminder.isActive && !reminder.isCompleted && !reminder.isPaused && reminder.location != nil
+            }
+        )
 
         let activeReminders: [WeatherReminder]
         do {
-            let allReminders = try modelContext.fetch(descriptor)
-            // Filter manually to avoid Predicate key path issues
-            activeReminders = allReminders.filter { $0.isActive && $0.location != nil }
+            activeReminders = try modelContext.fetch(descriptor)
         } catch {
             logger.error("Failed to fetch active reminders for background refresh: \(error)")
             return

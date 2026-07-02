@@ -28,6 +28,7 @@ final class DashboardViewModel: ObservableObject {
     @Published var weatherDescription: String = "Loading..."
     @Published var weatherIconName: String = "cloud.fill"
     @Published var weatherIconColor: Color = .gray
+    @Published var weatherCondition: WeatherCondition = .unknown
     
     @Published var currentLocationName: String = "Unknown Location"
     @Published var currentWeatherData: WeatherDataTransfer?
@@ -252,24 +253,19 @@ final class DashboardViewModel: ObservableObject {
            locationPermissionManager.authorizationStatus == .authorizedAlways {
             locationPermissionManager.getCurrentLocation()
 
-            // Poll up to 10 seconds
-            for _ in 0..<20 {
-                try? await Task.sleep(for: .milliseconds(500))
-                if let loc = locationPermissionManager.currentLocation {
-                    await updateLocationName(for: loc)
-                    return loc
-                }
+            if let loc = await waitForCurrentLocation() {
+                await updateLocationName(for: loc)
+                return loc
             }
         }
 
-        // 5) Last resort: request permission and try one more time
+        // 5) Last resort: request permission and wait briefly for a resulting location.
+        // The system permission callback is not guaranteed in tests or edge cases, so
+        // avoid waiting on an unbounded continuation here.
         if locationPermissionManager.authorizationStatus == .notDetermined {
-            await withCheckedContinuation { continuation in
-                locationPermissionManager.requestLocationPermission { _ in
-                    continuation.resume()
-                }
-            }
-            if let loc = locationPermissionManager.currentLocation {
+            locationPermissionManager.requestLocationPermission { _ in }
+
+            if let loc = await waitForCurrentLocation() {
                 await updateLocationName(for: loc)
                 return loc
             }
@@ -280,6 +276,23 @@ final class DashboardViewModel: ObservableObject {
         currentLocationName = "Location Unavailable"
         // Return a zero-coordinate so weather fetch will fail gracefully
         return CLLocation(latitude: 0, longitude: 0)
+    }
+
+    private func waitForCurrentLocation(maxAttempts: Int = 20) async -> CLLocation? {
+        for _ in 0..<maxAttempts {
+            try? await Task.sleep(for: .milliseconds(500))
+
+            if let loc = locationPermissionManager.currentLocation {
+                return loc
+            }
+
+            if locationPermissionManager.authorizationStatus == .denied ||
+                locationPermissionManager.authorizationStatus == .restricted {
+                return nil
+            }
+        }
+
+        return nil
     }
     
     private func updateLocationName(for location: CLLocation) async {
@@ -304,6 +317,7 @@ final class DashboardViewModel: ObservableObject {
     }
     
     private func updateWeatherIcon(for condition: WeatherCondition) {
+        weatherCondition = condition
         let (iconName, color) = weatherIconConfig(for: condition)
         weatherIconName = iconName
         weatherIconColor = color

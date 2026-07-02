@@ -150,7 +150,7 @@ struct SettingsView: View {
         } header: {
             Text("Location")
         } footer: {
-            Text("Your location is only used to fetch weather for your reminders and never leaves your device.")
+            Text("Your location is used only to fetch forecasts from enabled weather providers for your reminders.")
         }
     }
 

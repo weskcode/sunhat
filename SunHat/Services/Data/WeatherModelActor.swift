@@ -302,6 +302,45 @@ do {
         )
     }
 
+    @discardableResult
+    func completeReminder(id reminderId: UUID) async throws -> Bool {
+        guard let reminder = try fetchReminder(id: reminderId) else {
+            logger.warning("Cannot complete missing reminder: \(reminderId)")
+            return false
+        }
+
+        reminder.complete()
+        try modelContext.save()
+        logger.info("Completed reminder from notification action: \(reminderId)")
+        return true
+    }
+
+    @discardableResult
+    func snoozeReminder(id reminderId: UUID, hours: Int) async throws -> Bool {
+        guard let reminder = try fetchReminder(id: reminderId) else {
+            logger.warning("Cannot snooze missing reminder: \(reminderId)")
+            return false
+        }
+
+        reminder.snooze(for: hours)
+        try modelContext.save()
+        logger.info("Snoozed reminder from notification action: \(reminderId)")
+        return true
+    }
+
+    @discardableResult
+    func pauseReminder(id reminderId: UUID) async throws -> Bool {
+        guard let reminder = try fetchReminder(id: reminderId) else {
+            logger.warning("Cannot pause missing reminder: \(reminderId)")
+            return false
+        }
+
+        reminder.pause()
+        try modelContext.save()
+        logger.info("Paused reminder from notification action: \(reminderId)")
+        return true
+    }
+
     /// Fetches active reminders for dashboard display
     func fetchActiveRemindersForDisplay() async throws -> [WeatherReminderDisplay] {
         logger.debug("Fetching active reminders for display")
@@ -385,6 +424,16 @@ do {
 
         logger.info("Found \(displays.count) active reminders for display")
         return displays
+    }
+
+    private func fetchReminder(id reminderId: UUID) throws -> WeatherReminder? {
+        let descriptor = FetchDescriptor<WeatherReminder>(
+            predicate: #Predicate { reminder in
+                reminder.id == reminderId
+            }
+        )
+
+        return try modelContext.fetch(descriptor).first
     }
 
 }
@@ -474,6 +523,22 @@ struct WeatherDataTransfer: Sendable {
     let weatherDescription: String
     let locationLatitude: Double
     let locationLongitude: Double
+    let forecastDays: [ForecastDayTransfer]
+}
+
+/// Sendable version of ForecastDay for trigger evaluation
+struct ForecastDayTransfer: Sendable {
+    let date: Date
+    let highTemperature: Double
+    let lowTemperature: Double
+    let averageTemperature: Double
+    let weatherCondition: WeatherCondition
+    let precipitationProbability: Int
+    let precipitationAmount: Double
+    let precipitationType: PrecipitationType
+    let windSpeed: Double
+    let humidity: Int
+    let cloudCover: Int
 }
 
 /// Sendable version of ForecastDay for UI display
@@ -640,7 +705,22 @@ public final class ModelDataConverter {
             weatherCondition: weatherData.weatherCondition,
             weatherDescription: weatherData.weatherDescription,
             locationLatitude: weatherData.locationLatitude,
-            locationLongitude: weatherData.locationLongitude
+            locationLongitude: weatherData.locationLongitude,
+            forecastDays: weatherData.forecastDays.map { forecast in
+                ForecastDayTransfer(
+                    date: forecast.date,
+                    highTemperature: forecast.highTemperature,
+                    lowTemperature: forecast.lowTemperature,
+                    averageTemperature: forecast.averageTemperature,
+                    weatherCondition: forecast.weatherCondition,
+                    precipitationProbability: forecast.precipitationProbability,
+                    precipitationAmount: forecast.precipitationAmount,
+                    precipitationType: forecast.precipitationType,
+                    windSpeed: forecast.windSpeed,
+                    humidity: forecast.humidity,
+                    cloudCover: forecast.cloudCover
+                )
+            }
         )
     }
     

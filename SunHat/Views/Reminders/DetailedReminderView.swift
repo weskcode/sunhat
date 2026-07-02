@@ -126,6 +126,7 @@ struct DetailedReminderView: View {
         }
         .onDisappear {
             viewModel.stopLivePrediction()
+            viewModel.stopWeatherRefresh()
         }
     }
     

@@ -121,17 +121,18 @@ final class UserPreferencesViewModel {
     }
     
     func exportPreferences() -> [String: Any] {
+        let formatter = ISO8601DateFormatter()
         return [
             "temperatureUnit": preferences.temperatureUnit.rawValue,
             "defaultNotificationTiming": preferences.defaultNotificationTiming.rawValue,
             "selectedActivityInterests": preferences.selectedActivityInterests,
             "quietHoursEnabled": preferences.quietHoursEnabled,
-            "quietHoursStart": ISO8601DateFormatter().string(from: preferences.quietHoursStart),
-            "quietHoursEnd": ISO8601DateFormatter().string(from: preferences.quietHoursEnd),
+            "quietHoursStart": formatter.string(from: preferences.quietHoursStart),
+            "quietHoursEnd": formatter.string(from: preferences.quietHoursEnd),
             "allowWeekendNotifications": preferences.allowWeekendNotifications,
             "maximumDailyNotifications": preferences.maximumDailyNotifications,
-            "createdAt": ISO8601DateFormatter().string(from: preferences.createdAt),
-            "updatedAt": ISO8601DateFormatter().string(from: preferences.updatedAt)
+            "createdAt": formatter.string(from: preferences.createdAt),
+            "updatedAt": formatter.string(from: preferences.updatedAt)
         ]
     }
 }

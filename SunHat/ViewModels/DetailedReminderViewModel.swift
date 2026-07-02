@@ -31,7 +31,7 @@ final class DetailedReminderViewModel: ObservableObject {
     private var weatherService = WeatherService.shared
     private var locationManager = CLLocationManager()
     private var cancellables = Set<AnyCancellable>()
-    private var predictionTimer: Timer?
+    private let timers = DetailedReminderTimers()
     
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "DetailedReminderViewModel")
     
@@ -79,10 +79,11 @@ final class DetailedReminderViewModel: ObservableObject {
     }
     
     func startLivePrediction() {
+        timers.predictionTimer?.invalidate()
         calculateLivePrediction()
         
         // Update prediction every 5 minutes
-        predictionTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
+        timers.predictionTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.calculateLivePrediction()
             }
@@ -90,8 +91,13 @@ final class DetailedReminderViewModel: ObservableObject {
     }
     
     func stopLivePrediction() {
-        predictionTimer?.invalidate()
-        predictionTimer = nil
+        timers.predictionTimer?.invalidate()
+        timers.predictionTimer = nil
+    }
+
+    func stopWeatherRefresh() {
+        timers.weatherRefreshTimer?.invalidate()
+        timers.weatherRefreshTimer = nil
     }
     
     func pauseReminder() {
@@ -106,9 +112,11 @@ final class DetailedReminderViewModel: ObservableObject {
     
     func deleteReminder() {
         guard let modelContext = modelContext else { return }
-        
+        let reminderId = reminder.id
+
         modelContext.delete(reminder)
-        saveContext()
+        saveContext(reindexReminder: false)
+        SunHatSearchIndexer.deleteReminder(id: reminderId)
     }
     
     func saveChanges(_ editedReminder: EditableReminder) async -> Bool {
@@ -151,6 +159,7 @@ final class DetailedReminderViewModel: ObservableObject {
             }
             
             try modelContext.save()
+            SunHatSearchIndexer.index(reminder: reminder)
             
             // Add history entry
             reminder.addHistoryEntry(.modified, details: "Reminder updated")
@@ -175,12 +184,13 @@ final class DetailedReminderViewModel: ObservableObject {
     private func setupBindings() {
         // Since WeatherReminder is a SwiftData @Model and not an ObservableObject,
         // we need to use a different approach to observe changes
-        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            DispatchQueue.main.async {
+        timers.weatherRefreshTimer?.invalidate()
+        timers.weatherRefreshTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            Task { @MainActor in
                 self?.loadCurrentWeather()
             }
         }
-        .fire() // Trigger immediately on setup
+        timers.weatherRefreshTimer?.fire() // Trigger immediately on setup
     }
     
     private func loadUserPreferences() {
@@ -201,7 +211,15 @@ final class DetailedReminderViewModel: ObservableObject {
         
         Task {
             do {
-                let location = getCurrentLocation()
+                guard let location = getCurrentLocation() else {
+                    await MainActor.run {
+                        errorMessage = "Add a location or enable Location Services to load accurate weather for this reminder."
+                        isLoading = false
+                    }
+                    logger.warning("Skipped current weather load because no reminder or device location is available")
+                    return
+                }
+
                 let weatherData = try await weatherService.fetchCurrentWeather(for: location)
                 
                 await MainActor.run {
@@ -220,16 +238,15 @@ final class DetailedReminderViewModel: ObservableObject {
         }
     }
     
-    private func getCurrentLocation() -> CLLocation {
+    private func getCurrentLocation() -> CLLocation? {
         if let reminderLocation = reminder.location {
             return CLLocation(
                 latitude: reminderLocation.latitude,
                 longitude: reminderLocation.longitude
             )
-        } else {
-            // Use device location or default
-            return locationManager.location ?? CLLocation(latitude: 37.7749, longitude: -122.4194)
         }
+
+        return locationManager.location
     }
     
     private func calculateLivePrediction() {
@@ -238,7 +255,11 @@ final class DetailedReminderViewModel: ObservableObject {
         Task {
             do {
                 // Fetch forecast data
-                let location = getCurrentLocation()
+                guard let location = getCurrentLocation() else {
+                    logger.warning("Skipped live prediction because no reminder or device location is available")
+                    return
+                }
+
                 let weatherData = try await weatherService.fetchWeatherData(for: location)
                 
                 // Calculate next trigger prediction
@@ -323,14 +344,28 @@ final class DetailedReminderViewModel: ObservableObject {
         }
     }
     
-    private func saveContext() {
+    private func saveContext(reindexReminder: Bool = true) {
         guard let modelContext = modelContext else { return }
         
         do {
             try modelContext.save()
+            if reindexReminder {
+                SunHatSearchIndexer.index(reminder: reminder)
+            }
         } catch {
             logger.error("Failed to save context: \(error.localizedDescription)")
         }
+    }
+
+}
+
+nonisolated private final class DetailedReminderTimers {
+    var predictionTimer: Timer?
+    var weatherRefreshTimer: Timer?
+
+    deinit {
+        predictionTimer?.invalidate()
+        weatherRefreshTimer?.invalidate()
     }
 }
 

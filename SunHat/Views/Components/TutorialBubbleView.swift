@@ -29,15 +29,20 @@ struct TutorialBubbleView: View {
                             .fontWeight(.medium)
                             .foregroundStyle(.primary)
                     }
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Create your first reminder")
+                .accessibilityHint("Opens the reminder creation flow")
 
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
                         .font(.caption2)
                         .fontWeight(.semibold)
                         .foregroundStyle(.secondary)
-                        .frame(width: 20, height: 20)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
                 }
                 .accessibilityLabel("Dismiss hint")
             }
@@ -72,10 +77,7 @@ struct TutorialBubbleView: View {
                 }
             }
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Create your first reminder")
-        .accessibilityHint("Tap to open the reminder creation flow, or dismiss this hint")
-        .accessibilityAddTraits(.isButton)
+        .accessibilityElement(children: .contain)
     }
 }
 

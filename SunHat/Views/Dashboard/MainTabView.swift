@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import CoreSpotlight
 
 struct MainTabView: View {
     @State private var selectedTab: AppTab = .home
@@ -15,6 +16,7 @@ struct MainTabView: View {
 
     private enum AppTab: Hashable {
         case home
+        case weather
         case reminders
         case settings
         case add
@@ -43,6 +45,10 @@ struct MainTabView: View {
                 DashboardView()
             }
 
+            Tab("Weather", systemImage: "cloud.sun", value: AppTab.weather) {
+                WeatherView()
+            }
+
             Tab("Reminders", systemImage: "list.bullet.rectangle", value: AppTab.reminders) {
                 AllRemindersView()
             }
@@ -67,6 +73,48 @@ struct MainTabView: View {
                     onboardingCoordinator.markFirstReminderCreated()
                 }
             })
+        }
+        .task {
+            consumePendingIntentDestination()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIScene.willEnterForegroundNotification)) { _ in
+            consumePendingIntentDestination()
+        }
+        .onContinueUserActivity(CSSearchableItemActionType) { userActivity in
+            routeSearchActivity(userActivity)
+        }
+    }
+
+    private func consumePendingIntentDestination() {
+        guard let destination = SunHatIntentHandoff.consumePendingDestination() else {
+            return
+        }
+
+        switch destination {
+        case .home:
+            selectedTab = .home
+        case .reminders, .nextReady:
+            selectedTab = .reminders
+        case .createReminder:
+            showingCreate = true
+        case .settings:
+            selectedTab = .settings
+        }
+    }
+
+    private func routeSearchActivity(_ userActivity: NSUserActivity) {
+        guard
+            let identifier = userActivity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
+            let destination = SunHatSearchIndexer.destination(for: identifier)
+        else {
+            return
+        }
+
+        switch destination {
+        case .reminders:
+            selectedTab = .reminders
+        case .settings:
+            selectedTab = .settings
         }
     }
 }
