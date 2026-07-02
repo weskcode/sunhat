@@ -8,6 +8,7 @@
 import Foundation
 import SwiftData
 import Combine
+import Security
 import os
 
 struct WeatherServiceConfiguration: Sendable {
@@ -27,7 +28,7 @@ struct WeatherServiceConfiguration: Sendable {
         backgroundRefreshIntervalMinutes: 15,
         rateLimitRequestsPerMinute: 60,
         rateLimitRequestsPerHour: 1000,
-        enabledProviders: [.appleWeatherKit, .openWeatherMap],
+        enabledProviders: [.appleWeatherKit],
         preferredProvider: .appleWeatherKit,
         enableBackgroundRefresh: true,
         enableNotifications: true
@@ -39,7 +40,7 @@ struct WeatherServiceConfiguration: Sendable {
         backgroundRefreshIntervalMinutes: Int = 15,
         rateLimitRequestsPerMinute: Int = 60,
         rateLimitRequestsPerHour: Int = 1000,
-        enabledProviders: Set<WeatherProvider> = [.appleWeatherKit, .openWeatherMap],
+        enabledProviders: Set<WeatherProvider> = [.appleWeatherKit],
         preferredProvider: WeatherProvider = .appleWeatherKit,
         enableBackgroundRefresh: Bool = true,
         enableNotifications: Bool = true
@@ -94,6 +95,14 @@ final class WeatherServiceManager: ObservableObject {
     }
     
     func updateAPIKey(_ apiKey: String) async {
+        do {
+            try WeatherCredentialStore.saveOpenWeatherMapKey(apiKey)
+        } catch {
+            logger.error("Failed to save OpenWeatherMap API key to Keychain: \(error.localizedDescription)")
+            configurationError = .unknown(error)
+            return
+        }
+
         let newConfiguration = WeatherServiceConfiguration(
             openWeatherMapAPIKey: apiKey,
             cacheExpirationMinutes: configuration.cacheExpirationMinutes,
@@ -195,6 +204,9 @@ final class WeatherServiceManager: ObservableObject {
     
     private func loadConfiguration() {
         guard let data = UserDefaults.standard.data(forKey: configurationKey) else {
+            configuration = WeatherServiceConfiguration(
+                openWeatherMapAPIKey: WeatherCredentialStore.openWeatherMapKey()
+            )
             logger.debug("No saved configuration found, using defaults")
             return
         }
@@ -202,11 +214,26 @@ final class WeatherServiceManager: ObservableObject {
         do {
             let configData = try JSONDecoder().decode(ConfigurationData.self, from: data)
             configuration = configData.toConfiguration()
+            migrateLegacyAPIKeyIfNeeded(configData.openWeatherMapAPIKey)
             isConfigured = true
             logger.debug("Loaded weather service configuration")
         } catch {
             logger.error("Failed to load configuration: \(error)")
             configuration = .default
+        }
+    }
+
+    private func migrateLegacyAPIKeyIfNeeded(_ legacyKey: String?) {
+        guard let legacyKey, !legacyKey.isEmpty, WeatherCredentialStore.openWeatherMapKey() == nil else {
+            return
+        }
+
+        do {
+            try WeatherCredentialStore.saveOpenWeatherMapKey(legacyKey)
+            saveConfiguration()
+            logger.info("Migrated OpenWeatherMap API key from UserDefaults to Keychain")
+        } catch {
+            logger.error("Failed to migrate OpenWeatherMap API key to Keychain: \(error.localizedDescription)")
         }
     }
     
@@ -260,7 +287,6 @@ private struct ConfigurationData: Sendable {
     
     nonisolated func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encodeIfPresent(openWeatherMapAPIKey, forKey: .openWeatherMapAPIKey)
         try container.encode(cacheExpirationMinutes, forKey: .cacheExpirationMinutes)
         try container.encode(backgroundRefreshIntervalMinutes, forKey: .backgroundRefreshIntervalMinutes)
         try container.encode(rateLimitRequestsPerMinute, forKey: .rateLimitRequestsPerMinute)
@@ -303,7 +329,7 @@ extension ConfigurationData: Codable {
 
 extension ConfigurationData {
     init(from configuration: WeatherServiceConfiguration) {
-        self.openWeatherMapAPIKey = configuration.openWeatherMapAPIKey
+        self.openWeatherMapAPIKey = nil
         self.cacheExpirationMinutes = configuration.cacheExpirationMinutes
         self.backgroundRefreshIntervalMinutes = configuration.backgroundRefreshIntervalMinutes
         self.rateLimitRequestsPerMinute = configuration.rateLimitRequestsPerMinute
@@ -319,7 +345,7 @@ extension ConfigurationData {
         let preferred = WeatherProvider(rawValue: preferredProvider) ?? .appleWeatherKit
         
         return WeatherServiceConfiguration(
-            openWeatherMapAPIKey: openWeatherMapAPIKey,
+            openWeatherMapAPIKey: WeatherCredentialStore.openWeatherMapKey() ?? openWeatherMapAPIKey,
             cacheExpirationMinutes: cacheExpirationMinutes,
             backgroundRefreshIntervalMinutes: backgroundRefreshIntervalMinutes,
             rateLimitRequestsPerMinute: rateLimitRequestsPerMinute,
@@ -350,15 +376,8 @@ extension WeatherServiceManager {
     }
     
     private func getOpenWeatherMapAPIKey() -> String? {
-        // Try to load from bundle plist file
-        if let path = Bundle.main.path(forResource: "APIKeys", ofType: "plist"),
-           let dict = NSDictionary(contentsOfFile: path),
-           let apiKey = dict["OpenWeatherMapAPIKey"] as? String {
-            return apiKey
-        }
-        
-        // Try environment variable for development
-        return ProcessInfo.processInfo.environment["OPENWEATHERMAP_API_KEY"]
+        WeatherCredentialStore.openWeatherMapKey() ??
+            ProcessInfo.processInfo.environment["OPENWEATHERMAP_API_KEY"]
     }
     
     private func createDevelopmentModelContext() -> ModelContext? {
@@ -385,6 +404,92 @@ extension WeatherServiceManager {
         } catch {
             logger.error("Failed to create development model context: \(error)")
             return nil
+        }
+    }
+}
+
+private enum WeatherCredentialStore {
+    private static let service = "org.wesley.sunhat.weather"
+    private static let openWeatherMapAccount = "openweathermap-api-key"
+
+    static func openWeatherMapKey() -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: openWeatherMapAccount,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess,
+              let data = result as? Data,
+              let key = String(data: data, encoding: .utf8),
+              !key.isEmpty else {
+            return nil
+        }
+
+        return key
+    }
+
+    static func saveOpenWeatherMapKey(_ key: String) throws {
+        let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedKey.isEmpty else {
+            try deleteOpenWeatherMapKey()
+            return
+        }
+
+        let data = Data(trimmedKey.utf8)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: openWeatherMapAccount
+        ]
+
+        let attributes: [String: Any] = [
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        ]
+
+        let status = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+        if status == errSecItemNotFound {
+            var item = query
+            item[kSecValueData as String] = data
+            item[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+            let addStatus = SecItemAdd(item as CFDictionary, nil)
+            guard addStatus == errSecSuccess else {
+                throw KeychainError.unhandledStatus(addStatus)
+            }
+            return
+        }
+
+        guard status == errSecSuccess else {
+            throw KeychainError.unhandledStatus(status)
+        }
+    }
+
+    private static func deleteOpenWeatherMapKey() throws {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: openWeatherMapAccount
+        ]
+
+        let status = SecItemDelete(query as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw KeychainError.unhandledStatus(status)
+        }
+    }
+
+    private enum KeychainError: LocalizedError {
+        case unhandledStatus(OSStatus)
+
+        var errorDescription: String? {
+            switch self {
+            case .unhandledStatus(let status):
+                return "Keychain operation failed with status \(status)"
+            }
         }
     }
 }

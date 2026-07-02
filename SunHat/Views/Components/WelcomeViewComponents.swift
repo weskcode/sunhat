@@ -16,6 +16,7 @@ struct AnimatedWeatherIcon: View {
     let color: Color
     let size: CGFloat
     let animationType: WeatherAnimationType
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     @State private var isAnimating = false
     @State private var rotationAngle: Double = 0
@@ -49,6 +50,11 @@ struct AnimatedWeatherIcon: View {
     }
     
     private func startAnimation() {
+        guard !reduceMotion else {
+            isAnimating = true
+            return
+        }
+
         isAnimating = true
         
         switch animationType {
@@ -81,33 +87,52 @@ struct FloatingParticles: View {
     let particleCount: Int
     let colors: [Color]
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var particles: [Particle] = []
     @State private var screenSize: CGSize = .zero
+    @State private var startDate = Date()
 
     var body: some View {
         GeometryReader { geometry in
-            ZStack {
-                ForEach(particles.indices, id: \.self) { index in
-                    Circle()
-                        .fill(particles[index].color.opacity(particles[index].opacity))
-                        .frame(width: particles[index].size, height: particles[index].size)
-                        .position(particles[index].position)
-                        .blur(radius: particles[index].blur)
+            Group {
+                if reduceMotion {
+                    particleLayer(elapsed: 0)
+                        .opacity(0.45)
+                } else {
+                    TimelineView(.animation(minimumInterval: 0.1)) { context in
+                        particleLayer(elapsed: context.date.timeIntervalSince(startDate))
+                    }
                 }
             }
-            .onAppear {
+            .task(id: geometry.size) {
                 screenSize = geometry.size
+                startDate = Date()
                 generateParticles()
-                startParticleAnimation()
             }
             .onChange(of: geometry.size) { _, newSize in
                 screenSize = newSize
+                startDate = Date()
+                generateParticles()
+            }
+        }
+    }
+
+    private func particleLayer(elapsed: TimeInterval) -> some View {
+        ZStack {
+            ForEach(particles.indices, id: \.self) { index in
+                let particle = particles[index]
+                Circle()
+                    .fill(particle.color.opacity(particle.opacity))
+                    .frame(width: particle.size, height: particle.size)
+                    .position(projectedPosition(for: particle, index: index, elapsed: elapsed))
+                    .blur(radius: particle.blur)
             }
         }
     }
 
     private func generateParticles() {
-        particles = (0..<particleCount).map { _ in
+        let count = reduceMotion ? min(particleCount, 8) : particleCount
+        particles = (0..<count).map { _ in
             Particle(
                 position: CGPoint(
                     x: CGFloat.random(in: 0...screenSize.width),
@@ -121,23 +146,20 @@ struct FloatingParticles: View {
         }
     }
 
-    private func startParticleAnimation() {
-        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            Task { @MainActor in
-                withAnimation(.linear(duration: 0.1)) {
-                    for index in particles.indices {
-                        particles[index].position.y -= CGFloat.random(in: 0.5...2.0)
-                        particles[index].position.x += CGFloat.random(in: -0.5...0.5)
-
-                        // Reset particle if it goes off screen
-                        if particles[index].position.y < -10 {
-                            particles[index].position.y = screenSize.height + 10
-                            particles[index].position.x = CGFloat.random(in: 0...screenSize.width)
-                        }
-                    }
-                }
-            }
+    private func projectedPosition(for particle: Particle, index: Int, elapsed: TimeInterval) -> CGPoint {
+        guard screenSize.width > 0, screenSize.height > 0 else {
+            return particle.position
         }
+
+        let verticalSpeed = CGFloat(4 + (index % 5) * 3)
+        let horizontalDrift = sin(elapsed + Double(index)) * 6
+        let y = (particle.position.y - verticalSpeed * CGFloat(elapsed))
+            .truncatingRemainder(dividingBy: screenSize.height + 20)
+
+        return CGPoint(
+            x: min(max(particle.position.x + CGFloat(horizontalDrift), 0), screenSize.width),
+            y: y < -10 ? y + screenSize.height + 20 : y
+        )
     }
 }
 
@@ -159,6 +181,7 @@ struct TemperatureGauge: View {
     
     @State private var animatedTemperature: Double = 0
     @State private var isAnimating = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     var body: some View {
         VStack(spacing: 8) {
@@ -182,7 +205,10 @@ struct TemperatureGauge: View {
                         .frame(width: 8, height: 8)
                         .offset(y: -temperatureFillHeight + 4)
                         .scaleEffect(isAnimating ? 1.2 : 1.0)
-                        .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: isAnimating)
+                        .animation(
+                            reduceMotion ? nil : .easeInOut(duration: 0.5).repeatForever(autoreverses: true),
+                            value: isAnimating
+                        )
                 }
             }
             
@@ -199,7 +225,7 @@ struct TemperatureGauge: View {
                 animatedTemperature = temperature
             }
             
-            if isTriggered {
+            if isTriggered && !reduceMotion {
                 isAnimating = true
             }
         }
@@ -304,6 +330,7 @@ struct WeatherTransitionView: View {
 struct AnimatedBackgroundGradient: View {
     @State private var gradientOffset: CGFloat = 0
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     var body: some View {
         LinearGradient(
@@ -313,6 +340,8 @@ struct AnimatedBackgroundGradient: View {
         )
         .hueRotation(.degrees(gradientOffset))
         .onAppear {
+            guard !reduceMotion else { return }
+
             withAnimation(.linear(duration: 10.0).repeatForever(autoreverses: false)) {
                 gradientOffset = 360
             }

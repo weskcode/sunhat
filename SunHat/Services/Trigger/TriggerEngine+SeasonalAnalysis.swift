@@ -167,12 +167,13 @@ extension TriggerEngine {
              
             // Create month-day key
             let monthDay = calendar.dateComponents([.month, .day], from: data.timestamp)
-            let key = "\(monthDay.month!)-\(monthDay.day!)"
-             
-            if yearlyAverages[key] == nil {
-                yearlyAverages[key] = data.temperature
+            guard let month = monthDay.month, let day = monthDay.day else { continue }
+            let key = "\(month)-\(day)"
+
+            if let existing = yearlyAverages[key] {
+                yearlyAverages[key] = (existing + data.temperature) / 2
             } else {
-                yearlyAverages[key] = (yearlyAverages[key]! + data.temperature) / 2
+                yearlyAverages[key] = data.temperature
             }
         }
          

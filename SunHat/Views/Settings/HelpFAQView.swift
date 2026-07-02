@@ -30,7 +30,7 @@ struct HelpFAQView: View {
         ),
         FAQItem(
             question: "Can I use the app without location access?",
-            answer: "Location access is required for weather-based reminders. We only use your location to fetch relevant weather data and never share it with third parties."
+            answer: "Location access is required for current-location weather reminders. You can also save manual locations. Coordinates are sent only to enabled weather providers to fetch forecasts."
         ),
         FAQItem(
             question: "Is my data synced to iCloud?",

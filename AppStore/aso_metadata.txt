@@ -55,7 +55,7 @@ REAL-TIME WEATHER MONITORING
 SunHat checks weather conditions in the background so you never miss the perfect moment. View current temperature, humidity, wind speed, and hourly forecasts right from your dashboard. Weather data is refreshed automatically using Apple WeatherKit.
 
 LOCATION-AWARE ALERTS
-Get weather data for your exact location or choose any city manually. SunHat uses your location only to fetch local weather — your data never leaves your device.
+Get weather data for your exact location or choose any city manually. SunHat uses your location only to fetch local forecasts from enabled weather providers.
 
 POWERFUL NOTIFICATION CONTROLS
 - Quiet Hours — silence notifications during sleep (e.g., 10 PM - 7 AM)
@@ -70,14 +70,14 @@ FEATURES AT A GLANCE
 - Location-aware weather data with manual city selection
 - Quiet hours and daily notification limits
 - Beautiful Liquid Glass interface designed for iOS 26
-- Privacy-first — all weather data stays on your device
+- Privacy-first — reminders and preferences stay on your device
 - No account required — works instantly after download
 
 BUILT FOR iOS 26
 SunHat is designed from the ground up for iOS 26 with Apple's Liquid Glass design language. Every surface, button, and card uses native glass effects for a premium, translucent experience that feels right at home on your iPhone.
 
 PRIVACY BY DESIGN
-Your location is used only to fetch weather data and is never stored on external servers. SunHat requires no account, collects no analytics, and shares zero personal data. Your reminders and preferences stay on your device.
+Your location is used only to fetch weather data and is never stored on our servers. SunHat requires no account and collects no personal analytics. Your reminders and preferences stay on your device.
 
 Download SunHat and start getting reminders that actually match the weather.
 
@@ -102,7 +102,7 @@ Ordered per A.I.D.A. framework (Attention → Interest → Desire → Action):
     → DESIRE: Specific use-case demonstration
 08: "Always Monitoring" / "Background weather checks keep you ready"
     → ACTION: App works in the background for you
-09: "Privacy-First Design" / "Your weather data never leaves your device"
+09: "Privacy-First Design" / "Your reminders stay on your device"
     → ACTION: Trust signal — privacy commitment
 10: "Your Weather Companion" / "Beautiful Liquid Glass interface on iOS"
     → ACTION: Brand closing with design quality

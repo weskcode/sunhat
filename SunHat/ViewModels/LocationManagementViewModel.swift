@@ -114,6 +114,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
 
         case .authorizedWhenInUse, .authorizedAlways:
             logger.info("Location permission already granted")
+            requestFullAccuracyIfNeeded()
             getCurrentLocation()
 
         @unknown default:
@@ -168,6 +169,17 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
                 self.handleLocationTimeout()
             }
         })
+    }
+
+    private func requestFullAccuracyIfNeeded() {
+        guard locationManager.accuracyAuthorization == .reducedAccuracy else {
+            return
+        }
+
+        logger.info("Requesting temporary full accuracy for weather reminders")
+        locationManager.requestTemporaryFullAccuracyAuthorization(
+            withPurposeKey: LocationPermissionManager.weatherReminderAccuracyPurposeKey
+        )
     }
     
     private func handleLocationTimeout() {
@@ -290,6 +302,11 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         
         do {
             try modelContext.save()
+            if let existing = existingLocation {
+                SunHatSearchIndexer.index(location: existing)
+            } else {
+                SunHatSearchIndexer.index(location: location)
+            }
         } catch {
             logger.error("Failed to save location: \(error.localizedDescription)")
         }
@@ -297,12 +314,14 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
     
     func deleteSavedLocation(_ location: SavedLocation) {
         guard let modelContext = modelContext else { return }
-        
+        let locationId = location.id
+
         modelContext.delete(location)
         savedLocations.removeAll { $0.id == location.id }
         
         do {
             try modelContext.save()
+            SunHatSearchIndexer.deleteLocation(id: locationId)
             logger.info("Deleted saved location: \(location.name)")
         } catch {
             logger.error("Failed to delete location: \(error.localizedDescription)")
@@ -314,6 +333,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         
         do {
             try modelContext?.save()
+            SunHatSearchIndexer.index(location: location)
             self.loadSavedLocations() // Reload to update sorting
             self.logger.info("Toggled favorite for location: \(location.name)")
         } catch {
@@ -326,6 +346,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         
         do {
             try modelContext?.save()
+            SunHatSearchIndexer.index(location: location)
             logger.info("Updated location name: \(location.name) -> \(newName)")
         } catch {
             logger.error("Failed to update location name: \(error.localizedDescription)")
@@ -402,7 +423,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         let search = MKLocalSearch(request: request)
         
         search.start { [weak self] (response: MKLocalSearch.Response?, error: Error?) in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 guard let self = self else { return }
                 
                 if let error = error {
@@ -448,7 +469,7 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         Your location data:
         • Stays on your device and in your iCloud (if enabled)
         • Is only used for weather updates
-        • Is never shared with third parties
+        • Is sent only to enabled weather providers to fetch forecasts
         • Can be managed or deleted at any time
         
         You can:
@@ -477,6 +498,7 @@ extension LocationManagementViewModel: CLLocationManagerDelegate {
             switch newStatus {
             case .authorizedWhenInUse, .authorizedAlways:
                 self.locationError = nil
+                self.requestFullAccuracyIfNeeded()
                 self.getCurrentLocation()
 
             case .denied, .restricted:

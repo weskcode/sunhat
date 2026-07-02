@@ -36,21 +36,54 @@ extension TriggerEngine {
         totalConfidence += tempResult.confidence
         conditionCount += 1
         
-        // 2. Humidity condition (if required)
-        // Note: Humidity conditions not yet implemented in TriggerConditionData
-        // This would need to be added to the Sendable data structure
-        
-        // 3. Wind speed condition (if required)
-        // Note: Wind speed conditions not yet implemented in TriggerConditionData
-        // This would need to be added to the Sendable data structure
-        
-        // 4. Precipitation condition (if required)
-        // Note: Precipitation conditions not yet implemented in TriggerConditionData
-        // This would need to be added to the Sendable data structure
-        
-        // 5. Time constraints (if specified)
-        // Note: Time constraints not yet implemented in TriggerConditionData
-        // This would need to be added to the Sendable data structure
+        if conditionData.requiresHumidity {
+            let humidityResult = evaluateHumidityComponent(conditionData, humidity: weatherData.humidity)
+            if humidityResult.met {
+                conditionsMet.append(humidityResult.description)
+            } else {
+                conditionsFailed.append(humidityResult.description)
+            }
+            totalConfidence += humidityResult.confidence
+            conditionCount += 1
+        }
+
+        if conditionData.requiresWindSpeed {
+            let windResult = evaluateWindComponent(conditionData, windSpeed: weatherData.windSpeed)
+            if windResult.met {
+                conditionsMet.append(windResult.description)
+            } else {
+                conditionsFailed.append(windResult.description)
+            }
+            totalConfidence += windResult.confidence
+            conditionCount += 1
+        }
+
+        if conditionData.requiresPrecipitation {
+            let precipitationResult = evaluatePrecipitationComponent(
+                conditionData.precipitationRequirement,
+                amount: weatherData.precipitationAmount,
+                probability: weatherData.precipitationProbability,
+                type: weatherData.weatherCondition
+            )
+            if precipitationResult.met {
+                conditionsMet.append(precipitationResult.description)
+            } else {
+                conditionsFailed.append(precipitationResult.description)
+            }
+            totalConfidence += precipitationResult.confidence
+            conditionCount += 1
+        }
+
+        if conditionData.timeOfDayStart != nil || conditionData.timeOfDayEnd != nil {
+            let timeResult = evaluateTimeWindowComponent(conditionData, date: weatherData.timestamp)
+            if timeResult.met {
+                conditionsMet.append(timeResult.description)
+            } else {
+                conditionsFailed.append(timeResult.description)
+            }
+            totalConfidence += timeResult.confidence
+            conditionCount += 1
+        }
         
         // Calculate overall result
         let allConditionsMet = conditionsFailed.isEmpty
@@ -92,9 +125,7 @@ extension TriggerEngine {
     ) async -> TriggerEvaluationResult {
         
         do {
-            // Use Apple WeatherKit API directly to avoid non-Sendable WeatherData
-            let appleWeatherKitAPI = AppleWeatherKitAPI()
-            let weatherDataDTO = try await appleWeatherKitAPI.fetchWeatherData(for: location)
+            let weatherDataDTO = try await weatherAPI.fetchWeatherData(for: location)
             
             // Convert DTO to WeatherDataTransfer inline
             let weatherTransfer = WeatherDataTransfer(
@@ -119,7 +150,22 @@ extension TriggerEngine {
                 weatherCondition: weatherDataDTO.weatherCondition,
                 weatherDescription: weatherDataDTO.weatherCondition.rawValue,
                 locationLatitude: 0,
-                locationLongitude: 0
+                locationLongitude: 0,
+                forecastDays: weatherDataDTO.forecast.map { forecast in
+                    ForecastDayTransfer(
+                        date: forecast.date,
+                        highTemperature: forecast.highTemperature,
+                        lowTemperature: forecast.lowTemperature,
+                        averageTemperature: (forecast.highTemperature + forecast.lowTemperature) / 2,
+                        weatherCondition: forecast.weatherCondition,
+                        precipitationProbability: forecast.precipitationProbability,
+                        precipitationAmount: forecast.precipitationAmount,
+                        precipitationType: forecast.precipitationType,
+                        windSpeed: forecast.windSpeed,
+                        humidity: forecast.humidity,
+                        cloudCover: forecast.cloudCover
+                    )
+                }
             )
             
             let forecastAnalysis = await analyzeForecastForCondition(
@@ -228,17 +274,83 @@ extension TriggerEngine {
         }
     }
     
-    // Note: Humidity evaluation temporarily disabled due to missing fields in TriggerConditionData
-    // This would need targetHumidity and humidityTolerance fields added to the Sendable data structure
-    
-    // Note: Wind speed evaluation temporarily disabled due to missing fields in TriggerConditionData
-    // This would need maxWindSpeed field added to the Sendable data structure
-    
-    // Note: Precipitation evaluation temporarily disabled due to missing fields in TriggerConditionData
-    // This would need precipitationRequirement field added to the Sendable data structure
-    
-    // Note: Time constraints evaluation temporarily disabled due to missing fields in TriggerConditionData
-    // This would need timeOfDayStart and timeOfDayEnd fields added to the Sendable data structure
+    private func evaluateHumidityComponent(_ conditionData: TriggerConditionData, humidity: Int) -> ComponentEvaluationResult {
+        guard let target = conditionData.targetHumidity else {
+            return ComponentEvaluationResult(met: false, confidence: 0, description: "humidity target is missing")
+        }
+
+        let difference = abs(Double(humidity) - target)
+        let met = difference <= conditionData.humidityTolerance
+        return ComponentEvaluationResult(
+            met: met,
+            confidence: met ? max(0, 1 - (difference / max(conditionData.humidityTolerance, 1))) : 0,
+            description: "humidity \(humidity)% \(met ? "within" : "outside") \(Int(target))% ±\(Int(conditionData.humidityTolerance))%"
+        )
+    }
+
+    private func evaluateWindComponent(_ conditionData: TriggerConditionData, windSpeed: Double) -> ComponentEvaluationResult {
+        guard let maxWindSpeed = conditionData.maxWindSpeed else {
+            return ComponentEvaluationResult(met: false, confidence: 0, description: "wind limit is missing")
+        }
+
+        let met = windSpeed <= maxWindSpeed
+        return ComponentEvaluationResult(
+            met: met,
+            confidence: met ? 1 : max(0, 1 - ((windSpeed - maxWindSpeed) / max(maxWindSpeed, 1))),
+            description: "wind \(Int(windSpeed)) mph \(met ? "at or below" : "above") \(Int(maxWindSpeed)) mph"
+        )
+    }
+
+    private func evaluatePrecipitationComponent(
+        _ requirement: PrecipitationRequirement,
+        amount: Double,
+        probability: Int,
+        type: WeatherCondition
+    ) -> ComponentEvaluationResult {
+        let wetConditions: Set<WeatherCondition> = [.rain, .drizzle, .snow, .sleet, .hail, .thunderstorm]
+        let isWet = amount > 0 || probability >= 40 || wetConditions.contains(type)
+
+        switch requirement {
+        case .none:
+            return ComponentEvaluationResult(met: true, confidence: 1, description: "no precipitation requirement")
+        case .dry:
+            return ComponentEvaluationResult(met: !isWet, confidence: isWet ? 0 : 1, description: isWet ? "precipitation expected" : "dry conditions expected")
+        case .anyPrecipitation:
+            return ComponentEvaluationResult(met: isWet, confidence: isWet ? max(0.5, Double(probability) / 100) : 0, description: isWet ? "precipitation expected" : "no precipitation expected")
+        case .rain:
+            let met = [.rain, .drizzle, .thunderstorm].contains(type)
+            return ComponentEvaluationResult(met: met, confidence: met ? max(0.5, Double(probability) / 100) : 0, description: met ? "rain expected" : "rain not expected")
+        case .snow:
+            let met = [.snow, .sleet, .hail].contains(type)
+            return ComponentEvaluationResult(met: met, confidence: met ? max(0.5, Double(probability) / 100) : 0, description: met ? "snow expected" : "snow not expected")
+        case .noPrecipitationFor24Hours, .noPrecipitationFor48Hours:
+            return ComponentEvaluationResult(met: !isWet, confidence: isWet ? 0 : 0.8, description: isWet ? "dry-period requirement not met" : "dry-period requirement likely met")
+        }
+    }
+
+    private func evaluateTimeWindowComponent(_ conditionData: TriggerConditionData, date: Date) -> ComponentEvaluationResult {
+        guard let start = conditionData.timeOfDayStart ?? conditionData.timeOfDayEnd,
+              let end = conditionData.timeOfDayEnd ?? conditionData.timeOfDayStart else {
+            return ComponentEvaluationResult(met: true, confidence: 1, description: "no time window")
+        }
+
+        let calendar = Calendar.current
+        let currentComponents = calendar.dateComponents([.hour, .minute], from: date)
+        let startComponents = calendar.dateComponents([.hour, .minute], from: start)
+        let endComponents = calendar.dateComponents([.hour, .minute], from: end)
+        let currentMinutes = (currentComponents.hour ?? 0) * 60 + (currentComponents.minute ?? 0)
+        let startMinutes = (startComponents.hour ?? 0) * 60 + (startComponents.minute ?? 0)
+        let endMinutes = (endComponents.hour ?? 0) * 60 + (endComponents.minute ?? 0)
+        let met = startMinutes <= endMinutes
+            ? currentMinutes >= startMinutes && currentMinutes <= endMinutes
+            : currentMinutes >= startMinutes || currentMinutes <= endMinutes
+
+        return ComponentEvaluationResult(
+            met: met,
+            confidence: met ? 1 : 0,
+            description: met ? "inside notification time window" : "outside notification time window"
+        )
+    }
     
     // MARK: - Helper Methods
     
@@ -270,27 +382,147 @@ extension TriggerEngine {
         weatherData: WeatherDataTransfer,
         advanceHours: Int
     ) async -> ForecastAnalysis {
-        
-        // Note: Forecast analysis temporarily simplified due to missing forecast data in WeatherDataTransfer
-        // This would need forecastDays field added to the Sendable data structure
-        
+        let cutoff = Date().addingTimeInterval(TimeInterval(advanceHours * 3600))
+        let forecastDays = weatherData.forecastDays
+            .filter { $0.date <= cutoff }
+            .sorted { $0.date < $1.date }
+
+        guard !forecastDays.isEmpty else {
+            let currentResult = await evaluateComposite(
+                conditionData,
+                reminderId: conditionData.id,
+                location: CLLocation(latitude: weatherData.locationLatitude, longitude: weatherData.locationLongitude),
+                weatherData: weatherData
+            )
+
+            return ForecastAnalysis(
+                willTriggerInAdvancePeriod: currentResult.triggered,
+                confidence: currentResult.confidence,
+                description: currentResult.triggerReason,
+                daysAnalyzed: 0,
+                triggerProbability: currentResult.triggered ? currentResult.confidence : 0.0,
+                earliestTriggerTime: currentResult.triggered ? Date() : nil,
+                forecastConfidence: currentResult.confidence,
+                weatherPattern: weatherData.weatherCondition.rawValue
+            )
+        }
+
+        let evaluations = forecastDays.map { day in
+            (day, evaluateForecastDay(day, conditionData: conditionData))
+        }
+        let matches = evaluations.filter { $0.1.met }
+        let averageConfidence = evaluations.map(\.1.confidence).average()
+        let earliestMatch = matches.first
+
         return ForecastAnalysis(
-            willTriggerInAdvancePeriod: false,
-            confidence: 0.0,
-            description: "Forecast analysis not yet implemented for Sendable data structures",
-            daysAnalyzed: 0,
-            triggerProbability: 0.0,
-            earliestTriggerTime: nil,
-            forecastConfidence: 0.0,
-            weatherPattern: "unknown"
+            willTriggerInAdvancePeriod: earliestMatch != nil,
+            confidence: earliestMatch?.1.confidence ?? averageConfidence,
+            description: earliestMatch?.1.description ?? "No forecast day matches this reminder condition",
+            daysAnalyzed: forecastDays.count,
+            triggerProbability: earliestMatch == nil ? averageConfidence : max(averageConfidence, earliestMatch?.1.confidence ?? 0),
+            earliestTriggerTime: earliestMatch?.0.date,
+            forecastConfidence: averageConfidence,
+            weatherPattern: forecastDays.map(\.weatherCondition).mostFrequent()?.rawValue ?? "unknown"
         )
     }
-    
-    // Note: Forecast day evaluation temporarily disabled due to missing ForecastDay in Sendable data structures
-    
-    // Note: Weather pattern analysis temporarily disabled due to missing ForecastDay in Sendable data structures
-    
-    // Note: Forecast confidence calculation temporarily disabled due to missing ForecastDay in Sendable data structures
+
+    private func evaluateForecastDay(
+        _ day: ForecastDayTransfer,
+        conditionData: TriggerConditionData
+    ) -> ComponentEvaluationResult {
+        let checks = [
+            evaluateTemperatureForecastComponent(conditionData, day: day),
+            conditionData.requiresHumidity ? evaluateHumidityComponent(conditionData, humidity: day.humidity) : nil,
+            conditionData.requiresWindSpeed ? evaluateWindComponent(conditionData, windSpeed: day.windSpeed) : nil,
+            conditionData.requiresPrecipitation ? evaluatePrecipitationComponent(
+                conditionData.precipitationRequirement,
+                amount: day.precipitationAmount,
+                probability: day.precipitationProbability,
+                type: day.weatherCondition
+            ) : nil,
+            (conditionData.timeOfDayStart != nil || conditionData.timeOfDayEnd != nil) ? evaluateTimeWindowComponent(conditionData, date: day.date) : nil,
+            conditionData.hasSkyConditionFilter ? evaluateSkyConditionComponent(conditionData, weatherCondition: day.weatherCondition) : nil
+        ].compactMap { $0 }
+
+        let failed = checks.filter { !$0.met }
+        let confidence = checks.isEmpty ? 0 : checks.map(\.confidence).average()
+        let dateLabel = day.date.formatted(.dateTime.month(.abbreviated).day())
+
+        if failed.isEmpty {
+            return ComponentEvaluationResult(
+                met: true,
+                confidence: confidence,
+                description: "Forecast matches on \(dateLabel): " + checks.map(\.description).joined(separator: ", ")
+            )
+        }
+
+        return ComponentEvaluationResult(
+            met: false,
+            confidence: confidence,
+            description: "Forecast does not match on \(dateLabel): " + failed.map(\.description).joined(separator: ", ")
+        )
+    }
+
+    private func evaluateTemperatureForecastComponent(
+        _ conditionData: TriggerConditionData,
+        day: ForecastDayTransfer
+    ) -> ComponentEvaluationResult {
+        let target = conditionData.targetTemperature
+
+        switch conditionData.comparisonType {
+        case .above:
+            let met = day.highTemperature > target
+            let confidence = met ? min(1, (day.highTemperature - target) / 10) : max(0, 1 - ((target - day.highTemperature) / 10))
+            return ComponentEvaluationResult(met: met, confidence: confidence, description: "high \(Int(day.highTemperature))° above \(Int(target))°")
+        case .below:
+            let met = day.lowTemperature < target
+            let confidence = met ? min(1, (target - day.lowTemperature) / 10) : max(0, 1 - ((day.lowTemperature - target) / 10))
+            return ComponentEvaluationResult(met: met, confidence: confidence, description: "low \(Int(day.lowTemperature))° below \(Int(target))°")
+        case .equals:
+            let difference = abs(day.averageTemperature - target)
+            let tolerance = max(conditionData.temperatureTolerance, 0.1)
+            let met = difference <= tolerance
+            return ComponentEvaluationResult(met: met, confidence: met ? max(0, 1 - (difference / tolerance)) : 0, description: "average \(Int(day.averageTemperature))° near \(Int(target))°")
+        case .between:
+            guard let minTemp = conditionData.minTemperature, let maxTemp = conditionData.maxTemperature else {
+                return ComponentEvaluationResult(met: false, confidence: 0, description: "invalid forecast temperature range")
+            }
+            let met = day.highTemperature >= minTemp && day.lowTemperature <= maxTemp
+            return ComponentEvaluationResult(met: met, confidence: met ? 1 : 0, description: "forecast overlaps \(Int(minTemp))°-\(Int(maxTemp))°")
+        }
+    }
+
+    private func evaluateSkyConditionComponent(
+        _ conditionData: TriggerConditionData,
+        weatherCondition: WeatherCondition
+    ) -> ComponentEvaluationResult {
+        let selectedConditions = Set(
+            conditionData.selectedSkyConditionsRaw
+                .components(separatedBy: ",")
+                .compactMap { SkyCondition(rawValue: $0) }
+        )
+        guard !selectedConditions.isEmpty else {
+            return ComponentEvaluationResult(met: true, confidence: 1, description: "no sky condition filter")
+        }
+
+        let currentSky: SkyCondition
+        switch weatherCondition {
+        case .clear: currentSky = .sunny
+        case .partlyCloudy: currentSky = .partlyCloudy
+        case .cloudy, .overcast, .fog: currentSky = .cloudy
+        case .rain, .drizzle, .thunderstorm: currentSky = .rainy
+        case .snow, .sleet, .hail: currentSky = .snowy
+        case .windy, .unknown: currentSky = .sunny
+        }
+
+        let mode = ConditionSelectionMode(rawValue: conditionData.conditionModeRaw) ?? .include
+        let met = mode == .include ? selectedConditions.contains(currentSky) : !selectedConditions.contains(currentSky)
+        return ComponentEvaluationResult(
+            met: met,
+            confidence: met ? 1 : 0,
+            description: "sky condition \(currentSky.rawValue) \(met ? "matches" : "does not match")"
+        )
+    }
     
     private func calculateForecastEvaluationTime(
         triggered: Bool,
@@ -348,8 +580,15 @@ struct ForecastAnalysis: Sendable {
 // MARK: - Array Extensions
 
 private extension Array where Element: Hashable {
-    func mostFrequent() -> Element? {
+    nonisolated func mostFrequent() -> Element? {
         let counts = Dictionary(grouping: self) { $0 }.mapValues { $0.count }
         return counts.max { $0.value < $1.value }?.key
+    }
+}
+
+private extension Array where Element == Double {
+    nonisolated func average() -> Double {
+        guard !isEmpty else { return 0 }
+        return reduce(0, +) / Double(count)
     }
 }

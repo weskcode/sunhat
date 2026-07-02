@@ -41,7 +41,7 @@ struct PrivacyPolicyView: View {
 
             privacySection(
                 title: "Location Data",
-                content: "We only access your location to provide relevant weather information. Location data is never shared with third parties and is only used to fetch weather conditions for your area."
+                content: "We only access your location to provide relevant weather information. Coordinates are sent only to enabled weather providers to fetch forecasts for your area."
             )
 
             privacySection(

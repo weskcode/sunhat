@@ -396,12 +396,19 @@ struct DataPrivacyView: View {
                     dataShared: "Notification content (local only)",
                     privacyPolicy: "https://www.apple.com/legal/privacy/"
                 )
+
+                ThirdPartyServiceCard(
+                    name: "OpenWeatherMap",
+                    purpose: "Backup weather data provider when enabled",
+                    dataShared: "Location coordinates for forecast requests",
+                    privacyPolicy: "https://openweathermap.org/privacy-policy"
+                )
             }
             
         } header: {
             Label("Third-Party Services", systemImage: "building.2")
         } footer: {
-            Text("These Apple services are integrated into iOS and follow Apple's privacy policies.")
+            Text("Apple services are integrated into iOS. OpenWeatherMap is contacted only when its provider is enabled for weather data.")
         }
     }
     

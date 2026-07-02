@@ -9,14 +9,12 @@
 	<key>NSLocationDefaultAccuracyReduction</key>
 	<dict>
 		<key>NSLocationDefaultAccuracyReductionEnabled</key>
-		<true/>
+		<false/>
 	</dict>
 	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
 	<dict>
-		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-		<string>SunHat needs temporary location access to set up weather-based reminders for your current location.</string>
-		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>SunHat needs temporary location access to provide weather-based reminders while you&apos;re using the app.</string>
+		<key>WeatherReminderAccuracy</key>
+		<string>SunHat uses precise location temporarily to match weather forecasts to your current area for accurate reminders.</string>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>SunHat needs location access to provide weather-based reminders for your current area.</string>
@@ -28,7 +26,6 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
-		<string>remote-notification</string>
 	</array>
 </dict>
 </plist>

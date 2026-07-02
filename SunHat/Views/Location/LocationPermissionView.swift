@@ -319,7 +319,7 @@ struct LocationPermissionView: View {
                 .font(.subheadline)
                 .foregroundStyle(.green)
 
-            Text("Only **you** have your location data — it's used solely for accurate weather, nothing else.")
+            Text("SunHat stores location on-device and sends coordinates only to enabled weather providers for forecasts.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.leading)
@@ -327,7 +327,7 @@ struct LocationPermissionView: View {
         }
         .padding(.top, 8)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Privacy notice: Only you have your location data. It's used solely for accurate weather, nothing else.")
+        .accessibilityLabel("Privacy notice: SunHat stores location on device and sends coordinates only to enabled weather providers for forecasts.")
     }
     
     // MARK: - Helper Methods
@@ -348,7 +348,7 @@ struct LocationPermissionView: View {
         impactFeedback.impactOccurred()
         
         locationManager.requestLocationPermission { granted in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 isProcessingPermission = false
                 
                 if granted {

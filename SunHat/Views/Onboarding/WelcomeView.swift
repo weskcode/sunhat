@@ -148,7 +148,10 @@ struct WelcomeView: View {
                 .frame(width: 160, height: 160)
                 .scaleEffect(isAnimating ? 1.2 : 1.0)
                 .opacity(isAnimating ? 0.6 : 0.8)
-                .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: isAnimating)
+                .animation(
+                    reduceMotion ? nil : .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
+                    value: isAnimating
+                )
             
             // Main weather icon
             ZStack {
@@ -163,7 +166,10 @@ struct WelcomeView: View {
                         )
                     )
                     .rotationEffect(.degrees(isAnimating ? 360 : 0))
-                    .animation(.linear(duration: 20.0).repeatForever(autoreverses: false), value: isAnimating)
+                    .animation(
+                        reduceMotion ? nil : .linear(duration: 20.0).repeatForever(autoreverses: false),
+                        value: isAnimating
+                    )
                 
                 // Cloud overlay for partly cloudy effect
                 Image(systemName: "cloud.fill")

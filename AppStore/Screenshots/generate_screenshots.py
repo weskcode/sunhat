@@ -275,7 +275,7 @@ if __name__ == "__main__":
 
         # 9. Settings scrolled (shows General + privacy text)
         {"n": 9, "cap": "Privacy-First\nDesign",
-         "sub": "Your weather data never leaves your device",
+         "sub": "Your reminders stay on your device",
          "raw": "settings_tab.png",
          "g1": (22, 22, 38), "g2": (48, 48, 75), "ac": (160, 170, 200)},
 

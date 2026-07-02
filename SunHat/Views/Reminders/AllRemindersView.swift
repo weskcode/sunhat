@@ -12,6 +12,7 @@ struct AllRemindersView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \WeatherReminder.createdDate, order: .reverse) private var reminders: [WeatherReminder]
 
     @State private var searchText = ""
@@ -70,10 +71,8 @@ struct AllRemindersView: View {
                 .ignoresSafeArea()
 
             if reminders.isEmpty {
-                // Empty state
                 emptyStateView
             } else {
-                // Reminders list
                 ScrollView {
                     VStack(spacing: 12) {
                         if shouldShowSearchAndFilters {
@@ -117,18 +116,24 @@ struct AllRemindersView: View {
 
             TextField("Search tasks...", text: $searchText)
                 .textFieldStyle(.plain)
+                .accessibilityLabel("Search tasks")
 
             if !searchText.isEmpty {
                 Button {
-                    searchText = ""
+                    withAnimation(SunHatMotion.cardToggle(reduceMotion: reduceMotion)) {
+                        searchText = ""
+                    }
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(.secondary)
                 }
+                .buttonStyle(SunHatPressButtonStyle())
+                .accessibilityLabel("Clear search")
             }
         }
         .padding(12)
         .glassEffect(in: .rect(cornerRadius: 12))
+        .accessibilityElement(children: .contain)
     }
 
     // MARK: - Filter Chips
@@ -141,7 +146,7 @@ struct AllRemindersView: View {
                         title: filter.rawValue,
                         isSelected: selectedFilter == filter
                     ) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        withAnimation(SunHatMotion.cardToggle(reduceMotion: reduceMotion)) {
                             selectedFilter = filter
                         }
                     }
@@ -197,24 +202,24 @@ struct AllRemindersView: View {
     }
 
     private var emptyStateView: some View {
-        ContentUnavailableView {
-            Label("No Tasks Yet", systemImage: "list.bullet.clipboard")
-        } description: {
-            Text("Create your first weather-triggered task to get started.")
-        }
+        SunHatEmptyState(
+            title: "No Tasks Yet",
+            message: "Create your first weather-triggered task to start watching the weather.",
+            systemImage: "list.bullet.clipboard"
+        )
         .padding()
     }
 
     // MARK: - No Results View
 
     private var noResultsView: some View {
-        ContentUnavailableView {
-            Label("No Tasks Found", systemImage: "magnifyingglass")
-        } description: {
-            Text("Try adjusting your search or filter")
-        }
+        SunHatEmptyState(
+            title: "No Tasks Found",
+            message: "Try a different search or switch back to all tasks.",
+            systemImage: "magnifyingglass"
+        )
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
+        .padding(.vertical, 24)
     }
 
     // MARK: - Helper Methods
@@ -230,14 +235,16 @@ struct AllRemindersView: View {
 
 struct ReminderGlassCard: View {
     let reminder: WeatherReminder
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        let shouldReduceMotion = reduceMotion
+
         NavigationLink {
             DetailedReminderView(reminder: reminder)
         } label: {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    // Activity icon
                     ZStack {
                         Circle()
                             .fill(Color.accentColor.opacity(0.15))
@@ -245,10 +252,11 @@ struct ReminderGlassCard: View {
 
                         Image(systemName: reminder.category.iconName)
                             .font(AppFontStyle.title3.font)
+                            .symbolRenderingMode(.hierarchical)
                             .foregroundStyle(Color.accentColor)
                     }
+                    .accessibilityHidden(true)
 
-                    // Title and description
                     VStack(alignment: .leading, spacing: 4) {
                         Text(reminder.displayTitle)
                             .font(.headline)
@@ -266,19 +274,13 @@ struct ReminderGlassCard: View {
 
                     Spacer()
 
-                    // Status indicator
-                    VStack(spacing: 4) {
-                        Circle()
-                            .fill(reminder.isCurrentlyActive ? Color.green : Color.orange)
-                            .frame(width: 8, height: 8)
-
-                        Text(reminder.isCurrentlyActive ? "Active" : "Waiting")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+                    SunHatStatusPill(
+                        text: reminder.isCurrentlyActive ? "Active" : "Paused",
+                        systemImage: reminder.isCurrentlyActive ? "checkmark.circle.fill" : "pause.circle.fill",
+                        tint: reminder.isCurrentlyActive ? .green : .orange
+                    )
                 }
 
-                // Trigger condition
                 if let condition = reminder.triggerCondition {
                     HStack(spacing: 8) {
                         Image(systemName: "thermometer")
@@ -301,7 +303,29 @@ struct ReminderGlassCard: View {
             .glassEffect(in: .rect(cornerRadius: 16))
             .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SunHatPressButtonStyle())
+        .scrollTransition(.interactive, axis: .vertical) { content, phase in
+            content
+                .opacity(phase.isIdentity ? 1 : 0.84)
+                .scaleEffect(shouldReduceMotion || phase.isIdentity ? 1 : 0.98)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityHint("Opens task details.")
+    }
+
+    private var accessibilityLabel: String {
+        var parts = [reminder.displayTitle, reminder.isCurrentlyActive ? "Active" : "Paused"]
+
+        if !reminder.reminderDescription.isEmpty {
+            parts.append(reminder.reminderDescription)
+        }
+
+        if let condition = reminder.triggerCondition {
+            parts.append("When temperature is \(condition.comparisonType.rawValue) \(Int(condition.targetTemperature)) degrees")
+        }
+
+        return parts.joined(separator: ", ")
     }
 }
 
@@ -312,6 +336,7 @@ struct FilterChip: View {
     let isSelected: Bool
     let action: () -> Void
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Button(action: action) {
@@ -320,7 +345,7 @@ struct FilterChip: View {
                 .fontWeight(isSelected ? .semibold : .regular)
                 .foregroundStyle(isSelected ? .white : .primary)
                 .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .frame(minHeight: 44)
                 .background(
                     Capsule()
                         .fill(
@@ -351,8 +376,13 @@ struct FilterChip: View {
                                 )
                         )
                 )
+                .contentShape(Capsule())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SunHatPressButtonStyle())
+        .accessibilityLabel(title)
+        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+        .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: isSelected)
     }
 }
 

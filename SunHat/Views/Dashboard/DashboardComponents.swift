@@ -11,13 +11,22 @@ import SwiftUI
 
 struct WeatherAlertCard: View {
     let alert: WeatherAlertDisplay
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        let shouldReduceMotion = reduceMotion
+
         HStack(spacing: 12) {
             Image(systemName: alert.iconName)
                 .font(AppFontStyle.title3.font)
+                .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(alert.severityColor)
-                .frame(width: 28)
+                .frame(width: 34, height: 34)
+                .background {
+                    Circle()
+                        .fill(alert.severityColor.opacity(0.12))
+                }
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(alert.title)
@@ -34,7 +43,14 @@ struct WeatherAlertCard: View {
             Spacer()
         }
         .padding(12)
-        .glassEffect(.regular.tint(alert.severityColor.opacity(0.12)), in: .rect(cornerRadius: 10))
+        .glassEffect(.regular.tint(alert.severityColor.opacity(0.10)), in: .rect(cornerRadius: 12))
+        .scrollTransition(.interactive, axis: .vertical) { content, phase in
+            content
+                .opacity(phase.isIdentity ? 1 : 0.82)
+                .scaleEffect(shouldReduceMotion || phase.isIdentity ? 1 : 0.98)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(alert.title), \(alert.description)")
     }
 }
 
@@ -43,13 +59,22 @@ struct WeatherAlertCard: View {
 struct ActiveReminderCard: View {
     let reminder: WeatherReminderDisplay
     let weatherData: WeatherDataTransfer?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        let shouldReduceMotion = reduceMotion
+
         HStack(spacing: 12) {
             Image(systemName: reminder.category.iconName)
                 .font(AppFontStyle.title3.font)
+                .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(Color.accentColor)
-                .frame(width: 28)
+                .frame(width: 34, height: 34)
+                .background {
+                    Circle()
+                        .fill(Color.accentColor.opacity(0.12))
+                }
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(reminder.title)
@@ -83,13 +108,22 @@ struct ActiveReminderCard: View {
 
             if let weatherData {
                 Text("\(weatherData.temperature, specifier: "%.0f")°")
-                    .font(AppFontStyle.caption.font)
-                    .fontWeight(.medium)
+                    .font(AppFontStyle.headline.font)
+                    .fontWeight(.semibold)
                     .foregroundStyle(.primary)
+                    .contentTransition(.numericText())
+                    .accessibilityLabel("\(weatherData.temperature, specifier: "%.0f") degrees")
             }
         }
         .padding(12)
-        .glassEffect(in: .rect(cornerRadius: 10))
+        .glassEffect(in: .rect(cornerRadius: 12))
+        .scrollTransition(.interactive, axis: .vertical) { content, phase in
+            content
+                .opacity(phase.isIdentity ? 1 : 0.82)
+                .scaleEffect(shouldReduceMotion || phase.isIdentity ? 1 : 0.98)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(reminderAccessibilityLabel)
     }
 
     private var statusColor: Color {
@@ -107,19 +141,35 @@ struct ActiveReminderCard: View {
 
         return "Monitoring"
     }
+
+    private var reminderAccessibilityLabel: String {
+        var parts = [reminder.title, statusText]
+
+        if let condition = reminder.triggerCondition {
+            let temperature = String(format: "%.1f", condition.targetTemperature)
+            parts.append("Trigger when temperature is \(condition.comparisonType.rawValue) \(temperature) degrees")
+        } else {
+            parts.append("No trigger condition set")
+        }
+
+        if let weatherData {
+            let temperature = String(format: "%.0f", weatherData.temperature)
+            parts.append("Current temperature \(temperature) degrees")
+        }
+
+        return parts.joined(separator: ", ")
+    }
 }
 
 // MARK: - Empty Active Reminders View
 
 struct EmptyActiveRemindersView: View {
     var body: some View {
-        ContentUnavailableView {
-            Label("No Tasks Yet", systemImage: "bell.slash")
-        } description: {
-            Text("Create a weather task and SunHat will watch for matching conditions.")
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 24)
+        SunHatEmptyState(
+            title: "No Tasks Yet",
+            message: "Create a weather task and SunHat will watch for matching conditions.",
+            systemImage: "bell.slash"
+        )
     }
 }
 

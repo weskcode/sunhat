@@ -367,7 +367,7 @@ struct NotificationPermissionView: View {
         impactFeedback.impactOccurred()
         
         notificationManager.requestNotificationPermission { [self] granted in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 isRequestingPermission = false
                 
                 if granted {
@@ -590,87 +590,7 @@ final class NotificationPermissionManager: NSObject, ObservableObject {
     }
     
     func setupNotificationCategories() {
-        let weatherTriggerActions = [
-            UNNotificationAction(
-                identifier: "VIEW_DETAILS",
-                title: "View Details",
-                options: [.foreground]
-            ),
-            UNNotificationAction(
-                identifier: "SNOOZE_1H",
-                title: "Snooze 1 Hour",
-                options: []
-            )
-        ]
-        
-        let weatherTriggerCategory = UNNotificationCategory(
-            identifier: NotificationCategory.weatherTrigger.rawValue,
-            actions: weatherTriggerActions,
-            intentIdentifiers: [],
-            options: [.customDismissAction]
-        )
-        
-        let dailySummaryActions = [
-            UNNotificationAction(
-                identifier: "VIEW_FORECAST",
-                title: "View Forecast",
-                options: [.foreground]
-            )
-        ]
-        
-        let dailySummaryCategory = UNNotificationCategory(
-            identifier: NotificationCategory.dailySummary.rawValue,
-            actions: dailySummaryActions,
-            intentIdentifiers: [],
-            options: []
-        )
-        
-        let severeWeatherActions = [
-            UNNotificationAction(
-                identifier: "VIEW_ALERT",
-                title: "View Alert",
-                options: [.foreground]
-            ),
-            UNNotificationAction(
-                identifier: "POSTPONE_REMINDER",
-                title: "Postpone Reminder",
-                options: []
-            )
-        ]
-        
-        let severeWeatherCategory = UNNotificationCategory(
-            identifier: NotificationCategory.severeWeather.rawValue,
-            actions: severeWeatherActions,
-            intentIdentifiers: [],
-            options: [.customDismissAction]
-        )
-        
-        let reminderCompletedActions = [
-            UNNotificationAction(
-                identifier: "MARK_DONE",
-                title: "Mark Done",
-                options: []
-            ),
-            UNNotificationAction(
-                identifier: "RESCHEDULE",
-                title: "Reschedule",
-                options: [.foreground]
-            )
-        ]
-        
-        let reminderCompletedCategory = UNNotificationCategory(
-            identifier: NotificationCategory.reminderCompleted.rawValue,
-            actions: reminderCompletedActions,
-            intentIdentifiers: [],
-            options: []
-        )
-        
-        notificationCenter.setNotificationCategories([
-            weatherTriggerCategory,
-            dailySummaryCategory,
-            severeWeatherCategory,
-            reminderCompletedCategory
-        ])
+        SunHatNotificationCategoryRegistry.register(center: notificationCenter)
     }
     
     func requestNotificationPermission(completion: @escaping (Bool) -> Void) {

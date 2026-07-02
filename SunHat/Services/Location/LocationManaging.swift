@@ -23,11 +23,7 @@ final class LocationPermissionManagerAdapter: LocationManaging {
 
     func currentLocation() async -> (location: CLLocation, name: String)? {
         if locationPermissionManager.authorizationStatus == .notDetermined {
-            await withCheckedContinuation { continuation in
-                locationPermissionManager.requestLocationPermission { _ in
-                    continuation.resume()
-                }
-            }
+            locationPermissionManager.requestLocationPermission { _ in }
         }
 
         if let manualLocation = locationPermissionManager.manualLocation {
@@ -47,16 +43,30 @@ final class LocationPermissionManagerAdapter: LocationManaging {
             locationPermissionManager.authorizationStatus == .authorizedAlways {
             locationPermissionManager.getCurrentLocation()
 
-            for _ in 0..<20 {
-                try? await Task.sleep(for: .milliseconds(500))
-                if let location = locationPermissionManager.currentLocation {
-                    let locationName = await LocationDisplayFormatter.reverseGeocodedName(for: location)
-                    return (location, locationName)
-                }
+            if let location = await waitForCurrentLocation() {
+                let locationName = await LocationDisplayFormatter.reverseGeocodedName(for: location)
+                return (location, locationName)
             }
         }
 
         logger.warning("Could not obtain user location - no fallback used")
+        return nil
+    }
+
+    private func waitForCurrentLocation(maxAttempts: Int = 20) async -> CLLocation? {
+        for _ in 0..<maxAttempts {
+            try? await Task.sleep(for: .milliseconds(500))
+
+            if let location = locationPermissionManager.currentLocation {
+                return location
+            }
+
+            if locationPermissionManager.authorizationStatus == .denied ||
+                locationPermissionManager.authorizationStatus == .restricted {
+                return nil
+            }
+        }
+
         return nil
     }
 }

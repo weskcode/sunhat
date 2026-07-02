@@ -8,16 +8,16 @@
 import Foundation
 import CoreLocation
 
-struct CodableCoordinate: @unchecked Sendable {
+struct CodableCoordinate: Sendable {
     let latitude: Double
     let longitude: Double
 
-    init(_ coordinate: CLLocationCoordinate2D) {
+    nonisolated init(_ coordinate: CLLocationCoordinate2D) {
         self.latitude = coordinate.latitude
         self.longitude = coordinate.longitude
     }
 
-    var clCoordinate: CLLocationCoordinate2D {
+    nonisolated var clCoordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 }
@@ -42,7 +42,7 @@ extension CodableCoordinate: Codable {
     }
 }
 
-struct ReminderLocation: @unchecked Sendable, Identifiable {
+struct ReminderLocation: Sendable, Identifiable {
     let id: UUID
     let coordinate: CodableCoordinate
     let displayName: String

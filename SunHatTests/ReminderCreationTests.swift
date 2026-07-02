@@ -438,12 +438,19 @@ struct TimeRangeTests {
 @MainActor
 struct TriggerLikelihoodTests {
 
-    @Test("Every percentage tier produces a non-nil color")
+    @Test("Percentage tiers map to expected colors")
     func colorsExist() {
-        let percentages = [0, 20, 40, 60, 90]
-        for pct in percentages {
-            let likelihood = TriggerLikelihood(percentage: Double(pct), description: "", triggerDays: [])
-            #expect(likelihood.color != nil)
+        let expectations: [(percentage: Double, color: Color)] = [
+            (0, Color.gray.opacity(0.6)),
+            (40, .orange),
+            (60, .blue),
+            (90, .green),
+            (101, .gray)
+        ]
+
+        for expectation in expectations {
+            let likelihood = TriggerLikelihood(percentage: expectation.percentage, description: "", triggerDays: [])
+            #expect(likelihood.color == expectation.color)
         }
     }
 

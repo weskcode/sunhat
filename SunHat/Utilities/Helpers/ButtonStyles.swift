@@ -44,6 +44,7 @@ struct SecondaryButtonStyle: ButtonStyle {
 
 struct MagicalButtonStyle: ButtonStyle {
     @State private var isAnimating = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -63,15 +64,18 @@ struct MagicalButtonStyle: ButtonStyle {
                         ),
                         lineWidth: 1
                     )
+                    .opacity(reduceMotion ? 0 : 1)
                     .offset(x: isAnimating ? 200 : -200)
                     .animation(
-                        .linear(duration: 2.0).repeatForever(autoreverses: false),
+                        reduceMotion ? nil : .linear(duration: 2.0).repeatForever(autoreverses: false),
                         value: isAnimating
                     )
                     .clipped()
             )
             .onAppear {
-                isAnimating = true
+                if !reduceMotion {
+                    isAnimating = true
+                }
             }
             .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
     }

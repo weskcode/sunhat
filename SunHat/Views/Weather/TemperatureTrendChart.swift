@@ -90,7 +90,7 @@ struct TemperatureTrendChart: View {
             AxisMarks(values: .automatic(desiredCount: 7)) { value in
                 if let date = value.as(Date.self) {
                     AxisValueLabel {
-                        Text(dayFormatter.string(from: date))
+                        Text(date.formatted(.dateTime.weekday(.abbreviated)))
                             .font(AppFontStyle.caption2.font)
                             .foregroundStyle(.secondary)
                     }
@@ -116,12 +116,6 @@ struct TemperatureTrendChart: View {
             plot.frame(height: 120)
         }
         .animation(.easeInOut(duration: 0.6), value: animateChart)
-    }
-    
-    private var dayFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "E"
-        return formatter
     }
 }
 

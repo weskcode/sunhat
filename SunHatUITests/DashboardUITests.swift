@@ -8,38 +8,45 @@
 import XCTest
 
 final class DashboardUITests: XCTestCase {
-    var app: XCUIApplication!
-
     override func setUpWithError() throws {
         continueAfterFailure = false
-        app = XCUIApplication()
-        app.launch()
-
-        // Wait for splash screen to dismiss before interacting with UI
-        let homeTab = app.tabBars.buttons["Home"]
-        _ = homeTab.waitForExistence(timeout: 5)
     }
 
-    override func tearDownWithError() throws {
-        app = nil
+    @MainActor
+    private func launchApp() -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launch()
+
+        // Wait for splash screen to dismiss before interacting with UI.
+        let homeTab = app.tabBars.buttons["Home"]
+        _ = homeTab.waitForExistence(timeout: 5)
+        return app
     }
 
     // MARK: - Navigation Tests
 
+    @MainActor
     func testHomeTabIsSelected() throws {
+        let app = launchApp()
         // Verify home tab is selected on launch
         let homeTab = app.tabBars.buttons["Home"]
         XCTAssertTrue(homeTab.exists, "Home tab should exist")
         XCTAssertTrue(homeTab.isSelected, "Home tab should be selected by default")
     }
 
+    @MainActor
     func testNavigationBetweenTabs() throws {
+        let app = launchApp()
         // Test switching between tabs
         let tabBar = app.tabBars
 
         // Switch to Reminders tab
         tabBar.buttons["Reminders"].tap()
         XCTAssertTrue(tabBar.buttons["Reminders"].isSelected, "Reminders tab should be selected")
+
+        // Switch to Weather tab
+        tabBar.buttons["Weather"].tap()
+        XCTAssertTrue(tabBar.buttons["Weather"].isSelected, "Weather tab should be selected")
 
         // Switch to Settings tab
         tabBar.buttons["Settings"].tap()
@@ -52,13 +59,17 @@ final class DashboardUITests: XCTestCase {
 
     // MARK: - Weather Display Tests
 
+    @MainActor
     func testWeatherWidgetDisplays() throws {
+        let app = launchApp()
         // Verify main weather widget is visible
         let temperatureWidget = app.otherElements.containing(.staticText, identifier: "CurrentTemperature").firstMatch
         XCTAssertTrue(temperatureWidget.exists || app.staticTexts["SunHat"].exists, "Weather widget or title should be visible")
     }
 
+    @MainActor
     func testExpandableWeatherDetails() throws {
+        let app = launchApp()
         // Test expanding weather details
         let weatherCard = app.buttons.matching(identifier: "TemperatureWidget").firstMatch
 
@@ -84,7 +95,9 @@ final class DashboardUITests: XCTestCase {
 
     // MARK: - Forecast Tests
 
+    @MainActor
     func testHourlyForecastDisplay() throws {
+        let app = launchApp()
         // Scroll to hourly forecast section
         let scrollView = app.scrollViews.firstMatch
         scrollView.swipeUp()
@@ -102,7 +115,9 @@ final class DashboardUITests: XCTestCase {
         }
     }
 
+    @MainActor
     func testForecastTimeframeSwitching() throws {
+        let app = launchApp()
         // Scroll to forecast section
         let scrollView = app.scrollViews.firstMatch
         scrollView.swipeUp()
@@ -132,7 +147,9 @@ final class DashboardUITests: XCTestCase {
 
     // MARK: - Active Reminders Tests
 
+    @MainActor
     func testActiveRemindersSection() throws {
+        let app = launchApp()
         // Scroll to active reminders
         let scrollView = app.scrollViews.firstMatch
         scrollView.swipeUp()
@@ -163,7 +180,9 @@ final class DashboardUITests: XCTestCase {
 
     // MARK: - Weather Alerts Tests
 
+    @MainActor
     func testWeatherAlertsDisplay() throws {
+        let app = launchApp()
         // Alerts only show if there are active alerts
         let weatherAlerts = app.staticTexts["Weather Alerts"]
 
@@ -186,7 +205,9 @@ final class DashboardUITests: XCTestCase {
 
     // MARK: - Reminder Creation Tests
 
+    @MainActor
     func testCreateReminderButton() throws {
+        let app = launchApp()
         // Find the floating action button (FAB) or create button
         let createButton = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] 'Create'")).firstMatch
         let fabButton = app.buttons.matching(identifier: "QuickCreateFAB").firstMatch
@@ -231,7 +252,9 @@ final class DashboardUITests: XCTestCase {
 
     // MARK: - Pull to Refresh Tests
 
+    @MainActor
     func testPullToRefresh() throws {
+        let app = launchApp()
         // Get main scroll view
         let scrollView = app.scrollViews.firstMatch
         XCTAssertTrue(scrollView.exists, "Scroll view should exist")
@@ -251,7 +274,9 @@ final class DashboardUITests: XCTestCase {
 
     // MARK: - Weather Metrics Tests
 
+    @MainActor
     func testWeatherMetricsDisplay() throws {
+        let app = launchApp()
         // Scroll down to weather metrics
         let scrollView = app.scrollViews.firstMatch
         for _ in 0..<3 {
@@ -271,20 +296,24 @@ final class DashboardUITests: XCTestCase {
 
     // MARK: - Accessibility Tests
 
+    @MainActor
     func testVoiceOverLabels() throws {
+        let app = launchApp()
         // Verify important elements have accessibility labels
         let homeTab = app.tabBars.buttons["Home"]
-        XCTAssertNotNil(homeTab.label, "Home tab should have accessibility label")
+        XCTAssertFalse(homeTab.label.isEmpty, "Home tab should have accessibility label")
 
         let title = app.staticTexts["SunHat"]
         if title.exists {
-            XCTAssertNotNil(title.label, "Title should have accessibility label")
+            XCTAssertFalse(title.label.isEmpty, "Title should have accessibility label")
         }
     }
 
     // MARK: - Scroll Performance Tests
 
+    @MainActor
     func testScrollPerformance() throws {
+        let app = launchApp()
         measure(metrics: [XCTOSSignpostMetric.scrollDecelerationMetric]) {
             let scrollView = app.scrollViews.firstMatch
 
@@ -302,6 +331,7 @@ final class DashboardUITests: XCTestCase {
 
     // MARK: - Launch Performance Tests
 
+    @MainActor
     func testLaunchPerformance() throws {
         measure(metrics: [XCTApplicationLaunchMetric()]) {
             let app = XCUIApplication()
@@ -311,7 +341,9 @@ final class DashboardUITests: XCTestCase {
 
     // MARK: - Memory Tests
 
+    @MainActor
     func testMemoryUsage() throws {
+        let app = launchApp()
         measure(metrics: [XCTMemoryMetric()]) {
             // Navigate through different sections
             app.tabBars.buttons["Reminders"].tap()

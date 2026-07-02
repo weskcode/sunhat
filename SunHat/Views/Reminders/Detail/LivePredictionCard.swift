@@ -7,6 +7,7 @@ import SwiftUI
 
 struct LivePredictionCard: View {
     let prediction: LivePrediction
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -24,16 +25,11 @@ struct LivePredictionCard: View {
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(prediction.confidenceText)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundStyle(prediction.confidenceColor)
-
-                    Text("confidence")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
+                SunHatStatusPill(
+                    text: prediction.confidenceText,
+                    systemImage: "chart.line.uptrend.xyaxis",
+                    tint: prediction.confidenceColor
+                )
             }
 
             GeometryReader { geometry in
@@ -47,10 +43,11 @@ struct LivePredictionCard: View {
                         .fill(prediction.confidenceColor)
                         .frame(width: geometry.size.width * prediction.confidence, height: 4)
                         .clipShape(.rect(cornerRadius: 2))
-                        .animation(.easeInOut(duration: 0.5), value: prediction.confidence)
+                        .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: prediction.confidence)
                 }
             }
             .frame(height: 4)
+            .accessibilityHidden(true)
 
             HStack {
                 ForEach(0..<prediction.totalDays, id: \.self) { index in
@@ -68,5 +65,8 @@ struct LivePredictionCard: View {
         }
         .padding(16)
         .glassEffect(.regular.tint(prediction.confidenceColor.opacity(0.08)), in: .rect(cornerRadius: 12))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Next trigger, \(prediction.description)")
+        .accessibilityValue("\(prediction.confidenceText) confidence, \(prediction.matchingDays) of \(prediction.totalDays) days match")
     }
 }

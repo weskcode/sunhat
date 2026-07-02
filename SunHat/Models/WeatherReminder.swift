@@ -243,8 +243,8 @@ final class WeatherReminder {
         let calendar = Calendar.current
 
         if let previousTrigger = lastTriggered {
-            let yesterday = calendar.date(byAdding: .day, value: -1, to: now)!
-            if calendar.isDate(previousTrigger, inSameDayAs: yesterday) {
+            let yesterday = calendar.date(byAdding: .day, value: -1, to: now)
+            if let yesterday, calendar.isDate(previousTrigger, inSameDayAs: yesterday) {
                 consecutiveTriggerDays += 1
             } else if !calendar.isDate(previousTrigger, inSameDayAs: now) {
                 consecutiveTriggerDays = 1

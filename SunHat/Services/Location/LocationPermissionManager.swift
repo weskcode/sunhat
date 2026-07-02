@@ -14,6 +14,7 @@ import os
 @MainActor
 final class LocationPermissionManager: NSObject, ObservableObject {
     static let shared = LocationPermissionManager()
+    static let weatherReminderAccuracyPurposeKey = "WeatherReminderAccuracy"
     
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var currentLocation: CLLocation?
@@ -91,6 +92,7 @@ final class LocationPermissionManager: NSObject, ObservableObject {
 
         case .authorizedWhenInUse, .authorizedAlways:
             logger.info("Location permission already granted")
+            requestFullAccuracyIfNeeded()
             getCurrentLocation()
             completion(true)
 
@@ -202,6 +204,17 @@ final class LocationPermissionManager: NSObject, ObservableObject {
     func hasValidLocation() -> Bool {
         return currentLocation != nil || manualLocation != nil
     }
+
+    private func requestFullAccuracyIfNeeded() {
+        guard locationManager.accuracyAuthorization == .reducedAccuracy else {
+            return
+        }
+
+        logger.info("Requesting temporary full accuracy for weather reminders")
+        locationManager.requestTemporaryFullAccuracyAuthorization(
+            withPurposeKey: Self.weatherReminderAccuracyPurposeKey
+        )
+    }
     
     func getDisplayLocation() -> String {
         if let manual = manualLocation {
@@ -226,7 +239,7 @@ final class LocationPermissionManager: NSObject, ObservableObject {
         Your location data:
         • Stays on your device
         • Is only used for weather updates
-        • Is never shared with third parties
+        • Is sent only to enabled weather providers to fetch forecasts
         • Can be changed to manual entry at any time
         """
     }
@@ -252,6 +265,7 @@ extension LocationPermissionManager: CLLocationManagerDelegate {
             switch capturedStatus {
             case .authorizedWhenInUse, .authorizedAlways:
                 locationError = nil
+                requestFullAccuracyIfNeeded()
                 getCurrentLocation()
                 permissionCompletionHandler?(true)
                 
@@ -410,19 +424,23 @@ enum LocationError: LocalizedError, Sendable {
 
 // MARK: - Manual Location Data
 
-struct ManualLocationData: @unchecked Sendable, Identifiable {
+struct ManualLocationData: Sendable, Identifiable {
     let id: UUID
     let name: String
-    let coordinate: CLLocationCoordinate2D
+    private let codableCoordinate: CodableCoordinate
     let country: String?
     let administrativeArea: String? // State/Province
     
     init(name: String, coordinate: CLLocationCoordinate2D, country: String? = nil, administrativeArea: String? = nil) {
         self.id = UUID()
         self.name = name
-        self.coordinate = coordinate
+        self.codableCoordinate = CodableCoordinate(coordinate)
         self.country = country
         self.administrativeArea = administrativeArea
+    }
+
+    nonisolated var coordinate: CLLocationCoordinate2D {
+        codableCoordinate.clCoordinate
     }
     
     nonisolated var displayName: String {
@@ -443,8 +461,8 @@ extension ManualLocationData: Codable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(name, forKey: .name)
-        try container.encode(coordinate.latitude, forKey: .latitude)
-        try container.encode(coordinate.longitude, forKey: .longitude)
+        try container.encode(codableCoordinate.latitude, forKey: .latitude)
+        try container.encode(codableCoordinate.longitude, forKey: .longitude)
         try container.encode(country, forKey: .country)
         try container.encode(administrativeArea, forKey: .administrativeArea)
     }
@@ -455,7 +473,7 @@ extension ManualLocationData: Codable {
         name = try container.decode(String.self, forKey: .name)
         let latitude = try container.decode(Double.self, forKey: .latitude)
         let longitude = try container.decode(Double.self, forKey: .longitude)
-        coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        codableCoordinate = CodableCoordinate(CLLocationCoordinate2D(latitude: latitude, longitude: longitude))
         country = try container.decodeIfPresent(String.self, forKey: .country)
         administrativeArea = try container.decodeIfPresent(String.self, forKey: .administrativeArea)
     }

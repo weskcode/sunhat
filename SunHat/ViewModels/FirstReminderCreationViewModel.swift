@@ -351,6 +351,7 @@ final class FirstReminderCreationViewModel: ObservableObject {
         modelContext.insert(reminder)
         do {
             try modelContext.save()
+            SunHatSearchIndexer.index(reminder: reminder)
         } catch {
             modelContext.delete(reminder)
             creationErrorMessage = "Couldn't save your reminder. Please try again."

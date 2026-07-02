@@ -41,12 +41,11 @@ struct WeatherServiceConfigurationTests {
     @Test("WeatherService singleton is not nil after configure")
     func weatherServiceConfiguration() async {
         let weatherService = WeatherService.shared
-        #expect(weatherService != nil)
 
         await weatherService.configure(modelContainer: modelContainer, openWeatherMapKey: "test-api-key")
 
         let configManager = WeatherServiceManager.shared
-        #expect(configManager.configuration != nil)
+        #expect(configManager.configuration.openWeatherMapAPIKey == "test-api-key")
     }
 
     @Test("Valid configuration passes validation")
@@ -211,7 +210,7 @@ struct WeatherForecastDayModelTests {
         #expect(forecastDay.lowTemperature == 60.0)
         #expect(forecastDay.averageTemperature == 70.0)
         #expect(forecastDay.weatherCondition == .partlyCloudy)
-        #expect(forecastDay.dayOfWeek != nil)
+        #expect(forecastDay.dayOfWeek.isEmpty == false)
     }
 }
 
@@ -271,15 +270,27 @@ struct WeatherReminderCategoryTests {
 
 import XCTest
 
-final class MockWeatherAPI: WeatherAPI, @unchecked Sendable {
+actor MockWeatherAPI: WeatherAPI {
     nonisolated let provider: WeatherProvider = .openWeatherMap
 
-    var shouldFail = false
-    var mockWeatherData: WeatherDataDTO?
-    var mockForecast: [ForecastDayDTO] = []
+    private var shouldFail = false
+    private var mockWeatherData: WeatherDataDTO?
+    private var mockForecast: [ForecastDayDTO] = []
 
     nonisolated var isAvailable: Bool {
-        get async { !shouldFail }
+        get async { await !shouldFail }
+    }
+
+    func setShouldFail(_ shouldFail: Bool) {
+        self.shouldFail = shouldFail
+    }
+
+    func setMockWeatherData(_ mockWeatherData: WeatherDataDTO?) {
+        self.mockWeatherData = mockWeatherData
+    }
+
+    func setMockForecast(_ mockForecast: [ForecastDayDTO]) {
+        self.mockForecast = mockForecast
     }
 
     func fetchCurrentWeather(for location: CLLocation) async throws -> WeatherDataDTO {
