@@ -158,19 +158,11 @@ struct DashboardView: View {
             weatherSummaryContent
 
             if viewModel.hasWeatherData {
-                HStack(spacing: 8) {
-                    Image(systemName: "chevron.down")
-                        .font(AppFontStyle.caption.font.weight(.semibold))
-                        .rotationEffect(.degrees(showingDetailedWeather ? 180 : 0))
-                        .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: showingDetailedWeather)
-
-                    Text(showingDetailedWeather ? "Hide forecast detail" : "Show forecast detail")
-                        .font(AppFontStyle.caption.font.weight(.semibold))
-                }
-                .foregroundStyle(Color.accentColor)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(.primary.opacity(0.045), in: .capsule)
+                ForecastDetailToggleControl(
+                    isExpanded: showingDetailedWeather,
+                    tint: viewModel.weatherIconColor,
+                    reduceMotion: reduceMotion
+                )
             }
         }
         .padding(18)
