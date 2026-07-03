@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 import SwiftData
 import Combine
+import CoreLocation
 import os
 
 @MainActor
@@ -21,8 +22,11 @@ final class WeatherViewModel: ObservableObject {
     @Published var currentTemperature: Double = 0
     @Published var feelsLikeTemperature: Double = 0
     @Published var weatherDescription: String = "Clear"
+    @Published var weatherCondition: WeatherCondition = .unknown
     @Published var weatherIconName: String = "sun.max.fill"
     @Published var weatherIconColor: Color = .orange
+    @Published var backdropPalette: WeatherBackdropPalette = .calmBlue
+    @Published var hasWeatherData = false
     @Published var highTemperature: Double = 0
     @Published var lowTemperature: Double = 0
 
@@ -56,6 +60,8 @@ final class WeatherViewModel: ObservableObject {
     private var locationManager: LocationManaging
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "WeatherVM")
     private var cancellables = Set<AnyCancellable>()
+    private var selectedLocation: ReminderLocation = .currentLocation
+    private var activeLocation: (location: CLLocation, name: String)?
     private static let calendar = Calendar.current
     private static let dayFormatter: DateFormatter = {
         let df = DateFormatter()
@@ -126,12 +132,19 @@ final class WeatherViewModel: ObservableObject {
         await loadAllData(forceRefresh: true)
     }
 
+    func updateSelectedLocation(_ location: ReminderLocation) async {
+        selectedLocation = location
+        await loadAllData(forceRefresh: true)
+    }
+
     // MARK: - Data Loading
     private func loadAllData(forceRefresh: Bool) async {
-        guard let locInfo = await locationManager.currentLocation() else {
+        guard let locInfo = await resolveSelectedLocation() else {
             logger.warning("Location unavailable")
+            hasWeatherData = false
             return
         }
+        activeLocation = locInfo
         locationName = locInfo.name
         do {
             isLoading = true
@@ -148,6 +161,7 @@ final class WeatherViewModel: ObservableObject {
             logger.info("Weather data loaded for \(locInfo.name)")
         } catch {
             logger.error("Error loading weather: \(error.localizedDescription)")
+            hasWeatherData = false
         }
         isLoading = false
     }
@@ -155,6 +169,9 @@ final class WeatherViewModel: ObservableObject {
     private func updateCurrent(from data: WeatherData) {
         currentTemperature = data.temperature
         feelsLikeTemperature = data.apparentTemperature
+        weatherCondition = data.weatherCondition
+        backdropPalette = WeatherBackdropPalette.palette(for: data)
+        hasWeatherData = true
         weatherDescription = data.weatherDescription.isEmpty
             ? data.weatherCondition.rawValue.capitalized
             : data.weatherDescription
@@ -176,6 +193,26 @@ final class WeatherViewModel: ObservableObject {
             highTemperature = today.highTemperature
             lowTemperature = today.lowTemperature
         }
+    }
+
+    private func resolveSelectedLocation() async -> (location: CLLocation, name: String)? {
+        guard !selectedLocation.isCurrentLocation else {
+            return await locationManager.currentLocation()
+        }
+
+        let coordinate = selectedLocation.coordinate.clCoordinate
+        return (
+            CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude),
+            LocationDisplayFormatter.privacyPreservingName(from: selectedLocation.displayName)
+        )
+    }
+
+    private func resolvedActiveLocation() async -> (location: CLLocation, name: String)? {
+        if let activeLocation {
+            return activeLocation
+        }
+
+        return await resolveSelectedLocation()
     }
 
     private func computeDayLength() {
@@ -217,7 +254,7 @@ final class WeatherViewModel: ObservableObject {
         
         do {
             // Use fetchForecastData which returns [ForecastDayDisplay]
-            guard let locInfo = await locationManager.currentLocation() else {
+            guard let locInfo = await resolvedActiveLocation() else {
                 logger.warning("No current location for forecast")
                 return
             }
@@ -376,7 +413,7 @@ final class WeatherViewModel: ObservableObject {
         
         do {
             // Fetch historical weather data for the past year to find this date
-            guard let locInfo = await locationManager.currentLocation() else { return nil }
+            guard let locInfo = await resolvedActiveLocation() else { return nil }
 
             let weatherData = try await weatherModelActor.fetchHistoricalWeatherData(for: locInfo.location, daysBack: 365)
 

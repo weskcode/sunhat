@@ -79,7 +79,9 @@ struct DashboardView: View {
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
                 case .allReminders:
-                    AllRemindersView()
+                    NavigationStack {
+                        AllRemindersView()
+                    }
                 case .weatherAlerts:
                     WeatherAlertsView(alerts: viewModel.activeAlerts)
                 }

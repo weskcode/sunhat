@@ -11,6 +11,7 @@ struct SunHatAtmosphereBackground: View {
     var condition: WeatherCondition = .unknown
     var intensity: Double = 1
     var showsConditionAccent = true
+    var weatherPalette: WeatherBackdropPalette?
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -26,33 +27,31 @@ struct SunHatAtmosphereBackground: View {
     }
 
     private var baseColor: Color {
-        colorScheme == .dark ? Color(red: 0.03, green: 0.05, blue: 0.07) : Color(red: 0.93, green: 0.97, blue: 0.98)
+        palette.baseColor(for: colorScheme)
     }
 
     private var skyGradient: Gradient {
-        if colorScheme == .dark {
-            Gradient(colors: [
-                Color(red: 0.02, green: 0.04, blue: 0.07),
-                Color(red: 0.05, green: 0.11, blue: 0.14),
-                Color(red: 0.08, green: 0.17, blue: 0.17),
-                Color(red: 0.18, green: 0.13, blue: 0.09)
-            ])
-        } else {
-            Gradient(colors: [
-                Color(red: 0.88, green: 0.96, blue: 0.99),
-                Color(red: 0.78, green: 0.92, blue: 0.93),
-                Color(red: 0.94, green: 0.89, blue: 0.75),
-                Color(red: 0.99, green: 0.96, blue: 0.90)
-            ])
-        }
+        Gradient(colors: palette.skyColors(for: colorScheme))
     }
 
     private var lineColor: Color {
-        colorScheme == .dark ? .white.opacity(0.075) : Color(red: 0.10, green: 0.25, blue: 0.28).opacity(0.13)
+        palette.lineColor(for: colorScheme)
     }
 
     private var horizonColor: Color {
-        colorScheme == .dark ? Color(red: 0.95, green: 0.50, blue: 0.22) : Color(red: 0.99, green: 0.63, blue: 0.27)
+        palette.horizonColor(for: colorScheme)
+    }
+
+    private var conditionAccent: Color {
+        palette.conditionAccent(for: colorScheme)
+    }
+
+    private var palette: SunHatAtmospherePalette {
+        if let weatherPalette {
+            return .weather(weatherPalette)
+        }
+
+        return .sunHatDefault
     }
 
     private func draw(in context: GraphicsContext, size: CGSize, date: Date) {
@@ -173,7 +172,7 @@ struct SunHatAtmosphereBackground: View {
             var drop = Path()
             drop.move(to: CGPoint(x: x, y: y))
             drop.addLine(to: CGPoint(x: x - 12, y: y + 38))
-            context.stroke(drop, with: .color(Color.cyan.opacity(0.18)), lineWidth: 1.6)
+            context.stroke(drop, with: .color(conditionAccent.opacity(0.18)), lineWidth: 1.6)
         }
     }
 
@@ -184,7 +183,7 @@ struct SunHatAtmosphereBackground: View {
             let y = CGFloat((index * 41) % 520) + phase
             var flake = Path()
             flake.addEllipse(in: CGRect(x: x, y: y, width: 3.5, height: 3.5))
-            context.fill(flake, with: .color(.white.opacity(0.24)))
+            context.fill(flake, with: .color(conditionAccent.opacity(0.24)))
         }
     }
 
