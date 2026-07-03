@@ -93,14 +93,8 @@ struct AllRemindersView: View {
                 }
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("All Tasks")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-            }
-        }
+        .navigationTitle("Reminders")
+        .navigationBarTitleDisplayMode(.large)
     }
 
     // MARK: - Liquid Glass Background

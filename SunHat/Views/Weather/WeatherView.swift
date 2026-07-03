@@ -13,6 +13,7 @@ struct WeatherView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = WeatherViewModel()
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var selectedTimeframe: WeatherTimeframe = .current
     @State private var activeSheet: ActiveSheet?
@@ -71,11 +72,11 @@ struct WeatherView: View {
                     .padding(.bottom, 20)
                 }
             }
-            .navigationTitle("Weather Details")
+            .navigationTitle("Weather")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Change location", systemImage: "location") {
+                    Button("Location", systemImage: "location") {
                         activeSheet = .locationPicker
                     }
                 }
@@ -88,6 +89,11 @@ struct WeatherView: View {
             }
             .task {
                 viewModel.configure(modelContainer: modelContext.container)
+            }
+            .onChange(of: selectedLocation.id) {
+                Task {
+                    await viewModel.updateSelectedLocation(selectedLocation)
+                }
             }
         }
     }
@@ -448,7 +454,14 @@ struct WeatherView: View {
     // MARK: - Computed Properties
     
     private var backgroundGradient: some View {
-        Color(.systemBackground)
+        SunHatAtmosphereBackground(
+            condition: viewModel.weatherCondition,
+            intensity: viewModel.hasWeatherData ? 0.92 : 0.58,
+            showsConditionAccent: viewModel.hasWeatherData,
+            weatherPalette: viewModel.backdropPalette
+        )
+        .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: viewModel.backdropPalette)
+        .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: viewModel.weatherCondition)
     }
     
     private var humidityDescription: String {

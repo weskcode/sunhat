@@ -52,7 +52,9 @@ struct MainTabView: View {
             }
 
             Tab("Reminders", systemImage: "list.bullet.rectangle", value: AppTab.reminders) {
-                AllRemindersView()
+                NavigationStack {
+                    AllRemindersView()
+                }
             }
 
             Tab("Settings", systemImage: "gearshape", value: AppTab.settings) {
