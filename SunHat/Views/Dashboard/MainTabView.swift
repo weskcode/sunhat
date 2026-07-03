@@ -12,7 +12,9 @@ import CoreSpotlight
 struct MainTabView: View {
     @State private var selectedTab: AppTab = .home
     @State private var showingCreate = false
+    @StateObject private var lifecyclePrompts = AppLifecyclePromptCoordinator()
     @EnvironmentObject private var onboardingCoordinator: OnboardingCoordinator
+    @Environment(\.scenePhase) private var scenePhase
 
     private enum AppTab: Hashable {
         case home
@@ -76,12 +78,66 @@ struct MainTabView: View {
         }
         .task {
             consumePendingIntentDestination()
+            await lifecyclePrompts.recordForegroundOpenIfNeeded(
+                hasPositiveEngagementSignal: onboardingCoordinator.hasCreatedFirstReminder
+            )
         }
         .onReceive(NotificationCenter.default.publisher(for: UIScene.willEnterForegroundNotification)) { _ in
             consumePendingIntentDestination()
         }
+        .onChange(of: scenePhase) {
+            switch scenePhase {
+            case .active:
+                Task {
+                    await lifecyclePrompts.recordForegroundOpenIfNeeded(
+                        hasPositiveEngagementSignal: onboardingCoordinator.hasCreatedFirstReminder
+                    )
+                }
+            case .background:
+                lifecyclePrompts.endForegroundSession()
+            default:
+                break
+            }
+        }
         .onContinueUserActivity(CSSearchableItemActionType) { userActivity in
             routeSearchActivity(userActivity)
+        }
+        .alert("Turn On Weather Reminders?", isPresented: $lifecyclePrompts.showsNotificationPrompt) {
+            Button("Not Now", role: .cancel) {
+                lifecyclePrompts.handleNotificationPromptChoice(shouldEnable: false)
+            }
+            Button("Enable Notifications") {
+                lifecyclePrompts.handleNotificationPromptChoice(shouldEnable: true)
+            }
+        } message: {
+            Text("SunHat can only alert you when weather matches your tasks if notifications are enabled.")
+        }
+        .alert("Enjoying SunHat?", isPresented: $lifecyclePrompts.showsEnjoymentPrompt) {
+            Button("Not Really") {
+                lifecyclePrompts.handleEnjoymentResponse(isEnjoying: false)
+            }
+            Button("Yes") {
+                lifecyclePrompts.handleEnjoymentResponse(isEnjoying: true)
+            }
+        } message: {
+            Text("A quick answer helps us decide whether to ask for a review or collect feedback.")
+        }
+        .alert("Review SunHat?", isPresented: $lifecyclePrompts.showsReviewPrompt) {
+            Button("Not Now", role: .cancel) {
+                lifecyclePrompts.deferReviewRequest()
+            }
+            Button("Review SunHat") {
+                lifecyclePrompts.handleReviewRequest()
+            }
+        } message: {
+            Text("Reviews help more people discover weather-triggered reminders.")
+        }
+        .sheet(isPresented: $lifecyclePrompts.showsFeedbackForm) {
+            AppFeedbackFormView(
+                feedbackText: $lifecyclePrompts.feedbackText,
+                onSubmit: lifecyclePrompts.submitFeedback,
+                onCancel: lifecyclePrompts.dismissFeedback
+            )
         }
     }
 

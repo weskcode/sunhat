@@ -296,7 +296,7 @@ final class SettingsViewModel {
         iOS Version: \(UIDevice.current.systemVersion)
         """
 
-        if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&body=\(body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
+        if let url = AppSupportLinks.mailURL(to: email, subject: subject, body: body) {
             open(url, failureMessage: "Couldn't open Mail. Set up a mail account, or email \(email) directly.")
         }
     }
@@ -305,7 +305,7 @@ final class SettingsViewModel {
         let email = AppSupportLinks.supportEmail
         let subject = "SunHat Support Request"
 
-        if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
+        if let url = AppSupportLinks.mailURL(to: email, subject: subject) {
             open(url, failureMessage: "Couldn't open Mail. Set up a mail account, or email \(email) directly.")
         }
     }
