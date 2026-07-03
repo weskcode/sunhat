@@ -10,6 +10,7 @@ import SwiftUI
 struct SunHatAtmosphereBackground: View {
     var condition: WeatherCondition = .unknown
     var intensity: Double = 1
+    var showsConditionAccent = true
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -72,7 +73,9 @@ struct SunHatAtmosphereBackground: View {
         drawHorizon(in: context, size: size)
         drawForecastGrid(in: context, size: size)
         drawContourLines(in: context, size: size, date: date)
-        drawConditionAccent(in: context, size: size, date: date)
+        if showsConditionAccent {
+            drawConditionAccent(in: context, size: size, date: date)
+        }
     }
 
     private func drawHorizon(in context: GraphicsContext, size: CGSize) {
