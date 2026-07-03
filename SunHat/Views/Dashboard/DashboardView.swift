@@ -45,17 +45,17 @@ struct DashboardView: View {
                             .offset(y: cardsVisible || reduceMotion ? 0 : 16)
                             .animation(SunHatMotion.reveal(reduceMotion: reduceMotion), value: cardsVisible)
 
+                        if showingDetailedWeather {
+                            detailedWeatherMetrics
+                                .transition(detailsTransition)
+                        }
+
                         NextReadyReminderCompactView(
                             snapshot: NextReadyReminderSelector.snapshot(from: viewModel.activeReminders)
                         )
                         .opacity(cardsVisible ? 1 : 0)
                         .offset(y: cardsVisible || reduceMotion ? 0 : 16)
                         .animation(SunHatMotion.reveal(reduceMotion: reduceMotion, delay: 0.05), value: cardsVisible)
-
-                        if showingDetailedWeather {
-                            detailedWeatherMetrics
-                                .transition(detailsTransition)
-                        }
 
                         if !viewModel.activeReminders.isEmpty {
                             readyNowSection
@@ -369,7 +369,7 @@ struct DashboardView: View {
 
     private var detailedWeatherMetrics: some View {
         SunHatCardSection(
-            title: "More Details",
+            title: "Forecast Details",
             systemImage: "info.circle.fill",
             subtitle: "Forecast context for your reminders",
             actionTitle: "Less",
