@@ -255,14 +255,15 @@ final class BackgroundWeatherManager: ObservableObject {
     
     func requestBackgroundRefreshPermission() async -> Bool {
         let center = UNUserNotificationCenter.current()
-        do {
-            let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
-            if granted {
-                scheduleBackgroundRefresh()
-            }
-            return granted
-        } catch {
-            logger.error("Failed to request notification permission: \(error)")
+
+        let settings = await center.notificationSettings()
+        switch settings.authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            scheduleBackgroundRefresh()
+            return true
+        case .notDetermined, .denied:
+            return false
+        @unknown default:
             return false
         }
     }
