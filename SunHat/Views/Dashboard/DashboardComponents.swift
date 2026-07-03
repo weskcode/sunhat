@@ -42,8 +42,8 @@ struct WeatherAlertCard: View {
 
             Spacer()
         }
-        .padding(12)
-        .glassEffect(.regular.tint(alert.severityColor.opacity(0.10)), in: .rect(cornerRadius: 12))
+        .padding(14)
+        .sunHatSurface(tint: alert.severityColor, cornerRadius: 16, prominence: 0.55)
         .scrollTransition(.interactive, axis: .vertical) { content, phase in
             content
                 .opacity(phase.isIdentity ? 1 : 0.82)
@@ -64,22 +64,26 @@ struct ActiveReminderCard: View {
     var body: some View {
         let shouldReduceMotion = reduceMotion
 
-        HStack(spacing: 12) {
+        HStack(spacing: 14) {
             Image(systemName: reminder.category.iconName)
                 .font(AppFontStyle.title3.font)
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(Color.accentColor)
-                .frame(width: 34, height: 34)
+                .frame(width: 42, height: 42)
                 .background {
                     Circle()
                         .fill(Color.accentColor.opacity(0.12))
+                        .overlay {
+                            Circle()
+                                .stroke(Color.accentColor.opacity(0.22), lineWidth: 0.8)
+                        }
                 }
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(reminder.title)
                     .font(AppFontStyle.subheadline.font)
-                    .fontWeight(.medium)
+                    .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                     .lineLimit(1)
 
@@ -93,30 +97,26 @@ struct ActiveReminderCard: View {
                         .foregroundStyle(.secondary)
                 }
 
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(statusColor)
-                        .frame(width: 8, height: 8)
-
-                    Text(statusText)
-                        .font(AppFontStyle.caption2.font)
-                        .foregroundStyle(.secondary)
-                }
+                SunHatStatusPill(
+                    text: statusText,
+                    systemImage: weatherData == nil ? "clock" : "dot.radiowaves.left.and.right",
+                    tint: statusColor
+                )
             }
 
             Spacer()
 
             if let weatherData {
                 Text("\(weatherData.temperature, specifier: "%.0f")°")
-                    .font(AppFontStyle.headline.font)
+                    .font(AppFontStyle.title3.font)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
                     .accessibilityLabel("\(weatherData.temperature, specifier: "%.0f") degrees")
             }
         }
-        .padding(12)
-        .glassEffect(in: .rect(cornerRadius: 12))
+        .padding(14)
+        .sunHatSurface(tint: statusColor, cornerRadius: 16, prominence: 0.56)
         .scrollTransition(.interactive, axis: .vertical) { content, phase in
             content
                 .opacity(phase.isIdentity ? 1 : 0.82)
