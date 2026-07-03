@@ -85,8 +85,8 @@ struct SunHatCardSection<Content: View>: View {
 
             content
         }
-        .padding(16)
-        .glassEffect(.regular.tint(tint.opacity(0.05)), in: .rect(cornerRadius: 18))
+        .padding(18)
+        .sunHatSurface(tint: tint, cornerRadius: 22, prominence: 0.82)
         .accessibilityElement(children: .contain)
     }
 }
@@ -98,13 +98,17 @@ struct SunHatStatusPill: View {
 
     var body: some View {
         Label(text, systemImage: systemImage)
-            .font(AppFontStyle.caption2.font.weight(.semibold))
+            .font(AppFontStyle.caption.font.weight(.semibold))
             .foregroundStyle(tint)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
+            .padding(.horizontal, 11)
+            .padding(.vertical, 7)
             .background(
                 Capsule()
                     .fill(tint.opacity(0.12))
+                    .overlay {
+                        Capsule()
+                            .stroke(tint.opacity(0.22), lineWidth: 0.7)
+                    }
             )
             .accessibilityElement(children: .combine)
     }

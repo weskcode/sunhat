@@ -29,19 +29,16 @@ struct DashboardView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                backgroundGradient
-                    .ignoresSafeArea()
-
-                WeatherConditionLayer(
+                SunHatAtmosphereBackground(
                     condition: viewModel.weatherCondition,
-                    reduceMotion: reduceMotion || !viewModel.hasWeatherData
+                    intensity: viewModel.hasWeatherData ? 1 : 0.55
                 )
-                .ignoresSafeArea()
+                    .ignoresSafeArea()
 
                 RefreshableScrollView {
                     await viewModel.refreshWeatherData()
                 } content: {
-                    LazyVStack(spacing: 20) {
+                    LazyVStack(spacing: 18) {
                         currentTemperatureWidget
                             .padding(.top, 16)
                             .opacity(cardsVisible ? 1 : 0)
@@ -109,9 +106,8 @@ struct DashboardView: View {
     }
     
     private var temperatureWidgetContent: some View {
-        VStack(spacing: 0) {
-            // Location and time
-            HStack {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
                         Image(systemName: "location.fill")
@@ -139,26 +135,38 @@ struct DashboardView: View {
                 
                 Spacer()
 
-                HStack(spacing: 8) {
+                VStack(alignment: .trailing, spacing: 8) {
+                    SunHatStatusPill(
+                        text: viewModel.hasWeatherData ? "Live" : "Standby",
+                        systemImage: viewModel.hasWeatherData ? "dot.radiowaves.left.and.right" : "clock",
+                        tint: viewModel.hasWeatherData ? .green : .secondary
+                    )
+
                     if viewModel.isLoading {
                         ProgressView()
                             .scaleEffect(0.8)
                     }
-
-                    Image(systemName: "chevron.down.circle.fill")
-                        .font(AppFontStyle.title3.font)
-                        .foregroundStyle(Color.accentColor)
-                        .rotationEffect(.degrees(showingDetailedWeather ? 180 : 0))
-                        .animation(.interpolatingSpring(duration: 0.3, bounce: 0.25), value: showingDetailedWeather)
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 16)
             
             weatherSummaryContent
+
+            HStack(spacing: 8) {
+                Image(systemName: "chevron.down")
+                    .font(AppFontStyle.caption.font.weight(.semibold))
+                    .rotationEffect(.degrees(showingDetailedWeather ? 180 : 0))
+                    .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: showingDetailedWeather)
+
+                Text(showingDetailedWeather ? "Hide forecast detail" : "Show forecast detail")
+                    .font(AppFontStyle.caption.font.weight(.semibold))
+            }
+            .foregroundStyle(Color.accentColor)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(.primary.opacity(0.045), in: .capsule)
         }
-        .glassEffect(in: .rect(cornerRadius: 20))
-        .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
+        .padding(18)
+        .sunHatSurface(tint: viewModel.weatherIconColor, cornerRadius: 28, prominence: 1.08)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(weatherAccessibilityLabel)
         .accessibilityValue(showingDetailedWeather ? "Details shown" : "Details hidden")
@@ -174,69 +182,88 @@ struct DashboardView: View {
     }
 
     private var availableWeatherSummary: some View {
-        HStack(alignment: .top, spacing: 16) {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top, spacing: 4) {
-                    Text(viewModel.currentTemperatureDisplay)
-                        .font(AppFont.system(size: dynamicTypeSize.isAccessibilitySize ? 64 : 72, weight: .thin))
-                        .foregroundStyle(.primary)
-                        .contentTransition(.numericText())
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .center, spacing: 16) {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .top, spacing: 3) {
+                        Text(viewModel.currentTemperatureDisplay)
+                            .font(AppFont.system(size: dynamicTypeSize.isAccessibilitySize ? 58 : 82, weight: .thin))
+                            .foregroundStyle(.primary)
+                            .contentTransition(.numericText())
+                            .minimumScaleFactor(0.72)
 
-                    Text("°")
-                        .font(AppFont.system(size: 24, weight: .light))
-                        .foregroundStyle(.primary)
-                        .offset(y: 8)
+                        Text("°")
+                            .font(AppFont.system(size: dynamicTypeSize.isAccessibilitySize ? 22 : 28, weight: .light))
+                            .foregroundStyle(.primary)
+                            .offset(y: dynamicTypeSize.isAccessibilitySize ? 7 : 11)
+                    }
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(viewModel.weatherDescription)
+                            .font(AppFontStyle.headline.font)
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
+
+                        Text("Feels like \(viewModel.feelsLikeTemperatureDisplay)°")
+                            .font(AppFontStyle.callout.font)
+                            .foregroundStyle(.secondary)
+                            .contentTransition(.numericText())
+                    }
                 }
 
-                Text("Feels like \(viewModel.feelsLikeTemperatureDisplay)°")
-                    .font(AppFontStyle.callout.font)
-                    .foregroundStyle(.secondary)
-                    .contentTransition(.numericText())
+                Spacer(minLength: 8)
+
+                SunHatWeatherDial(
+                    systemImage: viewModel.weatherIconName,
+                    tint: viewModel.weatherIconColor,
+                    reduceMotion: reduceMotion
+                )
             }
 
-            Spacer()
+            SunHatForecastRibbon(
+                current: viewModel.currentTemperature,
+                high: viewModel.highTemperature,
+                low: viewModel.lowTemperature,
+                tint: viewModel.weatherIconColor
+            )
+            .frame(height: 54)
+            .accessibilityHidden(true)
 
-            VStack(alignment: .trailing, spacing: 12) {
-                VStack(alignment: .trailing, spacing: 8) {
-                    Image(systemName: viewModel.weatherIconName)
-                        .font(AppFont.system(size: 44))
-                        .foregroundStyle(viewModel.weatherIconColor)
-                        .symbolRenderingMode(.hierarchical)
-                        .symbolEffect(.bounce, value: reduceMotion ? false : viewModel.hasWeatherData)
-                        .contentTransition(.symbolEffect(.replace))
+            HStack(spacing: 8) {
+                WeatherHeroMetricPill(
+                    title: "High",
+                    value: "\(viewModel.highTemperatureDisplay)°",
+                    systemImage: "arrow.up",
+                    tint: .orange
+                )
 
-                    Text(viewModel.weatherDescription)
-                        .font(AppFontStyle.caption.font)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.trailing)
-                }
+                WeatherHeroMetricPill(
+                    title: "Low",
+                    value: "\(viewModel.lowTemperatureDisplay)°",
+                    systemImage: "arrow.down",
+                    tint: .cyan
+                )
 
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("H: \(viewModel.highTemperatureDisplay)°")
-                        .font(AppFontStyle.callout.font)
-                        .foregroundStyle(.primary)
-                        .contentTransition(.numericText())
-
-                    Text("L: \(viewModel.lowTemperatureDisplay)°")
-                        .font(AppFontStyle.callout.font)
-                        .foregroundStyle(.secondary)
-                        .contentTransition(.numericText())
-                }
+                WeatherHeroMetricPill(
+                    title: "Wind",
+                    value: viewModel.windSpeedDisplay,
+                    systemImage: "wind",
+                    tint: .mint
+                )
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
     }
 
     private var unavailableWeatherSummary: some View {
         HStack(spacing: 14) {
-            Image(systemName: "cloud.slash")
-                .font(.system(size: 34, weight: .regular))
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(.secondary)
-                .frame(width: 46, height: 46)
+            SunHatWeatherDial(
+                systemImage: "cloud.fill",
+                tint: .secondary,
+                reduceMotion: true
+            )
+            .frame(width: 82, height: 82)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 5) {
                 Text("Weather unavailable")
                     .font(.headline)
                     .foregroundStyle(.primary)
@@ -244,16 +271,15 @@ struct DashboardView: View {
                 Text(viewModel.errorMessage ?? "Pull down to refresh once weather access is available.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
-                    .lineLimit(2)
+                    .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 22)
+        .padding(.vertical, 4)
     }
-    
+
     // MARK: - Active Reminders Section
 
     private var readyNowSection: some View {
@@ -379,11 +405,6 @@ struct DashboardView: View {
         }
     }
 
-    // MARK: - Computed Properties
-
-    private var backgroundGradient: some View {
-        Color(.systemBackground)
-    }
 }
 
 // MARK: - Preview
@@ -397,47 +418,4 @@ struct DashboardView: View {
             UserPreferences.self,
             LocationData.self
         ], inMemory: true)
-}
-
-private struct DashboardMetricRow: View {
-    let systemImage: String
-    let tint: Color
-    let title: String
-    let primary: String
-    let secondary: String
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: systemImage)
-                .font(AppFontStyle.title3.font)
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(tint)
-                .frame(width: 34, height: 34)
-                .background {
-                    Circle()
-                        .fill(tint.opacity(0.12))
-                }
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(AppFontStyle.subheadline.font.weight(.semibold))
-                    .foregroundStyle(.primary)
-
-                Text(primary)
-                    .font(AppFontStyle.caption.font)
-                    .foregroundStyle(.secondary)
-                    .contentTransition(.numericText())
-
-                Text(secondary)
-                    .font(AppFontStyle.caption.font)
-                    .foregroundStyle(.secondary)
-                    .contentTransition(.numericText())
-            }
-
-            Spacer(minLength: 0)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(title), \(primary), \(secondary)")
-    }
 }

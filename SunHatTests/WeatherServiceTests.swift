@@ -40,17 +40,31 @@ struct WeatherServiceConfigurationTests {
 
     @Test("WeatherService singleton is not nil after configure")
     func weatherServiceConfiguration() async {
-        let weatherService = WeatherService.shared
-
-        await weatherService.configure(modelContainer: modelContainer, openWeatherMapKey: "test-api-key")
-
         let configManager = WeatherServiceManager.shared
+        let originalConfiguration = configManager.configuration
+        let originalIsConfigured = configManager.isConfigured
+        defer {
+            configManager.configuration = originalConfiguration
+            configManager.isConfigured = originalIsConfigured
+        }
+
+        let configuration = WeatherServiceConfiguration(
+            openWeatherMapAPIKey: "test-api-key",
+            enableBackgroundRefresh: false
+        )
+        await configManager.configure(with: configuration, modelContext: modelContext)
+
         #expect(configManager.configuration.openWeatherMapAPIKey == "test-api-key")
+        #expect(configManager.isConfigured == true)
     }
 
     @Test("Valid configuration passes validation")
     func configurationValidation() {
         let manager = WeatherServiceManager.shared
+        let originalConfiguration = manager.configuration
+        defer {
+            manager.configuration = originalConfiguration
+        }
 
         let validConfig = WeatherServiceConfiguration(
             openWeatherMapAPIKey: "valid-api-key-123456789",

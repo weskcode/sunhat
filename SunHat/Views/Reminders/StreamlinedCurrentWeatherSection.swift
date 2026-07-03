@@ -41,7 +41,7 @@ struct StreamlinedCurrentWeatherSection: View {
                     }
                 } else {
                     HStack(spacing: 12) {
-                        Image(systemName: "cloud.slash")
+                        Image(systemName: "cloud.fill")
                             .font(.title3)
                             .foregroundStyle(.secondary)
                         Text("Weather unavailable")
