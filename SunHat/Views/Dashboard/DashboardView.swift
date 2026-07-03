@@ -38,9 +38,9 @@ struct DashboardView: View {
                 RefreshableScrollView {
                     await viewModel.refreshWeatherData()
                 } content: {
-                    LazyVStack(spacing: 18) {
+                    LazyVStack(spacing: 22) {
                         currentTemperatureWidget
-                            .padding(.top, 16)
+                            .padding(.top, 12)
                             .opacity(cardsVisible ? 1 : 0)
                             .offset(y: cardsVisible || reduceMotion ? 0 : 16)
                             .animation(SunHatMotion.reveal(reduceMotion: reduceMotion), value: cardsVisible)
@@ -71,7 +71,7 @@ struct DashboardView: View {
                             .animation(SunHatMotion.reveal(reduceMotion: reduceMotion, delay: 0.15), value: cardsVisible)
                     }
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 24)
+                    .padding(.bottom, 132)
                 }
             }
             .navigationTitle("SunHat")
@@ -93,20 +93,26 @@ struct DashboardView: View {
     
     // MARK: - Current Temperature Widget
 
+    @ViewBuilder
     private var currentTemperatureWidget: some View {
-        Button(action: {
-            withAnimation(cardToggleAnimation) {
-                showingDetailedWeather.toggle()
+        if viewModel.hasWeatherData {
+            Button(action: {
+                withAnimation(cardToggleAnimation) {
+                    showingDetailedWeather.toggle()
+                }
+            }) {
+                temperatureWidgetContent
             }
-        }) {
+            .buttonStyle(SunHatPressButtonStyle())
+            .accessibilityHint(showingDetailedWeather ? "Double tap to hide weather details." : "Double tap to show weather details.")
+        } else {
             temperatureWidgetContent
+                .accessibilityHint("Pull down to refresh when weather access is available.")
         }
-        .buttonStyle(SunHatPressButtonStyle())
-        .accessibilityHint(showingDetailedWeather ? "Double tap to hide weather details." : "Double tap to show weather details.")
     }
     
     private var temperatureWidgetContent: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
@@ -151,25 +157,27 @@ struct DashboardView: View {
             
             weatherSummaryContent
 
-            HStack(spacing: 8) {
-                Image(systemName: "chevron.down")
-                    .font(AppFontStyle.caption.font.weight(.semibold))
-                    .rotationEffect(.degrees(showingDetailedWeather ? 180 : 0))
-                    .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: showingDetailedWeather)
+            if viewModel.hasWeatherData {
+                HStack(spacing: 8) {
+                    Image(systemName: "chevron.down")
+                        .font(AppFontStyle.caption.font.weight(.semibold))
+                        .rotationEffect(.degrees(showingDetailedWeather ? 180 : 0))
+                        .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: showingDetailedWeather)
 
-                Text(showingDetailedWeather ? "Hide forecast detail" : "Show forecast detail")
-                    .font(AppFontStyle.caption.font.weight(.semibold))
+                    Text(showingDetailedWeather ? "Hide forecast detail" : "Show forecast detail")
+                        .font(AppFontStyle.caption.font.weight(.semibold))
+                }
+                .foregroundStyle(Color.accentColor)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(.primary.opacity(0.045), in: .capsule)
             }
-            .foregroundStyle(Color.accentColor)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(.primary.opacity(0.045), in: .capsule)
         }
         .padding(18)
-        .sunHatSurface(tint: viewModel.weatherIconColor, cornerRadius: 28, prominence: 1.08)
+        .sunHatSurface(tint: viewModel.weatherIconColor, cornerRadius: 26, prominence: 0.88)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(weatherAccessibilityLabel)
-        .accessibilityValue(showingDetailedWeather ? "Details shown" : "Details hidden")
+        .accessibilityValue(weatherAccessibilityValue)
     }
 
     @ViewBuilder
@@ -255,13 +263,14 @@ struct DashboardView: View {
     }
 
     private var unavailableWeatherSummary: some View {
-        HStack(spacing: 14) {
-            SunHatWeatherDial(
-                systemImage: "cloud.fill",
-                tint: .secondary,
-                reduceMotion: true
-            )
-            .frame(width: 82, height: 82)
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: "cloud.fill")
+                .font(AppFontStyle.title2.font)
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(.secondary)
+                .frame(width: 46, height: 46)
+                .background(.secondary.opacity(0.10), in: .circle)
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 5) {
                 Text("Weather unavailable")
@@ -277,7 +286,7 @@ struct DashboardView: View {
 
             Spacer(minLength: 0)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 2)
     }
 
     // MARK: - Active Reminders Section
@@ -329,6 +338,7 @@ struct DashboardView: View {
                     message: "Create a weather task and SunHat will watch for matching conditions.",
                     systemImage: "list.bullet.clipboard"
                 )
+                .padding(.vertical, 4)
             } else {
                 LazyVStack(spacing: 12) {
                     SwiftUI.ForEach(Array(viewModel.activeReminders.prefix(3)), id: \.id) { reminder in
@@ -353,6 +363,14 @@ struct DashboardView: View {
         }
 
         return "Current weather for \(viewModel.currentLocationName): \(viewModel.currentTemperatureDisplay) degrees, feels like \(viewModel.feelsLikeTemperatureDisplay) degrees, \(viewModel.weatherDescription)"
+    }
+
+    private var weatherAccessibilityValue: String {
+        guard viewModel.hasWeatherData else {
+            return "Pull down to refresh when weather access is available"
+        }
+
+        return showingDetailedWeather ? "Details shown" : "Details hidden"
     }
 
     // MARK: - Detailed Weather Metrics
