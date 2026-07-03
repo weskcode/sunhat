@@ -3,6 +3,7 @@
 
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import os
+import math
 
 W, H = 1284, 2778
 RAW_DIR = os.path.join(os.path.dirname(__file__), "Raw")
@@ -121,7 +122,45 @@ def make_gradient(size, c1, c2):
     for y in range(h):
         t = y / max(h - 1, 1)
         for x in range(w):
-            px[x, y] = tuple(int(c1[i] + (c2[i] - c1[i]) * t) for i in range(3))
+            diagonal = (x / max(w - 1, 1)) * 0.22
+            tt = min(1, max(0, t * 0.88 + diagonal))
+            px[x, y] = tuple(int(c1[i] + (c2[i] - c1[i]) * tt) for i in range(3))
+
+    draw = ImageDraw.Draw(img, "RGBA")
+
+    # Horizon light: a wide weather-front glow rather than a generic radial orb.
+    horizon_y = int(h * 0.56)
+    for offset in range(0, 520, 8):
+        alpha = max(0, int(30 * (1 - offset / 520)))
+        draw.rounded_rectangle(
+            [(-180 - offset, horizon_y - offset // 4), (w + 180 + offset, horizon_y + 110 + offset // 3)],
+            radius=180 + offset // 2,
+            fill=(255, 191, 112, alpha),
+        )
+
+    # Forecast grid, skewed like a meteorology map.
+    grid = (255, 255, 255, 24)
+    for i in range(-2, 10):
+        x = int(i * w / 7)
+        draw.line([(x, int(h * 0.08)), (x + int(w * 0.24), h)], fill=grid, width=2)
+    for i in range(0, 11):
+        y = int(h * (0.10 + i * 0.085))
+        draw.line([(0, y), (w, y - int(h * 0.04))], fill=(255, 255, 255, 18), width=2)
+
+    # Pressure contour lines give every frame a subject-specific signature.
+    for i in range(9):
+        y = int(h * (0.20 + i * 0.065))
+        amp = 28 + i * 5
+        points = []
+        for x in range(-80, w + 100, 42):
+            yy = y + int(math.sin((x / 130) + i * 0.75) * amp)
+            points.append((x, yy))
+        draw.line(points, fill=(255, 255, 255, max(18, 54 - i * 4)), width=2)
+
+    # Fine grain keeps large color fields from feeling machine-flat.
+    for y in range(0, h, 6):
+        alpha = 6 if (y // 6) % 2 == 0 else 3
+        draw.line([(0, y), (w, y)], fill=(255, 255, 255, alpha), width=1)
     return img
 
 
@@ -160,13 +199,17 @@ def text_centered(draw, text, y, font, fill, cw, spacing=1.18):
 def generate(cfg):
     canvas = make_gradient((W, H), cfg["g1"], cfg["g2"]).convert("RGBA")
 
-    # Accent glow
+    # Accent weather-front flare
     a = cfg["ac"]
     glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     gd = ImageDraw.Draw(glow)
-    for r in range(700, 0, -4):
-        al = max(0, int(32 * (1 - r / 700)))
-        gd.ellipse([W // 2 - r, 360 - r, W // 2 + r, 360 + r], fill=(*a, al))
+    for r in range(900, 0, -8):
+        al = max(0, int(24 * (1 - r / 900)))
+        gd.rounded_rectangle(
+            [W // 2 - r, 305 - r // 5, W // 2 + r, 470 + r // 4],
+            radius=220,
+            fill=(*a, al),
+        )
     canvas = Image.alpha_composite(canvas, glow)
 
     draw = ImageDraw.Draw(canvas)
@@ -185,7 +228,7 @@ def generate(cfg):
 
     # Scale to fit available area
     top = sy + 100
-    area_h = H - top - 25
+    area_h = H - top - 130
     area_w = W - 90
     rw, rh = raw.size
 

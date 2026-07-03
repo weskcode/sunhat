@@ -8,11 +8,7 @@
 import SwiftUI
 
 struct WelcomeView: View {
-    @State private var showingOnboarding = false
-    @State private var animationStep = 0
     @State private var isAnimating = false
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityDifferentiateWithoutColor) private var differentiateWithoutColor
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -26,23 +22,19 @@ struct WelcomeView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background gradient
                 backgroundGradient
                     .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 0) {
-                        // Hero Section
                         heroSection
-                            .padding(.top, geometry.safeAreaInsets.top + 40)
+                            .padding(.top, geometry.safeAreaInsets.top + 8)
                         
-                        // Use Cases Section
                         useCaseSection
-                            .padding(.top, 60)
+                            .padding(.top, 34)
                         
-                        // Action Buttons Section
                         actionButtonsSection
-                            .padding(.top, 60)
+                            .padding(.top, 34)
                             .padding(.bottom, max(geometry.safeAreaInsets.bottom, 40))
                     }
                     .padding(.horizontal, 20)
@@ -69,18 +61,16 @@ struct WelcomeView: View {
     // MARK: - Hero Section
     
     private var heroSection: some View {
-        VStack(spacing: 24) {
-            // Weather icon with animated glow
+        VStack(spacing: 20) {
             weatherIconWithGlow
                 .scaleEffect(showHeroText ? 1.0 : 0.8)
                 .opacity(showHeroText ? 1.0 : 0.0)
-                .animation(.easeOut(duration: 0.4).delay(0.1), value: showHeroText)
+                .animation(entranceAnimation(delay: 0.1), value: showHeroText)
             
-            // Main headline
-            VStack(spacing: 16) {
-                Text("Smart reminders")
+            VStack(spacing: 10) {
+                Text("Weather-aware")
                     .font(dynamicTypeSize.isAccessibilitySize ? .title : .largeTitle)
-                    .fontWeight(.bold)
+                    .bold()
                     .foregroundStyle(
                         differentiateWithoutColor
                             ? AnyShapeStyle(Color.primary)
@@ -89,9 +79,9 @@ struct WelcomeView: View {
                     .multilineTextAlignment(.center)
                     .accessibilityAddTraits(.isHeader)
                 
-                Text("triggered by weather,")
+                Text("reminders")
                     .font(dynamicTypeSize.isAccessibilitySize ? .title : .largeTitle)
-                    .fontWeight(.bold)
+                    .bold()
                     .foregroundStyle(
                         differentiateWithoutColor
                             ? AnyShapeStyle(Color.primary)
@@ -99,9 +89,9 @@ struct WelcomeView: View {
                     )
                     .multilineTextAlignment(.center)
                 
-                Text("not time")
+                Text("ready with the forecast")
                     .font(dynamicTypeSize.isAccessibilitySize ? .title : .largeTitle)
-                    .fontWeight(.bold)
+                    .bold()
                     .foregroundStyle(
                         differentiateWithoutColor
                             ? AnyShapeStyle(Color.blue)
@@ -111,19 +101,17 @@ struct WelcomeView: View {
             }
             .opacity(showHeroText ? 1.0 : 0.0)
             .offset(y: showHeroText ? 0 : 30)
-            .animation(.easeOut(duration: 0.4).delay(0.2), value: showHeroText)
+            .animation(entranceAnimation(delay: 0.2), value: showHeroText)
             
-            // Subtitle
-            Text("Perfect conditions for your outdoor activities, gardening, and daily tasks")
-                .font(AppFontStyle.title3.font)
-                .fontWeight(.medium)
+            Text("SunHat watches weather, location, and timing so reminders feel contextual instead of scheduled.")
+                .font(AppFontStyle.callout.font)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(nil)
                 .opacity(showHeroText ? 1.0 : 0.0)
                 .offset(y: showHeroText ? 0 : 20)
-                .animation(.easeOut(duration: 0.4).delay(0.3), value: showHeroText)
-                .accessibilityLabel("Perfect conditions for your outdoor activities, gardening, and daily tasks")
+                .animation(entranceAnimation(delay: 0.3), value: showHeroText)
+                .accessibilityLabel("SunHat watches weather, location, and timing so reminders feel contextual instead of scheduled.")
         }
     }
     
@@ -131,13 +119,12 @@ struct WelcomeView: View {
     
     private var weatherIconWithGlow: some View {
         ZStack {
-            // Glow effect
             Circle()
                 .fill(
                     RadialGradient(
                         colors: [
-                            Color.orange.opacity(0.3),
-                            Color.orange.opacity(0.1),
+                            Color.orange.opacity(0.18),
+                            Color.cyan.opacity(0.08),
                             Color.clear
                         ],
                         center: .center,
@@ -145,17 +132,15 @@ struct WelcomeView: View {
                         endRadius: 80
                     )
                 )
-                .frame(width: 160, height: 160)
-                .scaleEffect(isAnimating ? 1.2 : 1.0)
-                .opacity(isAnimating ? 0.6 : 0.8)
+                .frame(width: 132, height: 132)
+                .scaleEffect(isAnimating ? 1.08 : 1.0)
+                .opacity(isAnimating ? 0.62 : 0.78)
                 .animation(
                     reduceMotion ? nil : .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
                     value: isAnimating
                 )
             
-            // Main weather icon
             ZStack {
-                // Sun
                 Image(systemName: "sun.max.fill")
                     .font(.system(size: 60))
                     .foregroundStyle(
@@ -171,7 +156,6 @@ struct WelcomeView: View {
                         value: isAnimating
                     )
                 
-                // Cloud overlay for partly cloudy effect
                 Image(systemName: "cloud.fill")
                     .font(.system(size: 40))
                     .foregroundStyle(
@@ -184,37 +168,35 @@ struct WelcomeView: View {
                     .offset(x: 15, y: 10)
                     .opacity(0.9)
             }
-            .shadow(color: .orange.opacity(0.3), radius: 20, x: 0, y: 10)
+            .frame(width: 104, height: 104)
+            .sunHatSurface(tint: .orange, cornerRadius: 52, prominence: 0.56)
         }
         .onAppear {
             if !reduceMotion {
                 isAnimating = true
             }
         }
-        .accessibilityLabel("Weather icon")
-        .accessibilityHidden(true) // Decorative element
+        .accessibilityHidden(true)
     }
     
     // MARK: - Use Case Section
 
     private let useCaseTags: [(String, String, Color)] = [
-        ("Gardening", "leaf.fill", .green),
-        ("Running", "figure.run", .blue),
+        ("Garden", "leaf.fill", .green),
+        ("Trail Run", "figure.run", .blue),
         ("Pool Day", "figure.pool.swim", .cyan),
-        ("Dog Walking", "dog.fill", .orange),
-        ("Photography", "camera.fill", .purple),
+        ("Photo Walk", "camera.fill", .purple),
         ("Picnic", "basket.fill", .pink)
     ]
 
     private var useCaseSection: some View {
-        VStack(spacing: 24) {
-            Text("Works for any outdoor activity")
+        VStack(spacing: 18) {
+            Text("Built for conditional plans")
                 .font(.headline)
-                .fontWeight(.semibold)
+                .bold()
                 .foregroundStyle(.primary)
                 .accessibilityAddTraits(.isHeader)
 
-            // Use case tags
             FlowLayout(spacing: 10) {
                 ForEach(useCaseTags, id: \.0) { tag in
                     HStack(spacing: 6) {
@@ -228,13 +210,13 @@ struct WelcomeView: View {
                             .foregroundStyle(.primary)
                     }
                     .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 9)
                     .background(
                         Capsule()
-                            .fill(tag.2.opacity(colorScheme == .dark ? 0.15 : 0.1))
+                            .fill(.ultraThinMaterial)
                             .overlay(
                                 Capsule()
-                                    .stroke(tag.2.opacity(0.2), lineWidth: 1)
+                                    .stroke(tag.2.opacity(0.26), lineWidth: 1)
                             )
                     )
                     .accessibilityElement(children: .combine)
@@ -247,7 +229,7 @@ struct WelcomeView: View {
         }
         .opacity(showUseCases ? 1.0 : 0.0)
         .offset(y: showUseCases ? 0 : 20)
-        .animation(.easeOut(duration: 0.4).delay(0.15), value: showUseCases)
+        .animation(entranceAnimation(delay: 0.15), value: showUseCases)
     }
 
     // MARK: - Example Notification Card
@@ -282,7 +264,7 @@ struct WelcomeView: View {
                     Spacer()
 
                     Text("now")
-                        .font(.caption2)
+                        .font(AppFontStyle.caption.font)
                         .foregroundStyle(.secondary)
                 }
 
@@ -300,11 +282,7 @@ struct WelcomeView: View {
             Spacer()
         }
         .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
-        )
+        .sunHatSurface(tint: .orange, cornerRadius: 18, prominence: 0.72)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Example notification: Perfect gardening weather! It's 72°F and sunny, ideal for your outdoor plans.")
     }
@@ -333,7 +311,10 @@ struct WelcomeView: View {
                 .frame(height: 56)
                 .background(
                     LinearGradient(
-                        colors: [Color.accentColor, Color.accentColor.opacity(0.85)],
+                        colors: [
+                            Color(red: 0.08, green: 0.45, blue: 0.68),
+                            Color(red: 0.10, green: 0.62, blue: 0.52)
+                        ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -361,8 +342,8 @@ struct WelcomeView: View {
             }
         }
         .opacity(showActionButtons ? 1.0 : 0.0)
-        .offset(y: showActionButtons ? 0 : 30)
-        .animation(.easeOut(duration: 0.4).delay(0.3), value: showActionButtons)
+                .offset(y: showActionButtons ? 0 : 30)
+        .animation(entranceAnimation(delay: 0.3), value: showActionButtons)
     }
     
     // MARK: - Helper Methods
@@ -372,11 +353,15 @@ struct WelcomeView: View {
         showUseCases = true
         showActionButtons = true
     }
+
+    private func entranceAnimation(delay: TimeInterval) -> Animation? {
+        SunHatMotion.reveal(reduceMotion: reduceMotion, delay: delay)
+    }
     
     // MARK: - Computed Properties
     
     private var backgroundGradient: some View {
-        Color(.systemBackground)
+        SunHatAtmosphereBackground(condition: .partlyCloudy, intensity: 0.62)
     }
     
     private var primaryTextGradient: LinearGradient {
@@ -393,50 +378,6 @@ struct WelcomeView: View {
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
-    }
-}
-
-// MARK: - Flow Layout
-
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxWidth = proposal.width ?? .infinity
-        var currentX: CGFloat = 0
-        var currentY: CGFloat = 0
-        var lineHeight: CGFloat = 0
-
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if currentX + size.width > maxWidth, currentX > 0 {
-                currentX = 0
-                currentY += lineHeight + spacing
-                lineHeight = 0
-            }
-            lineHeight = max(lineHeight, size.height)
-            currentX += size.width + spacing
-        }
-
-        return CGSize(width: maxWidth, height: currentY + lineHeight)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var currentX: CGFloat = bounds.minX
-        var currentY: CGFloat = bounds.minY
-        var lineHeight: CGFloat = 0
-
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if currentX + size.width > bounds.maxX, currentX > bounds.minX {
-                currentX = bounds.minX
-                currentY += lineHeight + spacing
-                lineHeight = 0
-            }
-            subview.place(at: CGPoint(x: currentX, y: currentY), proposal: .unspecified)
-            lineHeight = max(lineHeight, size.height)
-            currentX += size.width + spacing
-        }
     }
 }
 

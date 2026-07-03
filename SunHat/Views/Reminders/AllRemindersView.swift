@@ -66,7 +66,6 @@ struct AllRemindersView: View {
 
     var body: some View {
         ZStack {
-            // Liquid glass background
             liquidGlassBackground
                 .ignoresSafeArea()
 
@@ -74,11 +73,14 @@ struct AllRemindersView: View {
                 emptyStateView
             } else {
                 ScrollView {
-                    VStack(spacing: 12) {
+                    LazyVStack(spacing: 14) {
+                        remindersHeader
+                            .padding(.horizontal, 16)
+                            .padding(.top, 12)
+
                         if shouldShowSearchAndFilters {
                             searchBar
                                 .padding(.horizontal, 16)
-                                .padding(.top, 8)
 
                             filterChips
                                 .padding(.horizontal, 16)
@@ -104,7 +106,32 @@ struct AllRemindersView: View {
     // MARK: - Liquid Glass Background
 
     private var liquidGlassBackground: some View {
-        Color(.systemBackground)
+        SunHatAtmosphereBackground(condition: .partlyCloudy, intensity: 0.72)
+    }
+
+    private var remindersHeader: some View {
+        HStack(alignment: .bottom, spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Weather Tasks")
+                    .font(AppFontStyle.title2.font)
+                    .foregroundStyle(.primary)
+
+                Text("\(activeReminders.count) watching • \(inactiveReminders.count) paused")
+                    .font(AppFontStyle.callout.font)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 8)
+
+            SunHatStatusPill(
+                text: "\(reminders.count)",
+                systemImage: "list.bullet.rectangle",
+                tint: .accentColor
+            )
+        }
+        .padding(18)
+        .sunHatSurface(tint: .accentColor, cornerRadius: 24, prominence: 0.78)
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Search Bar
@@ -131,8 +158,8 @@ struct AllRemindersView: View {
                 .accessibilityLabel("Clear search")
             }
         }
-        .padding(12)
-        .glassEffect(in: .rect(cornerRadius: 12))
+        .padding(14)
+        .sunHatSurface(tint: .accentColor, cornerRadius: 18, prominence: 0.55)
         .accessibilityElement(children: .contain)
     }
 
@@ -182,8 +209,8 @@ struct AllRemindersView: View {
 
     private func reminderSection(title: String, reminders: [WeatherReminder]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title)
-                .font(.headline)
+            Label(title, systemImage: title == "Active" ? "dot.radiowaves.left.and.right" : "pause.circle")
+                .font(AppFontStyle.headline.font)
                 .foregroundStyle(.primary)
 
             LazyVStack(spacing: 12) {
@@ -207,6 +234,7 @@ struct AllRemindersView: View {
             message: "Create your first weather-triggered task to start watching the weather.",
             systemImage: "list.bullet.clipboard"
         )
+        .sunHatSurface(tint: .accentColor, cornerRadius: 24, prominence: 0.82)
         .padding()
     }
 
@@ -228,161 +256,6 @@ struct AllRemindersView: View {
         withAnimation {
             modelContext.delete(reminder)
         }
-    }
-}
-
-// MARK: - Reminder Glass Card
-
-struct ReminderGlassCard: View {
-    let reminder: WeatherReminder
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        let shouldReduceMotion = reduceMotion
-
-        NavigationLink {
-            DetailedReminderView(reminder: reminder)
-        } label: {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    ZStack {
-                        Circle()
-                            .fill(Color.accentColor.opacity(0.15))
-                            .frame(width: 44, height: 44)
-
-                        Image(systemName: reminder.category.iconName)
-                            .font(AppFontStyle.title3.font)
-                            .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(Color.accentColor)
-                    }
-                    .accessibilityHidden(true)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(reminder.displayTitle)
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-
-                        if !reminder.reminderDescription.isEmpty {
-                            Text(reminder.reminderDescription)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                        }
-                    }
-
-                    Spacer()
-
-                    SunHatStatusPill(
-                        text: reminder.isCurrentlyActive ? "Active" : "Paused",
-                        systemImage: reminder.isCurrentlyActive ? "checkmark.circle.fill" : "pause.circle.fill",
-                        tint: reminder.isCurrentlyActive ? .green : .orange
-                    )
-                }
-
-                if let condition = reminder.triggerCondition {
-                    HStack(spacing: 8) {
-                        Image(systemName: "thermometer")
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-
-                        Text("When temp is \(condition.comparisonType.rawValue) \(Int(condition.targetTemperature))°")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        Spacer()
-
-                        Text(reminder.createdDate, format: .dateTime.month().day())
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .padding(16)
-            .glassEffect(in: .rect(cornerRadius: 16))
-            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
-        }
-        .buttonStyle(SunHatPressButtonStyle())
-        .scrollTransition(.interactive, axis: .vertical) { content, phase in
-            content
-                .opacity(phase.isIdentity ? 1 : 0.84)
-                .scaleEffect(shouldReduceMotion || phase.isIdentity ? 1 : 0.98)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityLabel)
-        .accessibilityHint("Opens task details.")
-    }
-
-    private var accessibilityLabel: String {
-        var parts = [reminder.displayTitle, reminder.isCurrentlyActive ? "Active" : "Paused"]
-
-        if !reminder.reminderDescription.isEmpty {
-            parts.append(reminder.reminderDescription)
-        }
-
-        if let condition = reminder.triggerCondition {
-            parts.append("When temperature is \(condition.comparisonType.rawValue) \(Int(condition.targetTemperature)) degrees")
-        }
-
-        return parts.joined(separator: ", ")
-    }
-}
-
-// MARK: - Filter Chip
-
-struct FilterChip: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(isSelected ? .semibold : .regular)
-                .foregroundStyle(isSelected ? .white : .primary)
-                .padding(.horizontal, 16)
-                .frame(minHeight: 44)
-                .background(
-                    Capsule()
-                        .fill(
-                            isSelected ?
-                            LinearGradient(
-                                colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            ) :
-                            LinearGradient(
-                                colors: [
-                                    colorScheme == .dark ?
-                                    Color.white.opacity(0.05) :
-                                    Color.white.opacity(0.7)
-                                ],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .overlay(
-                            Capsule()
-                                .stroke(
-                                    isSelected ? Color.clear :
-                                    (colorScheme == .dark ?
-                                     Color.white.opacity(0.1) :
-                                     Color.white.opacity(0.3)),
-                                    lineWidth: 1
-                                )
-                        )
-                )
-                .contentShape(Capsule())
-        }
-        .buttonStyle(SunHatPressButtonStyle())
-        .accessibilityLabel(title)
-        .accessibilityValue(isSelected ? "Selected" : "Not selected")
-        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
-        .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: isSelected)
     }
 }
 
