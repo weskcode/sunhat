@@ -155,7 +155,7 @@ final class WeatherViewModel: ObservableObject {
             updateCurrent(from: data)
             computeDayLength()
             // Run these tasks sequentially to avoid Sendable issues with WeatherData
-            await loadForecasts()
+            await loadForecasts(from: data)
             await loadHistorical()
             await loadTriggers(with: data)
             logger.info("Weather data loaded for \(locInfo.name)")
@@ -221,9 +221,9 @@ final class WeatherViewModel: ObservableObject {
         }
     }
 
-    private func loadForecasts() async {
+    private func loadForecasts(from weatherData: WeatherData) async {
         await loadHourly()
-        await loadWeekly()
+        loadWeekly(from: weatherData.forecastDays)
         await loadAlerts()
     }
 
@@ -246,53 +246,8 @@ final class WeatherViewModel: ObservableObject {
         hourlyForecast = hours
     }
 
-    private func loadWeekly() async {
-        guard let weatherModelActor = weatherModelActor else {
-            logger.error("WeatherModelActor not available")
-            return
-        }
-        
-        do {
-            // Use fetchForecastData which returns [ForecastDayDisplay]
-            guard let locInfo = await resolvedActiveLocation() else {
-                logger.warning("No current location for forecast")
-                return
-            }
-            let forecastDays = try await weatherModelActor.fetchForecastData(for: locInfo.location)
-            var week: [DailyWeatherData] = []
-            let start = Self.calendar.startOfDay(for: Date())
-            
-            for offset in 0..<7 {
-                guard let date = Self.calendar.date(byAdding: .day, value: offset, to: start) else { continue }
-                if let ex = forecastDays.first(where: { Self.calendar.isDate($0.date, inSameDayAs: date) }) {
-                    week.append(.init(
-                        date: date,
-                        dayOfWeek: label(for: date),
-                        condition: ex.weatherDescription,
-                        iconName: ex.weatherCondition.iconName,
-                        iconColor: ex.weatherCondition.iconColor,
-                        highTemp: ex.highTemperature,
-                        lowTemp: ex.lowTemperature,
-                        precipitationProbability: ex.precipitationProbability
-                    ))
-                } else {
-                    let varTemp = Double.random(in: -15...15)
-                    week.append(.init(
-                        date: date,
-                        dayOfWeek: label(for: date),
-                        condition: weatherDescription,
-                        iconName: weatherIconName,
-                        iconColor: weatherIconColor,
-                        highTemp: currentTemperature + varTemp + 5,
-                        lowTemp: currentTemperature + varTemp - 8,
-                        precipitationProbability: Int.random(in: 0...40)
-                    ))
-                }
-            }
-            weeklyForecast = week
-        } catch {
-            logger.error("Weekly load error: \(error)")
-        }
+    private func loadWeekly(from forecastDays: [ForecastDay]) {
+        weeklyForecast = Self.dailyWeatherData(from: forecastDays)
     }
 
     private func loadAlerts() async {
@@ -368,10 +323,34 @@ final class WeatherViewModel: ObservableObject {
     }
 
     // MARK: - Helpers
-    private func label(for date: Date) -> String {
+    static func dailyWeatherData(from forecastDays: [ForecastDay]) -> [DailyWeatherData] {
+        forecastDays
+            .sorted { $0.date < $1.date }
+            .prefix(7)
+            .map { forecast in
+                DailyWeatherData(
+                    date: forecast.date,
+                    dayOfWeek: label(for: forecast.date),
+                    condition: forecast.weatherDescription.isEmpty
+                        ? forecast.weatherCondition.displayName
+                        : forecast.weatherDescription,
+                    iconName: forecast.weatherCondition.iconName,
+                    iconColor: forecast.weatherCondition.iconColor,
+                    highTemp: forecast.highTemperature,
+                    lowTemp: forecast.lowTemperature,
+                    precipitationProbability: forecast.precipitationProbability
+                )
+            }
+    }
+
+    private static func label(for date: Date) -> String {
         if Self.calendar.isDateInToday(date) { return "Today" }
         if Self.calendar.isDateInTomorrow(date) { return "Tomorrow" }
         return Self.dayFormatter.string(from: date)
+    }
+
+    private func label(for date: Date) -> String {
+        Self.label(for: date)
     }
 
     private func calculateLikelihood(cond: TriggerCondition, data: WeatherData) -> Double {

@@ -210,20 +210,22 @@ class WeatherServiceActor {
         let maxLon = location.coordinate.longitude + (searchRadius / (111000 * cos(location.coordinate.latitude * .pi / 180)))
 
         // Use simpler descriptor without key paths that cause issues
-        let descriptor = FetchDescriptor<WeatherData>(
+        var descriptor = FetchDescriptor<WeatherData>(
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
+        descriptor.fetchLimit = 50
 
         do {
             let results = try modelContext.fetch(descriptor)
 
             for weatherData in results {
-                // Filter manually since Predicate key paths cause issues
-                guard let weatherLocation = weatherData.location,
-                      weatherLocation.latitude >= minLat,
-                      weatherLocation.latitude <= maxLat,
-                      weatherLocation.longitude >= minLon,
-                      weatherLocation.longitude <= maxLon else {
+                let cachedLatitude = weatherData.location?.latitude ?? weatherData.locationLatitude
+                let cachedLongitude = weatherData.location?.longitude ?? weatherData.locationLongitude
+
+                guard cachedLatitude >= minLat,
+                      cachedLatitude <= maxLat,
+                      cachedLongitude >= minLon,
+                      cachedLongitude <= maxLon else {
                     continue
                 }
 
@@ -249,6 +251,8 @@ class WeatherServiceActor {
         )
 
         weatherData.location = locationData
+        weatherData.locationLatitude = location.coordinate.latitude
+        weatherData.locationLongitude = location.coordinate.longitude
         weatherData.timestamp = Date()
         weatherData.lastUpdated = Date()
         weatherData.expiresAt = Calendar.current.date(byAdding: .minute, value: 15, to: Date())
@@ -269,14 +273,15 @@ class WeatherServiceActor {
     private func cleanupOldCache() async {
         let cutoffDate = Calendar.current.date(byAdding: .hour, value: -24, to: Date()) ?? Date()
 
-        // Use simple descriptor and filter manually
         let descriptor = FetchDescriptor<WeatherData>(
+            predicate: #Predicate { weatherData in
+                weatherData.timestamp < cutoffDate
+            },
             sortBy: [SortDescriptor(\.timestamp, order: .forward)]
         )
 
         do {
-            let allEntries = try modelContext.fetch(descriptor)
-            let oldEntries = allEntries.filter { $0.timestamp < cutoffDate }
+            let oldEntries = try modelContext.fetch(descriptor)
 
             for entry in oldEntries {
                 modelContext.delete(entry)

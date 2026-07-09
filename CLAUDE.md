@@ -234,7 +234,7 @@ As of June 2026:
 - ✅ **System typography**: Global Inter/custom display typography has been retired in favor of semantic system styles
 - ✅ **Native empty states**: Key empty states use `ContentUnavailableView`
 - ✅ **Streamlined creation**: Normal navigation uses the streamlined reminder creator
-- 🔲 **Compact surface**: `NextReadyReminderSnapshot`/`NextReadyReminderCompactView`/`NextReadyReminderSelector` exist and are unit-tested, but are NOT yet wired into the live app (currently dead code) and need `Codable` + a shared-framework move before backing a widget/watch surface
+- ✅ **Compact surface**: `NextReadyReminderSnapshot` (`Codable`) / `NextReadyReminderCompactView` / `NextReadyReminderSelector` are wired into `DashboardView` and unit-tested; still needs the `SunHatKit` shared-framework move before it can also back a widget/watch surface
 - ✅ Complete location services integration with iOS 26 APIs
 - ✅ Enhanced WeatherKit support with extended weather data
 - ✅ Background weather updates using iOS 26 async patterns

@@ -14,6 +14,19 @@ import os.log
 @MainActor
 @Observable
 final class DataPrivacyViewModel {
+    static let privacyDeletedModelTypeNames = SunHatModelSchema.modelTypeNames
+    static let privacyExportedModelTypeNames: Set<String> = [
+        "WeatherReminder",
+        "TriggerCondition",
+        "LocationData",
+        "WeatherData",
+        "ForecastDay",
+        "NotificationConfig",
+        "ReminderHistory",
+        "UserPreferences",
+        "SavedLocation",
+        "LocationHistory"
+    ]
     
     // MARK: - Published Properties
 
@@ -259,6 +272,24 @@ final class DataPrivacyViewModel {
                 "notification_config": reminder.notificationConfig?.exportData ?? [:]
             ]
         }
+
+        let triggerDescriptor = FetchDescriptor<TriggerCondition>()
+        let triggerConditions = try context.fetch(triggerDescriptor)
+        exportData["trigger_conditions"] = triggerConditions.map { condition in
+            condition.exportData
+        }
+
+        let notificationConfigDescriptor = FetchDescriptor<NotificationConfig>()
+        let notificationConfigs = try context.fetch(notificationConfigDescriptor)
+        exportData["notification_configs"] = notificationConfigs.map { config in
+            config.exportData
+        }
+
+        let reminderHistoryDescriptor = FetchDescriptor<ReminderHistory>()
+        let reminderHistories = try context.fetch(reminderHistoryDescriptor)
+        exportData["reminder_history"] = reminderHistories.map { history in
+            history.exportData
+        }
         
         // Export locations
         let locationDescriptor = FetchDescriptor<LocationData>()
@@ -266,6 +297,18 @@ final class DataPrivacyViewModel {
         
         exportData["locations"] = locations.map { location in
             return location.exportData
+        }
+
+        let savedLocationDescriptor = FetchDescriptor<SavedLocation>()
+        let savedLocations = try context.fetch(savedLocationDescriptor)
+        exportData["saved_locations"] = savedLocations.map { location in
+            location.exportData
+        }
+
+        let locationHistoryDescriptor = FetchDescriptor<LocationHistory>()
+        let locationHistories = try context.fetch(locationHistoryDescriptor)
+        exportData["location_history"] = locationHistories.map { history in
+            history.exportData
         }
         
         // Export weather data (recent only, last 30 days)
@@ -276,6 +319,12 @@ final class DataPrivacyViewModel {
         
         exportData["weather_data"] = weatherRecords.map { weather in
             return weather.exportData
+        }
+
+        let forecastDayDescriptor = FetchDescriptor<ForecastDay>()
+        let forecastDays = try context.fetch(forecastDayDescriptor)
+        exportData["forecast_days"] = forecastDays.map { forecast in
+            forecast.exportData
         }
         
         return exportData
@@ -511,6 +560,7 @@ extension DateFormatter {
 extension TriggerCondition {
     var exportData: [String: Any] {
         return [
+            "id": id.uuidString,
             "type": triggerType.rawValue,
             "target_temperature": targetTemperature,
             "comparison_type": comparisonType.rawValue,
@@ -537,9 +587,45 @@ extension LocationData {
     }
 }
 
+extension SavedLocation {
+    var exportData: [String: Any] {
+        return [
+            "id": id.uuidString,
+            "display_name": displayName,
+            "name": name,
+            "address": address,
+            "city": city,
+            "state": state,
+            "country": country,
+            "latitude": latitude,
+            "longitude": longitude,
+            "date_added": ISO8601DateFormatter().string(from: dateAdded),
+            "last_used": ISO8601DateFormatter().string(from: lastUsed),
+            "use_count": useCount,
+            "is_favorite": isFavorite,
+            "source": source.rawValue
+        ]
+    }
+}
+
+extension LocationHistory {
+    var exportData: [String: Any] {
+        return [
+            "id": id.uuidString,
+            "name": name,
+            "latitude": latitude,
+            "longitude": longitude,
+            "timestamp": ISO8601DateFormatter().string(from: timestamp),
+            "accuracy": accuracy,
+            "source": source.rawValue
+        ]
+    }
+}
+
 extension WeatherData {
     var exportData: [String: Any] {
         return [
+            "id": id.uuidString,
             "timestamp": ISO8601DateFormatter().string(from: timestamp),
             "temperature": temperature,
             "feels_like": feelsLike,
@@ -547,7 +633,31 @@ extension WeatherData {
             "pressure": pressure,
             "visibility": visibility,
             "uv_index": uvIndex,
-            "description": weatherDescription
+            "description": weatherDescription,
+            "latitude": locationLatitude,
+            "longitude": locationLongitude,
+            "forecast_days": forecastDays.map { $0.exportData }
+        ]
+    }
+}
+
+extension ForecastDay {
+    var exportData: [String: Any] {
+        return [
+            "id": id.uuidString,
+            "date": ISO8601DateFormatter().string(from: date),
+            "high_temperature": highTemperature,
+            "low_temperature": lowTemperature,
+            "average_temperature": averageTemperature,
+            "condition": weatherCondition.rawValue,
+            "description": weatherDescription,
+            "precipitation_probability": precipitationProbability,
+            "precipitation_amount": precipitationAmount,
+            "precipitation_type": precipitationType.rawValue,
+            "wind_speed": windSpeed,
+            "humidity": humidity,
+            "uv_index": uvIndex,
+            "cloud_cover": cloudCover
         ]
     }
 }
@@ -555,12 +665,28 @@ extension WeatherData {
 extension NotificationConfig {
     var exportData: [String: Any] {
         return [
+            "id": id.uuidString,
             "title": title,
             "message": message,
             "delivery_time": deliveryTime.rawValue,
             "priority": priority.rawValue,
             "cooldown_hours": cooldownPeriodHours,
             "critical_alert": criticalAlert
+        ]
+    }
+}
+
+extension ReminderHistory {
+    var exportData: [String: Any] {
+        return [
+            "id": id.uuidString,
+            "timestamp": ISO8601DateFormatter().string(from: timestamp),
+            "action": action.rawValue,
+            "details": details,
+            "weather_conditions": weatherConditionsAtTime,
+            "temperature": temperatureAtTime ?? NSNull(),
+            "user_response": userResponse.rawValue,
+            "response_time": responseTime.map { ISO8601DateFormatter().string(from: $0) } ?? NSNull()
         ]
     }
 }
