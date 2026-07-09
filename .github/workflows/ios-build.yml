@@ -1,0 +1,27 @@
+name: iOS Build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-for-testing:
+    name: Build for Testing
+    runs-on: macos-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build app and unit test bundle
+        run: |
+          xcodebuild build-for-testing \
+            -project SunHat.xcodeproj \
+            -scheme SunHatUnitTests \
+            -destination 'generic/platform=iOS Simulator'

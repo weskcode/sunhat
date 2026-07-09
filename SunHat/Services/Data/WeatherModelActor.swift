@@ -60,9 +60,44 @@ do {
     /// Fetches forecast data
     func fetchForecastData(for location: CLLocation, days: Int = 7) async throws -> [ForecastDayDisplay] {
         logger.debug("Fetching forecast data for \(days) days")
-        // Implementation for fetching forecast data - currently returns empty array
-        // In production, this would fetch from WeatherService and convert to ForecastDayDisplay
-        return []
+
+        let targetLatitude = location.coordinate.latitude
+        let targetLongitude = location.coordinate.longitude
+        var descriptor = FetchDescriptor<WeatherData>(
+            sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
+        )
+        descriptor.fetchLimit = 20
+
+        let candidates = try modelContext.fetch(descriptor)
+        guard let cachedWeatherData = candidates.first(where: { weatherData in
+            abs(weatherData.locationLatitude - targetLatitude) < 0.001 &&
+            abs(weatherData.locationLongitude - targetLongitude) < 0.001 &&
+            !weatherData.forecastDays.isEmpty
+        }) else {
+            logger.info("No cached forecast data found for requested location")
+            return []
+        }
+
+        let forecastDays = cachedWeatherData.forecastDays
+            .sorted { $0.date < $1.date }
+            .prefix(days)
+            .map { forecast in
+                ForecastDayDisplay(
+                    date: forecast.date,
+                    highTemperature: forecast.highTemperature,
+                    lowTemperature: forecast.lowTemperature,
+                    weatherCondition: forecast.weatherCondition,
+                    weatherDescription: forecast.weatherDescription.isEmpty
+                        ? forecast.weatherCondition.rawValue.replacingOccurrences(of: "_", with: " ").capitalized
+                        : forecast.weatherDescription,
+                    precipitationProbability: forecast.precipitationProbability,
+                    windSpeed: forecast.windSpeed,
+                    humidity: forecast.humidity
+                )
+            }
+
+        logger.info("Fetched \(forecastDays.count) cached forecast days")
+        return Array(forecastDays)
     }
     
     /// Saves weather data
@@ -114,20 +149,20 @@ do {
         let targetLatitude = location.coordinate.latitude
         let targetLongitude = location.coordinate.longitude
 
-        // Fetch all weather data first, then filter in memory
-        // This avoids predicate macro issues with captured variables
-        let allDescriptor = FetchDescriptor<WeatherData>(
+        let dateRangeDescriptor = FetchDescriptor<WeatherData>(
+            predicate: #Predicate { weatherData in
+                weatherData.timestamp >= startDate && weatherData.timestamp <= endDate
+            },
             sortBy: [SortDescriptor(\.timestamp, order: .forward)]
         )
 
-        let allWeatherData = try modelContext.fetch(allDescriptor)
+        let weatherDataInRange = try modelContext.fetch(dateRangeDescriptor)
 
-        // Filter in memory for the specific location and date range
-        let filteredData = allWeatherData.filter { weatherData in
+        // Filter location in memory to keep the SwiftData predicate simple and
+        // avoid broad store scans across unrelated historical ranges.
+        let filteredData = weatherDataInRange.filter { weatherData in
             abs(weatherData.locationLatitude - targetLatitude) < 0.001 &&
-            abs(weatherData.locationLongitude - targetLongitude) < 0.001 &&
-            weatherData.timestamp >= startDate &&
-            weatherData.timestamp <= endDate
+            abs(weatherData.locationLongitude - targetLongitude) < 0.001
         }
 
         // Convert to Sendable transfer objects

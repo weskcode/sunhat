@@ -78,7 +78,7 @@ final class DashboardUITests: XCTestCase {
             weatherCard.tap()
 
             // Wait for detailed weather to appear
-            let detailedWeather = app.staticTexts["More Details"]
+            let detailedWeather = app.staticTexts["Forecast Details"]
             let exists = detailedWeather.waitForExistence(timeout: 2)
 
             if exists {

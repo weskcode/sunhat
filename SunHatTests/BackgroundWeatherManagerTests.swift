@@ -5,6 +5,7 @@
 
 import Foundation
 import Testing
+import UserNotifications
 @testable import SunHat
 
 /// Serialized because they exercise the shared singleton's registration and
@@ -38,5 +39,31 @@ struct BackgroundWeatherManagerTests {
         // No request is submitted and no error is thrown — the app simply
         // relies on foreground refresh.
         #expect(manager.scheduleBackgroundRefresh() == false)
+    }
+
+    @Test("Requesting background refresh permission only reads current authorization, never prompts")
+    func requestBackgroundRefreshPermissionMirrorsCurrentAuthorization() async {
+        // This checks the real UNUserNotificationCenter rather than a mock: the
+        // behavior under test is specifically that the method no longer calls
+        // requestAuthorization() (which would surface a system dialog and hang
+        // a test run). notificationSettings() is a passive read, so re-deriving
+        // the expected outcome here is safe and still catches a regression to
+        // the old prompting behavior.
+        let manager = BackgroundWeatherManager.shared
+        let settings = await UNUserNotificationCenter.current().notificationSettings()
+
+        let expectedGranted: Bool
+        switch settings.authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            expectedGranted = true
+        case .notDetermined, .denied:
+            expectedGranted = false
+        @unknown default:
+            expectedGranted = false
+        }
+
+        let granted = await manager.requestBackgroundRefreshPermission()
+
+        #expect(granted == expectedGranted)
     }
 }

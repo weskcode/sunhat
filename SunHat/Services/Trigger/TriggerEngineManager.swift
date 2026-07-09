@@ -47,7 +47,7 @@ final class TriggerEngineManager: ObservableObject {
     
     // MARK: - Manual Evaluation
     
-    func evaluateAllReminders() async {
+    func evaluateAllReminders(isBackground: Bool = false) async {
         guard !isEvaluating else {
             logger.warning("Evaluation already in progress")
             return
@@ -61,10 +61,10 @@ final class TriggerEngineManager: ObservableObject {
         isEvaluating = true
         let startTime = Date()
 
-        logger.info("Starting manual evaluation of all reminders")
+        logger.info("Starting \(isBackground ? "background" : "manual") evaluation of all reminders")
 
         let results = await triggerEngine.evaluateAllActiveReminders()
-        await processEvaluationResults(results)
+        await processEvaluationResults(results, isBackground: isBackground)
 
         let duration = Date().timeIntervalSince(startTime)
         updatePerformanceMetrics(duration: duration)
@@ -72,7 +72,7 @@ final class TriggerEngineManager: ObservableObject {
         lastEvaluationTime = Date()
         evaluationResults = results
 
-        logger.info("Manual evaluation completed: \(results.count) reminders evaluated in \(duration)s")
+        logger.info("\(isBackground ? "Background" : "Manual") evaluation completed: \(results.count) reminders evaluated in \(duration)s")
 
         isEvaluating = false
     }
