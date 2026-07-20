@@ -15,33 +15,22 @@ struct StreamlinedTimePreferencesSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 8) {
-                Image(systemName: "clock.fill")
-                    .font(.body)
-                    .foregroundStyle(viewModel.customReminder.selectedColor)
+            SectionHeaderView(icon: "clock.fill", title: "When")
 
-                Text("Time")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.primary)
-            }
-            .padding(.horizontal, 4)
-
-            VStack(spacing: 16) {
-                LazyVGrid(columns: [
-                    GridItem(.flexible(), spacing: 10),
-                    GridItem(.flexible(), spacing: 10)
-                ], spacing: 10) {
-                    ForEach(TimeRange.allCases, id: \.self) { timeRange in
-                        timeRangeButton(for: timeRange)
-                    }
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 10),
+                GridItem(.flexible(), spacing: 10)
+            ], spacing: 10) {
+                ForEach(TimeRange.allCases, id: \.self) { timeRange in
+                    timeRangeButton(for: timeRange)
                 }
-
-                quietHoursToggle
             }
-            .padding(16)
-            .liquidGlassFieldBackground(tint: viewModel.customReminder.selectedColor)
+
+            Divider()
+
+            quietHoursToggle
         }
+        .cardStyle()
     }
 
     private func timeRangeButton(for timeRange: TimeRange) -> some View {

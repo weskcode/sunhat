@@ -399,20 +399,21 @@ final class DashboardViewModel: ObservableObject {
         }
     }
     
+    /// SunHat's own threshold-based advisories derived from current conditions.
+    /// These are NOT official government or WeatherKit severe-weather alerts, so
+    /// titles are branded as SunHat advisories and each states its threshold.
     private func loadWeatherAlerts() {
-        // In a real implementation, this would fetch from a weather alert service
-        // For now, we'll check for severe weather conditions
         guard let weatherData = currentWeatherData else { return }
-        
+
         var alerts: [WeatherAlertDisplay] = []
-        
+
         // Temperature alerts
         if weatherData.temperature < 32 {
             alerts.append(WeatherAlertDisplay(
                 id: UUID(),
                 timestamp: Date(),
-                title: "Freezing Temperature Alert",
-                description: "Temperature has dropped below freezing. Protect plants and pets.",
+                title: "SunHat Frost Advisory",
+                description: "Current temperature is below SunHat's 32°F advisory threshold.",
                 severity: WeatherAlertSeverity.moderate,
                 type: .frost,
                 area: "Local Area",
@@ -426,9 +427,9 @@ final class DashboardViewModel: ObservableObject {
             alerts.append(WeatherAlertDisplay(
                 id: UUID(),
                 timestamp: Date(),
-                title: "Extreme Heat Warning",
-                description: "Temperature is dangerously high. Stay hydrated and avoid outdoor activities.",
-                severity: WeatherAlertSeverity.severe,
+                title: "SunHat Heat Advisory",
+                description: "Current temperature is above SunHat's 95°F advisory threshold.",
+                severity: WeatherAlertSeverity.moderate,
                 type: .heat,
                 area: "Local Area",
                 instructions: "Stay hydrated and avoid prolonged outdoor activities",
@@ -442,8 +443,8 @@ final class DashboardViewModel: ObservableObject {
             alerts.append(WeatherAlertDisplay(
                 id: UUID(),
                 timestamp: Date(),
-                title: "High Wind Advisory",
-                description: "Sustained winds exceed 25 mph. Secure outdoor objects.",
+                title: "SunHat Wind Advisory",
+                description: "Sustained winds are above SunHat's 25 mph advisory threshold.",
                 severity: WeatherAlertSeverity.moderate,
                 type: .wind,
                 area: "Local Area",
@@ -458,8 +459,8 @@ final class DashboardViewModel: ObservableObject {
             alerts.append(WeatherAlertDisplay(
                 id: UUID(),
                 timestamp: Date(),
-                title: "High UV Index",
-                description: "UV index is very high. Use sun protection when outdoors.",
+                title: "SunHat UV Advisory",
+                description: "Current UV index is above SunHat's advisory threshold of 7.",
                 severity: WeatherAlertSeverity.moderate,
                 type: .uv,
                 area: "Local Area",
@@ -468,7 +469,7 @@ final class DashboardViewModel: ObservableObject {
                 isActive: true
             ))
         }
-        
+
         activeAlerts = alerts
     }
     

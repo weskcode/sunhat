@@ -88,25 +88,23 @@ struct AllRemindersView: View {
 
                         remindersContent
                             .padding(.horizontal, 16)
-                            .padding(.bottom, 24)
+                            .padding(.bottom, 132)
                     }
                 }
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("All Tasks")
-                    .font(.headline)
-                    .fontWeight(.semibold)
-            }
-        }
+        .navigationTitle("Reminders")
+        .navigationBarTitleDisplayMode(.large)
     }
 
     // MARK: - Liquid Glass Background
 
     private var liquidGlassBackground: some View {
-        SunHatAtmosphereBackground(condition: .partlyCloudy, intensity: 0.72)
+        SunHatAtmosphereBackground(
+            condition: .partlyCloudy,
+            intensity: 0.58,
+            showsConditionAccent: false
+        )
     }
 
     private var remindersHeader: some View {
@@ -229,13 +227,20 @@ struct AllRemindersView: View {
     }
 
     private var emptyStateView: some View {
-        SunHatEmptyState(
-            title: "No Tasks Yet",
-            message: "Create your first weather-triggered task to start watching the weather.",
-            systemImage: "list.bullet.clipboard"
-        )
-        .sunHatSurface(tint: .accentColor, cornerRadius: 24, prominence: 0.82)
-        .padding()
+        VStack {
+            Spacer(minLength: 0)
+
+            SunHatEmptyState(
+                title: "No Tasks Yet",
+                message: "Create your first weather-triggered task to start watching the weather.",
+                systemImage: "list.bullet.clipboard"
+            )
+            .sunHatSurface(tint: .accentColor, cornerRadius: 24, prominence: 0.70)
+
+            Spacer(minLength: 120)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 16)
     }
 
     // MARK: - No Results View

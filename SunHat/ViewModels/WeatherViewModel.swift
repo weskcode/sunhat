@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 import SwiftData
 import Combine
+import CoreLocation
 import os
 
 @MainActor
@@ -21,8 +22,11 @@ final class WeatherViewModel: ObservableObject {
     @Published var currentTemperature: Double = 0
     @Published var feelsLikeTemperature: Double = 0
     @Published var weatherDescription: String = "Clear"
+    @Published var weatherCondition: WeatherCondition = .unknown
     @Published var weatherIconName: String = "sun.max.fill"
     @Published var weatherIconColor: Color = .orange
+    @Published var backdropPalette: WeatherBackdropPalette = .calmBlue
+    @Published var hasWeatherData = false
     @Published var highTemperature: Double = 0
     @Published var lowTemperature: Double = 0
 
@@ -41,9 +45,11 @@ final class WeatherViewModel: ObservableObject {
     @Published var sunset: Date?
     @Published var dayLength: TimeInterval?
 
-    @Published var yesterdayTemp: Double = 0
-    @Published var lastWeekTemp: Double = 0
-    @Published var historicalAvgTemp: Double = 0
+    /// Historical comparison temperatures. `nil` means "not enough stored history"
+    /// — the UI shows an explicit unavailable state instead of a placeholder value.
+    @Published var yesterdayTemp: Double?
+    @Published var lastWeekTemp: Double?
+    @Published var historicalAvgTemp: Double?
 
     @Published var hourlyForecast: [HourlyWeatherData] = []
     @Published var weeklyForecast: [DailyWeatherData] = []
@@ -56,6 +62,8 @@ final class WeatherViewModel: ObservableObject {
     private var locationManager: LocationManaging
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "WeatherVM")
     private var cancellables = Set<AnyCancellable>()
+    private var selectedLocation: ReminderLocation = .currentLocation
+    private var activeLocation: (location: CLLocation, name: String)?
     private static let calendar = Calendar.current
     private static let dayFormatter: DateFormatter = {
         let df = DateFormatter()
@@ -126,12 +134,19 @@ final class WeatherViewModel: ObservableObject {
         await loadAllData(forceRefresh: true)
     }
 
+    func updateSelectedLocation(_ location: ReminderLocation) async {
+        selectedLocation = location
+        await loadAllData(forceRefresh: true)
+    }
+
     // MARK: - Data Loading
     private func loadAllData(forceRefresh: Bool) async {
-        guard let locInfo = await locationManager.currentLocation() else {
+        guard let locInfo = await resolveSelectedLocation() else {
             logger.warning("Location unavailable")
+            hasWeatherData = false
             return
         }
+        activeLocation = locInfo
         locationName = locInfo.name
         do {
             isLoading = true
@@ -142,12 +157,13 @@ final class WeatherViewModel: ObservableObject {
             updateCurrent(from: data)
             computeDayLength()
             // Run these tasks sequentially to avoid Sendable issues with WeatherData
-            await loadForecasts()
+            await loadForecasts(from: data)
             await loadHistorical()
             await loadTriggers(with: data)
             logger.info("Weather data loaded for \(locInfo.name)")
         } catch {
             logger.error("Error loading weather: \(error.localizedDescription)")
+            hasWeatherData = false
         }
         isLoading = false
     }
@@ -155,6 +171,9 @@ final class WeatherViewModel: ObservableObject {
     private func updateCurrent(from data: WeatherData) {
         currentTemperature = data.temperature
         feelsLikeTemperature = data.apparentTemperature
+        weatherCondition = data.weatherCondition
+        backdropPalette = WeatherBackdropPalette.palette(for: data)
+        hasWeatherData = true
         weatherDescription = data.weatherDescription.isEmpty
             ? data.weatherCondition.rawValue.capitalized
             : data.weatherDescription
@@ -178,123 +197,106 @@ final class WeatherViewModel: ObservableObject {
         }
     }
 
+    private func resolveSelectedLocation() async -> (location: CLLocation, name: String)? {
+        guard !selectedLocation.isCurrentLocation else {
+            return await locationManager.currentLocation()
+        }
+
+        let coordinate = selectedLocation.coordinate.clCoordinate
+        return (
+            CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude),
+            LocationDisplayFormatter.privacyPreservingName(from: selectedLocation.displayName)
+        )
+    }
+
+    private func resolvedActiveLocation() async -> (location: CLLocation, name: String)? {
+        if let activeLocation {
+            return activeLocation
+        }
+
+        return await resolveSelectedLocation()
+    }
+
     private func computeDayLength() {
         if let rise = sunrise, let set = sunset {
             dayLength = set.timeIntervalSince(rise)
         }
     }
 
-    private func loadForecasts() async {
+    private func loadForecasts(from weatherData: WeatherData) async {
         await loadHourly()
-        await loadWeekly()
+        loadWeekly(from: weatherData.forecastDays)
         await loadAlerts()
     }
 
+    /// Loads the real provider hourly forecast. An empty array means the provider
+    /// had no hourly data (or the fetch failed) and the UI shows an unavailable
+    /// state — hours are never synthesized.
     private func loadHourly() async {
-        var hours: [HourlyWeatherData] = []
-        let now = Self.calendar.dateInterval(of: .hour, for: Date())?.start ?? Date()
-        for i in 0..<24 {
-            guard let dt = Self.calendar.date(byAdding: .hour, value: i, to: now) else { continue }
-            let variation = sin(Double(i) * .pi / 12) * 10
-            let temp = currentTemperature + variation
-            hours.append(.init(
-                hour: dt,
-                temperature: temp,
-                condition: weatherDescription,
-                iconName: weatherIconName,
-                iconColor: weatherIconColor,
-                precipitationProbability: max(0, humidity - 50)
-            ))
-        }
-        hourlyForecast = hours
-    }
-
-    private func loadWeekly() async {
-        guard let weatherModelActor = weatherModelActor else {
-            logger.error("WeatherModelActor not available")
+        guard let locInfo = await resolvedActiveLocation() else {
+            hourlyForecast = []
             return
         }
-        
-        do {
-            // Use fetchForecastData which returns [ForecastDayDisplay]
-            guard let locInfo = await locationManager.currentLocation() else {
-                logger.warning("No current location for forecast")
-                return
-            }
-            let forecastDays = try await weatherModelActor.fetchForecastData(for: locInfo.location)
-            var week: [DailyWeatherData] = []
-            let start = Self.calendar.startOfDay(for: Date())
-            
-            for offset in 0..<7 {
-                guard let date = Self.calendar.date(byAdding: .day, value: offset, to: start) else { continue }
-                if let ex = forecastDays.first(where: { Self.calendar.isDate($0.date, inSameDayAs: date) }) {
-                    week.append(.init(
-                        date: date,
-                        dayOfWeek: label(for: date),
-                        condition: ex.weatherDescription,
-                        iconName: ex.weatherCondition.iconName,
-                        iconColor: ex.weatherCondition.iconColor,
-                        highTemp: ex.highTemperature,
-                        lowTemp: ex.lowTemperature,
-                        precipitationProbability: ex.precipitationProbability
-                    ))
-                } else {
-                    let varTemp = Double.random(in: -15...15)
-                    week.append(.init(
-                        date: date,
-                        dayOfWeek: label(for: date),
-                        condition: weatherDescription,
-                        iconName: weatherIconName,
-                        iconColor: weatherIconColor,
-                        highTemp: currentTemperature + varTemp + 5,
-                        lowTemp: currentTemperature + varTemp - 8,
-                        precipitationProbability: Int.random(in: 0...40)
-                    ))
-                }
-            }
-            weeklyForecast = week
-        } catch {
-            logger.error("Weekly load error: \(error)")
+        let hours = await weatherService.fetchHourlyForecast(for: locInfo.location)
+        hourlyForecast = hours.map { hour in
+            HourlyWeatherData(
+                hour: hour.date,
+                temperature: hour.temperature,
+                condition: hour.weatherCondition.displayName,
+                iconName: hour.weatherCondition.iconName,
+                iconColor: hour.weatherCondition.iconColor,
+                precipitationProbability: hour.precipitationChance
+            )
         }
     }
 
+    private func loadWeekly(from forecastDays: [ForecastDay]) {
+        weeklyForecast = Self.dailyWeatherData(from: forecastDays)
+    }
+
+    /// SunHat's own threshold-based advisories. These are NOT official government or
+    /// WeatherKit severe-weather alerts, so the copy is branded as a SunHat advisory
+    /// and states the exact threshold that produced it.
     private func loadAlerts() async {
         var alerts: [WeatherAlert] = []
         if currentTemperature > 95 {
             alerts.append(.init(
                 id: .init(),
-                title: "Excessive Heat Warning",
-                description: "Temperatures above 95°F",
-                severity: .warning,
+                title: "SunHat Heat Advisory",
+                description: "Current temperature is above SunHat's 95°F advisory threshold.",
+                severity: .advisory,
                 area: locationName,
-                instructions: "Stay hydrated",
+                instructions: "Stay hydrated and limit time outdoors",
                 expiresAt: Date().addingTimeInterval(8 * 3600)
             ))
         }
         if uvIndex > 8 {
             alerts.append(.init(
                 id: .init(),
-                title: "High UV Index",
-                description: "UV > 8",
+                title: "SunHat UV Advisory",
+                description: "Current UV index (\(Int(uvIndex))) is above SunHat's advisory threshold of 8.",
                 severity: .advisory,
                 area: locationName,
-                instructions: "Use sunscreen",
+                instructions: "Use sunscreen and seek shade midday",
                 expiresAt: Date().addingTimeInterval(6 * 3600)
             ))
         }
         weatherAlerts = alerts
     }
 
+    /// Loads comparisons from actually stored weather history. Any value without
+    /// enough stored data stays `nil` — the UI shows "Not enough history yet"
+    /// rather than an invented placeholder.
     private func loadHistorical() async {
-        func temp(daysAgo: Int) async -> Double {
+        func temp(daysAgo: Int) async -> Double? {
             guard let date = Self.calendar.date(byAdding: .day, value: -daysAgo, to: Date()) else {
-                return currentTemperature
+                return nil
             }
-            return await getHistoricalTemp(for: date) ?? currentTemperature
+            return await getHistoricalTemp(for: date)
         }
         yesterdayTemp = await temp(daysAgo: 1)
         lastWeekTemp = await temp(daysAgo: 7)
-        historicalAvgTemp = await estimateSeasonalAverage()
+        historicalAvgTemp = await storedMonthlyAverage()
     }
 
     private func loadTriggers(with data: WeatherData) async {
@@ -331,10 +333,34 @@ final class WeatherViewModel: ObservableObject {
     }
 
     // MARK: - Helpers
-    private func label(for date: Date) -> String {
+    static func dailyWeatherData(from forecastDays: [ForecastDay]) -> [DailyWeatherData] {
+        forecastDays
+            .sorted { $0.date < $1.date }
+            .prefix(7)
+            .map { forecast in
+                DailyWeatherData(
+                    date: forecast.date,
+                    dayOfWeek: label(for: forecast.date),
+                    condition: forecast.weatherDescription.isEmpty
+                        ? forecast.weatherCondition.displayName
+                        : forecast.weatherDescription,
+                    iconName: forecast.weatherCondition.iconName,
+                    iconColor: forecast.weatherCondition.iconColor,
+                    highTemp: forecast.highTemperature,
+                    lowTemp: forecast.lowTemperature,
+                    precipitationProbability: forecast.precipitationProbability
+                )
+            }
+    }
+
+    private static func label(for date: Date) -> String {
         if Self.calendar.isDateInToday(date) { return "Today" }
         if Self.calendar.isDateInTomorrow(date) { return "Tomorrow" }
         return Self.dayFormatter.string(from: date)
+    }
+
+    private func label(for date: Date) -> String {
+        Self.label(for: date)
     }
 
     private func calculateLikelihood(cond: TriggerCondition, data: WeatherData) -> Double {
@@ -376,7 +402,7 @@ final class WeatherViewModel: ObservableObject {
         
         do {
             // Fetch historical weather data for the past year to find this date
-            guard let locInfo = await locationManager.currentLocation() else { return nil }
+            guard let locInfo = await resolvedActiveLocation() else { return nil }
 
             let weatherData = try await weatherModelActor.fetchHistoricalWeatherData(for: locInfo.location, daysBack: 365)
 
@@ -398,13 +424,24 @@ final class WeatherViewModel: ObservableObject {
         }
     }
 
-    private func estimateSeasonalAverage() async -> Double {
-        switch Self.calendar.component(.month, from: Date()) {
-        case 12, 1, 2: return 35
-        case 3, 4, 5: return 55
-        case 6, 7, 8: return 75
-        case 9, 10, 11: return 60
-        default: return 60
+    /// Average of stored temperatures at this location for the current month
+    /// (any year). Returns `nil` when fewer than 3 samples exist — no fixed
+    /// seasonal constants are ever substituted.
+    private func storedMonthlyAverage() async -> Double? {
+        guard let weatherModelActor else { return nil }
+        guard let locInfo = await resolvedActiveLocation() else { return nil }
+
+        do {
+            let stored = try await weatherModelActor.fetchHistoricalWeatherData(for: locInfo.location, daysBack: 365)
+            let currentMonth = Self.calendar.component(.month, from: Date())
+            let samples = stored
+                .filter { Self.calendar.component(.month, from: $0.timestamp) == currentMonth }
+                .map(\.temperature)
+            guard samples.count >= 3 else { return nil }
+            return samples.reduce(0, +) / Double(samples.count)
+        } catch {
+            logger.error("Failed to compute stored monthly average: \(error)")
+            return nil
         }
     }
     

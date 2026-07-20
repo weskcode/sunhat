@@ -7,52 +7,39 @@
 
 import SwiftUI
 
-/// The "Weather" card in the streamlined reminder creator — temperature
-/// condition type, range/exact sliders, and multi-select sky conditions
-/// with include/exclude mode.
+/// The "Weather Conditions" card in the streamlined reminder creator —
+/// temperature condition type, range/exact sliders, and multi-select sky
+/// conditions with include/exclude mode.
 struct StreamlinedWeatherConditionsSection: View {
     @ObservedObject var viewModel: FirstReminderCreationViewModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 8) {
-                Image(systemName: "thermometer.medium")
-                    .font(.body)
-                    .foregroundStyle(viewModel.customReminder.selectedColor)
+            SectionHeaderView(icon: "thermometer.medium", title: "Weather Conditions")
 
-                Text("Weather")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.primary)
-            }
-            .padding(.horizontal, 4)
-
-            VStack(spacing: 20) {
-                // Temperature section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Condition Type")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.secondary)
-
-                    conditionTypeSelector
-
-                    if viewModel.customReminder.temperatureType == .temperatureRange {
-                        temperatureRangeControl
-                    } else {
-                        exactTemperatureControl
+            // Temperature section
+            VStack(alignment: .leading, spacing: 12) {
+                Picker("Condition Type", selection: $viewModel.customReminder.temperatureType) {
+                    ForEach(TemperatureConditionType.allCases, id: \.self) { type in
+                        Text(type == .temperatureRange ? "Range" : "Exact").tag(type)
                     }
                 }
+                .pickerStyle(.segmented)
 
-                Divider()
-
-                // Sky conditions (multi-select with include/exclude)
-                skyConditionsSection
+                if viewModel.customReminder.temperatureType == .temperatureRange {
+                    temperatureRangeControl
+                } else {
+                    exactTemperatureControl
+                }
             }
-            .padding(16)
-            .liquidGlassFieldBackground(tint: viewModel.customReminder.selectedColor)
+
+            Divider()
+
+            // Sky conditions (multi-select with include/exclude)
+            skyConditionsSection
         }
+        .cardStyle()
     }
 
     // MARK: - Sky Conditions
@@ -64,22 +51,11 @@ struct StreamlinedWeatherConditionsSection: View {
                 .fontWeight(.medium)
                 .foregroundStyle(.secondary)
 
-            // Include/Exclude toggle
-            HStack(spacing: 8) {
-                conditionModeButton(
-                    mode: .include,
-                    title: "Include",
-                    icon: "checkmark.circle.fill",
-                    selectedFill: viewModel.customReminder.selectedColor
-                )
-
-                conditionModeButton(
-                    mode: .exclude,
-                    title: "Exclude",
-                    icon: "xmark.circle.fill",
-                    selectedFill: .gray // softer than red for negative states
-                )
+            Picker("Condition Mode", selection: $viewModel.customReminder.conditionMode) {
+                Text("Include").tag(ConditionSelectionMode.include)
+                Text("Exclude").tag(ConditionSelectionMode.exclude)
             }
+            .pickerStyle(.segmented)
 
             Text(viewModel.customReminder.conditionMode == .include
                  ? "Remind me when it's any of these:"
@@ -96,37 +72,6 @@ struct StreamlinedWeatherConditionsSection: View {
         }
     }
 
-    private func conditionModeButton(
-        mode: ConditionSelectionMode,
-        title: String,
-        icon: String,
-        selectedFill: Color
-    ) -> some View {
-        Button {
-            withAnimation(selectionAnimation) {
-                viewModel.customReminder.conditionMode = mode
-            }
-        } label: {
-            let isSelected = viewModel.customReminder.conditionMode == mode
-
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.caption)
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
-            }
-            .foregroundStyle(isSelected ? .white : .secondary)
-            .frame(maxWidth: .infinity)
-            .frame(minHeight: 44)
-            .background(isSelected ? selectedFill : Color(.tertiarySystemBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .contentShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(viewModel.customReminder.conditionMode == mode ? .isSelected : [])
-    }
-
     private func skyConditionChip(for sky: SkyCondition) -> some View {
         Button {
             withAnimation(selectionAnimation) {
@@ -141,52 +86,31 @@ struct StreamlinedWeatherConditionsSection: View {
             impact.impactOccurred()
         } label: {
             let isSelected = viewModel.customReminder.selectedSkyConditions.contains(sky)
+            let isExcluded = isSelected && viewModel.customReminder.conditionMode == .exclude
 
             HStack(spacing: 6) {
                 Image(systemName: sky.icon)
                     .font(.caption)
-                    .foregroundStyle(
-                        isSelected && viewModel.customReminder.conditionMode == .include
-                            ? .white
-                            : sky.color
-                    )
+                    .foregroundStyle(isSelected && !isExcluded ? .white : sky.color)
 
                 Text(sky.displayName)
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundStyle(
-                        isSelected
-                            ? (viewModel.customReminder.conditionMode == .include ? .white : .primary)
-                            : .primary
-                    )
-
-                if isSelected && viewModel.customReminder.conditionMode == .exclude {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundStyle(.gray)
-                }
+                    .foregroundStyle(isSelected && !isExcluded ? .white : .primary)
+                    .strikethrough(isExcluded, pattern: .solid, color: .secondary)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 20)
                     .fill(
-                        isSelected
-                            ? (viewModel.customReminder.conditionMode == .include
-                               ? sky.color.opacity(0.85)
-                               : Color.gray.opacity(0.15))
-                            : Color(.tertiarySystemBackground)
+                        isExcluded
+                            ? Color(.tertiarySystemBackground)
+                            : (isSelected ? sky.color.opacity(0.85) : Color(.tertiarySystemBackground))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 20)
-                            .stroke(
-                                isSelected
-                                    ? (viewModel.customReminder.conditionMode == .include
-                                       ? Color.clear
-                                       : Color.gray.opacity(0.4))
-                                    : Color.clear,
-                                lineWidth: 1.5
-                            )
+                            .stroke(isExcluded ? Color.secondary.opacity(0.4) : .clear, lineWidth: 1.5)
                     )
             )
         }
@@ -195,27 +119,6 @@ struct StreamlinedWeatherConditionsSection: View {
     }
 
     // MARK: - Temperature Controls
-
-    private var conditionTypeSelector: some View {
-        HStack(spacing: 10) {
-            ForEach(TemperatureConditionType.allCases, id: \.self) { type in
-                Button {
-                    withAnimation(selectionAnimation) {
-                        viewModel.customReminder.temperatureType = type
-                    }
-                } label: {
-                    SelectableTileLabel(
-                        icon: type.icon,
-                        title: type == .temperatureRange ? "Range" : "Exact",
-                        isSelected: viewModel.customReminder.temperatureType == type,
-                        tint: viewModel.customReminder.selectedColor
-                    )
-                }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(viewModel.customReminder.temperatureType == type ? .isSelected : [])
-            }
-        }
-    }
 
     private var temperatureRangeControl: some View {
         VStack(alignment: .leading, spacing: 12) {

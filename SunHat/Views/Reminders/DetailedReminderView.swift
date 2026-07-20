@@ -185,6 +185,8 @@ struct DetailedReminderView: View {
                             .foregroundStyle(.primary)
                             .padding(8)
                             .glassEffect(in: .circle)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Edit reminder")
@@ -197,6 +199,8 @@ struct DetailedReminderView: View {
                             .foregroundStyle(.primary)
                             .padding(8)
                             .glassEffect(in: .circle)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
                     .accessibilityLabel("More options")
                 }

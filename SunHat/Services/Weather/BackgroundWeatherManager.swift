@@ -105,7 +105,7 @@ final class BackgroundWeatherManager: ObservableObject {
 
         let workTask = Task {
             await WeatherService.shared.handleBackgroundRefresh()
-            await checkTriggeredConditions()
+            await TriggerEngineManager.shared.evaluateAllReminders(isBackground: true)
         }
 
         task.expirationHandler = {
@@ -122,147 +122,19 @@ final class BackgroundWeatherManager: ObservableObject {
         task.setTaskCompleted(success: !workTask.isCancelled)
     }
     
-    private func checkTriggeredConditions() async {
-        logger.debug("Checking for triggered weather conditions")
-        
-        guard let modelContext = await getModelContext() else {
-            logger.error("No model context available for condition checking")
-            return
-        }
-        
-        // Honor the user's app-level notification preferences (master switch,
-        // quiet hours, weekend rule, daily limit) before evaluating anything.
-        // The reminder stays eligible — its cooldown is only consumed when we actually fire.
-        let preferences: UserPreferences?
-        do {
-            preferences = try modelContext.fetch(FetchDescriptor<UserPreferences>()).first
-            if let preferences, !preferences.allowsNotificationDelivery() {
-                logger.info("Skipping trigger check — notifications are off, quiet hours active, or daily limit reached")
-                return
-            }
-        } catch {
-            logger.warning("Couldn't load notification preferences; proceeding with defaults: \(error)")
-            preferences = nil
-        }
-
-        // Fetch all reminders and filter programmatically due to MainActor isolation
-        let descriptor: FetchDescriptor<WeatherReminder> = FetchDescriptor<WeatherReminder>()
-
-        do {
-            let fetchedReminders: [WeatherReminder] = try modelContext.fetch(descriptor)
-
-            // Only consider reminders that can actually fire right now. `canTrigger`
-            // encapsulates the active/paused/completed/snoozed/scheduled/max-trigger
-            // checks AND the persistent cooldown (lastTriggered + cooldownPeriodHours).
-            // Gating here prevents re-notifying the same reminder on every background
-            // refresh while its condition stays true, and the cooldown survives app
-            // launches because it is stored in SwiftData. It also avoids fetching
-            // weather for reminders that are in cooldown.
-            let eligibleReminders = fetchedReminders.filter { $0.canTrigger }
-
-            logger.debug("Checking \(eligibleReminders.count) eligible reminders (filtered from \(fetchedReminders.count) total)")
-
-            var triggeredCount = 0
-
-            for reminder in eligibleReminders {
-                // Re-check the daily limit before each notification in case we've
-                // hit the ceiling mid-loop (e.g. max=2 and this is the 3rd reminder).
-                if let prefs = preferences, !prefs.allowsNotificationDelivery() {
-                    logger.info("Daily notification limit reached — stopping evaluation")
-                    break
-                }
-                if await evaluateReminderCondition(reminder) {
-                    await sendNotificationForReminder(reminder)
-                    reminder.trigger(with: nil)
-                    preferences?.recordNotificationDelivered()
-                    triggeredCount += 1
-                }
-            }
-
-            if triggeredCount > 0 {
-                try modelContext.save()
-                logger.info("Triggered \(triggeredCount) reminders")
-            }
-            
-        } catch {
-            logger.error("Failed to check triggered conditions: \(error)")
-        }
-    }
-    
-    private func evaluateReminderCondition(_ reminder: WeatherReminder) async -> Bool {
-        guard let location = reminder.location?.clLocation,
-              let condition = reminder.triggerCondition else {
-            return false
-        }
-        
-        do {
-            let weatherData = try await WeatherService.shared.fetchCurrentWeather(for: location)
-            return weatherData.evaluateCondition(condition)
-        } catch {
-            logger.warning("Failed to evaluate condition for reminder \(reminder.id): \(error)")
-            return false
-        }
-    }
-    
-    private func sendNotificationForReminder(_ reminder: WeatherReminder) async {
-        guard let notificationConfig = reminder.notificationConfig else { return }
-        
-        let content = notificationConfig.notificationContent
-        content.title = reminder.displayTitle
-        content.body = reminder.shortDescription
-        
-        // Add weather context if enabled
-        if notificationConfig.includeWeatherSummary,
-           let location = reminder.location?.clLocation {
-            do {
-                let weatherData = try await WeatherService.shared.fetchCurrentWeather(for: location)
-                content.body += "\n\nCurrent: \(Int(weatherData.temperature))° • \(weatherData.weatherDescription.capitalized)"
-            } catch {
-                logger.warning("Failed to add weather context to notification: \(error)")
-            }
-        }
-        
-        // Create notification request
-        let request = UNNotificationRequest(
-            identifier: reminder.id.uuidString,
-            content: content,
-            trigger: nil // Immediate delivery
-        )
-        
-        do {
-            try await UNUserNotificationCenter.current().add(request)
-            logger.info("Sent notification for reminder: \(reminder.displayTitle)")
-            
-            // Update notification tracking
-            notificationConfig.lastDelivered = Date()
-            notificationConfig.deliveryCount += 1
-            notificationConfig.successfulDeliveries += 1
-            
-        } catch {
-            logger.error("Failed to send notification for reminder \(reminder.id): \(error)")
-        }
-    }
-    
-    private func getModelContext() async -> ModelContext? {
-        guard let modelContainer else {
-            logger.error("ModelContainer not configured — call configure(modelContainer:) from the app entry point")
-            return nil
-        }
-        return ModelContext(modelContainer)
-    }
-    
     // MARK: - Public Interface
     
     func requestBackgroundRefreshPermission() async -> Bool {
         let center = UNUserNotificationCenter.current()
-        do {
-            let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
-            if granted {
-                scheduleBackgroundRefresh()
-            }
-            return granted
-        } catch {
-            logger.error("Failed to request notification permission: \(error)")
+
+        let settings = await center.notificationSettings()
+        switch settings.authorizationStatus {
+        case .authorized, .provisional, .ephemeral:
+            scheduleBackgroundRefresh()
+            return true
+        case .notDetermined, .denied:
+            return false
+        @unknown default:
             return false
         }
     }
@@ -270,7 +142,7 @@ final class BackgroundWeatherManager: ObservableObject {
     func manualRefresh() async {
         logger.info("Starting manual weather refresh")
         await WeatherService.shared.handleBackgroundRefresh()
-        await checkTriggeredConditions()
+        await TriggerEngineManager.shared.evaluateAllReminders()
         lastBackgroundRefresh = Date()
     }
     

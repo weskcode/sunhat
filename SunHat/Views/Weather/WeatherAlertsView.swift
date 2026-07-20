@@ -27,7 +27,7 @@ struct WeatherAlertsView: View {
                     }
                 }
             }
-            .navigationTitle("Weather Alerts")
+            .navigationTitle("SunHat Advisories")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
