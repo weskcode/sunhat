@@ -58,6 +58,15 @@ final class WeatherService: ObservableObject {
         try await fetchWeatherData(for: location, forceRefresh: forceRefresh)
     }
 
+    /// Real provider hourly forecast for the next ~24 hours, or `[]` when unavailable.
+    func fetchHourlyForecast(for location: CLLocation) async -> [HourlyForecastDTO] {
+        guard let weatherActor else {
+            logger.warning("fetchHourlyForecast called before WeatherService was configured")
+            return []
+        }
+        return await weatherActor.fetchHourlyForecast(for: location)
+    }
+
     func scheduleBackgroundRefresh() {
         guard let weatherActor else {
             logger.warning("scheduleBackgroundRefresh called before WeatherService was configured")
@@ -101,6 +110,11 @@ class WeatherServiceActor {
     private var modelContext: ModelContext
     private var providers: [any WeatherAPI] = []
     private let cacheExpirationInterval: TimeInterval = 15 * 60 // 15 minutes
+    /// In-memory hourly forecast per rounded coordinate, captured from the most
+    /// recent provider fetch. Hourly rows are deliberately not persisted to
+    /// SwiftData (no schema change); an empty result means "hourly unavailable"
+    /// and the UI must say so rather than synthesize values.
+    private var hourlyCache: [String: (fetchedAt: Date, hours: [HourlyForecastDTO])] = [:]
     private let rateLimiter = RateLimiter()
     private let backgroundTaskIdentifier = "org.wesley.sunhat.weather-refresh"
 
@@ -166,9 +180,10 @@ class WeatherServiceActor {
                 await rateLimiter.recordRequest()
                 
                 let weatherDataDTO = try await provider.fetchWeatherData(for: location)
-                
+
                 // Convert DTO to WeatherData and cache the result
                 let weatherData = weatherDataDTO.toWeatherData()
+                hourlyCache[hourlyCacheKey(for: location)] = (fetchedAt: Date(), hours: weatherDataDTO.hourly)
                 await cacheWeatherData(weatherData, for: location)
                 
                 logger.info("Successfully fetched weather data from \(providerName)")
@@ -202,6 +217,35 @@ class WeatherServiceActor {
         throw lastError ?? WeatherError.allProvidersFailed
     }
     
+    /// Real provider hourly forecast for the location, or `[]` when unavailable.
+    /// Serves the in-memory copy from the last provider fetch when fresh; otherwise
+    /// refreshes through the normal fetch path (which also updates the SwiftData
+    /// weather cache and respects the rate limiter). Never synthesizes hours.
+    func fetchHourlyForecast(for location: CLLocation) async -> [HourlyForecastDTO] {
+        let key = hourlyCacheKey(for: location)
+        if let entry = hourlyCache[key],
+           Date().timeIntervalSince(entry.fetchedAt) < cacheExpirationInterval,
+           !entry.hours.isEmpty {
+            return futureHours(entry.hours)
+        }
+
+        _ = try? await fetchWeatherData(for: location, forceRefresh: true)
+
+        if let entry = hourlyCache[key] {
+            return futureHours(entry.hours)
+        }
+        return []
+    }
+
+    private func futureHours(_ hours: [HourlyForecastDTO]) -> [HourlyForecastDTO] {
+        let currentHourStart = Calendar.current.dateInterval(of: .hour, for: Date())?.start ?? Date()
+        return hours.filter { $0.date >= currentHourStart }
+    }
+
+    private func hourlyCacheKey(for location: CLLocation) -> String {
+        String(format: "%.2f,%.2f", location.coordinate.latitude, location.coordinate.longitude)
+    }
+
     func getCachedWeatherData(for location: CLLocation, allowExpired: Bool = false) async -> WeatherData? {
         let searchRadius: CLLocationDistance = 10000 // 10km radius
         let minLat = location.coordinate.latitude - (searchRadius / 111000)

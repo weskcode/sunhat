@@ -366,7 +366,24 @@ final class DataPrivacyViewModel {
         for reminder in reminders {
             context.delete(reminder)
         }
-        
+
+        // Delete trigger conditions explicitly — a condition created without (or detached
+        // from) a parent reminder is not covered by the reminder cascade above.
+        let conditionDescriptor = FetchDescriptor<TriggerCondition>()
+        let conditions = try context.fetch(conditionDescriptor)
+        for condition in conditions {
+            context.delete(condition)
+        }
+
+        // Delete forecast days explicitly for the same reason (orphans are not covered
+        // by the WeatherData cascade).
+        let forecastDescriptor = FetchDescriptor<ForecastDay>()
+        let forecastDays = try context.fetch(forecastDescriptor)
+        for forecastDay in forecastDays {
+            context.delete(forecastDay)
+        }
+
+
         // Delete all locations
         let locationDescriptor = FetchDescriptor<LocationData>()
         let locations = try context.fetch(locationDescriptor)

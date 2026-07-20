@@ -195,7 +195,7 @@ final class StoreRecoveryState: ObservableObject {
     }
 
     nonisolated func reportRecoveryFailure(_ error: Error) {
-        let message = "SunHat could not reopen the repaired store and is running in temporary recovery mode."
+        let message = "SunHat is running in temporary recovery mode — changes made now will NOT be saved after you close the app. Contact support@sunhat.app for help recovering your data."
         logger.error("Persistent store recovery failed: \(error.localizedDescription)")
         Task { @MainActor in
             recoveryMessage = message
