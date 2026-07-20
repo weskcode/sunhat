@@ -181,7 +181,11 @@ def generate(cfg):
     shadowed, pad = add_shadow(raw)
 
     px = (W - shadowed.width) // 2
-    canvas.paste(shadowed, (px, top), shadowed)
+    # Center vertically within the available area rather than pinning to the top, so a
+    # shot whose crop is proportionally shorter (e.g. one avoiding an unusable region of
+    # the raw capture) doesn't dump all the leftover space as a gap at the bottom.
+    py = top + max(0, (area_h - shadowed.height) // 2)
+    canvas.paste(shadowed, (px, py), shadowed)
 
     # Flatten to RGB (no alpha for App Store)
     final = Image.new("RGB", (W, H), (0, 0, 0))
@@ -206,6 +210,7 @@ if __name__ == "__main__":
         },
         {
             "out": "03_Differentiator_Predictions.png", "raw": "03_weather_predictions.png",
+            "crop": (0, 300, 1320, 2868),
             "cap": "Built To Predict,\nNot Just Report", "sub": "See which reminders are about to fire",
             "g1": (8, 38, 48), "g2": (18, 75, 95), "ac": (0, 200, 180),
         },
@@ -231,6 +236,7 @@ if __name__ == "__main__":
         },
         {
             "out": "08_ActiveReminders_List.png", "raw": "08_reminders_list.png",
+            "crop": (0, 0, 1320, 2500),
             "cap": "Every Plan,\nWeather-Ready", "sub": "Track all your conditions at a glance",
             "g1": (8, 28, 42), "g2": (18, 55, 85), "ac": (80, 220, 150),
         },
