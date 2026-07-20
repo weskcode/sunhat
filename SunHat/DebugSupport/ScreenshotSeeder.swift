@@ -41,6 +41,12 @@ enum ScreenshotSeeder {
             context.insert(day)
         }
 
+        // Stored history so the Weather tab's historical comparison section has
+        // real data to compare against (it shows "Not enough history yet" otherwise).
+        for pastDay in makeHistoricalWeather(location: location) {
+            context.insert(pastDay)
+        }
+
         for reminder in makeReminders(location: location) {
             context.insert(reminder)
             if let condition = reminder.triggerCondition {
@@ -121,6 +127,33 @@ enum ScreenshotSeeder {
         data.lastUpdated = Date()
         data.expiresAt = Calendar.current.date(byAdding: .hour, value: 6, to: Date())
         return data
+    }
+
+    private static func makeHistoricalWeather(location: LocationData) -> [WeatherData] {
+        let calendar = Calendar.current
+        let plan: [(daysAgo: Int, temperature: Double, condition: WeatherCondition)] = [
+            (1, 68, .partlyCloudy),
+            (2, 74, .clear),
+            (3, 70, .cloudy),
+            (7, 64, .partlyCloudy),
+            (10, 71, .clear),
+            (14, 66, .cloudy)
+        ]
+
+        return plan.compactMap { entry in
+            guard let timestamp = calendar.date(byAdding: .day, value: -entry.daysAgo, to: Date()) else { return nil }
+            let data = WeatherData(temperature: entry.temperature, feelsLike: entry.temperature - 2, humidity: 55, location: location)
+            data.timestamp = timestamp
+            data.lastUpdated = timestamp
+            data.weatherCondition = entry.condition
+            data.weatherDescription = entry.condition.displayName
+            data.iconName = entry.condition.icon
+            data.locationLatitude = location.latitude
+            data.locationLongitude = location.longitude
+            data.dataSource = .appleWeatherKit
+            data.accuracy = .high
+            return data
+        }
     }
 
     private static func makeForecastDays() -> [ForecastDay] {

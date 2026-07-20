@@ -1,6 +1,6 @@
 # SunHat — Widget & Shared Framework Setup (Xcode steps + drop-in code)
 
-This is the handoff for Phase 4–5 of [IMPROVEMENT_PLAN.md](IMPROVEMENT_PLAN.md): extract a shared framework and add a WidgetKit extension.
+This is the handoff for the shared-framework + WidgetKit work tracked in [TODO.md](TODO.md) ("New surfaces"): extract a shared framework and add a WidgetKit extension.
 
 ## Why these steps must happen in Xcode (not via the agent)
 
@@ -75,7 +75,7 @@ Then `sunhat.swift` becomes `try SunHatStore.makeContainer()` instead of the inl
 
 ## Step 3 — Widget code (drop into `SunHatWidget/` after the target exists)
 
-The widget reads the **cached** store; it should not hammer WeatherKit (quota — see IMPROVEMENT_PLAN §5).
+The widget reads the **cached** store; it should not hammer WeatherKit (quota — see the WeatherKit quota note in TODO.md).
 
 ```swift
 import WidgetKit

@@ -15,9 +15,12 @@ struct SunHatAtmosphereBackground: View {
 
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: reduceMotion ? 1 : 1.0 / 30.0)) { timeline in
+        // Pause the frame clock whenever the scene isn't active — a full-screen
+        // 30 FPS Canvas otherwise keeps redrawing in the app switcher/background.
+        TimelineView(.animation(minimumInterval: reduceMotion ? 1 : 1.0 / 30.0, paused: scenePhase != .active)) { timeline in
             Canvas { context, size in
                 draw(in: context, size: size, date: timeline.date)
             }

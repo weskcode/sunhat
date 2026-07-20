@@ -114,6 +114,91 @@ struct WeatherViewModelDependencyTests {
         #expect(viewModel.weeklyForecast.isEmpty)
     }
 
+    @Test("Hourly forecast maps real provider hours without synthesis")
+    func hourlyForecastMapsProviderHours() async throws {
+        let calendar = Calendar.current
+        let hourStart = try #require(calendar.dateInterval(of: .hour, for: Date())?.start)
+        let nextHour = try #require(calendar.date(byAdding: .hour, value: 1, to: hourStart))
+
+        let provider = FakeWeatherProvider(weatherData: WeatherData(temperature: 72, feelsLike: 74, humidity: 55))
+        provider.hourlyToReturn = [
+            HourlyForecastDTO(date: hourStart, temperature: 71, precipitationChance: 10, weatherCondition: .clear),
+            HourlyForecastDTO(date: nextHour, temperature: 73, precipitationChance: 35, weatherCondition: .partlyCloudy)
+        ]
+
+        let viewModel = WeatherViewModel(
+            modelContainer: try makeModelContainer(),
+            weatherService: provider,
+            locationManager: FakeLocationManager()
+        )
+
+        try await waitUntil {
+            viewModel.hourlyForecast.count == 2
+        }
+
+        #expect(viewModel.hourlyForecast.map(\.temperature) == [71, 73])
+        #expect(viewModel.hourlyForecast.map(\.precipitationProbability) == [10, 35])
+        #expect(viewModel.hourlyForecast.map(\.hour) == [hourStart, nextHour])
+    }
+
+    @Test("Hourly forecast stays empty when the provider has no hourly data")
+    func hourlyForecastEmptyWithoutProviderHours() async throws {
+        let provider = FakeWeatherProvider(weatherData: WeatherData(temperature: 72, feelsLike: 74, humidity: 55))
+        let viewModel = WeatherViewModel(
+            modelContainer: try makeModelContainer(),
+            weatherService: provider,
+            locationManager: FakeLocationManager()
+        )
+
+        try await waitUntil {
+            provider.fetchCount == 1
+        }
+        try await Task.sleep(for: .milliseconds(20))
+
+        #expect(viewModel.hourlyForecast.isEmpty)
+    }
+
+    @Test("Threshold notices are branded as SunHat advisories, not official warnings")
+    func thresholdNoticesAreBrandedAdvisories() async throws {
+        let hotWeather = WeatherData(temperature: 101, feelsLike: 104, humidity: 30)
+        hotWeather.uvIndex = 10
+        hotWeather.weatherCondition = .clear
+
+        let provider = FakeWeatherProvider(weatherData: hotWeather)
+        let viewModel = WeatherViewModel(
+            modelContainer: try makeModelContainer(),
+            weatherService: provider,
+            locationManager: FakeLocationManager()
+        )
+
+        try await waitUntil {
+            viewModel.weatherAlerts.count == 2
+        }
+
+        #expect(viewModel.weatherAlerts.allSatisfy { $0.title.hasPrefix("SunHat") })
+        #expect(viewModel.weatherAlerts.allSatisfy { $0.severity == .advisory })
+        #expect(!viewModel.weatherAlerts.contains { $0.title.contains("Warning") })
+    }
+
+    @Test("Historical comparisons stay nil without stored history — no placeholder values")
+    func historicalComparisonsNilWithoutStoredHistory() async throws {
+        let provider = FakeWeatherProvider(weatherData: WeatherData(temperature: 72, feelsLike: 74, humidity: 55))
+        let viewModel = WeatherViewModel(
+            modelContainer: try makeModelContainer(),
+            weatherService: provider,
+            locationManager: FakeLocationManager()
+        )
+
+        try await waitUntil {
+            provider.fetchCount == 1
+        }
+        try await Task.sleep(for: .milliseconds(50))
+
+        #expect(viewModel.yesterdayTemp == nil)
+        #expect(viewModel.lastWeekTemp == nil)
+        #expect(viewModel.historicalAvgTemp == nil)
+    }
+
     @Test("WeatherViewModel refreshes through the selected manual location")
     func weatherViewModelRefreshesSelectedManualLocation() async throws {
         let weatherData = WeatherData(
@@ -303,6 +388,12 @@ private final class FakeWeatherProvider: WeatherProviding {
         }
         lastUpdateTime = Date()
         return weatherData
+    }
+
+    var hourlyToReturn: [HourlyForecastDTO] = []
+
+    func fetchHourlyForecast(for location: CLLocation) async -> [HourlyForecastDTO] {
+        hourlyToReturn
     }
 }
 

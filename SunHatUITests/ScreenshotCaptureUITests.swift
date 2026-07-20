@@ -11,6 +11,10 @@
 
 import XCTest
 
+// The whole class is main-actor isolated: XCUIApplication/XCUIScreen and the
+// helper methods below all touch UI state, and nonisolated sync helpers were
+// producing Swift 6 actor-isolation warnings.
+@MainActor
 final class ScreenshotCaptureUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = true
@@ -88,7 +92,10 @@ final class ScreenshotCaptureUITests: XCTestCase {
         let card = app.buttons.matching(predicate).firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 5), "Could not find reminder card starting with \(title)")
         card.tap()
-        Thread.sleep(forTimeInterval: 1.0)
+        // Trigger History loads asynchronously and slides in with a bottom-edge transition;
+        // scrolling before it settles leaves the scroll view's content height stale, which can
+        // land a later scroll position behind the custom nav bar. Give it time to finish first.
+        Thread.sleep(forTimeInterval: 2.2)
     }
 
     // MARK: - Shots
@@ -113,7 +120,10 @@ final class ScreenshotCaptureUITests: XCTestCase {
     func testShot03_WeatherPredictions() throws {
         let app = launchSeeded()
         app.tabBars.buttons["Weather"].tap()
-        Thread.sleep(forTimeInterval: 3.5)
+        // Trigger predictions and historical comparison load via an async model-actor fetch;
+        // on a cold app launch this can take longer than the UI settle time below, which was
+        // caught rendering its pre-load empty/zeroed state ("No active reminders", 0.0° deltas).
+        Thread.sleep(forTimeInterval: 7.0)
         app.swipeUp()
         app.swipeUp()
         Thread.sleep(forTimeInterval: 1.5)
@@ -204,6 +214,10 @@ final class ScreenshotCaptureUITests: XCTestCase {
         app.tabBars.buttons["Reminders"].tap()
         Thread.sleep(forTimeInterval: 1.5)
         openReminder(app, titled: "Garden Watering")
+        // Scrolling to the bottom of this reminder's content lands the Notification Settings
+        // section at the top of the viewport, which the app's floating nav bar and the status
+        // bar both overlap (a real DetailedReminderView layout issue, not a capture artifact —
+        // reproduces regardless of scroll timing). The crop below cuts past it.
         app.swipeUp()
         app.swipeUp()
         Thread.sleep(forTimeInterval: 1.0)
