@@ -7,65 +7,54 @@
 
 import SwiftUI
 
-/// The "Current Conditions" card in the streamlined reminder creator —
-/// live weather for the selected location with loading and unavailable states.
+/// Live current-conditions row for the selected location, nested inside the
+/// "Location" card in the streamlined reminder creator. Shows loading and
+/// unavailable states — never fabricated values.
 struct StreamlinedCurrentWeatherSection: View {
     @ObservedObject var viewModel: FirstReminderCreationViewModel
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: "location.fill")
-                    .font(.caption)
-                    .foregroundStyle(viewModel.customReminder.selectedColor)
-
-                Text(viewModel.customReminder.locationDisplayName)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-            }
-            .padding(.horizontal, 4)
-
-            // Real current weather for the selected location.
-            Group {
-                if viewModel.hasCurrentWeather {
-                    currentWeatherRow
-                } else if viewModel.isLoadingCurrentWeather {
-                    HStack(spacing: 12) {
-                        ProgressView()
-                        Text("Updating weather…")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                    }
-                } else {
-                    HStack(spacing: 12) {
-                        Image(systemName: "cloud.fill")
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
-                        Text("Weather unavailable")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                    }
+        Group {
+            if viewModel.hasCurrentWeather {
+                currentWeatherRow
+            } else if viewModel.isLoadingCurrentWeather {
+                HStack(spacing: 12) {
+                    ProgressView()
+                    Text("Updating weather…")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
                 }
+                .frame(minHeight: 44)
+            } else {
+                HStack(spacing: 12) {
+                    Image(systemName: "cloud.slash")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                    Text("Weather unavailable")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Retry") { viewModel.loadWeather() }
+                        .font(.subheadline)
+                        .buttonStyle(.plain)
+                        .foregroundStyle(viewModel.customReminder.selectedColor)
+                }
+                .frame(minHeight: 44)
             }
-            .padding(16)
-            .liquidGlassFieldBackground(tint: viewModel.customReminder.selectedColor)
         }
     }
 
     private var currentWeatherRow: some View {
         HStack(spacing: 16) {
             Image(systemName: viewModel.currentConditionIcon)
-                .font(.title)
+                .font(.title2)
                 .foregroundStyle(viewModel.currentConditionColor)
                 .symbolRenderingMode(.hierarchical)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(viewModel.currentTemperatureText)°")
-                    .font(AppFontStyle.title2.font)
+                    .font(.title3)
                     .fontWeight(.bold)
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())

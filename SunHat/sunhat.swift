@@ -51,18 +51,7 @@ struct SunHatApp: App {
     var sharedModelContainer: ModelContainer = {
         Self.prepareSharedStoreDirectory()
 
-        let schema = Schema([
-            WeatherReminder.self,
-            TriggerCondition.self,
-            LocationData.self,
-            WeatherData.self,
-            ForecastDay.self,
-            NotificationConfig.self,
-            ReminderHistory.self,
-            UserPreferences.self,
-            SavedLocation.self,
-            LocationHistory.self,   
-        ])
+        let schema = SunHatModelSchema.schema
         // CloudKit sync is disabled for now - can be re-enabled in the future
         let modelConfiguration = ModelConfiguration(
             schema: schema,
@@ -159,6 +148,13 @@ struct SunHatApp: App {
     init() {
         let container = sharedModelContainer
         BackgroundWeatherManager.shared.configure(modelContainer: container)
+
+        #if DEBUG
+        MainActor.assumeIsolated {
+            ScreenshotSeeder.seedIfRequested(modelContainer: container)
+        }
+        #endif
+
         Task {
             // Configure the weather service before any background refresh can run,
             // so BackgroundWeatherManager's refresh path never hits an unconfigured actor.
@@ -199,7 +195,7 @@ final class StoreRecoveryState: ObservableObject {
     }
 
     nonisolated func reportRecoveryFailure(_ error: Error) {
-        let message = "SunHat could not reopen the repaired store and is running in temporary recovery mode."
+        let message = "SunHat is running in temporary recovery mode — changes made now will NOT be saved after you close the app. Contact support@sunhat.app for help recovering your data."
         logger.error("Persistent store recovery failed: \(error.localizedDescription)")
         Task { @MainActor in
             recoveryMessage = message

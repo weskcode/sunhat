@@ -222,7 +222,15 @@ The app implements sophisticated weather triggers including:
 
 ## Current Implementation Status
 
-As of June 2026:
+**Tracking docs:** [TODO.md](TODO.md) is the single live tracker (submission blockers, QA, post-launch work). [CODE_AUDIT.md](CODE_AUDIT.md) holds the July 10, 2026 audit plus its resolution log. Future-surface plans: WIDGET_SETUP.md, WATCHOS_PORT_PLAN.md, IPAD_PORT_PLAN.md. All other audit/plan docs were completed and removed (git history has them).
+
+As of July 19, 2026:
+- ✅ **No fabricated weather data anywhere**: hourly forecast is real WeatherKit data via `WeatherProviding.fetchHourlyForecast` (empty = explicit unavailable state); weekly forecast maps real forecast days; historical comparisons are optional with "Not enough history yet"; threshold notices are branded "SunHat … Advisory" (never official-sounding warnings)
+- ✅ Trigger engine correctness: dry-period windows evaluated across the forecast, real coordinates/precipitation probability in predictions, zero-tolerance NaN guard (all tested)
+- ✅ Privacy delete-all covers every schema type (schema-parity tested)
+- ✅ Unit verification: **242 tests / 49 suites passed (July 19, 2026)**
+
+Earlier milestones (June 2026):
 - ✅ Deployment target: iOS 26.4, Swift 6.2
 - ✅ **Liquid Glass**: `.glassEffect()` on card surfaces; all page backgrounds use `Color(.systemBackground)` (standard iOS); remaining ~29 `secondarySystemBackground` are secondary/nested fills left deliberately
 - ✅ **Native settings**: Apple-native `SettingsView` with icon chips, real notification toggle, enforced quiet hours and master switch
@@ -234,7 +242,7 @@ As of June 2026:
 - ✅ **System typography**: Global Inter/custom display typography has been retired in favor of semantic system styles
 - ✅ **Native empty states**: Key empty states use `ContentUnavailableView`
 - ✅ **Streamlined creation**: Normal navigation uses the streamlined reminder creator
-- 🔲 **Compact surface**: `NextReadyReminderSnapshot`/`NextReadyReminderCompactView`/`NextReadyReminderSelector` exist and are unit-tested, but are NOT yet wired into the live app (currently dead code) and need `Codable` + a shared-framework move before backing a widget/watch surface
+- ✅ **Compact surface**: `NextReadyReminderSnapshot` (`Codable`) / `NextReadyReminderCompactView` / `NextReadyReminderSelector` are wired into `DashboardView` and unit-tested; still needs the `SunHatKit` shared-framework move before it can also back a widget/watch surface
 - ✅ Complete location services integration with iOS 26 APIs
 - ✅ Enhanced WeatherKit support with extended weather data
 - ✅ Background weather updates using iOS 26 async patterns

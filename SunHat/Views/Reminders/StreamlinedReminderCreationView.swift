@@ -20,61 +20,37 @@ struct StreamlinedReminderCreationView: View {
     @State private var showLocationPicker = false
 
     var body: some View {
-        ZStack {
-            backgroundGradient
-                .ignoresSafeArea()
-
+        NavigationStack {
             ScrollView {
-                VStack(spacing: 0) {
-                    // Close button
-                    HStack {
-                        Spacer()
-                        Button(action: { dismiss() }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(AppFontStyle.title2.font)
-                                .foregroundStyle(.secondary)
-                                .symbolRenderingMode(.hierarchical)
-                                .frame(width: 44, height: 44)
-                        }
-                        .accessibilityLabel("Close")
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 10)
+                VStack(spacing: 20) {
+                    ReminderIconColorPicker(
+                        selectedIcon: $viewModel.customReminder.selectedIcon,
+                        selectedColor: $viewModel.customReminder.selectedColor
+                    )
+                    .padding(.top, 12)
 
-                    VStack(spacing: 24) {
-                        iconHeaderView
-                            .padding(.top, 12)
-
-                        Text("New Task")
-                            .font(.title2.bold())
-                            .foregroundStyle(.primary)
-
-                        // Form fields
-                        VStack(spacing: 20) {
-                            titleField
-
-                            notesField
-
-                            locationSelectorRow
-
-                            StreamlinedCurrentWeatherSection(viewModel: viewModel)
-
-                            StreamlinedWeatherConditionsSection(viewModel: viewModel)
-
-                            StreamlinedTimePreferencesSection(viewModel: viewModel)
-                        }
-                        .padding(.horizontal, 20)
-
-                        // Create button (no preview step)
-                        createButton
-                            .padding(.horizontal, 20)
-                            .padding(.top, 8)
-
-                        Spacer(minLength: 40)
-                    }
+                    detailsCard
+                    locationCard
+                    StreamlinedWeatherConditionsSection(viewModel: viewModel)
+                    StreamlinedTimePreferencesSection(viewModel: viewModel)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 32)
+            }
+            .background(Color(.systemBackground))
+            .scrollIndicators(.hidden)
+            .navigationTitle("New Task")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Create", action: createReminder)
+                        .fontWeight(.semibold)
+                        .disabled(!viewModel.isReminderValid)
                 }
             }
-            .scrollIndicators(.hidden)
         }
         .sheet(isPresented: $showLocationPicker) {
             ManualLocationEntryView(
@@ -109,62 +85,43 @@ struct StreamlinedReminderCreationView: View {
         }
     }
 
-    // MARK: - Icon Header
+    // MARK: - Details Card
 
-    private var iconHeaderView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: viewModel.customReminder.selectedIcon)
-                .font(.system(size: 34, weight: .medium))
-                .foregroundStyle(viewModel.customReminder.selectedColor)
-                .symbolRenderingMode(.hierarchical)
-                .frame(width: 76, height: 76)
-                .glassEffect(.regular.tint(viewModel.customReminder.selectedColor.opacity(0.16)), in: .circle)
-                .contentTransition(.symbolEffect(.replace))
-            .accessibilityHidden(true)
+    private var detailsCard: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            SectionHeaderView(icon: "square.and.pencil", title: "Details")
+                .padding(.bottom, 8)
+
+            TextField("Title", text: $viewModel.customReminder.title)
+                .font(.body)
+                .padding(.vertical, 10)
+                .accessibilityLabel("Reminder title")
+
+            Divider()
+
+            TextField("Notes (optional)", text: $viewModel.customReminder.notes, axis: .vertical)
+                .font(.body)
+                .lineLimit(1...4)
+                .padding(.vertical, 10)
+                .accessibilityLabel("Reminder notes")
         }
+        .cardStyle()
     }
 
-    // MARK: - Form Fields
-
-    private var titleField: some View {
-        TextField("Reminder Title", text: $viewModel.customReminder.title)
-            .font(.body)
-            .padding(16)
-            .liquidGlassFieldBackground(tint: viewModel.customReminder.selectedColor)
-            .accessibilityLabel("Reminder title")
-    }
-
-    private var notesField: some View {
-        TextField("Notes (optional)", text: $viewModel.customReminder.notes, axis: .vertical)
-            .font(.body)
-            .lineLimit(2...4)
-            .padding(16)
-            .liquidGlassFieldBackground(tint: viewModel.customReminder.selectedColor)
-            .accessibilityLabel("Reminder notes")
-    }
-
-    // MARK: - Location Selector
+    // MARK: - Location Card
 
     private var locationPermissionGranted: Bool {
         let status = LocationPermissionManager.shared.authorizationStatus
         return status == .authorizedWhenInUse || status == .authorizedAlways
     }
 
-    private var locationSelectorRow: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Location")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 4)
+    private var locationCard: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            SectionHeaderView(icon: "location.fill", title: "Location")
+                .padding(.bottom, 8)
 
             Button(action: { showLocationPicker = true }) {
                 HStack(spacing: 12) {
-                    Image(systemName: viewModel.customReminder.selectedLocation.isCurrentLocation
-                          ? "location.fill" : "mappin.and.ellipse")
-                        .font(.body)
-                        .foregroundStyle(viewModel.customReminder.selectedColor)
-
                     VStack(alignment: .leading, spacing: 2) {
                         Text(viewModel.customReminder.locationDisplayName)
                             .font(.body)
@@ -172,7 +129,7 @@ struct StreamlinedReminderCreationView: View {
 
                         if viewModel.customReminder.selectedLocation.isCurrentLocation {
                             Text("Uses your device location")
-                                .font(.caption2)
+                                .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -183,26 +140,19 @@ struct StreamlinedReminderCreationView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                .padding(16)
-                .liquidGlassFieldBackground(tint: viewModel.customReminder.selectedColor)
+                .contentShape(Rectangle())
+                .padding(.vertical, 10)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Select location, currently \(viewModel.customReminder.locationDisplayName)")
             .accessibilityHint("Double tap to change location")
+
+            Divider()
+
+            StreamlinedCurrentWeatherSection(viewModel: viewModel)
+                .padding(.vertical, 10)
         }
-    }
-
-    // MARK: - Create Button (no preview step per feedback)
-
-    private var createButton: some View {
-        Button("Create", systemImage: "plus.circle.fill", action: createReminder)
-            .font(.headline)
-            .frame(maxWidth: .infinity, minHeight: 54)
-            .buttonStyle(.glassProminent)
-            .controlSize(.large)
-            .tint(viewModel.customReminder.selectedColor)
-        .disabled(!viewModel.isReminderValid)
-        .opacity(viewModel.isReminderValid ? 1.0 : 0.5)
+        .cardStyle()
     }
 
     // MARK: - Actions
@@ -215,13 +165,6 @@ struct StreamlinedReminderCreationView: View {
 
         onReminderCreated?()
         dismiss()
-    }
-
-    // MARK: - Background
-
-    private var backgroundGradient: some View {
-        Color(.systemBackground)
-            .ignoresSafeArea()
     }
 }
 

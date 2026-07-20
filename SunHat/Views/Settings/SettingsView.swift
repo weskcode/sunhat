@@ -91,15 +91,16 @@ struct SettingsView: View {
                     }
 
                 if viewModel.quietHoursEnabled {
-                    DatePicker("From", selection: $viewModel.quietHoursStart, displayedComponents: .hourAndMinute)
-                        .onChange(of: viewModel.quietHoursStart) {
-                            viewModel.handleQuietHoursChange()
-                        }
-
-                    DatePicker("To", selection: $viewModel.quietHoursEnd, displayedComponents: .hourAndMinute)
-                        .onChange(of: viewModel.quietHoursEnd) {
-                            viewModel.handleQuietHoursChange()
-                        }
+                    QuietHoursWindowPicker(
+                        start: $viewModel.quietHoursStart,
+                        end: $viewModel.quietHoursEnd
+                    )
+                    .onChange(of: viewModel.quietHoursStart) {
+                        viewModel.handleQuietHoursChange()
+                    }
+                    .onChange(of: viewModel.quietHoursEnd) {
+                        viewModel.handleQuietHoursChange()
+                    }
                 }
 
                 Stepper(value: $viewModel.maximumDailyNotifications, in: 1...10) {
@@ -119,8 +120,6 @@ struct SettingsView: View {
         } footer: {
             if !viewModel.notificationsEnabled {
                 Text("SunHat won't send weather reminders while notifications are off.")
-            } else if viewModel.quietHoursEnabled {
-                Text("Notifications are silenced from \(viewModel.quietHoursDescription).")
             }
         }
     }

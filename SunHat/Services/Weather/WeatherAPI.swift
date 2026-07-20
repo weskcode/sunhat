@@ -9,6 +9,7 @@ import Foundation
 import WeatherKit
 import CoreLocation
 import SwiftData
+import os
 
 // Use DTOs for protocol and async boundaries
 protocol WeatherAPI: Sendable {
@@ -24,6 +25,7 @@ protocol WeatherAPI: Sendable {
 final class AppleWeatherKitAPI: WeatherAPI {
     nonisolated let provider: WeatherProvider = .appleWeatherKit
     private let weatherService = WeatherKit.WeatherService.shared
+    private let logger = Logger(subsystem: "org.wesley.sunhat", category: "AppleWeatherKitAPI")
     
     nonisolated var isAvailable: Bool {
         get async {
@@ -102,6 +104,7 @@ final class AppleWeatherKitAPI: WeatherAPI {
             let forecast = weather.dailyForecast.forecast.prefix(10).map { dailyWeather in
                 mapDailyWeather(dailyWeather, hourlyAggregates: aggregates)
             }
+            let hourly = mapHourlyForecast(weather.hourlyForecast.forecast)
 
             return WeatherDataDTO(
                 temperature: current.temperature,
@@ -119,13 +122,31 @@ final class AppleWeatherKitAPI: WeatherAPI {
                 weatherCondition: current.weatherCondition,
                 dataSource: current.dataSource,
                 accuracy: current.accuracy,
-                forecast: forecast
+                forecast: forecast,
+                hourly: hourly
             )
         } catch {
             throw mapWeatherKitError(error)
         }
     }
-    
+
+    /// Maps the next 24 real WeatherKit forecast hours (starting from the current hour).
+    private func mapHourlyForecast(_ hours: [HourWeather]) -> [HourlyForecastDTO] {
+        let calendar = Calendar.current
+        let currentHourStart = calendar.dateInterval(of: .hour, for: Date())?.start ?? Date()
+        return hours
+            .filter { $0.date >= currentHourStart }
+            .prefix(24)
+            .map { hour in
+                HourlyForecastDTO(
+                    date: hour.date,
+                    temperature: hour.temperature.fahrenheitValue,
+                    precipitationChance: Int(hour.precipitationChance * 100),
+                    weatherCondition: mapWeatherKitCondition(hour.condition)
+                )
+            }
+    }
+
     private func mapCurrentWeather(_ current: CurrentWeather, at location: CLLocation) -> WeatherDataDTO {
         // WeatherKit doesn't provide direct precipitation amount in CurrentWeather
         // We'll use the condition to infer precipitation type and set amount to 0
@@ -226,13 +247,21 @@ final class AppleWeatherKitAPI: WeatherAPI {
         }
     }
     
+    /// Maps WeatherKit's own error type into this app's `WeatherError`. Also logs the
+    /// raw domain/code/description first — WeatherKit surfaces provisioning and
+    /// entitlement failures (e.g. a missing WeatherKit capability on the App ID, or a
+    /// distribution provisioning profile built before the capability was added) as opaque
+    /// NSErrors that the coarse mapping below can't distinguish from a real network
+    /// failure. Pulling device logs (Console.app, subsystem "org.wesley.sunhat",
+    /// category "AppleWeatherKitAPI") after a failed fetch shows the actual cause.
     private func mapWeatherKitError(_ error: Error) -> WeatherError {
         if let weatherError = error as? WeatherError {
             return weatherError
         }
-        
-        // Map specific WeatherKit errors
+
         let nsError = error as NSError
+        logger.error("WeatherKit request failed — domain: \(nsError.domain, privacy: .public), code: \(nsError.code, privacy: .public), description: \(nsError.localizedDescription, privacy: .public), userInfo: \(nsError.userInfo, privacy: .public)")
+
         switch nsError.code {
         case 1: return .locationPermissionDenied
         case 2: return .networkUnavailable
@@ -571,7 +600,12 @@ nonisolated struct WeatherDataDTO: Sendable {
     let dataSource: WeatherDataSource
     let accuracy: WeatherAccuracy
     let forecast: [ForecastDayDTO]
-    
+    /// Real provider hourly forecast (next ~24 h). Not persisted to SwiftData —
+    /// kept in memory by `WeatherServiceActor` for the Weather tab's hourly strip.
+    /// Empty when the provider has no hourly data; the UI must show an
+    /// unavailable state instead of synthesizing values.
+    var hourly: [HourlyForecastDTO] = []
+
     func toWeatherData() -> WeatherData {
         let weather = WeatherData(
             temperature: temperature,
@@ -593,6 +627,15 @@ nonisolated struct WeatherDataDTO: Sendable {
         weather.forecastDays = forecast.map { $0.toForecastDay() }
         return weather
     }
+}
+
+/// One real provider forecast hour. Temperatures are Fahrenheit to match the
+/// rest of the DTO layer (converted to the user's unit at display time).
+nonisolated struct HourlyForecastDTO: Sendable {
+    let date: Date
+    let temperature: Double
+    let precipitationChance: Int
+    let weatherCondition: WeatherCondition
 }
 
 nonisolated struct ForecastDayDTO: Sendable {

@@ -11,91 +11,52 @@ import MapKit
 struct LocationPickerView: View {
     @Binding var selectedLocation: ReminderLocation
     @Environment(\.dismiss) private var dismiss
-    
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var viewModel = LocationPickerViewModel()
     @State private var searchText = ""
-    
+
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Search bar
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundStyle(.secondary)
-                    
-                    TextField("Search locations", text: $searchText)
-                        .textFieldStyle(.roundedBorder)
-                        .onSubmit {
-                            viewModel.searchLocations(searchText)
+            ZStack {
+                SunHatAtmosphereBackground(
+                    condition: .partlyCloudy,
+                    intensity: 0.50,
+                    showsConditionAccent: false
+                )
+                .ignoresSafeArea()
+
+                VStack(spacing: 18) {
+                    LocationPickerHeader(
+                        onCancel: dismiss.callAsFunction,
+                        onDone: dismiss.callAsFunction
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.top, 18)
+
+                    LocationPickerSearchField(
+                        searchText: $searchText,
+                        isSearching: viewModel.isSearching,
+                        onSubmit: submitSearch
+                    )
+                    .padding(.horizontal, 16)
+
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            LocationPickerCurrentLocationCard(
+                                isSelected: selectedLocation.isCurrentLocation,
+                                onSelect: selectCurrentLocation
+                            )
+
+                            locationResultsContent
                         }
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
-                
-                if viewModel.isSearching {
-                    ProgressView("Searching...")
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                }
-                
-                // Current location option
-                Button(action: {
-                    selectCurrentLocation()
-                }) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "location.fill")
-                            .font(AppFontStyle.title3.font)
-                            .foregroundStyle(.blue)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Current Location")
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                                .foregroundStyle(.primary)
-                            
-                            Text("Use device location")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        if selectedLocation.isCurrentLocation {
-                            Image(systemName: "checkmark")
-                                .foregroundStyle(.blue)
-                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 32)
                     }
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                }
-                .buttonStyle(.plain)
-                
-                // Search results
-                List {
-                    ForEach(viewModel.searchResults, id: \.self) { result in
-                        LocationResultRow(result: result) {
-                            selectLocation(result)
-                        }
-                    }
-                }
-                .listStyle(PlainListStyle())
-            }
-            .navigationTitle("Select Location")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .bold()
+                    .scrollIndicators(.hidden)
                 }
             }
+            .toolbar(.hidden, for: .navigationBar)
         }
         .onChange(of: searchText) { _, newValue in
             if !newValue.isEmpty {
@@ -112,11 +73,31 @@ struct LocationPickerView: View {
             Text(viewModel.searchErrorMessage)
         }
     }
-    
-    private func selectCurrentLocation() {
-        selectedLocation = ReminderLocation.currentLocation
+
+    @ViewBuilder
+    private var locationResultsContent: some View {
+        if viewModel.searchResults.isEmpty {
+            LocationPickerEmptyGuidance(hasSearchText: !searchText.isEmpty)
+                .transition(SunHatMotion.transition(reduceMotion: reduceMotion))
+        } else {
+            ForEach(viewModel.searchResults, id: \.self) { result in
+                LocationResultRow(result: result) {
+                    selectLocation(result)
+                }
+            }
+        }
     }
-    
+
+    private func submitSearch() {
+        viewModel.searchLocations(searchText)
+    }
+
+    private func selectCurrentLocation() {
+        withAnimation(SunHatMotion.cardToggle(reduceMotion: reduceMotion)) {
+            selectedLocation = ReminderLocation.currentLocation
+        }
+    }
+
     private func selectLocation(_ result: MKLocalSearchCompletion) {
         Task {
             if let location = await viewModel.resolveLocation(result) {

@@ -13,6 +13,7 @@ struct WeatherView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = WeatherViewModel()
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var selectedTimeframe: WeatherTimeframe = .current
     @State private var activeSheet: ActiveSheet?
@@ -71,11 +72,11 @@ struct WeatherView: View {
                     .padding(.bottom, 20)
                 }
             }
-            .navigationTitle("Weather Details")
+            .navigationTitle("Weather")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Change location", systemImage: "location") {
+                    Button("Location", systemImage: "location") {
                         activeSheet = .locationPicker
                     }
                 }
@@ -88,6 +89,11 @@ struct WeatherView: View {
             }
             .task {
                 viewModel.configure(modelContainer: modelContext.container)
+            }
+            .onChange(of: selectedLocation.id) {
+                Task {
+                    await viewModel.updateSelectedLocation(selectedLocation)
+                }
             }
         }
     }
@@ -299,16 +305,24 @@ struct WeatherView: View {
     private var hourlyForecastSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             sectionHeader(title: "24-Hour Forecast", icon: "clock.fill")
-            
-            ScrollView(.horizontal) {
-                LazyHStack(spacing: 16) {
-                    ForEach(viewModel.hourlyForecast, id: \.hour) { hourData in
-                        HourlyForecastCard(hourData: hourData)
+
+            if viewModel.hourlyForecast.isEmpty {
+                Text("Hourly forecast is unavailable right now. Pull to refresh to try again.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 20)
+            } else {
+                ScrollView(.horizontal) {
+                    LazyHStack(spacing: 16) {
+                        ForEach(viewModel.hourlyForecast, id: \.hour) { hourData in
+                            HourlyForecastCard(hourData: hourData)
+                        }
                     }
+                    .padding(.horizontal, 20)
                 }
-                .padding(.horizontal, 20)
+                .scrollIndicators(.hidden)
             }
-            .scrollIndicators(.hidden)
         }
         .padding(.vertical, 16)
         .glassEffect(in: .rect(cornerRadius: 20))
@@ -335,7 +349,7 @@ struct WeatherView: View {
     
     private var weatherAlertsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            sectionHeader(title: "Weather Alerts", icon: "exclamationmark.triangle.fill", color: .orange)
+            sectionHeader(title: "SunHat Advisories", icon: "exclamationmark.triangle.fill", color: .orange)
             
             LazyVStack(spacing: 12) {
                 ForEach(viewModel.weatherAlerts, id: \.id) { alert in
@@ -383,26 +397,39 @@ struct WeatherView: View {
             sectionHeader(title: "Historical Comparison", icon: "chart.line.uptrend.xyaxis")
             
             VStack(spacing: 12) {
-                HistoricalComparisonRow(
-                    title: "vs. Yesterday",
-                    currentTemp: viewModel.currentTemperature,
-                    historicalTemp: viewModel.yesterdayTemp,
-                    timeframe: "24h ago"
-                )
-                
-                HistoricalComparisonRow(
-                    title: "vs. Last Week",
-                    currentTemp: viewModel.currentTemperature,
-                    historicalTemp: viewModel.lastWeekTemp,
-                    timeframe: "7 days ago"
-                )
-                
-                HistoricalComparisonRow(
-                    title: "vs. Historical Average",
-                    currentTemp: viewModel.currentTemperature,
-                    historicalTemp: viewModel.historicalAvgTemp,
-                    timeframe: "Historical avg for today"
-                )
+                if viewModel.yesterdayTemp == nil && viewModel.lastWeekTemp == nil && viewModel.historicalAvgTemp == nil {
+                    Text("Not enough history yet. Comparisons appear once SunHat has stored weather for this location.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    if let yesterdayTemp = viewModel.yesterdayTemp {
+                        HistoricalComparisonRow(
+                            title: "vs. Yesterday",
+                            currentTemp: viewModel.currentTemperature,
+                            historicalTemp: yesterdayTemp,
+                            timeframe: "24h ago"
+                        )
+                    }
+
+                    if let lastWeekTemp = viewModel.lastWeekTemp {
+                        HistoricalComparisonRow(
+                            title: "vs. Last Week",
+                            currentTemp: viewModel.currentTemperature,
+                            historicalTemp: lastWeekTemp,
+                            timeframe: "7 days ago"
+                        )
+                    }
+
+                    if let historicalAvgTemp = viewModel.historicalAvgTemp {
+                        HistoricalComparisonRow(
+                            title: "vs. Monthly Average",
+                            currentTemp: viewModel.currentTemperature,
+                            historicalTemp: historicalAvgTemp,
+                            timeframe: "Stored average for this month"
+                        )
+                    }
+                }
             }
             .padding(.horizontal, 20)
         }
@@ -448,7 +475,14 @@ struct WeatherView: View {
     // MARK: - Computed Properties
     
     private var backgroundGradient: some View {
-        Color(.systemBackground)
+        SunHatAtmosphereBackground(
+            condition: viewModel.weatherCondition,
+            intensity: viewModel.hasWeatherData ? 0.92 : 0.58,
+            showsConditionAccent: viewModel.hasWeatherData,
+            weatherPalette: viewModel.backdropPalette
+        )
+        .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: viewModel.backdropPalette)
+        .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: viewModel.weatherCondition)
     }
     
     private var humidityDescription: String {

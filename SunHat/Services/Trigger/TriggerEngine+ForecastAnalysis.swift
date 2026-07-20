@@ -63,7 +63,8 @@ extension TriggerEngine {
                 conditionData.precipitationRequirement,
                 amount: weatherData.precipitationAmount,
                 probability: weatherData.precipitationProbability,
-                type: weatherData.weatherCondition
+                type: weatherData.weatherCondition,
+                forecastDays: weatherData.forecastDays
             )
             if precipitationResult.met {
                 conditionsMet.append(precipitationResult.description)
@@ -141,7 +142,12 @@ extension TriggerEngine {
                 windDirectionDegrees: Double(weatherDataDTO.windDirection),
                 windGust: nil,
                 precipitationAmount: weatherDataDTO.precipitationAmount,
-                precipitationProbability: 0,
+                // Current precipitation probability: prefer the provider's current
+                // forecast hour, then today's daily forecast — never hard-code 0,
+                // which broke rain/dry prediction decisions.
+                precipitationProbability: weatherDataDTO.hourly.first?.precipitationChance
+                    ?? weatherDataDTO.forecast.first?.precipitationProbability
+                    ?? 0,
                 cloudCoverage: weatherDataDTO.cloudCover,
                 airQualityIndex: nil,
                 pm25: nil,
@@ -149,8 +155,8 @@ extension TriggerEngine {
                 sunset: nil,
                 weatherCondition: weatherDataDTO.weatherCondition,
                 weatherDescription: weatherDataDTO.weatherCondition.rawValue,
-                locationLatitude: 0,
-                locationLongitude: 0,
+                locationLatitude: location.coordinate.latitude,
+                locationLongitude: location.coordinate.longitude,
                 forecastDays: weatherDataDTO.forecast.map { forecast in
                     ForecastDayTransfer(
                         date: forecast.date,
@@ -248,7 +254,14 @@ extension TriggerEngine {
             let difference = abs(currentTemp - targetTemp)
             let tolerance = conditionData.temperatureTolerance
             let met = difference <= tolerance
-            let confidence = met ? max(0.0, 1.0 - (difference / tolerance)) : 0.0
+            // Guard tolerance == 0: an exact match at zero tolerance is full
+            // confidence; dividing by zero would otherwise produce NaN.
+            let confidence: Double
+            if met {
+                confidence = difference == 0 ? 1.0 : max(0.0, 1.0 - (difference / max(tolerance, 0.001)))
+            } else {
+                confidence = 0.0
+            }
             return ComponentEvaluationResult(
                 met: met,
                 confidence: confidence,
@@ -305,7 +318,9 @@ extension TriggerEngine {
         _ requirement: PrecipitationRequirement,
         amount: Double,
         probability: Int,
-        type: WeatherCondition
+        type: WeatherCondition,
+        forecastDays: [ForecastDayTransfer] = [],
+        referenceDate: Date = Date()
     ) -> ComponentEvaluationResult {
         let wetConditions: Set<WeatherCondition> = [.rain, .drizzle, .snow, .sleet, .hail, .thunderstorm]
         let isWet = amount > 0 || probability >= 40 || wetConditions.contains(type)
@@ -324,8 +339,69 @@ extension TriggerEngine {
             let met = [.snow, .sleet, .hail].contains(type)
             return ComponentEvaluationResult(met: met, confidence: met ? max(0.5, Double(probability) / 100) : 0, description: met ? "snow expected" : "snow not expected")
         case .noPrecipitationFor24Hours, .noPrecipitationFor48Hours:
-            return ComponentEvaluationResult(met: !isWet, confidence: isWet ? 0 : 0.8, description: isWet ? "dry-period requirement not met" : "dry-period requirement likely met")
+            return evaluateDryPeriod(
+                hoursRequired: requirement == .noPrecipitationFor24Hours ? 24 : 48,
+                currentIsWet: isWet,
+                forecastDays: forecastDays,
+                wetConditions: wetConditions,
+                startingAt: referenceDate
+            )
         }
+    }
+
+    /// Evaluates a 24/48-hour dry requirement across every forecast day covering the
+    /// requested period — a single current-conditions sample is not enough, because
+    /// rain later in the window must fail the requirement. Requires forecast coverage
+    /// of the whole window; without it the requirement is not met.
+    private func evaluateDryPeriod(
+        hoursRequired: Int,
+        currentIsWet: Bool,
+        forecastDays: [ForecastDayTransfer],
+        wetConditions: Set<WeatherCondition>,
+        startingAt: Date = Date()
+    ) -> ComponentEvaluationResult {
+        if currentIsWet {
+            return ComponentEvaluationResult(met: false, confidence: 0, description: "precipitation now — \(hoursRequired)h dry requirement not met")
+        }
+
+        let calendar = Calendar.current
+        let now = startingAt
+        let windowEnd = calendar.date(byAdding: .hour, value: hoursRequired, to: now) ?? now
+        let todayStart = calendar.startOfDay(for: now)
+        let coveringDays = forecastDays
+            .filter { $0.date >= todayStart && $0.date <= windowEnd }
+            .sorted { $0.date < $1.date }
+
+        let daysNeeded = Int((Double(hoursRequired) / 24.0).rounded(.up)) + 1 // include today
+        guard coveringDays.count >= daysNeeded else {
+            return ComponentEvaluationResult(
+                met: false,
+                confidence: 0,
+                description: "forecast doesn't cover the full \(hoursRequired)h dry window"
+            )
+        }
+
+        for day in coveringDays {
+            let dayIsWet = day.precipitationAmount > 0
+                || day.precipitationProbability >= 40
+                || wetConditions.contains(day.weatherCondition)
+            if dayIsWet {
+                return ComponentEvaluationResult(
+                    met: false,
+                    confidence: 0,
+                    description: "precipitation expected within the \(hoursRequired)h window"
+                )
+            }
+        }
+
+        let lowestDryConfidence = coveringDays
+            .map { 1.0 - Double($0.precipitationProbability) / 100.0 }
+            .min() ?? 0.8
+        return ComponentEvaluationResult(
+            met: true,
+            confidence: max(0.5, lowestDryConfidence),
+            description: "no precipitation expected for the next \(hoursRequired)h"
+        )
     }
 
     private func evaluateTimeWindowComponent(_ conditionData: TriggerConditionData, date: Date) -> ComponentEvaluationResult {
@@ -408,7 +484,7 @@ extension TriggerEngine {
         }
 
         let evaluations = forecastDays.map { day in
-            (day, evaluateForecastDay(day, conditionData: conditionData))
+            (day, evaluateForecastDay(day, conditionData: conditionData, allForecastDays: weatherData.forecastDays))
         }
         let matches = evaluations.filter { $0.1.met }
         let averageConfidence = evaluations.map(\.1.confidence).average()
@@ -428,7 +504,8 @@ extension TriggerEngine {
 
     private func evaluateForecastDay(
         _ day: ForecastDayTransfer,
-        conditionData: TriggerConditionData
+        conditionData: TriggerConditionData,
+        allForecastDays: [ForecastDayTransfer] = []
     ) -> ComponentEvaluationResult {
         let checks = [
             evaluateTemperatureForecastComponent(conditionData, day: day),
@@ -438,7 +515,9 @@ extension TriggerEngine {
                 conditionData.precipitationRequirement,
                 amount: day.precipitationAmount,
                 probability: day.precipitationProbability,
-                type: day.weatherCondition
+                type: day.weatherCondition,
+                forecastDays: allForecastDays,
+                referenceDate: day.date
             ) : nil,
             (conditionData.timeOfDayStart != nil || conditionData.timeOfDayEnd != nil) ? evaluateTimeWindowComponent(conditionData, date: day.date) : nil,
             conditionData.hasSkyConditionFilter ? evaluateSkyConditionComponent(conditionData, weatherCondition: day.weatherCondition) : nil
