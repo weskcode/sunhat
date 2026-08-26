@@ -12,6 +12,7 @@ import CoreSpotlight
 struct MainTabView: View {
     @State private var selectedTab: AppTab = .home
     @State private var showingCreate = false
+    @State private var reminderPath: [UUID] = []
     @StateObject private var lifecyclePrompts = AppLifecyclePromptCoordinator()
     @EnvironmentObject private var onboardingCoordinator: OnboardingCoordinator
     @Environment(\.scenePhase) private var scenePhase
@@ -52,8 +53,11 @@ struct MainTabView: View {
             }
 
             Tab("Reminders", systemImage: "list.bullet.rectangle", value: AppTab.reminders) {
-                NavigationStack {
+                NavigationStack(path: $reminderPath) {
                     AllRemindersView()
+                        .navigationDestination(for: UUID.self) { reminderID in
+                            NotificationReminderDestination(reminderID: reminderID)
+                        }
                 }
             }
 
@@ -80,12 +84,21 @@ struct MainTabView: View {
         }
         .task {
             consumePendingIntentDestination()
+            consumePendingNotificationDestination()
             await lifecyclePrompts.recordForegroundOpenIfNeeded(
                 hasPositiveEngagementSignal: onboardingCoordinator.hasCreatedFirstReminder
             )
         }
         .onReceive(NotificationCenter.default.publisher(for: UIScene.willEnterForegroundNotification)) { _ in
             consumePendingIntentDestination()
+            consumePendingNotificationDestination()
+        }
+        .onReceive(
+            NotificationCenter.default.publisher(
+                for: NotificationNavigationHandoff.didStoreDestination
+            )
+        ) { _ in
+            consumePendingNotificationDestination()
         }
         .onChange(of: scenePhase) {
             switch scenePhase {
@@ -160,6 +173,15 @@ struct MainTabView: View {
         }
     }
 
+    private func consumePendingNotificationDestination() {
+        guard let reminderID = NotificationNavigationHandoff.shared.consumePendingReminderID() else {
+            return
+        }
+
+        selectedTab = .reminders
+        reminderPath = [reminderID]
+    }
+
     private func routeSearchActivity(_ userActivity: NSUserActivity) {
         guard
             let identifier = userActivity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
@@ -173,6 +195,30 @@ struct MainTabView: View {
             selectedTab = .reminders
         case .settings:
             selectedTab = .settings
+        }
+    }
+}
+
+private struct NotificationReminderDestination: View {
+    @Query private var reminders: [WeatherReminder]
+
+    init(reminderID: UUID) {
+        _reminders = Query(
+            filter: #Predicate<WeatherReminder> { reminder in
+                reminder.id == reminderID
+            }
+        )
+    }
+
+    var body: some View {
+        if let reminder = reminders.first {
+            DetailedReminderView(reminder: reminder)
+        } else {
+            ContentUnavailableView(
+                "Task Unavailable",
+                systemImage: "bell.slash",
+                description: Text("This weather task may have been deleted.")
+            )
         }
     }
 }

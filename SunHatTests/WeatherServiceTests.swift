@@ -7,6 +7,7 @@
 
 import SwiftData
 import CoreLocation
+import WeatherKit
 import Testing
 @testable import SunHat
 
@@ -83,6 +84,95 @@ struct WeatherServiceConfigurationTests {
         manager.configuration = invalidConfig
         let invalidErrors = manager.validateConfiguration()
         #expect(!invalidErrors.isEmpty)
+    }
+
+    @Test("Cancelling a provider request stops fallback processing")
+    func cancellationPropagates() async throws {
+        let provider = CancellationWeatherAPI()
+        let actor = WeatherServiceActor(
+            modelContext: modelContext,
+            providers: [provider]
+        )
+        let location = CLLocation(latitude: 37.3349, longitude: -122.0090)
+
+        let task = Task {
+            do {
+                _ = try await actor.fetchWeatherData(for: location, forceRefresh: true)
+                Issue.record("Expected the provider request to be cancelled.")
+            } catch is CancellationError {
+                // Expected.
+            } catch {
+                Issue.record("Expected CancellationError, received \(error).")
+            }
+        }
+
+        while await provider.hasStarted == false {
+            await Task.yield()
+        }
+        task.cancel()
+
+        await task.value
+        #expect(await provider.fetchCount == 1)
+        #expect(await provider.observedCancellation)
+    }
+
+    @Test("Cancellation prevents a non-cooperative provider result from being committed")
+    func cancellationAfterNonCooperativeProvider() async throws {
+        let provider = NonCooperativeWeatherAPI()
+        let actor = WeatherServiceActor(
+            modelContext: modelContext,
+            providers: [provider]
+        )
+        let location = CLLocation(latitude: 37.3349, longitude: -122.0090)
+
+        let task = Task {
+            do {
+                _ = try await actor.fetchWeatherData(for: location, forceRefresh: true)
+                return false
+            } catch is CancellationError {
+                return true
+            } catch {
+                Issue.record("Expected CancellationError, received \(error).")
+                return false
+            }
+        }
+
+        while await provider.hasStarted == false { await Task.yield() }
+        task.cancel()
+        await provider.finishRequest()
+
+        #expect(await task.value)
+        #expect(try modelContext.fetch(FetchDescriptor<WeatherData>()).isEmpty)
+    }
+
+    @Test("Clearing weather cache also removes in-memory hourly location data")
+    func clearCacheRemovesHourlyData() async throws {
+        let provider = MockWeatherAPI()
+        var dto = try await provider.fetchWeatherData(
+            for: CLLocation(latitude: 37.3349, longitude: -122.0090)
+        )
+        dto.hourly = [
+            HourlyForecastDTO(
+                date: Date().addingTimeInterval(3_600),
+                temperature: 72,
+                precipitationChance: 10,
+                weatherCondition: .clear
+            )
+        ]
+        await provider.setMockWeatherData(dto)
+
+        let actor = WeatherServiceActor(
+            modelContext: modelContext,
+            providers: [provider]
+        )
+        let location = CLLocation(latitude: 37.3349, longitude: -122.0090)
+        _ = try await actor.fetchWeatherData(for: location, forceRefresh: true)
+        #expect(await actor.fetchHourlyForecast(for: location).count == 1)
+
+        await actor.clearCache()
+        await provider.setShouldFail(true)
+
+        #expect(await actor.fetchHourlyForecast(for: location).isEmpty)
     }
 }
 
@@ -247,16 +337,40 @@ struct WeatherProviderEnumTests {
 
     @Test(
         "Weather condition raw values are non-empty",
-        arguments: [WeatherCondition.clear, .partlyCloudy, .rain, .snow, .thunderstorm]
+        arguments: [
+            SunHat.WeatherCondition.clear,
+            .partlyCloudy,
+            .rain,
+            .snow,
+            .thunderstorm
+        ]
     )
-    func weatherConditionMapping(condition: WeatherCondition) {
+    func weatherConditionMapping(condition: SunHat.WeatherCondition) {
         #expect(condition.rawValue.isEmpty == false)
     }
 
     @Test("Known condition raw values match expected strings")
     func knownConditionRawValues() {
-        #expect(WeatherCondition.clear.rawValue == "clear")
-        #expect(WeatherCondition.partlyCloudy.rawValue == "partly_cloudy")
+        #expect(SunHat.WeatherCondition.clear.rawValue == "clear")
+        #expect(SunHat.WeatherCondition.partlyCloudy.rawValue == "partly_cloudy")
+    }
+
+    @MainActor
+    @Test(
+        "WeatherKit precipitation variants retain their precipitation type",
+        arguments: [
+            (WeatherKit.WeatherCondition.heavyRain, PrecipitationType.rain),
+            (.sunShowers, .rain),
+            (.heavySnow, .snow),
+            (.sunFlurries, .snow),
+            (.wintryMix, .sleet)
+        ]
+    )
+    func precipitationTypeMapping(
+        condition: WeatherKit.WeatherCondition,
+        expected: PrecipitationType
+    ) {
+        #expect(AppleWeatherKitAPI().mapPrecipitationType(condition) == expected)
     }
 }
 
@@ -360,7 +474,87 @@ actor MockWeatherAPI: WeatherAPI {
             weatherCondition: current.weatherCondition,
             dataSource: current.dataSource,
             accuracy: current.accuracy,
-            forecast: forecast
+            forecast: forecast,
+            // `hourly` defaults to [], so omitting it here compiled but silently
+            // dropped whatever the test configured — forward it explicitly.
+            hourly: current.hourly
         )
+    }
+}
+
+private actor CancellationWeatherAPI: WeatherAPI {
+    nonisolated let provider: WeatherProvider = .appleWeatherKit
+    private(set) var hasStarted = false
+    private(set) var fetchCount = 0
+    private(set) var observedCancellation = false
+
+    nonisolated var isAvailable: Bool {
+        get async { true }
+    }
+
+    func fetchCurrentWeather(for location: CLLocation) async throws -> WeatherDataDTO {
+        try await fetchWeatherData(for: location)
+    }
+
+    func fetchForecast(for location: CLLocation, days: Int) async throws -> [ForecastDayDTO] {
+        []
+    }
+
+    func fetchWeatherData(for location: CLLocation) async throws -> WeatherDataDTO {
+        hasStarted = true
+        fetchCount += 1
+        do {
+            try await Task.sleep(for: .seconds(10))
+        } catch is CancellationError {
+            observedCancellation = true
+            throw CancellationError()
+        }
+        throw WeatherError.allProvidersFailed
+    }
+}
+
+private actor NonCooperativeWeatherAPI: WeatherAPI {
+    nonisolated let provider: WeatherProvider = .appleWeatherKit
+    private(set) var hasStarted = false
+    private var continuation: CheckedContinuation<Void, Never>?
+
+    nonisolated var isAvailable: Bool {
+        get async { true }
+    }
+
+    func fetchCurrentWeather(for location: CLLocation) async throws -> WeatherDataDTO {
+        try await fetchWeatherData(for: location)
+    }
+
+    func fetchForecast(for location: CLLocation, days: Int) async throws -> [ForecastDayDTO] {
+        []
+    }
+
+    func fetchWeatherData(for location: CLLocation) async throws -> WeatherDataDTO {
+        hasStarted = true
+        await withCheckedContinuation { continuation = $0 }
+        return WeatherDataDTO(
+            temperature: 72,
+            feelsLike: 72,
+            humidity: 50,
+            dewPoint: 50,
+            pressure: 30,
+            visibility: 10,
+            uvIndex: 3,
+            cloudCover: 10,
+            windSpeed: 4,
+            windDirection: 180,
+            precipitationAmount: 0,
+            precipitationType: .none,
+            weatherCondition: .clear,
+            dataSource: .appleWeatherKit,
+            accuracy: .high,
+            forecast: []
+        )
+    }
+
+    func finishRequest() {
+        continuation?.resume()
+        continuation = nil
     }
 }

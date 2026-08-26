@@ -47,6 +47,8 @@ final class WeatherService: ObservableObject {
             lastUpdateTime = Date()
             connectionStatus = .connected
             return weatherData
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             connectionStatus = .disconnected
             logger.error("Failed to fetch weather data: \(error.localizedDescription)")
@@ -120,8 +122,9 @@ class WeatherServiceActor {
 
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "WeatherServiceActor")
 
-    init(modelContext: ModelContext) {
+    init(modelContext: ModelContext, providers: [any WeatherAPI] = []) {
         self.modelContext = modelContext
+        self.providers = providers
     }
 
     func configure(openWeatherMapKey: String? = nil) async {
@@ -144,6 +147,7 @@ class WeatherServiceActor {
     }
     
     func fetchWeatherData(for location: CLLocation, forceRefresh: Bool = false) async throws -> WeatherData {
+        try Task.checkCancellation()
         logger.debug("Starting fetchWeatherData for location: \(location.coordinate.latitude), \(location.coordinate.longitude), forceRefresh: \(forceRefresh)")
         // Check cache first unless force refresh is requested
         if !forceRefresh, let cachedData = await getCachedWeatherData(for: location) {
@@ -169,6 +173,8 @@ class WeatherServiceActor {
         }
         
         for provider in sortedProviders {
+            try Task.checkCancellation()
+
             do {
                 let providerName = provider.provider.displayName
                 guard await provider.isAvailable else {
@@ -180,6 +186,7 @@ class WeatherServiceActor {
                 await rateLimiter.recordRequest()
                 
                 let weatherDataDTO = try await provider.fetchWeatherData(for: location)
+                try Task.checkCancellation()
 
                 // Convert DTO to WeatherData and cache the result
                 let weatherData = weatherDataDTO.toWeatherData()
@@ -189,6 +196,8 @@ class WeatherServiceActor {
                 logger.info("Successfully fetched weather data from \(providerName)")
                 return weatherData
                 
+            } catch is CancellationError {
+                throw CancellationError()
             } catch let error as WeatherError {
                 let providerName = provider.provider.displayName
                 logger.warning("Provider \(providerName) failed: \(error.localizedDescription)")
@@ -197,7 +206,7 @@ class WeatherServiceActor {
                 // If rate limited, wait before trying next provider
                 if case .rateLimitExceeded(let retryAfter) = error {
                     if let retryAfter = retryAfter, retryAfter < 60 {
-                        try? await Task.sleep(for: .seconds(retryAfter))
+                        try await Task.sleep(for: .seconds(retryAfter))
                     }
                 }
             } catch {
@@ -206,6 +215,8 @@ class WeatherServiceActor {
                 lastError = .unknown(error)
             }
         }
+
+        try Task.checkCancellation()
         
         // All providers failed, try to return cached data even if expired
         if let cachedData = await getCachedWeatherData(for: location, allowExpired: true) {
@@ -338,6 +349,7 @@ class WeatherServiceActor {
     }
     
     func clearCache() async {
+        hourlyCache.removeAll()
         let descriptor = FetchDescriptor<WeatherData>()
 
         do {

@@ -53,7 +53,7 @@ Use the existing configured simulator only: `iPhone 17 Pro` (`20465D2E-7941-46FD
 - **SunHat/sunhat.swift**: Main app entry point with SwiftData ModelContainer setup
 - **ContentView.swift**: Root view — routes between splash, onboarding, and main tab bar
 - **MainTabView.swift**: iOS 26.4 tab bar with `.tabBarMinimizeBehavior(.onScrollDown)`
-- **Views/Components/GlassCard.swift**: Reusable Liquid Glass card/section components
+- **Views/Reminders/ReminderGlassCard.swift**: the actual in-use glass card surface
 - **Tests**: Unit tests use XCTest plus newer Swift Testing suites; UI tests remain XCTest-based
 
 ### Current Architecture (iOS 26.4 Implementation)

@@ -321,3 +321,42 @@ All P1 items and most P2 items from §1.2 were implemented and verified (build c
 | §7.1 Atmosphere Canvas 30 FPS loop | **Fixed** — `TimelineView` clock pauses when `scenePhase != .active`. |
 | §8.2 / §10 Localization, onboarding funnel, ASO experiments | **Open** — tracked in TODO.md (post-launch). |
 | (New, found this pass) Privacy delete-all left orphans | **Fixed** — `deleteAllUserData` now explicitly deletes `TriggerCondition` and `ForecastDay`; schema-parity test passes. |
+
+## 14. Resolution log — July 21, 2026
+
+Full interactive QA pass (build, unit tests, then live `ScreenshotCaptureUITests` runs with manual screenshot review) over the July 19 fixes above plus the rest of the app. Found and fixed 4 bugs — one pre-existing (a real cross-feature location bug the July 19 pass didn't touch), three introduced by §5.4's own dry-period fix and by this app's floating-nav-bar/screenshot-tooling gaps. Details and file references in [TODO.md](TODO.md)'s "Resolved July 21, 2026" section. Build clean, 247 unit tests / 50 suites passing (was 242/49).
+
+| Item | Status |
+|---|---|
+| Weather tab silently empty for manual-location users | **Fixed** — `LocationPermissionManager.manualLocation` was in-memory only (no persistence across relaunches), while `DashboardViewModel` separately persists its own location choice via `UserPreferences`; the Weather tab (which reads the former) would lose the user's location and show an all-zero empty state on every fresh launch. Now persisted via `UserDefaults` + restored at init. Tested. |
+| `ScreenshotSeeder` didn't set the location the Weather tab reads | **Fixed** — same root cause; seeded/demo builds showed the Weather tab broken. Confirmed via screenshot before and after. |
+| §5.4 dry-period fix had its own edge case | **Fixed** — coverage check compared raw forecast timestamps against a raw cutoff; a provider day stamped at a non-midnight hour could be miscounted as missing, reproducing the exact class of bug §5.4 fixed. Now buckets by calendar day. Tested. |
+| `DetailedReminderView` floating nav bar clipped content | **Fixed** — was a plain `.overlay`; switched to `.safeAreaInset(edge: .top)` so scrolled sections can never render underneath it. Verified via screenshot. |
+
+## 15. Follow-up findings and resolution log — July 30, 2026
+
+This pass reconciled the July 21 dirty worktree, reviewed concurrency, correctness,
+privacy, persistence, architecture, and WeatherKit mapping, then implemented the
+highest-confidence bounded fixes. The full production target and every unit-test source
+pass standalone Swift 6 type checking against the iOS 26.5 SDK with the app's MainActor
+default isolation. The focused audit suite passed 68/68 tests and the full `SunHatTests`
+suite passed 258/258 tests with no warnings or diagnostics. On August 19, the current app
+built successfully, installed, launched, and rendered onboarding on the configured iPhone 17
+Pro simulator. A focused re-test compiled but the Xcode runner stalled while finalizing its
+test log amid unrelated concurrent builds, so it produced no new pass/fail result.
+
+| ID | Severity / confidence | Finding | Status |
+|---|---|---|---|
+| SH-2026-01 | High / Confirmed | Manual location persisted outside SwiftData survived “Delete All User Data.” | **Fixed** — one location-service deletion boundary clears memory and UserDefaults; privacy deletion calls it; regression tested. |
+| SH-2026-02 | High / Confirmed | Quiet-hours/master-switch/weekend/daily-cap suppression was recorded as a successful trigger, preventing later delivery and corrupting cooldown/statistics. | **Fixed** — trigger state is persisted only after successful notification delivery; focused manager regression test added. |
+| SH-2026-03 | High / Strong evidence | Overlapping location loads could finish out of order and display weather for the previous city. | **Fixed** — generation-gated state commits and deterministic out-of-order regression test. |
+| SH-2026-04 | Medium / Confirmed | WeatherKit cancellation was mapped to an ordinary provider error, permitting fallback/cache work after lifecycle or background expiration. | **Fixed** — `CancellationError` now propagates through WeatherKit, provider iteration, backoff, and the service façade; cancellation test added. |
+| SH-2026-05 | Medium / Confirmed | Privacy deletion left pending/delivered notifications and badge data outside SwiftData. | **Fixed** — injectable notification-data cleaner clears all three surfaces; regression tested. |
+| SH-2026-06 | Medium / Strong evidence | Ordinary reminder deletion could orphan its trigger, notification configuration, and history records. | **Fixed without schema migration** — list/detail deletion use a shared owned-data boundary; shared locations are deliberately preserved; persistence test added. |
+| SH-2026-07 | Medium / Confirmed | Heavy rain/snow and mixed WeatherKit conditions mapped to `.none` precipitation. | **Fixed** — affected variants map to rain, snow, or sleet; parameterized coverage added. |
+| SH-2026-08 | Medium / Confirmed | Notification default/View action logged only and did not navigate to reminder detail. | **Fixed** — a persisted one-shot handoff selects the Reminders tab and pushes the matching detail; deleted reminders show an unavailable state; handoff tested. |
+| SH-2026-09 | Medium / Strong evidence | Large unreachable reminder-summary and stale WeatherModelActor provider façades remain compiled. | **Open / non-blocking cleanup** — delete only in a focused, separately verified cleanup. |
+| SH-2026-10 | High / Confirmed | Reentrant trigger evaluations could both pass de-duplication and deliver the same reminder twice. | **Fixed** — delivery IDs are reserved before suspension, released on failure, and committed only after success; concurrent and retry regressions added. |
+| SH-2026-11 | Medium / Confirmed | A cancelled weather request could return cached data or persist data from a provider that ignored cancellation. | **Fixed** — cancellation is checked at entry and after provider suspension before cache or persistence mutations; non-cooperative-provider coverage added. |
+| SH-2026-12 | High / Confirmed | Delete All Data left hourly weather cache, notification navigation handoff, and trigger runtime state resident. | **Fixed** — an injected runtime cleaner clears all three; weather cache and handoff regressions added. |
+| SH-2026-13 | Medium / Confirmed | Reminder deletion launched notification cleanup as unstructured work that could be lost on suspension or termination. | **Fixed** — list and detail deletion now await notification cleanup before completing. |

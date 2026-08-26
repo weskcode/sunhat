@@ -63,7 +63,7 @@ final class WeatherViewModel: ObservableObject {
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "WeatherVM")
     private var cancellables = Set<AnyCancellable>()
     private var selectedLocation: ReminderLocation = .currentLocation
-    private var activeLocation: (location: CLLocation, name: String)?
+    private var loadGeneration = 0
     private static let calendar = Calendar.current
     private static let dayFormatter: DateFormatter = {
         let df = DateFormatter()
@@ -121,9 +121,6 @@ final class WeatherViewModel: ObservableObject {
 
     // MARK: - Service Bindings
     private func bindService() {
-        weatherService.isLoadingPublisher
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$isLoading)
         weatherService.lastUpdateTimePublisher
             .receive(on: DispatchQueue.main)
             .assign(to: &$lastUpdateTime)
@@ -141,31 +138,48 @@ final class WeatherViewModel: ObservableObject {
 
     // MARK: - Data Loading
     private func loadAllData(forceRefresh: Bool) async {
-        guard let locInfo = await resolveSelectedLocation() else {
+        loadGeneration += 1
+        let generation = loadGeneration
+        let selection = selectedLocation
+        isLoading = true
+
+        defer {
+            if generation == loadGeneration {
+                isLoading = false
+            }
+        }
+
+        guard let locInfo = await resolveSelectedLocation(selection) else {
+            guard generation == loadGeneration else { return }
             logger.warning("Location unavailable")
             hasWeatherData = false
             return
         }
-        activeLocation = locInfo
+        guard generation == loadGeneration else { return }
+
         locationName = locInfo.name
+
         do {
-            isLoading = true
             let data = try await weatherService.fetchCurrentWeather(
                 for: locInfo.location,
                 forceRefresh: forceRefresh
             )
+            guard generation == loadGeneration else { return }
+
             updateCurrent(from: data)
             computeDayLength()
-            // Run these tasks sequentially to avoid Sendable issues with WeatherData
-            await loadForecasts(from: data)
-            await loadHistorical()
-            await loadTriggers(with: data)
+            await loadForecasts(from: data, at: locInfo.location, generation: generation)
+            await loadHistorical(at: locInfo.location, generation: generation)
+            await loadTriggers(with: data, generation: generation)
+            guard generation == loadGeneration else { return }
             logger.info("Weather data loaded for \(locInfo.name)")
+        } catch is CancellationError {
+            return
         } catch {
+            guard generation == loadGeneration else { return }
             logger.error("Error loading weather: \(error.localizedDescription)")
             hasWeatherData = false
         }
-        isLoading = false
     }
 
     private func updateCurrent(from data: WeatherData) {
@@ -197,24 +211,18 @@ final class WeatherViewModel: ObservableObject {
         }
     }
 
-    private func resolveSelectedLocation() async -> (location: CLLocation, name: String)? {
-        guard !selectedLocation.isCurrentLocation else {
+    private func resolveSelectedLocation(
+        _ selection: ReminderLocation
+    ) async -> (location: CLLocation, name: String)? {
+        guard !selection.isCurrentLocation else {
             return await locationManager.currentLocation()
         }
 
-        let coordinate = selectedLocation.coordinate.clCoordinate
+        let coordinate = selection.coordinate.clCoordinate
         return (
             CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude),
-            LocationDisplayFormatter.privacyPreservingName(from: selectedLocation.displayName)
+            LocationDisplayFormatter.privacyPreservingName(from: selection.displayName)
         )
-    }
-
-    private func resolvedActiveLocation() async -> (location: CLLocation, name: String)? {
-        if let activeLocation {
-            return activeLocation
-        }
-
-        return await resolveSelectedLocation()
     }
 
     private func computeDayLength() {
@@ -223,21 +231,23 @@ final class WeatherViewModel: ObservableObject {
         }
     }
 
-    private func loadForecasts(from weatherData: WeatherData) async {
-        await loadHourly()
+    private func loadForecasts(
+        from weatherData: WeatherData,
+        at location: CLLocation,
+        generation: Int
+    ) async {
+        await loadHourly(at: location, generation: generation)
+        guard generation == loadGeneration else { return }
         loadWeekly(from: weatherData.forecastDays)
-        await loadAlerts()
+        loadAlerts()
     }
 
     /// Loads the real provider hourly forecast. An empty array means the provider
     /// had no hourly data (or the fetch failed) and the UI shows an unavailable
     /// state — hours are never synthesized.
-    private func loadHourly() async {
-        guard let locInfo = await resolvedActiveLocation() else {
-            hourlyForecast = []
-            return
-        }
-        let hours = await weatherService.fetchHourlyForecast(for: locInfo.location)
+    private func loadHourly(at location: CLLocation, generation: Int) async {
+        let hours = await weatherService.fetchHourlyForecast(for: location)
+        guard generation == loadGeneration else { return }
         hourlyForecast = hours.map { hour in
             HourlyWeatherData(
                 hour: hour.date,
@@ -257,7 +267,7 @@ final class WeatherViewModel: ObservableObject {
     /// SunHat's own threshold-based advisories. These are NOT official government or
     /// WeatherKit severe-weather alerts, so the copy is branded as a SunHat advisory
     /// and states the exact threshold that produced it.
-    private func loadAlerts() async {
+    private func loadAlerts() {
         var alerts: [WeatherAlert] = []
         if currentTemperature > 95 {
             alerts.append(.init(
@@ -287,19 +297,25 @@ final class WeatherViewModel: ObservableObject {
     /// Loads comparisons from actually stored weather history. Any value without
     /// enough stored data stays `nil` — the UI shows "Not enough history yet"
     /// rather than an invented placeholder.
-    private func loadHistorical() async {
+    private func loadHistorical(at location: CLLocation, generation: Int) async {
         func temp(daysAgo: Int) async -> Double? {
             guard let date = Self.calendar.date(byAdding: .day, value: -daysAgo, to: Date()) else {
                 return nil
             }
-            return await getHistoricalTemp(for: date)
+            return await getHistoricalTemp(for: date, at: location)
         }
-        yesterdayTemp = await temp(daysAgo: 1)
-        lastWeekTemp = await temp(daysAgo: 7)
-        historicalAvgTemp = await storedMonthlyAverage()
+
+        let yesterday = await temp(daysAgo: 1)
+        let lastWeek = await temp(daysAgo: 7)
+        let monthlyAverage = await storedMonthlyAverage(at: location)
+        guard generation == loadGeneration else { return }
+
+        yesterdayTemp = yesterday
+        lastWeekTemp = lastWeek
+        historicalAvgTemp = monthlyAverage
     }
 
-    private func loadTriggers(with data: WeatherData) async {
+    private func loadTriggers(with data: WeatherData, generation: Int) async {
         guard let weatherModelActor = weatherModelActor else {
             logger.error("WeatherModelActor not available")
             return
@@ -326,6 +342,7 @@ final class WeatherViewModel: ObservableObject {
                 )
                 preds.append(prediction)
             }
+            guard generation == loadGeneration else { return }
             triggerPredictions = preds.sorted { $0.likelihood > $1.likelihood }
         } catch {
             logger.error("Trigger load error: \(error)")
@@ -394,17 +411,17 @@ final class WeatherViewModel: ObservableObject {
         }
     }
 
-    private func getHistoricalTemp(for date: Date) async -> Double? {
+    private func getHistoricalTemp(for date: Date, at location: CLLocation) async -> Double? {
         guard let weatherModelActor = weatherModelActor else {
             logger.error("WeatherModelActor not available")
             return nil
         }
         
         do {
-            // Fetch historical weather data for the past year to find this date
-            guard let locInfo = await resolvedActiveLocation() else { return nil }
-
-            let weatherData = try await weatherModelActor.fetchHistoricalWeatherData(for: locInfo.location, daysBack: 365)
+            let weatherData = try await weatherModelActor.fetchHistoricalWeatherData(
+                for: location,
+                daysBack: 365
+            )
 
             // Find the weather data closest to the same day/month as the target date
             let calendar = Calendar.current
@@ -427,12 +444,14 @@ final class WeatherViewModel: ObservableObject {
     /// Average of stored temperatures at this location for the current month
     /// (any year). Returns `nil` when fewer than 3 samples exist — no fixed
     /// seasonal constants are ever substituted.
-    private func storedMonthlyAverage() async -> Double? {
+    private func storedMonthlyAverage(at location: CLLocation) async -> Double? {
         guard let weatherModelActor else { return nil }
-        guard let locInfo = await resolvedActiveLocation() else { return nil }
 
         do {
-            let stored = try await weatherModelActor.fetchHistoricalWeatherData(for: locInfo.location, daysBack: 365)
+            let stored = try await weatherModelActor.fetchHistoricalWeatherData(
+                for: location,
+                daysBack: 365
+            )
             let currentMonth = Self.calendar.component(.month, from: Date())
             let samples = stored
                 .filter { Self.calendar.component(.month, from: $0.timestamp) == currentMonth }

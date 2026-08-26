@@ -18,23 +18,66 @@ final class LocationPermissionManager: NSObject, ObservableObject {
     
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var currentLocation: CLLocation?
-    @Published var manualLocation: ManualLocationData?
+    /// Persisted across launches (see `didSet` below) — without this, any consumer
+    /// that reads `manualLocation` directly (e.g. `LocationPermissionManagerAdapter`,
+    /// used by `WeatherViewModel`) silently lost a user's manual-location choice on
+    /// every fresh app launch, even though `UserPreferences.manualLocationLatitude/
+    /// Longitude` (read separately by `DashboardViewModel`) survived correctly.
+    @Published var manualLocation: ManualLocationData? {
+        didSet { persistManualLocation() }
+    }
     @Published var showPermissionDeniedAlert = false
     @Published var isLocationServicesEnabled = true
     @Published var locationError: LocationError?
-    
+
     private let locationManager = CLLocationManager()
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "LocationPermissionManager")
     private var permissionCompletionHandler: ((Bool) -> Void)?
-    
+    private let defaults: UserDefaults
+    private static let manualLocationDefaultsKey = "LocationPermissionManager.manualLocation"
+
     // Location accuracy and timeout settings
     private let desiredAccuracy = kCLLocationAccuracyHundredMeters
     private let locationTimeout: TimeInterval = 15.0
     private var locationTimer: Timer?
-    
-    override init() {
+
+    convenience override init() {
+        self.init(userDefaults: .standard)
+    }
+
+    /// Test seam for verifying manual-location persistence without touching the
+    /// real `UserDefaults.standard` (see `LocationPermissionManagerTests`).
+    init(userDefaults: UserDefaults) {
+        self.defaults = userDefaults
         super.init()
+        manualLocation = Self.restoreManualLocation(from: userDefaults)
         setupLocationManager()
+    }
+
+    private static func restoreManualLocation(from defaults: UserDefaults) -> ManualLocationData? {
+        guard let data = defaults.data(forKey: manualLocationDefaultsKey) else { return nil }
+        return try? JSONDecoder().decode(ManualLocationData.self, from: data)
+    }
+
+    private func persistManualLocation() {
+        guard let manualLocation else {
+            defaults.removeObject(forKey: Self.manualLocationDefaultsKey)
+            return
+        }
+        guard let data = try? JSONEncoder().encode(manualLocation) else { return }
+        defaults.set(data, forKey: Self.manualLocationDefaultsKey)
+    }
+
+    /// Removes location data owned by this service from memory and persistence.
+    /// Keep this as the single deletion boundary so privacy reset flows cannot
+    /// overlook newly persisted location state.
+    func clearStoredLocationData() {
+        locationManager.stopUpdatingLocation()
+        locationTimer?.invalidate()
+        locationTimer = nil
+        currentLocation = nil
+        manualLocation = nil
+        locationError = nil
     }
     
     // MARK: - Setup

@@ -133,12 +133,17 @@ struct GradientButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(
-                LinearGradient(
-                    colors: colors,
-                    startPoint: startPoint,
-                    endPoint: endPoint
+                // AnyShapeStyle pins `.opacity` to the ShapeStyle overload. As of the
+                // Xcode 27 SDK LinearGradient satisfies both View and ShapeStyle, so a
+                // bare `.opacity` here is ambiguous.
+                AnyShapeStyle(
+                    LinearGradient(
+                        colors: colors,
+                        startPoint: startPoint,
+                        endPoint: endPoint
+                    )
+                    .opacity(configuration.isPressed ? 0.8 : 1.0)
                 )
-                .opacity(configuration.isPressed ? 0.8 : 1.0)
             )
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
@@ -186,12 +191,16 @@ struct WeatherButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(
-                LinearGradient(
-                    colors: weatherCondition.colors,
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+                // See note above: AnyShapeStyle disambiguates `.opacity` under the
+                // Xcode 27 SDK, where LinearGradient is both a View and a ShapeStyle.
+                AnyShapeStyle(
+                    LinearGradient(
+                        colors: weatherCondition.colors,
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .opacity(configuration.isPressed ? 0.8 : 1.0)
                 )
-                .opacity(configuration.isPressed ? 0.8 : 1.0)
             )
             .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)

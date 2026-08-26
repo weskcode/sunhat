@@ -102,8 +102,12 @@ struct DetailedReminderView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
         .animation(.smooth(duration: 0.3), value: isEditMode)
-        .overlay(alignment: .topLeading) {
-            // Custom navigation bar
+        .safeAreaInset(edge: .top, spacing: 0) {
+            // Custom navigation bar. `safeAreaInset` (not `.overlay`) reserves this
+            // height in the ScrollView's layout so section headers can never scroll
+            // underneath it — an `.overlay` here let "Notification Settings" (and any
+            // other section) end up hidden beneath the floating bar and status bar
+            // once scrolled to that position (see ScreenshotCaptureUITests testShot09).
             customNavigationBar
         }
         .confirmationDialog("Delete Reminder", isPresented: $showingDeleteConfirmation) {
@@ -207,12 +211,12 @@ struct DetailedReminderView: View {
             }
         }
         .padding(.horizontal, 20)
-        .padding(.top, 50)
-        .zIndex(100)
+        .padding(.top, 8)
+        .padding(.bottom, 8)
     }
-    
+
     // MARK: - Weather Condition Header
-    
+
     private var weatherConditionHeader: some View {
         VStack(spacing: 0) {
             // Current weather display
@@ -297,7 +301,7 @@ struct DetailedReminderView: View {
         .glassEffect(in: .rect(cornerRadius: 20))
         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
         .padding(.horizontal, 20)
-        .padding(.top, 80)
+        .padding(.top, 12)
     }
     
     // MARK: - Live Prediction Section
@@ -522,8 +526,11 @@ struct DetailedReminderView: View {
     private func deleteConfirmationDialogButtons() -> some View {
         Group {
             Button("Delete", role: .destructive) {
-                viewModel.deleteReminder()
-                dismiss()
+                Task {
+                    if await viewModel.deleteReminder() {
+                        dismiss()
+                    }
+                }
             }
             
             Button("Cancel", role: .cancel) { }

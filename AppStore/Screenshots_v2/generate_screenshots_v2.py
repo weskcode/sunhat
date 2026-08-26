@@ -20,7 +20,7 @@ FONT_REG = "/Library/Fonts/SF-Pro-Display-Regular.otf"
 
 # ─── Background ──────────────────────────────────────────────────────
 
-def make_gradient(size, c1, c2):
+def make_gradient(size, c1, c2, horizon=(255, 191, 112)):
     w, h = size
     img = Image.new("RGB", size)
     px = img.load()
@@ -34,13 +34,20 @@ def make_gradient(size, c1, c2):
     draw = ImageDraw.Draw(img, "RGBA")
 
     # Horizon light: a wide weather-front glow rather than a generic radial orb.
+    #
+    # This sits at ~0.56h, which is behind the device — so the only part a viewer
+    # actually sees is the sliver either side of the phone. Two constraints follow:
+    # it has to be tinted from the shot's own palette (a hardcoded warm tone read as
+    # an orange light-leak on the cool navy/purple/teal frames), and it has to stay
+    # subtle, because ~65 stacked passes at high alpha accumulate into a hard band
+    # rather than a glow.
     horizon_y = int(h * 0.56)
     for offset in range(0, 520, 8):
-        alpha = max(0, int(30 * (1 - offset / 520)))
+        alpha = max(0, int(11 * (1 - offset / 520)))
         draw.rounded_rectangle(
             [(-180 - offset, horizon_y - offset // 4), (w + 180 + offset, horizon_y + 110 + offset // 3)],
             radius=180 + offset // 2,
-            fill=(255, 191, 112, alpha),
+            fill=(*horizon, alpha),
         )
 
     # Forecast grid, skewed like a meteorology map.
@@ -138,7 +145,10 @@ def text_centered(draw, text, y, font, fill, cw, spacing=1.18):
 
 
 def generate(cfg):
-    canvas = make_gradient((W, H), cfg["g1"], cfg["g2"]).convert("RGBA")
+    # Tint the horizon with the shot's own accent so it reads as part of the palette.
+    canvas = make_gradient(
+        (W, H), cfg["g1"], cfg["g2"], horizon=cfg.get("horizon", cfg["ac"])
+    ).convert("RGBA")
 
     # Accent weather-front flare behind the caption
     a = cfg["ac"]

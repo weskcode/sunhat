@@ -111,7 +111,7 @@ final class ScreenshotCaptureUITests: XCTestCase {
 
     @MainActor
     func testShot02_DashboardReadyNow() throws {
-        let app = launchSeeded()
+        launchSeeded()
         Thread.sleep(forTimeInterval: 1.5)
         save(name: "02_dashboard_ready_now.png")
     }
