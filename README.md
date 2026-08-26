@@ -26,24 +26,6 @@
 
 ---
 
-## Screenshots
-
-<p align="center">
-  <img src="AppStore/Screenshots_v2/Framed/01_iOS_Hero.png" width="200" alt="Hero: Weather-Smart Reminders" />
-  &nbsp;&nbsp;
-  <img src="AppStore/Screenshots_v2/Framed/02_TimerStyle_ExactMatch.png" width="200" alt="Exact Match Trigger" />
-  &nbsp;&nbsp;
-  <img src="AppStore/Screenshots_v2/Framed/03_Differentiator_Predictions.png" width="200" alt="Smart Weather Predictions" />
-  &nbsp;&nbsp;
-  <img src="AppStore/Screenshots_v2/Framed/08_ActiveReminders_List.png" width="200" alt="Active Reminders List" />
-</p>
-
-<p align="center">
-  <em>Light and dark modes &mdash; <a href="AppStore/Screenshots_v2/FramedDark/">see dark variants</a></em>
-</p>
-
----
-
 ## What SunHat actually does
 
 A calendar reminder for "go for a run" fires whether it's sunny or sleeting. SunHat's whole idea is that some plans are conditional, not scheduled, and your phone already knows the weather.
@@ -160,10 +142,6 @@ Version 1.0, iPhone-first, preparing for App Store submission.
 **Tested:** 258+ unit tests across 50+ suites covering trigger engine correctness, weather service cancellation, privacy deletion parity, notification delivery, and location persistence.
 
 **Planned:** WidgetKit and Lock Screen widgets, watchOS complication, iPad-optimized layout, CloudKit sync (prepared in code, needs provisioning), String Catalog localization (all copy is currently inline English).
-
-Widgets and watchOS both need a shared `SunHatKit` framework target first. See [WIDGET_SETUP.md](WIDGET_SETUP.md), [WATCHOS_PORT_PLAN.md](WATCHOS_PORT_PLAN.md), and [IPAD_PORT_PLAN.md](IPAD_PORT_PLAN.md).
-
-Live work is tracked in [TODO.md](TODO.md). The standing code audit and its resolution log are in [CODE_AUDIT.md](CODE_AUDIT.md).
 
 ### Toolchain note
 
