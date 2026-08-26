@@ -257,7 +257,7 @@ final class AppleWeatherKitAPI: WeatherAPI {
     }
     
     /// Maps WeatherKit's own error type into this app's `WeatherError`. Also logs the
-    /// raw domain/code/description first — WeatherKit surfaces provisioning and
+    /// raw domain/code/description first, WeatherKit surfaces provisioning and
     /// entitlement failures (e.g. a missing WeatherKit capability on the App ID, or a
     /// distribution provisioning profile built before the capability was added) as opaque
     /// NSErrors that the coarse mapping below can't distinguish from a real network
@@ -269,7 +269,7 @@ final class AppleWeatherKitAPI: WeatherAPI {
         }
 
         let nsError = error as NSError
-        logger.error("WeatherKit request failed — domain: \(nsError.domain, privacy: .public), code: \(nsError.code, privacy: .public), description: \(nsError.localizedDescription, privacy: .public), userInfo: \(nsError.userInfo, privacy: .public)")
+        logger.error("WeatherKit request failed, domain: \(nsError.domain, privacy: .public), code: \(nsError.code, privacy: .public), description: \(nsError.localizedDescription, privacy: .public), userInfo: \(nsError.userInfo, privacy: .public)")
 
         switch nsError.code {
         case 1: return .locationPermissionDenied
@@ -571,7 +571,7 @@ private extension Array where Element == Double {
     }
 }
 
-// Pure unit conversions — nonisolated so the nonisolated WeatherAPI implementations
+// Pure unit conversions, nonisolated so the nonisolated WeatherAPI implementations
 // can use them off the main actor.
 nonisolated private extension Measurement where UnitType == UnitTemperature {
     var fahrenheitValue: Double {
@@ -610,7 +610,7 @@ nonisolated struct WeatherDataDTO: Sendable {
     let dataSource: WeatherDataSource
     let accuracy: WeatherAccuracy
     let forecast: [ForecastDayDTO]
-    /// Real provider hourly forecast (next ~24 h). Not persisted to SwiftData —
+    /// Real provider hourly forecast (next ~24 h). Not persisted to SwiftData,
     /// kept in memory by `WeatherServiceActor` for the Weather tab's hourly strip.
     /// Empty when the provider has no hourly data; the UI must show an
     /// unavailable state instead of synthesizing values.

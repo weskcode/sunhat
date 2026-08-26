@@ -233,7 +233,7 @@ struct TriggerEngineForecastAnalysisTests {
         let calendar = Calendar.current
 
         // Simulate "now" early in the day and forecast entries stamped at an
-        // arbitrary later hour (providers don't guarantee midnight — WeatherAPI's
+        // arbitrary later hour (providers don't guarantee midnight, WeatherAPI's
         // own hourly-aggregate lookup normalizes via startOfDay for the same
         // reason). A raw `date <= now + 24h` cutoff would put windowEnd at
         // tomorrow 01:00, wrongly dropping a tomorrow entry stamped at noon even

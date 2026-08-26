@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// The "Weather Conditions" card in the streamlined reminder creator —
+/// The "Weather Conditions" card in the streamlined reminder creator,
 /// temperature condition type, range/exact sliders, and multi-select sky
 /// conditions with include/exclude mode.
 struct StreamlinedWeatherConditionsSection: View {

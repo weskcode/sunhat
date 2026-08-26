@@ -24,7 +24,7 @@ If applicable, add screenshots to help explain the problem.
 
 **Environment:**
 - Device: [e.g., iPhone 15 Pro]
-- iOS version: [e.g., 26.4]
+- iOS version: [e.g., 26.0]
 - SunHat version: [e.g., 1.0]
 
 **Console logs**

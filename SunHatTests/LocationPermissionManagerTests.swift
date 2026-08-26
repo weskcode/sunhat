@@ -7,7 +7,7 @@
 //  directly (WeatherViewModel, via LocationPermissionManagerAdapter) silently lost
 //  the user's manual-location choice on every fresh launch, even though
 //  UserPreferences.manualLocationLatitude/Longitude (read separately by
-//  DashboardViewModel) survived correctly — producing a Weather tab that fell back
+//  DashboardViewModel) survived correctly, producing a Weather tab that fell back
 //  to real GPS (or an empty state) while the Dashboard kept working.
 //
 

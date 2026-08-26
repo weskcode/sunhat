@@ -145,7 +145,7 @@ final class FirstReminderCreationViewModel: ObservableObject {
     /// Loads live weather for the selected location via WeatherKit and publishes both
     /// the current-conditions card and the forecast (used for trigger likelihood) from a
     /// single API call. Degrades to an unavailable/empty state when there's no location
-    /// or the fetch fails — never shows fabricated values.
+    /// or the fetch fails, never shows fabricated values.
     func loadWeather() {
         weatherTask?.cancel()
         weatherTask = Task { [weak self] in
@@ -525,7 +525,7 @@ struct CustomReminder {
             "It's \(Int(minTemperature + (maxTemperature - minTemperature) / 2))°F" :
             "It's \(Int(minTemperature))°F"
 
-        return "\(tempDesc) and \(skyConditionDescription.lowercased()) — ideal for your \(displayTitle.lowercased()) reminder."
+        return "\(tempDesc) and \(skyConditionDescription.lowercased()), ideal for your \(displayTitle.lowercased()) reminder."
     }
 
     /// Evaluate if a forecast day matches the sky conditions

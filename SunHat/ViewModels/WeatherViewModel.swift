@@ -45,8 +45,8 @@ final class WeatherViewModel: ObservableObject {
     @Published var sunset: Date?
     @Published var dayLength: TimeInterval?
 
-    /// Historical comparison temperatures. `nil` means "not enough stored history"
-    /// — the UI shows an explicit unavailable state instead of a placeholder value.
+    /// Historical comparison temperatures. `nil` means "not enough stored history".
+    /// The UI shows an explicit unavailable state instead of a placeholder value.
     @Published var yesterdayTemp: Double?
     @Published var lastWeekTemp: Double?
     @Published var historicalAvgTemp: Double?
@@ -110,7 +110,7 @@ final class WeatherViewModel: ObservableObject {
     }
 
     /// Supplies the real (shared, app-group) model container and kicks off the first load.
-    /// Safe to call multiple times — only the first call wires up the actor.
+    /// Safe to call multiple times, only the first call wires up the actor.
     func configure(modelContainer: ModelContainer) {
         guard weatherModelActor == nil else { return }
         weatherModelActor = WeatherModelActor(modelContainer: modelContainer)
@@ -244,7 +244,7 @@ final class WeatherViewModel: ObservableObject {
 
     /// Loads the real provider hourly forecast. An empty array means the provider
     /// had no hourly data (or the fetch failed) and the UI shows an unavailable
-    /// state — hours are never synthesized.
+    /// state, hours are never synthesized.
     private func loadHourly(at location: CLLocation, generation: Int) async {
         let hours = await weatherService.fetchHourlyForecast(for: location)
         guard generation == loadGeneration else { return }
@@ -295,7 +295,7 @@ final class WeatherViewModel: ObservableObject {
     }
 
     /// Loads comparisons from actually stored weather history. Any value without
-    /// enough stored data stays `nil` — the UI shows "Not enough history yet"
+    /// enough stored data stays `nil`, the UI shows "Not enough history yet"
     /// rather than an invented placeholder.
     private func loadHistorical(at location: CLLocation, generation: Int) async {
         func temp(daysAgo: Int) async -> Double? {
@@ -442,7 +442,7 @@ final class WeatherViewModel: ObservableObject {
     }
 
     /// Average of stored temperatures at this location for the current month
-    /// (any year). Returns `nil` when fewer than 3 samples exist — no fixed
+    /// (any year). Returns `nil` when fewer than 3 samples exist, no fixed
     /// seasonal constants are ever substituted.
     private func storedMonthlyAverage(at location: CLLocation) async -> Double? {
         guard let weatherModelActor else { return nil }

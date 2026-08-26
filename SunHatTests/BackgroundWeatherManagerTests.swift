@@ -21,7 +21,7 @@ struct BackgroundWeatherManagerTests {
         // time any test touches it.
         #expect(manager.isBackgroundTaskRegistered == true)
 
-        // A second registration must be a no-op — without the guard this
+        // A second registration must be a no-op, without the guard this
         // raises NSInternalInconsistencyException inside BGTaskScheduler.
         #expect(manager.registerBackgroundTask() == false)
         #expect(manager.registerBackgroundTask() == false)
@@ -36,7 +36,7 @@ struct BackgroundWeatherManagerTests {
 
         manager.isBackgroundRefreshEnabled = false
 
-        // No request is submitted and no error is thrown — the app simply
+        // No request is submitted and no error is thrown, the app simply
         // relies on foreground refresh.
         #expect(manager.scheduleBackgroundRefresh() == false)
     }

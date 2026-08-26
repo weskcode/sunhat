@@ -105,7 +105,7 @@ struct DetailedReminderView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             // Custom navigation bar. `safeAreaInset` (not `.overlay`) reserves this
             // height in the ScrollView's layout so section headers can never scroll
-            // underneath it — an `.overlay` here let "Notification Settings" (and any
+            // underneath it, an `.overlay` here let "Notification Settings" (and any
             // other section) end up hidden beneath the floating bar and status bar
             // once scrolled to that position (see ScreenshotCaptureUITests testShot09).
             customNavigationBar

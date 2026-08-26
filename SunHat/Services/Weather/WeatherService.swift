@@ -35,7 +35,7 @@ final class WeatherService: ObservableObject {
     
     func fetchWeatherData(for location: CLLocation, forceRefresh: Bool = false) async throws -> WeatherData {
         guard let weatherActor else {
-            logger.error("WeatherService used before configure(modelContainer:) — returning serviceUnavailable")
+            logger.error("WeatherService used before configure(modelContainer:), returning serviceUnavailable")
             throw WeatherError.serviceUnavailable(provider: .appleWeatherKit)
         }
 
@@ -81,7 +81,7 @@ final class WeatherService: ObservableObject {
 
     func handleBackgroundRefresh() async {
         guard let weatherActor else {
-            logger.warning("handleBackgroundRefresh called before WeatherService was configured — skipping")
+            logger.warning("handleBackgroundRefresh called before WeatherService was configured, skipping")
             return
         }
         await weatherActor.handleBackgroundRefresh()

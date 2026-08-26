@@ -10,7 +10,7 @@ struct TriggerEngineManagerTests {
         // The initializer is public for dependency injection, and defaults to
         // registering. BGTaskScheduler's registry is process-global, so a second
         // registration of the same identifier raises NSInternalInconsistencyException
-        // — an uncatchable crash on launch. Only the first caller may register.
+        //, an uncatchable crash on launch. Only the first caller may register.
         let first = TriggerEngineManager(registerBackgroundTask: false)
         let didRegister = first.registerBackgroundTask()
 

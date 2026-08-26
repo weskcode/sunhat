@@ -35,7 +35,7 @@ def make_gradient(size, c1, c2, horizon=(255, 191, 112)):
 
     # Horizon light: a wide weather-front glow rather than a generic radial orb.
     #
-    # This sits at ~0.56h, which is behind the device — so the only part a viewer
+    # This sits at ~0.56h, which is behind the device, so the only part a viewer
     # actually sees is the sliver either side of the phone. Two constraints follow:
     # it has to be tinted from the shot's own palette (a hardcoded warm tone read as
     # an orange light-leak on the cool navy/purple/teal frames), and it has to stay
@@ -102,7 +102,7 @@ def add_bezel_rim(img, radius, width=3):
 
 
 def add_glass_reflection(img):
-    """A soft diagonal glossy streak across the upper third — reads as glass."""
+    """A soft diagonal glossy streak across the upper third, reads as glass."""
     rgba = img.convert("RGBA")
     w, h = rgba.size
     overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))

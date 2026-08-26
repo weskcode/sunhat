@@ -123,8 +123,8 @@ final class TriggerEngineManager: ObservableObject {
     ///
     /// Static, not per-instance: `BGTaskScheduler`'s registry is process-global and a
     /// second `register` for the same identifier raises `NSInternalInconsistencyException`
-    /// (an uncatchable crash). Since this type is no longer a private singleton — the
-    /// initializer is available for dependency injection — an instance flag would not
+    /// (an uncatchable crash). Since this type is no longer a private singleton, the
+    /// initializer is available for dependency injection, an instance flag would not
     /// stop a second manager from crashing the app on launch.
     private static var registeredBackgroundTaskIdentifiers: Set<String> = []
 
@@ -133,7 +133,7 @@ final class TriggerEngineManager: ObservableObject {
     @discardableResult
     func registerBackgroundTask() -> Bool {
         guard !Self.registeredBackgroundTaskIdentifiers.contains(backgroundTaskIdentifier) else {
-            logger.warning("Background task \(self.backgroundTaskIdentifier) already registered — ignoring duplicate")
+            logger.warning("Background task \(self.backgroundTaskIdentifier) already registered, ignoring duplicate")
             return false
         }
         Self.registeredBackgroundTaskIdentifiers.insert(backgroundTaskIdentifier)
@@ -258,7 +258,7 @@ final class TriggerEngineManager: ObservableObject {
             let context = ModelContext(modelContainer)
             if let preferences = try? context.fetch(FetchDescriptor<UserPreferences>()).first,
                !preferences.allowsNotificationDelivery() {
-                logger.info("Suppressed notification for \(result.reminderId) — notifications are off, quiet hours active, or daily limit reached")
+                logger.info("Suppressed notification for \(result.reminderId), notifications are off, quiet hours active, or daily limit reached")
                 return false
             }
         }
@@ -286,7 +286,7 @@ final class TriggerEngineManager: ObservableObject {
 
     private func updateReminderWithResult(_ result: TriggerEvaluationResult) async {
         guard let modelContainer else {
-            logger.warning("Cannot persist trigger for \(result.reminderId) — ModelContainer not configured")
+            logger.warning("Cannot persist trigger for \(result.reminderId), ModelContainer not configured")
             return
         }
         let context = ModelContext(modelContainer)

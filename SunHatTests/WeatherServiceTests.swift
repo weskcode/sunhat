@@ -476,7 +476,7 @@ actor MockWeatherAPI: WeatherAPI {
             accuracy: current.accuracy,
             forecast: forecast,
             // `hourly` defaults to [], so omitting it here compiled but silently
-            // dropped whatever the test configured — forward it explicitly.
+            // dropped whatever the test configured, forward it explicitly.
             hourly: current.hourly
         )
     }

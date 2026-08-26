@@ -22,7 +22,6 @@ SunHat is a privacy-focused iOS app. The following are in scope:
 
 - Data leakage (location, reminder data, user preferences)
 - Unauthorized data access or exfiltration
-- Authentication/authorization bypass
 - Injection attacks via notification deep-links or App Intents
 - Weather data manipulation or spoofing
 
@@ -34,6 +33,6 @@ SunHat is a privacy-focused iOS app. The following are in scope:
 
 ## Privacy
 
-SunHat stores all data locally on-device. No personal data is transmitted to any server except weather queries to Apple WeatherKit (using your coordinates to fetch a forecast). There are no accounts, no analytics, and no third-party SDKs.
+SunHat stores all data locally on-device. The only data that leaves the device is weather queries to Apple WeatherKit (coordinates sent to fetch a forecast). There are no accounts, no analytics, and no third-party SDKs.
 
-If you find a way to exfiltrate data from the app, that is a critical vulnerability — please report it immediately.
+If you find a way to exfiltrate data from the app, that is a critical vulnerability. Please report it immediately.

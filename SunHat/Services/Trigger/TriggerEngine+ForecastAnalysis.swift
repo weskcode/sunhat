@@ -143,7 +143,7 @@ extension TriggerEngine {
                 windGust: nil,
                 precipitationAmount: weatherDataDTO.precipitationAmount,
                 // Current precipitation probability: prefer the provider's current
-                // forecast hour, then today's daily forecast — never hard-code 0,
+                // forecast hour, then today's daily forecast, never hard-code 0,
                 // which broke rain/dry prediction decisions.
                 precipitationProbability: weatherDataDTO.hourly.first?.precipitationChance
                     ?? weatherDataDTO.forecast.first?.precipitationProbability
@@ -350,11 +350,11 @@ extension TriggerEngine {
     }
 
     /// Evaluates a 24/48-hour dry requirement across every forecast day covering the
-    /// requested period — a single current-conditions sample is not enough, because
+    /// requested period, a single current-conditions sample is not enough, because
     /// rain later in the window must fail the requirement. Requires forecast coverage
     /// of the whole window; without it the requirement is not met.
     // Internal (not private) so regression tests can drive it with a fixed `startingAt`
-    // instead of the real wall clock — see TriggerEngineForecastAnalysisTests.
+    // instead of the real wall clock, see TriggerEngineForecastAnalysisTests.
     func evaluateDryPeriod(
         hoursRequired: Int,
         currentIsWet: Bool,
@@ -363,7 +363,7 @@ extension TriggerEngine {
         startingAt: Date = Date()
     ) -> ComponentEvaluationResult {
         if currentIsWet {
-            return ComponentEvaluationResult(met: false, confidence: 0, description: "precipitation now — \(hoursRequired)h dry requirement not met")
+            return ComponentEvaluationResult(met: false, confidence: 0, description: "precipitation now, \(hoursRequired)h dry requirement not met")
         }
 
         let calendar = Calendar.current
