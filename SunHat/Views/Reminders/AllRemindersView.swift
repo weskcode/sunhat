@@ -17,6 +17,7 @@ struct AllRemindersView: View {
 
     @State private var searchText = ""
     @State private var selectedFilter: ReminderFilter = .all
+    @State private var deletionErrorMessage: String?
 
     enum ReminderFilter: String, CaseIterable {
         case all = "All"
@@ -95,6 +96,17 @@ struct AllRemindersView: View {
         }
         .navigationTitle("Reminders")
         .navigationBarTitleDisplayMode(.large)
+        .alert(
+            "Couldn't Delete Task",
+            isPresented: Binding(
+                get: { deletionErrorMessage != nil },
+                set: { if !$0 { deletionErrorMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(deletionErrorMessage ?? "Please try again.")
+        }
     }
 
     // MARK: - Liquid Glass Background
@@ -216,7 +228,7 @@ struct AllRemindersView: View {
                     ReminderGlassCard(reminder: reminder)
                         .contextMenu {
                             Button(role: .destructive) {
-                                deleteReminder(reminder)
+                                Task { await deleteReminder(reminder) }
                             } label: {
                                 Label("Delete", systemImage: "trash")
                             }
@@ -257,9 +269,19 @@ struct AllRemindersView: View {
 
     // MARK: - Helper Methods
 
-    private func deleteReminder(_ reminder: WeatherReminder) {
+    private func deleteReminder(_ reminder: WeatherReminder) async {
+        let reminderId = reminder.id
         withAnimation {
-            modelContext.delete(reminder)
+            reminder.deleteOwnedData(from: modelContext)
+        }
+
+        do {
+            try modelContext.save()
+            SunHatSearchIndexer.deleteReminder(id: reminderId)
+            await TriggerNotificationManager.shared.cancelNotifications(for: reminderId)
+        } catch {
+            modelContext.rollback()
+            deletionErrorMessage = error.localizedDescription
         }
     }
 }

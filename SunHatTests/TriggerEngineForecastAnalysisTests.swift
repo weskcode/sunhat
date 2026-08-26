@@ -226,4 +226,46 @@ struct TriggerEngineForecastAnalysisTests {
 
         #expect(!result.triggered)
     }
+
+    @Test("24h dry-period coverage is bucketed by calendar day, not a raw hour cutoff")
+    func dryPeriodCoverageToleratesNonMidnightForecastTimestamps() async throws {
+        let engine = try await makeEngine()
+        let calendar = Calendar.current
+
+        // Simulate "now" early in the day and forecast entries stamped at an
+        // arbitrary later hour (providers don't guarantee midnight — WeatherAPI's
+        // own hourly-aggregate lookup normalizes via startOfDay for the same
+        // reason). A raw `date <= now + 24h` cutoff would put windowEnd at
+        // tomorrow 01:00, wrongly dropping a tomorrow entry stamped at noon even
+        // though it's clearly the very next calendar day.
+        let now = calendar.date(bySettingHour: 1, minute: 0, second: 0, of: Date()) ?? Date()
+        let todayStamped = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: now) ?? now
+        let tomorrowStamped = calendar.date(byAdding: .day, value: 1, to: todayStamped) ?? now
+
+        let forecastDays = [
+            ForecastDayTransfer(
+                date: todayStamped,
+                highTemperature: 75, lowTemperature: 55, averageTemperature: 65,
+                weatherCondition: .clear, precipitationProbability: 5, precipitationAmount: 0,
+                precipitationType: .none, windSpeed: 5, humidity: 50, cloudCover: 20
+            ),
+            ForecastDayTransfer(
+                date: tomorrowStamped,
+                highTemperature: 75, lowTemperature: 55, averageTemperature: 65,
+                weatherCondition: .clear, precipitationProbability: 5, precipitationAmount: 0,
+                precipitationType: .none, windSpeed: 5, humidity: 50, cloudCover: 20
+            )
+        ]
+
+        let result = await engine.evaluateDryPeriod(
+            hoursRequired: 24,
+            currentIsWet: false,
+            forecastDays: forecastDays,
+            wetConditions: [.rain, .drizzle, .snow, .sleet, .hail, .thunderstorm],
+            startingAt: now
+        )
+
+        #expect(result.met)
+        #expect(result.confidence.isFinite)
+    }
 }

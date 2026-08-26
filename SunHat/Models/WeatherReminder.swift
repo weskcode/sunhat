@@ -291,6 +291,22 @@ final class WeatherReminder {
         lastModified = Date()
         addHistoryEntry(.resumed, details: "Reminder resumed")
     }
+
+    /// Deletes the reminder and records that are exclusively owned by it.
+    /// LocationData is intentionally preserved because locations can be shared
+    /// by multiple reminders and weather records.
+    func deleteOwnedData(from modelContext: ModelContext) {
+        if let triggerCondition {
+            modelContext.delete(triggerCondition)
+        }
+        if let notificationConfig {
+            modelContext.delete(notificationConfig)
+        }
+        for historyEntry in history {
+            modelContext.delete(historyEntry)
+        }
+        modelContext.delete(self)
+    }
 }
 
 @Model
@@ -452,4 +468,3 @@ enum UserResponse: String, Codable, CaseIterable {
     case dismissed = "dismissed"
     case opened = "opened"
 }
-

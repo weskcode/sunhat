@@ -58,11 +58,22 @@ final class DataPrivacyViewModel {
 
     private var modelContext: ModelContext?
     private let settingsOpener: SettingsOpening
+    private let locationPermissionManager: LocationPermissionManager
+    private let notificationDataCleaner: any NotificationDataClearing
+    private let runtimeDataCleaner: any PrivacyRuntimeDataClearing
 
     // MARK: - Initialization
 
-    init(settingsOpener: SettingsOpening = ApplicationSettingsOpener()) {
+    init(
+        settingsOpener: SettingsOpening = ApplicationSettingsOpener(),
+        locationPermissionManager: LocationPermissionManager = .shared,
+        notificationDataCleaner: any NotificationDataClearing = SystemNotificationDataCleaner(),
+        runtimeDataCleaner: any PrivacyRuntimeDataClearing = SystemPrivacyRuntimeDataCleaner()
+    ) {
         self.settingsOpener = settingsOpener
+        self.locationPermissionManager = locationPermissionManager
+        self.notificationDataCleaner = notificationDataCleaner
+        self.runtimeDataCleaner = runtimeDataCleaner
     }
 
     /// Must be called with the app's shared model context before any data
@@ -163,7 +174,7 @@ final class DataPrivacyViewModel {
             try await deleteAllData(from: context)
 
             // Reset app to initial state
-            await resetAppState()
+            try await resetAppState()
 
             statusMessage = "All data has been successfully deleted"
 
@@ -437,11 +448,23 @@ final class DataPrivacyViewModel {
         SunHatSearchIndexer.deleteAll()
     }
     
-    private func resetAppState() async {
+    private func resetAppState() async throws {
         // Reset app to initial onboarding state
         UserDefaults.standard.removeObject(forKey: "hasCompletedOnboarding")
         UserDefaults.standard.removeObject(forKey: "hasCreatedFirstReminder")
         UserDefaults.standard.removeObject(forKey: "lastLaunchVersion")
+
+        // Manual coordinates are persisted outside SwiftData by the location
+        // service, so they need an explicit privacy-deletion boundary.
+        locationPermissionManager.clearStoredLocationData()
+
+        // Notification Center is a separate data store that can retain deleted
+        // reminder titles, identifiers, and actions until explicitly cleared.
+        try await notificationDataCleaner.clearAllNotificationData()
+
+        // Clear non-persistent caches and one-shot routing/evaluation state that
+        // can still contain locations or deleted reminder identifiers.
+        await runtimeDataCleaner.clearPrivacyRuntimeData()
         
         // Clear any cached data
         URLCache.shared.removeAllCachedResponses()

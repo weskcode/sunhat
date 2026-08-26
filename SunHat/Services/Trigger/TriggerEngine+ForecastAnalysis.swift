@@ -353,7 +353,9 @@ extension TriggerEngine {
     /// requested period — a single current-conditions sample is not enough, because
     /// rain later in the window must fail the requirement. Requires forecast coverage
     /// of the whole window; without it the requirement is not met.
-    private func evaluateDryPeriod(
+    // Internal (not private) so regression tests can drive it with a fixed `startingAt`
+    // instead of the real wall clock — see TriggerEngineForecastAnalysisTests.
+    func evaluateDryPeriod(
         hoursRequired: Int,
         currentIsWet: Bool,
         forecastDays: [ForecastDayTransfer],
@@ -365,14 +367,20 @@ extension TriggerEngine {
         }
 
         let calendar = Calendar.current
-        let now = startingAt
-        let windowEnd = calendar.date(byAdding: .hour, value: hoursRequired, to: now) ?? now
-        let todayStart = calendar.startOfDay(for: now)
-        let coveringDays = forecastDays
-            .filter { $0.date >= todayStart && $0.date <= windowEnd }
-            .sorted { $0.date < $1.date }
-
+        let todayStart = calendar.startOfDay(for: startingAt)
         let daysNeeded = Int((Double(hoursRequired) / 24.0).rounded(.up)) + 1 // include today
+
+        // Bucket by calendar day rather than comparing raw timestamps against a
+        // windowEnd cutoff: providers don't guarantee `date` is midnight (WeatherAPI's
+        // own hourly-aggregate lookup already normalizes via startOfDay for the same
+        // reason), so a day stamped at e.g. 07:00 could fall just outside a raw
+        // now+Nh cutoff and be miscounted as missing coverage.
+        let dayBuckets = Dictionary(grouping: forecastDays) { calendar.startOfDay(for: $0.date) }
+        let coveringDays = (0..<daysNeeded).compactMap { offset -> ForecastDayTransfer? in
+            guard let dayStart = calendar.date(byAdding: .day, value: offset, to: todayStart) else { return nil }
+            return dayBuckets[dayStart]?.first
+        }
+
         guard coveringDays.count >= daysNeeded else {
             return ComponentEvaluationResult(
                 met: false,

@@ -11,8 +11,11 @@ import CoreLocation
 import SwiftData
 import os
 
-// Use DTOs for protocol and async boundaries
-protocol WeatherAPI: Sendable {
+// Use DTOs for protocol and async boundaries.
+// `nonisolated` because the module defaults to `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`,
+// which would otherwise pin this Sendable, all-async protocol to the main actor and stop
+// `actor` implementations (including test doubles) from conforming.
+nonisolated protocol WeatherAPI: Sendable {
     var provider: WeatherProvider { get }
     var isAvailable: Bool { get async }
     func fetchCurrentWeather(for location: CLLocation) async throws -> WeatherDataDTO
@@ -39,6 +42,8 @@ final class AppleWeatherKitAPI: WeatherAPI {
         do {
             let weather = try await weatherService.weather(for: location)
             return mapCurrentWeather(weather.currentWeather, at: location)
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             throw mapWeatherKitError(error)
         }
@@ -91,6 +96,8 @@ final class AppleWeatherKitAPI: WeatherAPI {
             return weather.dailyForecast.forecast.prefix(days).map { dailyWeather in
                 mapDailyWeather(dailyWeather, hourlyAggregates: aggregates)
             }
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             throw mapWeatherKitError(error)
         }
@@ -125,6 +132,8 @@ final class AppleWeatherKitAPI: WeatherAPI {
                 forecast: forecast,
                 hourly: hourly
             )
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             throw mapWeatherKitError(error)
         }
@@ -270,15 +279,15 @@ final class AppleWeatherKitAPI: WeatherAPI {
         }
     }
     
-    private func mapPrecipitationType(_ condition: WeatherKit.WeatherCondition) -> PrecipitationType {
+    func mapPrecipitationType(_ condition: WeatherKit.WeatherCondition) -> PrecipitationType {
         switch condition {
         case .drizzle, .freezingDrizzle:
             return .rain  // Map drizzle to rain since PrecipitationType doesn't have drizzle
-        case .rain, .freezingRain:
+        case .rain, .freezingRain, .heavyRain, .sunShowers:
             return .rain
-        case .snow, .blizzard, .blowingSnow, .flurries:
+        case .snow, .blizzard, .blowingSnow, .flurries, .heavySnow, .sunFlurries:
             return .snow
-        case .sleet:
+        case .sleet, .wintryMix:
             return .sleet
         case .hail:
             return .hail
@@ -287,8 +296,7 @@ final class AppleWeatherKitAPI: WeatherAPI {
              .isolatedThunderstorms, .scatteredThunderstorms,
              .strongStorms, .thunderstorms,
              .foggy, .smoky, .hurricane, .tropicalStorm,
-             .blowingDust, .haze, .heavyRain, .heavySnow,
-             .mostlyClear, .sunFlurries, .sunShowers, .wintryMix:
+             .blowingDust, .haze, .mostlyClear:
             return .none
         @unknown default:
             return .none
@@ -499,7 +507,7 @@ final class OpenWeatherMapAPI: WeatherAPI {
 
 // MARK: - OpenWeatherMap Response Models
 
-private struct OpenWeatherCurrentResponse: Codable, Sendable {
+nonisolated private struct OpenWeatherCurrentResponse: Codable, Sendable {
     let dt: Int
     let main: MainData
     let weather: [WeatherInfo]
@@ -540,11 +548,11 @@ private struct OpenWeatherCurrentResponse: Codable, Sendable {
 
 
 
-private struct OpenWeatherForecastResponse: Codable, Sendable {
+nonisolated private struct OpenWeatherForecastResponse: Codable, Sendable {
     let list: [OpenWeatherForecastItem]
 }
 
-private struct OpenWeatherForecastItem: Codable, Sendable {
+nonisolated private struct OpenWeatherForecastItem: Codable, Sendable {
     let dt: Int
     let main: OpenWeatherCurrentResponse.MainData
     let weather: [OpenWeatherCurrentResponse.WeatherInfo]
@@ -563,19 +571,21 @@ private extension Array where Element == Double {
     }
 }
 
-private extension Measurement where UnitType == UnitTemperature {
+// Pure unit conversions — nonisolated so the nonisolated WeatherAPI implementations
+// can use them off the main actor.
+nonisolated private extension Measurement where UnitType == UnitTemperature {
     var fahrenheitValue: Double {
         converted(to: .fahrenheit).value
     }
 }
 
-private extension Measurement where UnitType == UnitLength {
+nonisolated private extension Measurement where UnitType == UnitLength {
     var milesValue: Double {
         converted(to: .miles).value
     }
 }
 
-private extension Measurement where UnitType == UnitSpeed {
+nonisolated private extension Measurement where UnitType == UnitSpeed {
     var milesPerHourValue: Double {
         converted(to: .milesPerHour).value
     }

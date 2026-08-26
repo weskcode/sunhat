@@ -110,13 +110,18 @@ final class DetailedReminderViewModel: ObservableObject {
         saveContext()
     }
     
-    func deleteReminder() {
-        guard let modelContext = modelContext else { return }
+    func deleteReminder() async -> Bool {
+        guard let modelContext = modelContext else { return false }
         let reminderId = reminder.id
 
-        modelContext.delete(reminder)
-        saveContext(reindexReminder: false)
+        reminder.deleteOwnedData(from: modelContext)
+        guard saveContext(reindexReminder: false) else {
+            modelContext.rollback()
+            return false
+        }
         SunHatSearchIndexer.deleteReminder(id: reminderId)
+        await TriggerNotificationManager.shared.cancelNotifications(for: reminderId)
+        return true
     }
     
     func saveChanges(_ editedReminder: EditableReminder) async -> Bool {
@@ -344,16 +349,20 @@ final class DetailedReminderViewModel: ObservableObject {
         }
     }
     
-    private func saveContext(reindexReminder: Bool = true) {
-        guard let modelContext = modelContext else { return }
+    @discardableResult
+    private func saveContext(reindexReminder: Bool = true) -> Bool {
+        guard let modelContext = modelContext else { return false }
         
         do {
             try modelContext.save()
             if reindexReminder {
                 SunHatSearchIndexer.index(reminder: reminder)
             }
+            return true
         } catch {
             logger.error("Failed to save context: \(error.localizedDescription)")
+            errorMessage = "Couldn't save changes. Please try again."
+            return false
         }
     }
 

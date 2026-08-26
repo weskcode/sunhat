@@ -8,6 +8,7 @@
 
 import Foundation
 import Testing
+import SwiftData
 @testable import SunHat
 
 @MainActor
@@ -247,6 +248,43 @@ struct WeatherReminderTests {
         #expect(actions.contains(.skipped))
         #expect(actions.contains(.paused))
         #expect(actions.contains(.resumed))
+    }
+
+    @Test("Deleting a reminder removes its owned records but preserves its location")
+    func deletionRemovesOwnedRecords() throws {
+        let configuration = ModelConfiguration(
+            schema: SunHatModelSchema.schema,
+            isStoredInMemoryOnly: true
+        )
+        let container = try ModelContainer(
+            for: SunHatModelSchema.schema,
+            configurations: [configuration]
+        )
+        let context = ModelContext(container)
+
+        let condition = TriggerCondition()
+        let notification = NotificationConfig()
+        let location = LocationData(latitude: 40.0, longitude: -111.0, city: "Home")
+        let history = ReminderHistory(action: .created)
+        let reminder = WeatherReminder(
+            title: "Outdoor task",
+            triggerCondition: condition,
+            location: location,
+            notificationSettings: notification
+        )
+        history.weatherReminder = reminder
+        reminder.history = [history]
+        context.insert(reminder)
+        try context.save()
+
+        reminder.deleteOwnedData(from: context)
+        try context.save()
+
+        #expect(try context.fetch(FetchDescriptor<WeatherReminder>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<TriggerCondition>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<NotificationConfig>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<ReminderHistory>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<LocationData>()).count == 1)
     }
 }
 

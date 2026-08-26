@@ -199,6 +199,42 @@ struct WeatherViewModelDependencyTests {
         #expect(viewModel.historicalAvgTemp == nil)
     }
 
+    @Test("Historical comparisons populate from stored weather at the same location")
+    func historicalComparisonsPopulateFromStoredHistory() async throws {
+        let container = try makeModelContainer()
+        let context = container.mainContext
+        let calendar = Calendar.current
+
+        // Matches FakeLocationManager's fixed coordinate exactly, mirroring how
+        // ScreenshotSeeder stamps locationLatitude/Longitude on seeded rows.
+        let plan: [(daysAgo: Int, temperature: Double)] = [(1, 68), (7, 64), (10, 71)]
+        for entry in plan {
+            let data = WeatherData(temperature: entry.temperature, feelsLike: entry.temperature - 2, humidity: 55)
+            data.timestamp = calendar.date(byAdding: .day, value: -entry.daysAgo, to: Date())!
+            data.locationLatitude = 37.3349
+            data.locationLongitude = -122.0090
+            context.insert(data)
+        }
+        try context.save()
+
+        let provider = FakeWeatherProvider(weatherData: WeatherData(temperature: 72, feelsLike: 74, humidity: 55))
+        let viewModel = WeatherViewModel(
+            modelContainer: container,
+            weatherService: provider,
+            locationManager: FakeLocationManager()
+        )
+
+        try await waitUntil {
+            provider.fetchCount == 1
+        }
+        try await waitUntil {
+            viewModel.yesterdayTemp != nil
+        }
+
+        #expect(viewModel.yesterdayTemp == 68)
+        #expect(viewModel.lastWeekTemp == 64)
+    }
+
     @Test("WeatherViewModel refreshes through the selected manual location")
     func weatherViewModelRefreshesSelectedManualLocation() async throws {
         let weatherData = WeatherData(
@@ -238,6 +274,39 @@ struct WeatherViewModelDependencyTests {
         #expect(abs(lastCoordinate.latitude - 40.7128) < 0.0001)
         #expect(abs(lastCoordinate.longitude - -74.0060) < 0.0001)
         #expect(viewModel.locationName == "New York")
+    }
+
+    @Test("A slower previous location load cannot overwrite the latest selection")
+    func latestLocationLoadWins() async throws {
+        let provider = LocationDelayWeatherProvider()
+        let viewModel = WeatherViewModel(
+            modelContainer: try makeModelContainer(),
+            weatherService: provider,
+            locationManager: FakeLocationManager()
+        )
+
+        try await waitUntil {
+            provider.fetchCount == 1
+        }
+
+        let newYork = ReminderLocation(
+            coordinate: CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060),
+            displayName: "New York",
+            fullAddress: "New York, NY",
+            isCurrentLocation: false
+        )
+
+        await viewModel.updateSelectedLocation(newYork)
+        #expect(viewModel.locationName == "New York")
+        #expect(viewModel.currentTemperature == 74)
+
+        // The original current-location request deliberately finishes last.
+        provider.finishOriginalRequest()
+        try await waitUntil { provider.originalRequestFinished }
+
+        #expect(viewModel.locationName == "New York")
+        #expect(viewModel.currentTemperature == 74)
+        #expect(viewModel.isLoading == false)
     }
 
     @Test("hasWeatherData becomes false when the weather fetch fails")
@@ -394,6 +463,49 @@ private final class FakeWeatherProvider: WeatherProviding {
 
     func fetchHourlyForecast(for location: CLLocation) async -> [HourlyForecastDTO] {
         hourlyToReturn
+    }
+}
+
+@MainActor
+private final class LocationDelayWeatherProvider: WeatherProviding {
+    @Published private var lastUpdateTime: Date?
+    private(set) var fetchCount = 0
+    private(set) var originalRequestFinished = false
+    private var originalRequestContinuation: CheckedContinuation<Void, Never>?
+
+    var isLoadingPublisher: AnyPublisher<Bool, Never> {
+        Just(false).eraseToAnyPublisher()
+    }
+
+    var lastUpdateTimePublisher: AnyPublisher<Date?, Never> {
+        $lastUpdateTime.eraseToAnyPublisher()
+    }
+
+    func fetchCurrentWeather(
+        for location: CLLocation,
+        forceRefresh: Bool
+    ) async throws -> WeatherData {
+        fetchCount += 1
+
+        if abs(location.coordinate.longitude - -122.0090) < 0.001 {
+            await withCheckedContinuation { continuation in
+                originalRequestContinuation = continuation
+            }
+            originalRequestFinished = true
+            return WeatherData(temperature: 60, feelsLike: 60, humidity: 50)
+        }
+
+        lastUpdateTime = Date()
+        return WeatherData(temperature: 74, feelsLike: 74, humidity: 50)
+    }
+
+    func finishOriginalRequest() {
+        originalRequestContinuation?.resume()
+        originalRequestContinuation = nil
+    }
+
+    func fetchHourlyForecast(for location: CLLocation) async -> [HourlyForecastDTO] {
+        []
     }
 }
 

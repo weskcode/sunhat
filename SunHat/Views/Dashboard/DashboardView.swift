@@ -31,7 +31,8 @@ struct DashboardView: View {
             ZStack {
                 SunHatAtmosphereBackground(
                     condition: viewModel.weatherCondition,
-                    intensity: viewModel.hasWeatherData ? 1 : 0.55
+                    intensity: viewModel.hasWeatherData ? 1 : 0.55,
+                    showsConditionAccent: false
                 )
                     .ignoresSafeArea()
 

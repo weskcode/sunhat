@@ -11,6 +11,7 @@
 #if DEBUG
 import Foundation
 import SwiftData
+import CoreLocation
 
 @MainActor
 enum ScreenshotSeeder {
@@ -29,6 +30,17 @@ enum ScreenshotSeeder {
 
         let location = makeLocation()
         context.insert(location)
+
+        // WeatherViewModel (Weather tab) resolves its location through
+        // LocationPermissionManager.shared.manualLocation, not through
+        // UserPreferences.manualLocationLatitude/Longitude below (that's a separate
+        // path only DashboardViewModel reads) — without this, the Weather tab has no
+        // location at all in a screenshot build and falls back to an all-zero empty
+        // state instead of showing the seeded data.
+        LocationPermissionManager.shared.manualLocation = ManualLocationData(
+            name: location.city,
+            coordinate: CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude)
+        )
 
         let preferences = makePreferences(location: location)
         context.insert(preferences)

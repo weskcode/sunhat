@@ -13,6 +13,13 @@ import CoreLocation
 import Combine
 import os
 
+// `nonisolated` for the same reason as `WeatherAPI`: the module's default MainActor
+// isolation would otherwise prevent `actor` conformances, including test doubles.
+nonisolated protocol TriggerNotificationSending: Sendable {
+    func configure(modelContainer: ModelContainer?) async
+    func sendTriggerNotification(for result: TriggerEvaluationResult, isBackground: Bool) async throws
+}
+
 @MainActor
 final class TriggerEngineManager: ObservableObject {
     static let shared = TriggerEngineManager()
@@ -25,7 +32,8 @@ final class TriggerEngineManager: ObservableObject {
     private var triggerEngine: TriggerEngine?
     private var modelContainer: ModelContainer?
     private var scheduledEvaluationTask: Task<Void, Never>?
-    private let notificationManager = TriggerNotificationManager.shared
+    private let notificationManager: any TriggerNotificationSending
+    private var deliveriesInFlight: Set<UUID> = []
     private let backgroundTaskIdentifier = "org.wesley.sunhat.trigger-evaluation"
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "TriggerEngineManager")
     
@@ -34,8 +42,16 @@ final class TriggerEngineManager: ObservableObject {
     @Published var successfulTriggers = 0
     @Published var averageEvaluationTime: TimeInterval = 0
     
-    private init() {
-        registerBackgroundTask()
+    init(
+        modelContainer: ModelContainer? = nil,
+        registerBackgroundTask: Bool = true,
+        notificationManager: any TriggerNotificationSending = TriggerNotificationManager.shared
+    ) {
+        self.modelContainer = modelContainer
+        self.notificationManager = notificationManager
+        if registerBackgroundTask {
+            self.registerBackgroundTask()
+        }
     }
     
     func configure(modelContainer: ModelContainer) async {
@@ -103,7 +119,25 @@ final class TriggerEngineManager: ObservableObject {
     
     // MARK: - Background Evaluation
     
-    private func registerBackgroundTask() {
+    /// Identifiers already handed to `BGTaskScheduler` in this process.
+    ///
+    /// Static, not per-instance: `BGTaskScheduler`'s registry is process-global and a
+    /// second `register` for the same identifier raises `NSInternalInconsistencyException`
+    /// (an uncatchable crash). Since this type is no longer a private singleton — the
+    /// initializer is available for dependency injection — an instance flag would not
+    /// stop a second manager from crashing the app on launch.
+    private static var registeredBackgroundTaskIdentifiers: Set<String> = []
+
+    /// Registers the BG launch handler. Safe to call more than once.
+    /// Returns whether this call performed the registration.
+    @discardableResult
+    func registerBackgroundTask() -> Bool {
+        guard !Self.registeredBackgroundTaskIdentifiers.contains(backgroundTaskIdentifier) else {
+            logger.warning("Background task \(self.backgroundTaskIdentifier) already registered — ignoring duplicate")
+            return false
+        }
+        Self.registeredBackgroundTaskIdentifiers.insert(backgroundTaskIdentifier)
+
         BGTaskScheduler.shared.register(forTaskWithIdentifier: backgroundTaskIdentifier, using: nil) { task in
             Task {
                 guard let refreshTask = task as? BGAppRefreshTask else {
@@ -115,6 +149,7 @@ final class TriggerEngineManager: ObservableObject {
             }
         }
         logger.info("Registered background task: \(self.backgroundTaskIdentifier)")
+        return true
     }
     
     func scheduleBackgroundEvaluation() {
@@ -140,8 +175,9 @@ final class TriggerEngineManager: ObservableObject {
 
         let startTime = Date()
 
-        let workTask = Task {
+        let workTask = Task { () -> [TriggerEvaluationResult] in
             let results = await triggerEngine.evaluateAllActiveReminders()
+            guard !Task.isCancelled else { return [] }
             await processEvaluationResults(results, isBackground: true)
             return results
         }
@@ -165,29 +201,36 @@ final class TriggerEngineManager: ObservableObject {
     
     // MARK: - Result Processing
     
-    private func processEvaluationResults(_ results: [TriggerEvaluationResult], isBackground: Bool = false) async {
+    func processEvaluationResults(
+        _ results: [TriggerEvaluationResult],
+        isBackground: Bool = false
+    ) async {
         var newlyTriggered: [UUID] = []
         
         for result in results {
+            guard !Task.isCancelled else { break }
+
             if result.triggered {
                 // Check if this is a new trigger (not already in our triggered list)
-                if !triggeredReminders.contains(result.reminderId) {
-                    newlyTriggered.append(result.reminderId)
-                    await MainActor.run {
+                if !triggeredReminders.contains(result.reminderId),
+                   !deliveriesInFlight.contains(result.reminderId) {
+                    // Delivery policy can suppress an otherwise true condition (for
+                    // example during quiet hours). Only enter notification cooldown
+                    // and persist trigger statistics after an actual delivery, so the
+                    // same condition remains eligible when suppression ends.
+                    deliveriesInFlight.insert(result.reminderId)
+                    let delivered = await sendNotificationForResult(result, isBackground: isBackground)
+                    deliveriesInFlight.remove(result.reminderId)
+
+                    if delivered {
+                        newlyTriggered.append(result.reminderId)
                         triggeredReminders.append(result.reminderId)
+                        await updateReminderWithResult(result)
                     }
-                    
-                    // Send notification for newly triggered reminder
-                    await sendNotificationForResult(result, isBackground: isBackground)
-                    
-                    // Update reminder in database
-                    await updateReminderWithResult(result)
                 }
             } else {
                 // Remove from triggered list if no longer triggered
-                await MainActor.run {
-                    triggeredReminders.removeAll { $0 == result.reminderId }
-                }
+                triggeredReminders.removeAll { $0 == result.reminderId }
             }
         }
         
@@ -202,7 +245,13 @@ final class TriggerEngineManager: ObservableObject {
         await scheduleNextEvaluations(results)
     }
     
-    private func sendNotificationForResult(_ result: TriggerEvaluationResult, isBackground: Bool) async {
+    @discardableResult
+    private func sendNotificationForResult(
+        _ result: TriggerEvaluationResult,
+        isBackground: Bool
+    ) async -> Bool {
+        guard !Task.isCancelled else { return false }
+
         // Honor the user's app-level notification preferences (master switch,
         // quiet hours, weekend rule, daily limit).
         if let modelContainer {
@@ -210,16 +259,19 @@ final class TriggerEngineManager: ObservableObject {
             if let preferences = try? context.fetch(FetchDescriptor<UserPreferences>()).first,
                !preferences.allowsNotificationDelivery() {
                 logger.info("Suppressed notification for \(result.reminderId) — notifications are off, quiet hours active, or daily limit reached")
-                return
+                return false
             }
         }
 
         do {
+            try Task.checkCancellation()
             try await notificationManager.sendTriggerNotification(for: result, isBackground: isBackground)
             logger.info("Sent notification for triggered reminder: \(result.reminderId)")
             recordDelivery()
+            return true
         } catch {
             logger.error("Failed to send notification for reminder \(result.reminderId): \(error)")
+            return false
         }
     }
 
@@ -299,6 +351,8 @@ final class TriggerEngineManager: ObservableObject {
     
     func clearTriggeredReminders() {
         triggeredReminders.removeAll()
+        deliveriesInFlight.removeAll()
+        evaluationResults.removeAll()
         logger.info("Cleared triggered reminders list")
     }
     
@@ -317,7 +371,7 @@ final class TriggerEngineManager: ObservableObject {
 
 // MARK: - Notification Manager
 
-actor TriggerNotificationManager {
+actor TriggerNotificationManager: TriggerNotificationSending {
     static let shared = TriggerNotificationManager()
     
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "TriggerNotificationManager")
@@ -516,8 +570,7 @@ actor TriggerNotificationManager {
     
     private func handleViewAction(reminderId: UUID) async {
         logger.info("User requested to view details for reminder \(reminderId)")
-        // This would typically navigate to the reminder detail view
-        // The UI layer would handle this navigation
+        await NotificationNavigationHandoff.shared.store(reminderID: reminderId)
     }
 
     private func persistReminderAction(

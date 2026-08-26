@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import CoreLocation
 import SwiftData
 import Testing
 @testable import SunHat
@@ -40,8 +41,20 @@ struct DataPrivacyViewModelTests {
         let context = try makeInMemoryContext()
         insertOneOfEachPrivacyModel(in: context)
         try context.save()
+        let defaults = makeDefaults()
+        let locationManager = LocationPermissionManager(userDefaults: defaults)
+        let notificationCleaner = RecordingNotificationDataCleaner()
+        let runtimeCleaner = RecordingPrivacyRuntimeDataCleaner()
+        locationManager.manualLocation = ManualLocationData(
+            name: "Private location",
+            coordinate: .init(latitude: 40.0, longitude: -111.0)
+        )
 
-        let viewModel = DataPrivacyViewModel()
+        let viewModel = DataPrivacyViewModel(
+            locationPermissionManager: locationManager,
+            notificationDataCleaner: notificationCleaner,
+            runtimeDataCleaner: runtimeCleaner
+        )
         viewModel.configure(modelContext: context)
         viewModel.deleteConfirmationText = "DELETE"
         await viewModel.deleteAllUserData()
@@ -57,6 +70,10 @@ struct DataPrivacyViewModelTests {
         #expect(try context.fetch(FetchDescriptor<UserPreferences>()).isEmpty)
         #expect(try context.fetch(FetchDescriptor<SavedLocation>()).isEmpty)
         #expect(try context.fetch(FetchDescriptor<LocationHistory>()).isEmpty)
+        #expect(locationManager.manualLocation == nil)
+        #expect(LocationPermissionManager(userDefaults: defaults).manualLocation == nil)
+        #expect(notificationCleaner.clearCount == 1)
+        #expect(runtimeCleaner.clearCount == 1)
     }
 
     @Test("Delete all is a no-op without typed confirmation")
@@ -86,6 +103,11 @@ struct DataPrivacyViewModelTests {
         return ModelContext(container)
     }
 
+    private func makeDefaults() -> UserDefaults {
+        let suiteName = "DataPrivacyViewModelTests.\(UUID().uuidString)"
+        return UserDefaults(suiteName: suiteName)!
+    }
+
     private func insertOneOfEachPrivacyModel(in context: ModelContext) {
         context.insert(WeatherReminder(title: "Wear sunscreen"))
         context.insert(TriggerCondition())
@@ -97,5 +119,23 @@ struct DataPrivacyViewModelTests {
         context.insert(UserPreferences())
         context.insert(SavedLocation(latitude: 40.0, longitude: -111.0, name: "Home"))
         context.insert(LocationHistory(latitude: 40.2, longitude: -111.7, name: "Provo"))
+    }
+}
+
+@MainActor
+private final class RecordingNotificationDataCleaner: NotificationDataClearing {
+    private(set) var clearCount = 0
+
+    func clearAllNotificationData() async throws {
+        clearCount += 1
+    }
+}
+
+@MainActor
+private final class RecordingPrivacyRuntimeDataCleaner: PrivacyRuntimeDataClearing {
+    private(set) var clearCount = 0
+
+    func clearPrivacyRuntimeData() async {
+        clearCount += 1
     }
 }
