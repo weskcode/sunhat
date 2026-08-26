@@ -20,7 +20,7 @@ final class SettingsViewModel {
 
     // Notifications
     /// Whether the in-app master switch is on AND the system permission is
-    /// granted — the single source of truth the toggle displays.
+    /// granted, the single source of truth the toggle displays.
     var notificationsEnabled = false
     /// True when the user has denied the system permission, so the toggle
     /// can explain that enabling requires a trip to the Settings app.

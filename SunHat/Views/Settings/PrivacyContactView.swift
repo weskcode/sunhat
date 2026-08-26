@@ -357,7 +357,7 @@ struct PrivacyContactView: View {
     }
 }
 
-/// Typed alert state for `PrivacyContactView` — one alert surface for
+/// Typed alert state for `PrivacyContactView`, one alert surface for
 /// open-failure and clipboard-confirmation messages.
 private struct PrivacyContactStatusAlert: Identifiable {
     let id = UUID()

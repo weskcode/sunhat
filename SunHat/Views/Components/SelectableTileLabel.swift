@@ -8,7 +8,7 @@
 import SwiftUI
 
 /// A fixed-height selectable tile (icon over caption) used for option grids
-/// in the streamlined reminder creator — currently time-of-day preference.
+/// in the streamlined reminder creator, currently time-of-day preference.
 /// Flat tint fill when selected, matching the app's native segmented/toggle styling.
 struct SelectableTileLabel: View {
     let icon: String

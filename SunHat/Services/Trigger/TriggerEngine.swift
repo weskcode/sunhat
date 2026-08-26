@@ -270,7 +270,7 @@ actor TriggerEngine {
             result = await evaluateHistoricalComparison(conditionData, reminderId: reminderId, location: location, currentWeather: currentWeatherData)
         }
 
-        // Apply sky condition filter — only when temperature already matched
+        // Apply sky condition filter, only when temperature already matched
         if conditionData.hasSkyConditionFilter && result.triggered {
             let skyMatch = evaluateSkyCondition(conditionData, weatherData: currentWeatherData)
             if !skyMatch {

@@ -131,7 +131,7 @@ final class DashboardViewModel: ObservableObject {
 
             // Validate location is not the (0,0) fallback
             if location.coordinate.latitude == 0 && location.coordinate.longitude == 0 {
-                logger.error("Location unavailable — cannot fetch weather for (0,0)")
+                logger.error("Location unavailable, cannot fetch weather for (0,0)")
                 errorMessage = "Unable to determine your location. Please check location permissions in Settings."
                 connectionStatus = .disconnected
                 isLoading = false
@@ -144,7 +144,7 @@ final class DashboardViewModel: ObservableObject {
             let weatherData = try await weatherService.fetchCurrentWeather(for: location, forceRefresh: true)
 
             // refreshWeatherData() is already isolated to @MainActor (inherited from the class),
-            // so no MainActor.run hop is needed — these assignments are safe as-is.
+            // so no MainActor.run hop is needed, these assignments are safe as-is.
             updateWeatherData(weatherData)
             loadActiveReminders()
             loadWeatherAlerts()
@@ -170,7 +170,7 @@ final class DashboardViewModel: ObservableObject {
     // MARK: - Private Methods
     
     private func setupBindings() {
-        // Weather service bindings — use RunLoop.main as the Combine scheduler
+        // Weather service bindings, use RunLoop.main as the Combine scheduler
         // so Swift 6 can verify we're delivering on the @MainActor thread.
         weatherService.$isLoading
             .receive(on: RunLoop.main)

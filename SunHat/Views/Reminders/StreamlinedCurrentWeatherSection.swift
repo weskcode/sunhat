@@ -9,7 +9,7 @@ import SwiftUI
 
 /// Live current-conditions row for the selected location, nested inside the
 /// "Location" card in the streamlined reminder creator. Shows loading and
-/// unavailable states — never fabricated values.
+/// unavailable states, never fabricated values.
 struct StreamlinedCurrentWeatherSection: View {
     @ObservedObject var viewModel: FirstReminderCreationViewModel
 

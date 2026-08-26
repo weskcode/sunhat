@@ -77,7 +77,7 @@ final class DataPrivacyViewModel {
     }
 
     /// Must be called with the app's shared model context before any data
-    /// operation — summary, export, and delete must all hit the same
+    /// operation, summary, export, and delete must all hit the same
     /// app-group store the rest of the app reads and writes.
     func configure(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -378,7 +378,7 @@ final class DataPrivacyViewModel {
             context.delete(reminder)
         }
 
-        // Delete trigger conditions explicitly — a condition created without (or detached
+        // Delete trigger conditions explicitly, a condition created without (or detached
         // from) a parent reminder is not covered by the reminder cascade above.
         let conditionDescriptor = FetchDescriptor<TriggerCondition>()
         let conditions = try context.fetch(conditionDescriptor)

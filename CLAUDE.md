@@ -51,7 +51,7 @@ Use the existing configured simulator only: `iPhone 17 Pro` (`20465D2E-7941-46FD
 
 ### Current Structure
 - **SunHat/sunhat.swift**: Main app entry point with SwiftData ModelContainer setup
-- **ContentView.swift**: Root view — routes between splash, onboarding, and main tab bar
+- **ContentView.swift**: Root view, routes between splash, onboarding, and main tab bar
 - **MainTabView.swift**: iOS 26.4 tab bar with `.tabBarMinimizeBehavior(.onScrollDown)`
 - **Views/Reminders/ReminderGlassCard.swift**: the actual in-use glass card surface
 - **Tests**: Unit tests use XCTest plus newer Swift Testing suites; UI tests remain XCTest-based
@@ -92,10 +92,10 @@ class WeatherData {
 
 ### iOS 26.4 Liquid Glass UI
 
-**Use `.glassEffect()` for all card surfaces** and `Color(.systemBackground)` for page backgrounds (standard iOS white/dark). No custom warm-tinted or gradient backgrounds. Remaining ~29 `Color(.secondarySystemBackground)` are in secondary/nested contexts — convert case-by-case only where a true top-level card surface is identified (avoid glass-in-glass). `GlassEffectContainer` wrapping and `.searchable` are deferred to visual QA.
+**Use `.glassEffect()` for all card surfaces** and `Color(.systemBackground)` for page backgrounds (standard iOS white/dark). No custom warm-tinted or gradient backgrounds. Remaining ~29 `Color(.secondarySystemBackground)` are in secondary/nested contexts. Convert case-by-case only where a true top-level card surface is identified (avoid glass-in-glass). `GlassEffectContainer` wrapping and `.searchable` are deferred to visual QA.
 
 ```swift
-// ✅ iOS 26.4 — correct
+// ✅ iOS 26.4, correct
 someView
     .padding(20)
     .glassEffect(in: .rect(cornerRadius: 20))
@@ -114,7 +114,7 @@ GlassEffectContainer {
     VStack { cardA; cardB }
 }
 
-// Do not use .regularMaterial — use .glassEffect() instead
+// Do not use .regularMaterial, use .glassEffect() instead
 // .background(RoundedRectangle(cornerRadius: 20).fill(.regularMaterial))  // DEPRECATED
 ```
 
@@ -136,12 +136,12 @@ label
     .glassEffect(.regular.tint(color.opacity(0.15)), in: .capsule)
 ```
 
-**Tab bar** — use `.tabBarMinimizeBehavior(.onScrollDown)` on `TabView` to auto-hide on scroll.
+**Tab bar**: Use `.tabBarMinimizeBehavior(.onScrollDown)` on `TabView` to auto-hide on scroll.
 
 ### SwiftData Implementation
 - Use `@Model` for all persistent entities
 - Configure ModelContainer in app entry point (already done)
-- CloudKit sync is prepared but disabled — enable via `ModelConfiguration(.cloud)` when ready
+- CloudKit sync is prepared but disabled, enable via `ModelConfiguration(.cloud)` when ready
 - Use `@Query` in views for reactive data binding
 
 ### Modern Swift Patterns (iOS 26.4)
@@ -179,11 +179,11 @@ Migration status and priority:
 4. Keep `DashboardViewModel` / `WeatherViewModel` on `ObservableObject` for now because they still coordinate heavier service work and Combine-backed services.
 
 ### Weather Integration Architecture
-- Primary: Apple WeatherKit with iOS 26 APIs — `WeatherProviding` / `WeatherService` + `AppleWeatherKitAPI`
+- Primary: Apple WeatherKit with iOS 26 APIs, `WeatherProviding` / `WeatherService` + `AppleWeatherKitAPI`
 - Backup: OpenWeatherMap API
 - Cache with SwiftData for offline capability
 - Background refresh via iOS 26 BackgroundTasks (`BGContinuedProcessingTask`)
-- `async/await` throughout — no completion handlers
+- `async/await` throughout, no completion handlers
 
 ### Testing Requirements
 - Unit tests in `SunHatTests/` for business logic; write new unit/integration tests with Swift Testing where practical
@@ -235,7 +235,7 @@ Earlier milestones (June 2026):
 - ✅ **Liquid Glass**: `.glassEffect()` on card surfaces; all page backgrounds use `Color(.systemBackground)` (standard iOS); remaining ~29 `secondarySystemBackground` are secondary/nested fills left deliberately
 - ✅ **Native settings**: Apple-native `SettingsView` with icon chips, real notification toggle, enforced quiet hours and master switch
 - ✅ **Glass tab bar**: `MainTabView` with `.tabBarMinimizeBehavior(.onScrollDown)`
-- ✅ **Glass create button**: a `Tab("New Task", systemImage: "plus", role: .search)` renders as the detached circular glass button on the trailing side of the tab bar (the slot Apple Music uses for search). `MainTabView` intercepts its selection in `.onChange` — reverts the selection and presents the create sheet — so it acts as a button, not a tab. (Earlier `tabViewBottomAccessory` and over-content FAB approaches were rejected.)
+- ✅ **Glass create button**: a `Tab("New Task", systemImage: "plus", role: .search)` renders as the detached circular glass button on the trailing side of the tab bar (the slot Apple Music uses for search). `MainTabView` intercepts its selection in `.onChange`, reverts the selection and presents the create sheet, so it acts as a button, not a tab. (Earlier `tabViewBottomAccessory` and over-content FAB approaches were rejected.)
 - ✅ **Glass buttons**: Welcome screen "Get Started" uses `.buttonStyle(.glass)`
 - ✅ **Glass tags**: Onboarding activity tags use capsule glass tints
 - ✅ **GlassCard component**: Reusable `GlassCard`, `GlassSection`, `GlassMetricBadge`
@@ -248,11 +248,11 @@ Earlier milestones (June 2026):
 - ✅ Background weather updates using iOS 26 async patterns
 - ✅ **Background task plist**: `BGTaskSchedulerPermittedIdentifiers` and `fetch` background mode configured
 - ✅ **ModelContainer injection**: `BackgroundWeatherManager` and `TriggerEngineManager` use the shared container from app entry point
-- ✅ **Zero `DispatchQueue.main.asyncAfter`** in production code — all replaced with cancellable `Task.sleep`
+- ✅ **Zero `DispatchQueue.main.asyncAfter`** in production code, all replaced with cancellable `Task.sleep`
 - ✅ Dependency seams: `WeatherProviding`, `LocationManaging`, `SettingsOpening`, `NotificationPermissionProviding` protocols
 - ✅ Observation migration: `UserPreferencesViewModel`, `SettingsViewModel`, `LocationPickerViewModel` use `@Observable`
 - ✅ Unit verification: `SunHatTests` passed with 230 tests on June 12, 2026
 - 🔲 Actual WidgetKit/watchOS targets (shared compact view exists; targets are not present yet)
-- ✅ Launch smoke verification on the configured simulator (boots to dashboard, light/dark render, relaunch stable, live error states — June 12, 2026); 🔲 interactive tap-through QA still pending
+- ✅ Launch smoke verification on the configured simulator (boots to dashboard, light/dark render, relaunch stable, live error states, June 12, 2026); 🔲 interactive tap-through QA still pending
 - 🔲 Continue ViewModel migration from `ObservableObject` → `@Observable`
 - 🔲 CloudKit sync re-enablement (prepared, needs provisioning)

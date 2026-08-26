@@ -273,7 +273,7 @@ struct WelcomeView: View {
                     .fontWeight(.medium)
                     .foregroundStyle(.primary)
 
-                Text("It's 72°F and sunny — ideal for your outdoor plans.")
+                Text("It's 72°F and sunny, ideal for your outdoor plans.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)

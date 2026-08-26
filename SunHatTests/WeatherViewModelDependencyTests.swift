@@ -180,7 +180,7 @@ struct WeatherViewModelDependencyTests {
         #expect(!viewModel.weatherAlerts.contains { $0.title.contains("Warning") })
     }
 
-    @Test("Historical comparisons stay nil without stored history — no placeholder values")
+    @Test("Historical comparisons stay nil without stored history, no placeholder values")
     func historicalComparisonsNilWithoutStoredHistory() async throws {
         let provider = FakeWeatherProvider(weatherData: WeatherData(temperature: 72, feelsLike: 74, humidity: 55))
         let viewModel = WeatherViewModel(

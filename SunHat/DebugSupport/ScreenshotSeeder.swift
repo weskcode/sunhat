@@ -34,7 +34,7 @@ enum ScreenshotSeeder {
         // WeatherViewModel (Weather tab) resolves its location through
         // LocationPermissionManager.shared.manualLocation, not through
         // UserPreferences.manualLocationLatitude/Longitude below (that's a separate
-        // path only DashboardViewModel reads) — without this, the Weather tab has no
+        // path only DashboardViewModel reads), without this, the Weather tab has no
         // location at all in a screenshot build and falls back to an all-zero empty
         // state instead of showing the seeded data.
         LocationPermissionManager.shared.manualLocation = ManualLocationData(
@@ -218,7 +218,7 @@ enum ScreenshotSeeder {
             category: .gardening,
             priority: .normal,
             triggerCondition: condition,
-            notificationConfig: NotificationConfig(title: "Garden Watering", message: "It's warm enough — hold off on watering today."),
+            notificationConfig: NotificationConfig(title: "Garden Watering", message: "It's warm enough, hold off on watering today."),
             location: location
         )
         reminder.addHistoryEntry(.created, details: "Reminder created")
@@ -262,7 +262,7 @@ enum ScreenshotSeeder {
             category: .outdoor,
             priority: .normal,
             triggerCondition: condition,
-            notificationConfig: NotificationConfig(title: "Beach Day", message: "Sunny and warm — a great day for the beach."),
+            notificationConfig: NotificationConfig(title: "Beach Day", message: "Sunny and warm, a great day for the beach."),
             location: location
         )
         reminder.addHistoryEntry(.created, details: "Reminder created")
@@ -286,11 +286,11 @@ enum ScreenshotSeeder {
 
         let reminder = WeatherReminder(
             title: "Golden Hour Photo Walk",
-            reminderDescription: "Warm, calm, and dry — ideal golden-hour light.",
+            reminderDescription: "Warm, calm, and dry, ideal golden-hour light.",
             category: .outdoor,
             priority: .low,
             triggerCondition: condition,
-            notificationConfig: NotificationConfig(title: "Golden Hour Photo Walk", message: "Calm, dry, warm conditions — good light for photos."),
+            notificationConfig: NotificationConfig(title: "Golden Hour Photo Walk", message: "Calm, dry, warm conditions, good light for photos."),
             location: location
         )
         reminder.addHistoryEntry(.created, details: "Reminder created")
@@ -327,7 +327,7 @@ enum ScreenshotSeeder {
             category: .seasonal,
             priority: .high,
             triggerCondition: condition,
-            notificationConfig: NotificationConfig(title: "First Frost Watch", message: "Frost is likely tonight — bring in tender plants."),
+            notificationConfig: NotificationConfig(title: "First Frost Watch", message: "Frost is likely tonight, bring in tender plants."),
             location: location
         )
         reminder.addHistoryEntry(.created, details: "Reminder created")

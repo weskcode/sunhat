@@ -39,14 +39,14 @@ final class BackgroundWeatherManager: ObservableObject {
         logger.info("BackgroundWeatherManager configured with shared ModelContainer")
     }
 
-    /// Registers the BG refresh launch handler. Safe to call more than once —
+    /// Registers the BG refresh launch handler. Safe to call more than once,
     /// a second `BGTaskScheduler.register` for the same identifier raises
     /// `NSInternalInconsistencyException`, so duplicates are ignored.
     /// Returns whether this call performed the registration.
     @discardableResult
     func registerBackgroundTask() -> Bool {
         guard !isBackgroundTaskRegistered else {
-            logger.warning("Background task already registered — ignoring duplicate registration")
+            logger.warning("Background task already registered, ignoring duplicate registration")
             return false
         }
         isBackgroundTaskRegistered = true
@@ -75,13 +75,13 @@ final class BackgroundWeatherManager: ObservableObject {
     }
     
     /// Schedules the next background refresh. Returns whether a request was
-    /// actually submitted — `false` when background refresh is unavailable
+    /// actually submitted, `false` when background refresh is unavailable
     /// (user disabled it / Low Power Mode) or submission fails, in which case
     /// the app falls back to foreground-only refreshes.
     @discardableResult
     func scheduleBackgroundRefresh() -> Bool {
         guard isBackgroundRefreshEnabled else {
-            logger.warning("Background refresh is disabled — relying on foreground refresh only")
+            logger.warning("Background refresh is disabled, relying on foreground refresh only")
             return false
         }
 

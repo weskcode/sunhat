@@ -18,7 +18,7 @@ final class LocationPermissionManager: NSObject, ObservableObject {
     
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var currentLocation: CLLocation?
-    /// Persisted across launches (see `didSet` below) — without this, any consumer
+    /// Persisted across launches (see `didSet` below), without this, any consumer
     /// that reads `manualLocation` directly (e.g. `LocationPermissionManagerAdapter`,
     /// used by `WeatherViewModel`) silently lost a user's manual-location choice on
     /// every fresh app launch, even though `UserPreferences.manualLocationLatitude/

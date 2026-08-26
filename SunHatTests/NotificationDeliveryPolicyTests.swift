@@ -95,7 +95,7 @@ struct NotificationDeliveryPolicyTests {
         preferences.recordNotificationDelivered(at: now, calendar: calendar)
         #expect(preferences.allowsNotificationDelivery(at: now, calendar: calendar))
         preferences.recordNotificationDelivered(at: now, calendar: calendar)
-        // At the limit — should now be blocked
+        // At the limit, should now be blocked
         #expect(preferences.allowsNotificationDelivery(at: now, calendar: calendar) == false)
     }
 
@@ -108,7 +108,7 @@ struct NotificationDeliveryPolicyTests {
 
         preferences.recordNotificationDelivered(at: today, calendar: calendar)
         #expect(preferences.allowsNotificationDelivery(at: today, calendar: calendar) == false)
-        // New day — count should be treated as 0
+        // New day, count should be treated as 0
         #expect(preferences.allowsNotificationDelivery(at: tomorrow, calendar: calendar))
     }
 

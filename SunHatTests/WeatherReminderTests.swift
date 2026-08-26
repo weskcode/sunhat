@@ -2,7 +2,7 @@
 //  WeatherReminderTests.swift
 //  SunHatTests
 //
-//  Covers WeatherReminder lifecycle, activation state, and trigger gating —
+//  Covers WeatherReminder lifecycle, activation state, and trigger gating,
 //  the core domain logic behind the app's reminders.
 //
 

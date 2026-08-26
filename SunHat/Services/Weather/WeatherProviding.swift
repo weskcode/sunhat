@@ -17,7 +17,7 @@ protocol WeatherProviding: AnyObject {
     func fetchCurrentWeather(for location: CLLocation, forceRefresh: Bool) async throws -> WeatherData
 
     /// Real provider hourly forecast, or `[]` when unavailable. Implementations
-    /// must never synthesize hours — the UI shows an unavailable state instead.
+    /// must never synthesize hours, the UI shows an unavailable state instead.
     func fetchHourlyForecast(for location: CLLocation) async -> [HourlyForecastDTO]
 }
 

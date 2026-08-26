@@ -3,7 +3,7 @@
 //  SunHatUITests
 //
 //  Drives the real app UI to capture raw App Store screenshot material into
-//  AppStore/Screenshots_v2/Raw. Not a correctness test — run explicitly via
+//  AppStore/Screenshots_v2/Raw. Not a correctness test, run explicitly via
 //  -only-testing when regenerating marketing screenshots. Each shot is an
 //  independent test method (own launch) so one flaky interaction can't take
 //  down the rest of the set.
@@ -216,7 +216,7 @@ final class ScreenshotCaptureUITests: XCTestCase {
         openReminder(app, titled: "Garden Watering")
         // Scrolling to the bottom of this reminder's content lands the Notification Settings
         // section at the top of the viewport, which the app's floating nav bar and the status
-        // bar both overlap (a real DetailedReminderView layout issue, not a capture artifact —
+        // bar both overlap (a real DetailedReminderView layout issue, not a capture artifact,
         // reproduces regardless of scroll timing). The crop below cuts past it.
         app.swipeUp()
         app.swipeUp()

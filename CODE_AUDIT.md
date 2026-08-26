@@ -13,16 +13,16 @@ Snapshot: commit `941d71e` on 2026-07-10. SunHat is a privacy-first, location-aw
 
 ### 1.2 Highest-impact action items
 
-1. **[High/P1] Replace synthetic hourly forecast data** — §5.1 — `SunHat/ViewModels/WeatherViewModel.swift:224-247`.
-2. **[High/P1] Stop presenting locally invented conditions as official weather alerts** — §5.2 — `SunHat/ViewModels/WeatherViewModel.swift:253-278`.
-3. **[High/P1] Make Data & Analytics controls truthful or remove the screen** — §6.1 — `SunHat/Views/Settings/DataAnalyticsView.swift:10-55`.
-4. **[High/P1] Preserve precipitation probability and location in prediction evaluation** — §5.3 — `SunHat/Services/Trigger/TriggerEngine+ForecastAnalysis.swift:120-169`.
-5. **[High/P1] Evaluate 24/48-hour dry requirements across the requested period** — §5.4 — `SunHat/Services/Trigger/TriggerEngine+ForecastAnalysis.swift:304-328`.
-6. **[High/P1] Guard zero temperature tolerance** — §5.5 — `SunHat/Services/Trigger/TriggerEngine+ForecastAnalysis.swift:247-255`.
-7. **[High/P1] Resolve Swift 6 actor-isolation warnings in screenshot UI tests** — §3.1 — `SunHatUITests/ScreenshotCaptureUITests.swift:19-107`.
-8. **[Medium/P2] Suspend decorative frame loops when scenes are inactive** — §7.1 — `SunHat/Utilities/Theme/SunHatAtmosphereBackground.swift:19-24`.
-9. **[Medium/P2] Replace seasonal placeholder temperatures with explicit unavailable states** — §5.6 — `SunHat/ViewModels/WeatherViewModel.swift:280-289,387-424`.
-10. **[Medium/P2] Localize all user-facing copy and measurement formatting** — §8.2.
+1. **[High/P1] Replace synthetic hourly forecast data**, §5.1, `SunHat/ViewModels/WeatherViewModel.swift:224-247`.
+2. **[High/P1] Stop presenting locally invented conditions as official weather alerts**, §5.2, `SunHat/ViewModels/WeatherViewModel.swift:253-278`.
+3. **[High/P1] Make Data & Analytics controls truthful or remove the screen**, §6.1, `SunHat/Views/Settings/DataAnalyticsView.swift:10-55`.
+4. **[High/P1] Preserve precipitation probability and location in prediction evaluation**, §5.3, `SunHat/Services/Trigger/TriggerEngine+ForecastAnalysis.swift:120-169`.
+5. **[High/P1] Evaluate 24/48-hour dry requirements across the requested period**, §5.4, `SunHat/Services/Trigger/TriggerEngine+ForecastAnalysis.swift:304-328`.
+6. **[High/P1] Guard zero temperature tolerance**, §5.5, `SunHat/Services/Trigger/TriggerEngine+ForecastAnalysis.swift:247-255`.
+7. **[High/P1] Resolve Swift 6 actor-isolation warnings in screenshot UI tests**, §3.1, `SunHatUITests/ScreenshotCaptureUITests.swift:19-107`.
+8. **[Medium/P2] Suspend decorative frame loops when scenes are inactive**, §7.1, `SunHat/Utilities/Theme/SunHatAtmosphereBackground.swift:19-24`.
+9. **[Medium/P2] Replace seasonal placeholder temperatures with explicit unavailable states**, §5.6, `SunHat/ViewModels/WeatherViewModel.swift:280-289,387-424`.
+10. **[Medium/P2] Localize all user-facing copy and measurement formatting**, §8.2.
 
 ## 2. Quick wins
 
@@ -289,51 +289,51 @@ Accessibility applies to every item: preserve semantic controls, 44-point target
 
 ## 12. Verification
 
-- **§3.1** — build-for-testing succeeded and emitted actor-isolation warnings at `SunHatUITests/ScreenshotCaptureUITests.swift:19-107`.
-- **§5.1** — `loadHourly()` constructs each hour from `sin(...)` and current values at `SunHat/ViewModels/WeatherViewModel.swift:230-246`.
-- **§5.2** — locally created warnings and expirations are visible at `SunHat/ViewModels/WeatherViewModel.swift:253-277`.
-- **§5.3** — precipitation probability and latitude/longitude are hard-coded at `SunHat/Services/Trigger/TriggerEngine+ForecastAnalysis.swift:143-153`.
-- **§5.4** — both long dry-period cases use one `isWet` value at `SunHat/Services/Trigger/TriggerEngine+ForecastAnalysis.swift:304-328`.
-- **§5.5** — tolerance is a direct divisor at `SunHat/Services/Trigger/TriggerEngine+ForecastAnalysis.swift:247-255`.
-- **§5.7** — persistent recovery falls back to an in-memory container at `SunHat/sunhat.swift:64-86`.
-- **§6.1** — privacy toggles are local `@State` only at `SunHat/Views/Settings/DataAnalyticsView.swift:10-55`.
-- **§7.1** — full-screen Canvas is clocked at 30 FPS at `SunHat/Utilities/Theme/SunHatAtmosphereBackground.swift:19-24`.
+- **§3.1**, build-for-testing succeeded and emitted actor-isolation warnings at `SunHatUITests/ScreenshotCaptureUITests.swift:19-107`.
+- **§5.1**, `loadHourly()` constructs each hour from `sin(...)` and current values at `SunHat/ViewModels/WeatherViewModel.swift:230-246`.
+- **§5.2**, locally created warnings and expirations are visible at `SunHat/ViewModels/WeatherViewModel.swift:253-277`.
+- **§5.3**, precipitation probability and latitude/longitude are hard-coded at `SunHat/Services/Trigger/TriggerEngine+ForecastAnalysis.swift:143-153`.
+- **§5.4**, both long dry-period cases use one `isWet` value at `SunHat/Services/Trigger/TriggerEngine+ForecastAnalysis.swift:304-328`.
+- **§5.5**, tolerance is a direct divisor at `SunHat/Services/Trigger/TriggerEngine+ForecastAnalysis.swift:247-255`.
+- **§5.7**, persistent recovery falls back to an in-memory container at `SunHat/sunhat.swift:64-86`.
+- **§6.1**, privacy toggles are local `@State` only at `SunHat/Views/Settings/DataAnalyticsView.swift:10-55`.
+- **§7.1**, full-screen Canvas is clocked at 30 FPS at `SunHat/Utilities/Theme/SunHatAtmosphereBackground.swift:19-24`.
 
 Build evidence: `xcodebuild ... Debug ... build` succeeded with no app-source warnings. `xcodebuild ... build-for-testing` succeeded; warnings were confined to `ScreenshotCaptureUITests.swift` plus an App Intents metadata warning.
 
 ---
 
-## 13. Resolution log — July 19, 2026
+## 13. Resolution log, July 19, 2026
 
 All P1 items and most P2 items from §1.2 were implemented and verified (build clean, 242 unit tests / 49 suites passing). Remaining open work is tracked in [TODO.md](TODO.md).
 
 | Item | Status |
 |---|---|
-| §5.1 Synthetic hourly forecast | **Fixed** — real WeatherKit hours via new `HourlyForecastDTO` pipeline (`WeatherAPI` → `WeatherServiceActor` in-memory cache → `WeatherProviding.fetchHourlyForecast` → `WeatherViewModel.loadHourly`); empty = explicit unavailable state, never synthesized. Tested. |
-| §5.2 Synthetic weather alerts | **Fixed** — all threshold notices renamed "SunHat … Advisory" with the threshold disclosed, in `WeatherViewModel`, `DashboardViewModel`, and both UI headers. Tested (no "Warning" titles, `.advisory` severity). |
-| §5.3 Forecast conversion discards context | **Fixed** — `evaluateForecastPrediction` passes real coordinates and current precipitation probability (provider hourly first, then today's daily). |
-| §5.4 Dry-period single-sample evaluation | **Fixed** — `evaluateDryPeriod` checks every forecast day covering the 24/48-h window and requires full coverage; also applied per-day with the day as reference date. Tested (rain-later fails, dry window passes, no coverage fails). |
-| §5.5 Zero-tolerance NaN | **Fixed** — exact match at zero tolerance is confidence 1.0; divisor clamped. Tested. |
-| §5.6 Placeholder historical/seasonal values | **Fixed** — comparisons are optional; seasonal constants deleted; monthly average computed from stored data (≥3 samples) or "Not enough history yet" in the UI. Tested. |
-| §5.7 Silent temporary recovery mode | **Mitigated** — the existing recovery banner now states that changes will not persist and gives the support contact. Full write-gating remains in TODO. |
-| §6.1 / §2.3 Fake analytics controls | **Fixed** — `DataAnalyticsView` was unreachable dead code; deleted. |
-| §3.1 / §2.1 UI-test actor isolation | **Fixed** — `ScreenshotCaptureUITests` is `@MainActor`; stale unused-local finding no longer applies to the current file. |
-| §7.1 Atmosphere Canvas 30 FPS loop | **Fixed** — `TimelineView` clock pauses when `scenePhase != .active`. |
-| §8.2 / §10 Localization, onboarding funnel, ASO experiments | **Open** — tracked in TODO.md (post-launch). |
-| (New, found this pass) Privacy delete-all left orphans | **Fixed** — `deleteAllUserData` now explicitly deletes `TriggerCondition` and `ForecastDay`; schema-parity test passes. |
+| §5.1 Synthetic hourly forecast | **Fixed**, real WeatherKit hours via new `HourlyForecastDTO` pipeline (`WeatherAPI` → `WeatherServiceActor` in-memory cache → `WeatherProviding.fetchHourlyForecast` → `WeatherViewModel.loadHourly`); empty = explicit unavailable state, never synthesized. Tested. |
+| §5.2 Synthetic weather alerts | **Fixed**, all threshold notices renamed "SunHat … Advisory" with the threshold disclosed, in `WeatherViewModel`, `DashboardViewModel`, and both UI headers. Tested (no "Warning" titles, `.advisory` severity). |
+| §5.3 Forecast conversion discards context | **Fixed**, `evaluateForecastPrediction` passes real coordinates and current precipitation probability (provider hourly first, then today's daily). |
+| §5.4 Dry-period single-sample evaluation | **Fixed**, `evaluateDryPeriod` checks every forecast day covering the 24/48-h window and requires full coverage; also applied per-day with the day as reference date. Tested (rain-later fails, dry window passes, no coverage fails). |
+| §5.5 Zero-tolerance NaN | **Fixed**, exact match at zero tolerance is confidence 1.0; divisor clamped. Tested. |
+| §5.6 Placeholder historical/seasonal values | **Fixed**, comparisons are optional; seasonal constants deleted; monthly average computed from stored data (≥3 samples) or "Not enough history yet" in the UI. Tested. |
+| §5.7 Silent temporary recovery mode | **Mitigated**, the existing recovery banner now states that changes will not persist and gives the support contact. Full write-gating remains in TODO. |
+| §6.1 / §2.3 Fake analytics controls | **Fixed**, `DataAnalyticsView` was unreachable dead code; deleted. |
+| §3.1 / §2.1 UI-test actor isolation | **Fixed**, `ScreenshotCaptureUITests` is `@MainActor`; stale unused-local finding no longer applies to the current file. |
+| §7.1 Atmosphere Canvas 30 FPS loop | **Fixed**, `TimelineView` clock pauses when `scenePhase != .active`. |
+| §8.2 / §10 Localization, onboarding funnel, ASO experiments | **Open**, tracked in TODO.md (post-launch). |
+| (New, found this pass) Privacy delete-all left orphans | **Fixed**, `deleteAllUserData` now explicitly deletes `TriggerCondition` and `ForecastDay`; schema-parity test passes. |
 
-## 14. Resolution log — July 21, 2026
+## 14. Resolution log, July 21, 2026
 
-Full interactive QA pass (build, unit tests, then live `ScreenshotCaptureUITests` runs with manual screenshot review) over the July 19 fixes above plus the rest of the app. Found and fixed 4 bugs — one pre-existing (a real cross-feature location bug the July 19 pass didn't touch), three introduced by §5.4's own dry-period fix and by this app's floating-nav-bar/screenshot-tooling gaps. Details and file references in [TODO.md](TODO.md)'s "Resolved July 21, 2026" section. Build clean, 247 unit tests / 50 suites passing (was 242/49).
+Full interactive QA pass (build, unit tests, then live `ScreenshotCaptureUITests` runs with manual screenshot review) over the July 19 fixes above plus the rest of the app. Found and fixed 4 bugs, one pre-existing (a real cross-feature location bug the July 19 pass didn't touch), three introduced by §5.4's own dry-period fix and by this app's floating-nav-bar/screenshot-tooling gaps. Details and file references in [TODO.md](TODO.md)'s "Resolved July 21, 2026" section. Build clean, 247 unit tests / 50 suites passing (was 242/49).
 
 | Item | Status |
 |---|---|
-| Weather tab silently empty for manual-location users | **Fixed** — `LocationPermissionManager.manualLocation` was in-memory only (no persistence across relaunches), while `DashboardViewModel` separately persists its own location choice via `UserPreferences`; the Weather tab (which reads the former) would lose the user's location and show an all-zero empty state on every fresh launch. Now persisted via `UserDefaults` + restored at init. Tested. |
-| `ScreenshotSeeder` didn't set the location the Weather tab reads | **Fixed** — same root cause; seeded/demo builds showed the Weather tab broken. Confirmed via screenshot before and after. |
-| §5.4 dry-period fix had its own edge case | **Fixed** — coverage check compared raw forecast timestamps against a raw cutoff; a provider day stamped at a non-midnight hour could be miscounted as missing, reproducing the exact class of bug §5.4 fixed. Now buckets by calendar day. Tested. |
-| `DetailedReminderView` floating nav bar clipped content | **Fixed** — was a plain `.overlay`; switched to `.safeAreaInset(edge: .top)` so scrolled sections can never render underneath it. Verified via screenshot. |
+| Weather tab silently empty for manual-location users | **Fixed**, `LocationPermissionManager.manualLocation` was in-memory only (no persistence across relaunches), while `DashboardViewModel` separately persists its own location choice via `UserPreferences`; the Weather tab (which reads the former) would lose the user's location and show an all-zero empty state on every fresh launch. Now persisted via `UserDefaults` + restored at init. Tested. |
+| `ScreenshotSeeder` didn't set the location the Weather tab reads | **Fixed**, same root cause; seeded/demo builds showed the Weather tab broken. Confirmed via screenshot before and after. |
+| §5.4 dry-period fix had its own edge case | **Fixed**, coverage check compared raw forecast timestamps against a raw cutoff; a provider day stamped at a non-midnight hour could be miscounted as missing, reproducing the exact class of bug §5.4 fixed. Now buckets by calendar day. Tested. |
+| `DetailedReminderView` floating nav bar clipped content | **Fixed**, was a plain `.overlay`; switched to `.safeAreaInset(edge: .top)` so scrolled sections can never render underneath it. Verified via screenshot. |
 
-## 15. Follow-up findings and resolution log — July 30, 2026
+## 15. Follow-up findings and resolution log, July 30, 2026
 
 This pass reconciled the July 21 dirty worktree, reviewed concurrency, correctness,
 privacy, persistence, architecture, and WeatherKit mapping, then implemented the
@@ -347,16 +347,16 @@ test log amid unrelated concurrent builds, so it produced no new pass/fail resul
 
 | ID | Severity / confidence | Finding | Status |
 |---|---|---|---|
-| SH-2026-01 | High / Confirmed | Manual location persisted outside SwiftData survived “Delete All User Data.” | **Fixed** — one location-service deletion boundary clears memory and UserDefaults; privacy deletion calls it; regression tested. |
-| SH-2026-02 | High / Confirmed | Quiet-hours/master-switch/weekend/daily-cap suppression was recorded as a successful trigger, preventing later delivery and corrupting cooldown/statistics. | **Fixed** — trigger state is persisted only after successful notification delivery; focused manager regression test added. |
-| SH-2026-03 | High / Strong evidence | Overlapping location loads could finish out of order and display weather for the previous city. | **Fixed** — generation-gated state commits and deterministic out-of-order regression test. |
-| SH-2026-04 | Medium / Confirmed | WeatherKit cancellation was mapped to an ordinary provider error, permitting fallback/cache work after lifecycle or background expiration. | **Fixed** — `CancellationError` now propagates through WeatherKit, provider iteration, backoff, and the service façade; cancellation test added. |
-| SH-2026-05 | Medium / Confirmed | Privacy deletion left pending/delivered notifications and badge data outside SwiftData. | **Fixed** — injectable notification-data cleaner clears all three surfaces; regression tested. |
-| SH-2026-06 | Medium / Strong evidence | Ordinary reminder deletion could orphan its trigger, notification configuration, and history records. | **Fixed without schema migration** — list/detail deletion use a shared owned-data boundary; shared locations are deliberately preserved; persistence test added. |
-| SH-2026-07 | Medium / Confirmed | Heavy rain/snow and mixed WeatherKit conditions mapped to `.none` precipitation. | **Fixed** — affected variants map to rain, snow, or sleet; parameterized coverage added. |
-| SH-2026-08 | Medium / Confirmed | Notification default/View action logged only and did not navigate to reminder detail. | **Fixed** — a persisted one-shot handoff selects the Reminders tab and pushes the matching detail; deleted reminders show an unavailable state; handoff tested. |
-| SH-2026-09 | Medium / Strong evidence | Large unreachable reminder-summary and stale WeatherModelActor provider façades remain compiled. | **Open / non-blocking cleanup** — delete only in a focused, separately verified cleanup. |
-| SH-2026-10 | High / Confirmed | Reentrant trigger evaluations could both pass de-duplication and deliver the same reminder twice. | **Fixed** — delivery IDs are reserved before suspension, released on failure, and committed only after success; concurrent and retry regressions added. |
-| SH-2026-11 | Medium / Confirmed | A cancelled weather request could return cached data or persist data from a provider that ignored cancellation. | **Fixed** — cancellation is checked at entry and after provider suspension before cache or persistence mutations; non-cooperative-provider coverage added. |
-| SH-2026-12 | High / Confirmed | Delete All Data left hourly weather cache, notification navigation handoff, and trigger runtime state resident. | **Fixed** — an injected runtime cleaner clears all three; weather cache and handoff regressions added. |
-| SH-2026-13 | Medium / Confirmed | Reminder deletion launched notification cleanup as unstructured work that could be lost on suspension or termination. | **Fixed** — list and detail deletion now await notification cleanup before completing. |
+| SH-2026-01 | High / Confirmed | Manual location persisted outside SwiftData survived “Delete All User Data.” | **Fixed**, one location-service deletion boundary clears memory and UserDefaults; privacy deletion calls it; regression tested. |
+| SH-2026-02 | High / Confirmed | Quiet-hours/master-switch/weekend/daily-cap suppression was recorded as a successful trigger, preventing later delivery and corrupting cooldown/statistics. | **Fixed**, trigger state is persisted only after successful notification delivery; focused manager regression test added. |
+| SH-2026-03 | High / Strong evidence | Overlapping location loads could finish out of order and display weather for the previous city. | **Fixed**, generation-gated state commits and deterministic out-of-order regression test. |
+| SH-2026-04 | Medium / Confirmed | WeatherKit cancellation was mapped to an ordinary provider error, permitting fallback/cache work after lifecycle or background expiration. | **Fixed**, `CancellationError` now propagates through WeatherKit, provider iteration, backoff, and the service façade; cancellation test added. |
+| SH-2026-05 | Medium / Confirmed | Privacy deletion left pending/delivered notifications and badge data outside SwiftData. | **Fixed**, injectable notification-data cleaner clears all three surfaces; regression tested. |
+| SH-2026-06 | Medium / Strong evidence | Ordinary reminder deletion could orphan its trigger, notification configuration, and history records. | **Fixed without schema migration**, list/detail deletion use a shared owned-data boundary; shared locations are deliberately preserved; persistence test added. |
+| SH-2026-07 | Medium / Confirmed | Heavy rain/snow and mixed WeatherKit conditions mapped to `.none` precipitation. | **Fixed**, affected variants map to rain, snow, or sleet; parameterized coverage added. |
+| SH-2026-08 | Medium / Confirmed | Notification default/View action logged only and did not navigate to reminder detail. | **Fixed**, a persisted one-shot handoff selects the Reminders tab and pushes the matching detail; deleted reminders show an unavailable state; handoff tested. |
+| SH-2026-09 | Medium / Strong evidence | Large unreachable reminder-summary and stale WeatherModelActor provider façades remain compiled. | **Open / non-blocking cleanup**, delete only in a focused, separately verified cleanup. |
+| SH-2026-10 | High / Confirmed | Reentrant trigger evaluations could both pass de-duplication and deliver the same reminder twice. | **Fixed**, delivery IDs are reserved before suspension, released on failure, and committed only after success; concurrent and retry regressions added. |
+| SH-2026-11 | Medium / Confirmed | A cancelled weather request could return cached data or persist data from a provider that ignored cancellation. | **Fixed**, cancellation is checked at entry and after provider suspension before cache or persistence mutations; non-cooperative-provider coverage added. |
+| SH-2026-12 | High / Confirmed | Delete All Data left hourly weather cache, notification navigation handoff, and trigger runtime state resident. | **Fixed**, an injected runtime cleaner clears all three; weather cache and handoff regressions added. |
+| SH-2026-13 | Medium / Confirmed | Reminder deletion launched notification cleanup as unstructured work that could be lost on suspension or termination. | **Fixed**, list and detail deletion now await notification cleanup before completing. |

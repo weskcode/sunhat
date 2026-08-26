@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// The "Time" card in the streamlined reminder creator — preferred time
+/// The "Time" card in the streamlined reminder creator, preferred time
 /// range grid and the quiet-hours toggle.
 struct StreamlinedTimePreferencesSection: View {
     @ObservedObject var viewModel: FirstReminderCreationViewModel

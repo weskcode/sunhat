@@ -98,7 +98,7 @@ def add_bezel_rim(img, radius, width=3):
 
 
 def add_glass_reflection(img):
-    """A soft diagonal glossy streak across the upper third — reads as glass."""
+    """A soft diagonal glossy streak across the upper third, reads as glass."""
     rgba = img.convert("RGBA")
     w, h = rgba.size
     overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
