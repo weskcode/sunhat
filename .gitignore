@@ -70,12 +70,4 @@ buildServer.json
 .claude/
 
 ## App Store internals (only framed screenshots are public)
-AppStore/Screenshots/
-AppStore/Screenshots_v2/Raw/
-AppStore/Screenshots_v2/RawDark/
-AppStore/Screenshots_v2/Framed/
-AppStore/Screenshots_v2/FramedDark/
-AppStore/Screenshots_v2/generate_screenshots_v2.py
-AppStore/Screenshots_v2/generate_screenshots_v2_dark.py
-AppStore/aso_metadata.txt
-AppStore/Videos_v1/
+AppStore/
