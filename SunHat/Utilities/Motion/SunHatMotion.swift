@@ -29,6 +29,15 @@ enum SunHatMotion {
     }
 }
 
+extension AnyTransition {
+    static var weatherSlide: AnyTransition {
+        .asymmetric(
+            insertion: .move(edge: .trailing).combined(with: .opacity),
+            removal: .move(edge: .leading).combined(with: .opacity)
+        )
+    }
+}
+
 struct WeatherConditionLayer: View {
     let condition: WeatherCondition
     let reduceMotion: Bool

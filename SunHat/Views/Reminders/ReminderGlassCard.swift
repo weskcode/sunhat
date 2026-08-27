@@ -9,36 +9,23 @@ import SwiftUI
 
 struct ReminderGlassCard: View {
     let reminder: WeatherReminder
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        let shouldReduceMotion = reduceMotion
-
         NavigationLink {
             DetailedReminderView(reminder: reminder)
         } label: {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .top, spacing: 14) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.accentColor.opacity(0.16))
-                            .overlay {
-                                Circle()
-                                    .stroke(Color.accentColor.opacity(0.26), lineWidth: 0.8)
-                            }
-                            .frame(width: 46, height: 46)
-
-                        Image(systemName: reminder.category.iconName)
-                            .font(AppFontStyle.title3.font)
-                            .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(Color.accentColor)
-                    }
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    Image(systemName: reminder.category.iconName)
+                        .font(.body)
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(Color.accentColor)
+                        .frame(width: 24)
                     .accessibilityHidden(true)
 
-                    VStack(alignment: .leading, spacing: 5) {
+                    VStack(alignment: .leading, spacing: 3) {
                         Text(reminder.displayTitle)
                             .font(.headline)
-                            .fontWeight(.semibold)
                             .foregroundStyle(.primary)
                             .lineLimit(2)
 
@@ -52,43 +39,28 @@ struct ReminderGlassCard: View {
 
                     Spacer()
 
-                    SunHatStatusPill(
-                        text: reminder.isCurrentlyActive ? "Active" : "Paused",
-                        systemImage: reminder.isCurrentlyActive ? "checkmark.circle.fill" : "pause.circle.fill",
-                        tint: reminder.isCurrentlyActive ? .green : .orange
-                    )
+                    Text(reminder.isCurrentlyActive ? "Active" : "Paused")
+                        .font(.subheadline)
+                        .foregroundStyle(reminder.isCurrentlyActive ? .green : .secondary)
                 }
 
                 if let condition = reminder.triggerCondition {
-                    HStack(spacing: 10) {
-                        Label("When temp is \(condition.comparisonType.rawValue) \(Int(condition.targetTemperature))°", systemImage: "thermometer.medium")
-                            .font(AppFontStyle.caption.font)
+                    HStack(spacing: 8) {
+                        Text("When temperature is \(condition.comparisonType.rawValue) \(Int(condition.targetTemperature))°")
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
 
                         Spacer(minLength: 8)
 
                         Text(reminder.createdDate, format: .dateTime.month().day())
-                            .font(AppFontStyle.caption.font)
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 9)
-                    .background(.primary.opacity(0.045), in: .rect(cornerRadius: 13))
                 }
             }
-            .padding(16)
-            .sunHatSurface(
-                tint: reminder.isCurrentlyActive ? Color.accentColor : .secondary,
-                cornerRadius: 20,
-                prominence: 0.70
-            )
+            .padding(.vertical, 10)
         }
-        .buttonStyle(SunHatPressButtonStyle())
-        .scrollTransition(.interactive, axis: .vertical) { content, phase in
-            content
-                .opacity(phase.isIdentity ? 1 : 0.84)
-                .scaleEffect(shouldReduceMotion || phase.isIdentity ? 1 : 0.98)
-        }
+        .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
         .accessibilityHint("Opens task details.")

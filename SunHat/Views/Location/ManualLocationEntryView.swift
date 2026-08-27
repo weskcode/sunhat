@@ -487,11 +487,7 @@ struct ManualLocationEntryView: View {
     
     private func selectLocation(_ result: LocationSearchResult) {
         selectedLocation = result
-        
-        // Haptic feedback
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
-        
+
         // Create manual location data
         let manualLocation = ManualLocationData(
             name: result.displayName,
@@ -503,10 +499,7 @@ struct ManualLocationEntryView: View {
         // Provide to parent view
         onLocationSelected(manualLocation)
         
-        // Dismiss with animation
-        withAnimation(.easeInOut(duration: 0.3)) {
-            isPresented = false
-        }
+        isPresented = false
     }
     
     // MARK: - Computed Properties

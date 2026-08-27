@@ -13,13 +13,12 @@ struct LocationPickerCurrentLocationCard: View {
 
     var body: some View {
         Button(action: onSelect) {
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 Image(systemName: "location.fill")
-                    .font(AppFontStyle.title3.font)
+                    .font(.body)
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.blue)
-                    .frame(width: 44, height: 44)
-                    .background(.blue.opacity(0.12), in: Circle())
+                    .frame(width: 28)
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -41,10 +40,10 @@ struct LocationPickerCurrentLocationCard: View {
                     .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
                     .accessibilityHidden(true)
             }
-            .padding(16)
-            .sunHatSurface(tint: .blue, cornerRadius: 22, prominence: isSelected ? 0.82 : 0.58)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 12)
         }
-        .buttonStyle(SunHatPressButtonStyle())
+        .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Current Location")
         .accessibilityHint("Uses the device location for live local weather.")

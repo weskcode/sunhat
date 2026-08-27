@@ -22,25 +22,18 @@ struct PrivacyContactView: View {
     var body: some View {
         NavigationStack {
             Form {
-                // Contact Information Section
-                contactInfoSection
-                
-                // Inquiry Type Section
+                Section {
+                    Text("Email SunHat about data access, correction, deletion, export, or another privacy question.")
+                        .foregroundStyle(.secondary)
+                }
+
                 inquiryTypeSection
-                
-                // Contact Details Section
                 contactDetailsSection
-                
-                // Inquiry Form Section
                 inquiryFormSection
-                
-                // Response Time Section
-                responseTimeSection
-                
-                // Contact Actions Section
+                responseCommitmentSection
                 contactActionsSection
             }
-            .navigationTitle("Privacy Contact")
+            .navigationTitle("Contact About Privacy")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -75,64 +68,9 @@ struct PrivacyContactView: View {
             }
         }
     }
-    
-    // MARK: - Contact Information Section
-    
-    private var contactInfoSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Image(systemName: "person.badge.shield.checkmark")
-                        .foregroundStyle(.blue)
-                        .font(.title2)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Data Protection Officer")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                        
-                        Text("SunHat Privacy Team")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    ContactDetailRow(
-                        icon: "envelope.fill",
-                        title: "Email",
-                        value: AppSupportLinks.privacyEmail,
-                        isLink: true
-                    ) {
-                        openEmailClient()
-                    }
-                    
-                    ContactDetailRow(
-                        icon: "clock.fill",
-                        title: "Response Time",
-                        value: "Within 30 days",
-                        isLink: false
-                    )
-                    
-                    ContactDetailRow(
-                        icon: "globe",
-                        title: "Jurisdiction",
-                        value: "United States & European Union",
-                        isLink: false
-                    )
-                }
-            }
-            .padding(.vertical, 4)
-            
-        } header: {
-            Label("Privacy Officer", systemImage: "person.fill.checkmark")
-        } footer: {
-            Text("Our Data Protection Officer handles all privacy-related inquiries and rights requests under GDPR and CCPA.")
-        }
-    }
-    
+
     // MARK: - Inquiry Type Section
-    
+
     private var inquiryTypeSection: some View {
         Section {
             Picker("Inquiry Type", selection: $selectedInquiryType) {
@@ -152,51 +90,33 @@ struct PrivacyContactView: View {
                 }
             }
             .pickerStyle(.navigationLink)
-            
-            if selectedInquiryType.hasLegalBasis {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Image(systemName: "scale.3d")
-                            .foregroundStyle(.blue)
-                        Text("Legal Basis")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                    }
-                    
-                    Text(selectedInquiryType.legalBasis)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(12)
-                .background(Color.blue.opacity(0.05))
-                .clipShape(.rect(cornerRadius: 8))
-            }
-            
+
         } header: {
-            Label("Type of Inquiry", systemImage: "questionmark.circle")
+            Text("Type of Inquiry")
         } footer: {
             Text("Select the type of privacy inquiry or request you'd like to make.")
         }
     }
-    
+
     // MARK: - Contact Details Section
-    
+
     private var contactDetailsSection: some View {
         Section {
             TextField("Your Email (optional)", text: $userEmail)
                 .textContentType(.emailAddress)
                 .keyboardType(.emailAddress)
-                .autocapitalization(.none)
-            
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+
         } header: {
-            Label("Your Information", systemImage: "person")
+            Text("Your Information")
         } footer: {
             Text("Providing your email helps us respond more efficiently. This is optional but recommended for faster resolution.")
         }
     }
-    
+
     // MARK: - Inquiry Form Section
-    
+
     private var inquiryFormSection: some View {
         Section {
             TextField(
@@ -205,53 +125,30 @@ struct PrivacyContactView: View {
                 axis: .vertical
             )
             .lineLimit(5...10)
-            
+
         } header: {
-            Label("Your Inquiry", systemImage: "text.bubble")
+            Text("Your Inquiry")
         } footer: {
             Text("Please provide details about your privacy request. Include any specific data or timeframes if relevant.")
         }
     }
-    
-    // MARK: - Response Time Section
-    
-    private var responseTimeSection: some View {
+
+    // MARK: - Response Commitment Section
+
+    private var responseCommitmentSection: some View {
         Section {
-            VStack(alignment: .leading, spacing: 12) {
-                ResponseTimeCard(
-                    title: "Standard Requests",
-                    timeframe: "Within 30 days",
-                    description: "GDPR and CCPA compliant response time",
-                    icon: "calendar",
-                    color: .blue
-                )
-                
-                ResponseTimeCard(
-                    title: "Complex Requests",
-                    timeframe: "Up to 90 days",
-                    description: "May require additional time for verification",
-                    icon: "hourglass",
-                    color: .orange
-                )
-                
-                ResponseTimeCard(
-                    title: "Urgent Security Issues",
-                    timeframe: "Within 72 hours",
-                    description: "Security or breach-related inquiries",
-                    icon: "exclamationmark.shield",
-                    color: .red
-                )
+            LabeledContent("Response Time", value: "Within 30 days")
+
+            if selectedInquiryType.hasLegalBasis {
+                LabeledContent("Legal Basis", value: selectedInquiryType.legalBasis)
             }
-            
-        } header: {
-            Label("Response Times", systemImage: "clock")
         } footer: {
-            Text("We're committed to responding to all privacy inquiries within the legally required timeframes.")
+            Text("We respond to privacy inquiries within 30 days, as required by GDPR and CCPA.")
         }
     }
-    
+
     // MARK: - Contact Actions Section
-    
+
     private var contactActionsSection: some View {
         Section {
             Button("Send Email Inquiry") {
@@ -267,16 +164,12 @@ struct PrivacyContactView: View {
                 copyEmailTemplate()
             }
             
-            Button("Visit Privacy Policy") {
-                openPrivacyPolicy()
-            }
-            
         } footer: {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Choose how you'd like to contact us about your privacy inquiry.")
                 
                 if !canSendEmail {
-                    Text("📧 Email app not configured. We'll copy the details to your clipboard.")
+                    Text("Mail is not configured on this device. You can copy the message and send it from another email app.")
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
@@ -323,23 +216,25 @@ struct PrivacyContactView: View {
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
         let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
         
+        let legalBasisLine = selectedInquiryType.hasLegalBasis
+            ? "\nLegal Basis: \(selectedInquiryType.legalBasis)\n"
+            : ""
+
         return """
         Privacy Inquiry Type: \(selectedInquiryType.displayName)
-        
-        Legal Basis: \(selectedInquiryType.legalBasis)
-        
+        \(legalBasisLine)
         Your Inquiry:
         \(inquiryText.isEmpty ? "[Please describe your privacy request]" : inquiryText)
-        
+
         Contact Information:
         Email: \(userEmail.isEmpty ? "[Your email address]" : userEmail)
-        
+
         App Information:
         - App: SunHat
         - Version: \(appVersion) (\(buildNumber))
         - Platform: iOS
         - Date: \(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))
-        
+
         Thank you for contacting our Data Protection Officer. We will respond within 30 days as required by law.
         """
     }
@@ -363,98 +258,6 @@ private struct PrivacyContactStatusAlert: Identifiable {
     let id = UUID()
     let title: String
     let message: String
-}
-
-// MARK: - Supporting Views
-
-struct ContactDetailRow: View {
-    let icon: String
-    let title: String
-    let value: String
-    let isLink: Bool
-    let action: (() -> Void)?
-    
-    init(icon: String, title: String, value: String, isLink: Bool, action: (() -> Void)? = nil) {
-        self.icon = icon
-        self.title = title
-        self.value = value
-        self.isLink = isLink
-        self.action = action
-    }
-    
-    var body: some View {
-        if isLink {
-            Button(action: { action?() }) {
-                rowContent
-            }
-            .buttonStyle(.plain)
-        } else {
-            rowContent
-        }
-    }
-
-    private var rowContent: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .foregroundStyle(.blue)
-                .frame(width: 20)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                
-                Text(value)
-                    .font(.subheadline)
-                    .foregroundStyle(isLink ? .blue : .primary)
-            }
-            
-            Spacer()
-            
-            if isLink {
-                Image(systemName: "arrow.up.right.square")
-                    .font(.caption)
-                    .foregroundStyle(.blue)
-            }
-        }
-    }
-}
-
-struct ResponseTimeCard: View {
-    let title: String
-    let timeframe: String
-    let description: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .foregroundStyle(color)
-                .font(.title3)
-                .frame(width: 24)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Text(timeframe)
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(color)
-                
-                Text(description)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Spacer()
-        }
-        .padding(12)
-        .background(color.opacity(0.05))
-        .clipShape(.rect(cornerRadius: 8))
-    }
 }
 
 // MARK: - Mail Compose View
@@ -488,24 +291,26 @@ struct MailComposeView: UIViewControllerRepresentable {
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
         let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
         
+        let legalBasisLine = inquiryType.hasLegalBasis
+            ? "\nLegal Basis: \(inquiryType.legalBasis)\n"
+            : ""
+
         return """
         Privacy Inquiry Type: \(inquiryType.displayName)
-        
-        Legal Basis: \(inquiryType.legalBasis)
-        
+        \(legalBasisLine)
         Your Inquiry:
         \(inquiryText.isEmpty ? "[Please describe your privacy request]" : inquiryText)
-        
+
         Contact Information:
         Email: \(userEmail.isEmpty ? "[Your email address]" : userEmail)
-        
+
         App Information:
         - App: SunHat
         - Version: \(appVersion) (\(buildNumber))
         - Platform: iOS
         - Date: \(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))
-        
-        Thank you for contacting our Data Protection Officer.
+
+        Thank you for contacting our Data Protection Officer. We will respond within 30 days as required by law.
         """
     }
     

@@ -18,22 +18,7 @@ struct LocationPickerView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                SunHatAtmosphereBackground(
-                    condition: .partlyCloudy,
-                    intensity: 0.50,
-                    showsConditionAccent: false
-                )
-                .ignoresSafeArea()
-
-                VStack(spacing: 18) {
-                    LocationPickerHeader(
-                        onCancel: dismiss.callAsFunction,
-                        onDone: dismiss.callAsFunction
-                    )
-                    .padding(.horizontal, 16)
-                    .padding(.top, 18)
-
+            VStack(spacing: 16) {
                     LocationPickerSearchField(
                         searchText: $searchText,
                         isSearching: viewModel.isSearching,
@@ -54,9 +39,19 @@ struct LocationPickerView: View {
                         .padding(.bottom, 32)
                     }
                     .scrollIndicators(.hidden)
+            }
+            .background(Color(.systemBackground))
+            .navigationTitle("Select Location")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
                 }
             }
-            .toolbar(.hidden, for: .navigationBar)
         }
         .onChange(of: searchText) { _, newValue in
             if !newValue.isEmpty {
@@ -93,9 +88,7 @@ struct LocationPickerView: View {
     }
 
     private func selectCurrentLocation() {
-        withAnimation(SunHatMotion.cardToggle(reduceMotion: reduceMotion)) {
-            selectedLocation = ReminderLocation.currentLocation
-        }
+        selectedLocation = ReminderLocation.currentLocation
     }
 
     private func selectLocation(_ result: MKLocalSearchCompletion) {

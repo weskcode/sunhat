@@ -12,12 +12,10 @@ struct LocationPickerEmptyGuidance: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            Image(systemName: hasSearchText ? "mappin.slash.circle.fill" : "map.circle.fill")
+            Image(systemName: hasSearchText ? "mappin.slash" : "magnifyingglass")
                 .font(AppFontStyle.title2.font)
                 .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(.blue)
-                .frame(width: 54, height: 54)
-                .background(.blue.opacity(0.12), in: Circle())
+                .foregroundStyle(.secondary)
                 .accessibilityHidden(true)
 
             VStack(spacing: 4) {
@@ -34,8 +32,7 @@ struct LocationPickerEmptyGuidance: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.horizontal, 20)
-        .padding(.vertical, 28)
-        .sunHatSurface(tint: .blue, cornerRadius: 22, prominence: 0.46)
+        .padding(.vertical, 36)
         .accessibilityElement(children: .combine)
     }
 }

@@ -99,7 +99,15 @@ struct HourlyForecastCard: View {
                 .fill(.thinMaterial)
         )
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("At \(hourData.timeLabel): \(hourData.temperature, specifier: "%.0f") degrees, \(hourData.condition)")
+        .accessibilityLabel(hourlyAccessibilityLabel)
+    }
+
+    private var hourlyAccessibilityLabel: String {
+        var label = "At \(hourData.timeLabel): \(hourData.temperature.formatted(.number.precision(.fractionLength(0)))) degrees, \(hourData.condition)"
+        if hourData.precipitationProbability > 0 {
+            label += ", \(hourData.precipitationProbability) percent chance of precipitation"
+        }
+        return label
     }
 }
 
@@ -109,82 +117,55 @@ struct WeeklyForecastRow: View {
     let dayData: DailyWeatherData
     
     var body: some View {
-        HStack(spacing: 16) {
-            // Day of week
-            Text(dayData.dayOfWeek)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundStyle(.primary)
-                .frame(width: 50, alignment: .leading)
-            
-            // Weather icon
-            Image(systemName: dayData.iconName)
-                .font(AppFontStyle.title3.font)
-                .foregroundStyle(dayData.iconColor)
-                .symbolRenderingMode(.hierarchical)
-                .frame(width: 32)
-            
-            // Condition
-            Text(dayData.condition)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-            
-            Spacer()
-            
-            // Precipitation probability
-            if dayData.precipitationProbability > 0 {
-                HStack(spacing: 4) {
-                    Image(systemName: "drop.fill")
-                        .font(AppFontStyle.caption.font)
-                        .foregroundStyle(.blue)
-                    
-                    Text("\(dayData.precipitationProbability)%")
-                        .font(AppFontStyle.caption.font)
-                        .foregroundStyle(.blue)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: dayData.iconName)
+                    .font(.title3)
+                    .foregroundStyle(dayData.iconColor)
+                    .symbolRenderingMode(.hierarchical)
+                    .accessibilityHidden(true)
+
+                Text(dayData.dayOfWeek)
+                    .font(.headline)
+
+                Spacer(minLength: 12)
+
+                HStack(spacing: 8) {
+                    Text("L \(dayData.lowTemp, specifier: "%.0f")°")
+                        .foregroundStyle(.secondary)
+
+                    Text("H \(dayData.highTemp, specifier: "%.0f")°")
+                        .bold()
                 }
-                .frame(width: 40)
-            } else {
-                Spacer()
-                    .frame(width: 40)
+                .font(.subheadline)
             }
-            
-            // Temperature range
-            HStack(spacing: 8) {
-                Text("\(dayData.lowTemp, specifier: "%.0f")°")
+
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Text(dayData.condition)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                
-                // Temperature range bar
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 60, height: 4)
-                    
-                    Capsule()
-                        .fill(LinearGradient(
-                            colors: [.blue, .orange, .red],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ))
-                        .frame(width: temperatureBarWidth(for: dayData), height: 4)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer(minLength: 8)
+
+                if dayData.precipitationProbability > 0 {
+                    Label("\(dayData.precipitationProbability)%", systemImage: "drop.fill")
+                        .font(.caption)
+                        .foregroundStyle(.blue)
                 }
-                
-                Text("\(dayData.highTemp, specifier: "%.0f")°")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.primary)
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(dayData.dayOfWeek): \(dayData.condition), high \(dayData.highTemp, specifier: "%.0f"), low \(dayData.lowTemp, specifier: "%.0f") degrees")
+        .accessibilityLabel(weeklyRowAccessibilityLabel)
     }
-    
-    private func temperatureBarWidth(for dayData: DailyWeatherData) -> CGFloat {
-        // Simple calculation - in a real app, you'd want to normalize across all days
-        let range = dayData.highTemp - dayData.lowTemp
-        return max(20, min(60, CGFloat(range) * 2))
+
+    private var weeklyRowAccessibilityLabel: String {
+        var label = "\(dayData.dayOfWeek): \(dayData.condition), high \(Int(dayData.highTemp.rounded())), low \(Int(dayData.lowTemp.rounded())) degrees"
+        if dayData.precipitationProbability > 0 {
+            label += ", \(dayData.precipitationProbability) percent chance of precipitation"
+        }
+        return label
     }
 }
 

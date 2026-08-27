@@ -14,13 +14,12 @@ struct LocationResultRow: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 Image(systemName: "mappin.circle")
-                    .font(AppFontStyle.title3.font)
+                    .font(.body)
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.blue)
-                    .frame(width: 40, height: 40)
-                    .background(.blue.opacity(0.10), in: Circle())
+                    .frame(width: 28)
                     .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -44,10 +43,10 @@ struct LocationResultRow: View {
                     .foregroundStyle(.secondary)
                     .accessibilityHidden(true)
             }
-            .padding(14)
-            .sunHatSurface(tint: .blue, cornerRadius: 18, prominence: 0.52)
+            .padding(.horizontal, 4)
+            .padding(.vertical, 12)
         }
-        .buttonStyle(SunHatPressButtonStyle())
+        .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
     }

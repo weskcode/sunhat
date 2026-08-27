@@ -112,11 +112,7 @@ struct AllRemindersView: View {
     // MARK: - Liquid Glass Background
 
     private var liquidGlassBackground: some View {
-        SunHatAtmosphereBackground(
-            condition: .partlyCloudy,
-            intensity: 0.58,
-            showsConditionAccent: false
-        )
+        Color(.systemBackground)
     }
 
     private var remindersHeader: some View {

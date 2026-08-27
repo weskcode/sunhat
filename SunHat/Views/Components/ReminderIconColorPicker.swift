@@ -37,7 +37,7 @@ struct ReminderIconColorPicker: View {
                 }
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Icon, currently \(selectedIcon)")
+            .accessibilityLabel("Icon, currently \(reminderIconName(selectedIcon))")
             .accessibilityHint("Double tap to change icon")
 
             colorSwatchRow
@@ -68,8 +68,6 @@ struct ReminderIconColorPicker: View {
             withAnimation(.smooth(duration: 0.2)) {
                 selectedColor = swatch.color
             }
-            let impact = UIImpactFeedbackGenerator(style: .light)
-            impact.impactOccurred()
         } label: {
             Circle()
                 .fill(swatch.color)
@@ -79,6 +77,8 @@ struct ReminderIconColorPicker: View {
                         .strokeBorder(Color.primary.opacity(0.85), lineWidth: isSelected ? 2 : 0)
                         .padding(-3)
                 )
+                .frame(width: 44, height: 44)
+                .contentShape(.circle)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(swatch.name)
@@ -119,8 +119,6 @@ private struct IconPickerSheet: View {
 
         return Button {
             selectedIcon = icon
-            let impact = UIImpactFeedbackGenerator(style: .light)
-            impact.impactOccurred()
             dismiss()
         } label: {
             Image(systemName: icon)
@@ -130,8 +128,56 @@ private struct IconPickerSheet: View {
                 .background(Circle().fill(isSelected ? tint : Color(.tertiarySystemBackground)))
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(icon)
+        .accessibilityLabel(reminderIconName(icon))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+
+private func reminderIconName(_ symbol: String) -> String {
+    switch symbol {
+    case "figure.walk": "Walking"
+    case "figure.run": "Running"
+    case "figure.hiking": "Hiking"
+    case "bicycle", "figure.outdoor.cycle": "Cycling"
+    case "leaf.fill": "Gardening"
+    case "tree.fill": "Trees"
+    case "drop.fill": "Water"
+    case "flame.fill": "Fire"
+    case "snowflake": "Snow"
+    case "tennis.racket", "figure.tennis": "Tennis"
+    case "figure.golf": "Golf"
+    case "figure.yoga": "Yoga"
+    case "dumbbell.fill": "Fitness"
+    case "camera.fill": "Photography"
+    case "paintbrush.fill": "Painting"
+    case "pencil.and.outline": "Writing"
+    case "music.note": "Music"
+    case "book.fill": "Reading"
+    case "basket.fill": "Picnic"
+    case "cart.fill": "Shopping"
+    case "cup.and.saucer.fill": "Coffee"
+    case "takeoutbag.and.cup.and.straw.fill": "Takeout"
+    case "briefcase.fill": "Work"
+    case "laptopcomputer": "Laptop"
+    case "desktopcomputer": "Computer"
+    case "note.text": "Notes"
+    case "dog.fill": "Dog"
+    case "cat.fill": "Cat"
+    case "bird.fill": "Bird"
+    case "fish.fill": "Fish"
+    case "car.fill": "Driving"
+    case "bus.fill": "Bus"
+    case "airplane": "Flight"
+    case "sailboat.fill": "Sailing"
+    case "house.fill": "Home"
+    case "lightbulb.fill": "Idea"
+    case "wrench.and.screwdriver.fill": "Maintenance"
+    case "hammer.fill": "Projects"
+    case "star.fill": "Favorite"
+    case "heart.fill": "Heart"
+    case "flag.fill": "Flag"
+    case "bell.fill": "Reminder"
+    default: "Activity"
     }
 }
 
