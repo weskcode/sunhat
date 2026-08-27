@@ -81,12 +81,10 @@ struct DetailedReminderView: View {
                                         ))
                                 }
 
-                                // Action buttons section
-                                actionButtonsSection
-                                    .padding(.bottom, 40)
                             }
                             .padding(.horizontal, 20)
                             .padding(.top, 20)
+                            .padding(.bottom, 40)
                         }
                     }
                     .scrollIndicators(.hidden)
@@ -422,61 +420,6 @@ struct DetailedReminderView: View {
             )
         }
         .cardStyle()
-    }
-    
-    // MARK: - Action Buttons Section
-    
-    private var actionButtonsSection: some View {
-        VStack(spacing: 12) {
-            if !isEditMode {
-                HStack(spacing: 12) {
-                    // Duplicate button
-                    Button(action: {
-                        activeSheet = .duplicate
-                    }) {
-                        Label("Duplicate", systemImage: "plus.square.on.square")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.blue)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                            .background(Color.blue.opacity(0.1))
-                            .clipShape(.rect(cornerRadius: 12))
-                    }
-                    .buttonStyle(.plain)
-                    
-                    // Share button
-                    Button(action: {
-                        activeSheet = .share
-                    }) {
-                        Label("Share", systemImage: "square.and.arrow.up")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.green)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                            .background(Color.green.opacity(0.1))
-                            .clipShape(.rect(cornerRadius: 12))
-                    }
-                    .buttonStyle(.plain)
-                }
-                
-                // Delete button
-                Button(action: {
-                    showingDeleteConfirmation = true
-                }) {
-                    Label("Delete Reminder", systemImage: "trash")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 44)
-                        .background(Color.red)
-                        .clipShape(.rect(cornerRadius: 12))
-                }
-                .buttonStyle(.plain)
-            }
-        }
     }
     
     // MARK: - More Options Menu

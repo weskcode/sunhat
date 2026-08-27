@@ -13,7 +13,7 @@ struct AboutView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 30) {
+                VStack(spacing: 28) {
                     appIdentity
                     mission
                     acknowledgments
@@ -35,33 +35,30 @@ struct AboutView: View {
     }
 
     private var appIdentity: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             Image(systemName: "thermometer.sun.fill")
-                .font(.system(size: 80))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.orange, .red],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .font(.system(.largeTitle, design: .rounded, weight: .medium))
+                .symbolRenderingMode(.hierarchical)
+                .foregroundStyle(.orange)
+                .accessibilityHidden(true)
 
             Text("SunHat")
                 .font(.largeTitle)
                 .bold()
 
-            Text("Weather-Smart Reminders")
-                .font(.title3)
+            Text("Weather reminders for the plans that matter")
+                .font(.body)
                 .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
     }
 
     private var mission: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Our Mission")
+            Text("About SunHat")
                 .font(.headline)
 
-            Text("SunHat helps you plan your activities around the weather. Get reminded when conditions are perfect for gardening, exercise, outdoor dining, and more.")
+            Text("SunHat watches the forecast for conditions you choose, then reminds you when it may be a good time for an activity.")
                 .font(.body)
                 .foregroundStyle(.secondary)
         }
@@ -90,8 +87,8 @@ struct AboutView: View {
                 )
 
                 acknowledgmentRow(
-                    service: "SwiftData & CloudKit",
-                    description: "Data storage and sync"
+                    service: "SwiftData",
+                    description: "On-device data storage"
                 )
             }
         }
@@ -103,7 +100,7 @@ struct AboutView: View {
             Text("Built With")
                 .font(.headline)
 
-            Text("SunHat is a private project built with Swift (Apple's open source programming language) and Apple's modern iOS frameworks.")
+            Text("SunHat is built with Swift and Apple's iOS frameworks.")
                 .font(.body)
                 .foregroundStyle(.secondary)
         }
@@ -111,11 +108,7 @@ struct AboutView: View {
     }
 
     private var contactFooter: some View {
-        VStack(spacing: 12) {
-            Text("Made with ❤️ by the SunHat Team")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-
+        VStack(spacing: 8) {
             Text("© 2026 SunHat. All rights reserved.")
                 .font(.caption)
                 .foregroundStyle(.secondary)

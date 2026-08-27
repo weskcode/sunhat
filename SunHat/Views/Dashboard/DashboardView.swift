@@ -15,25 +15,12 @@ struct DashboardView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var activeSheet: ActiveSheet?
-    @State private var showingDetailedWeather = false
     @State private var cardsVisible = false
-
-    private enum ActiveSheet: Identifiable {
-        case allReminders
-        case weatherAlerts
-
-        var id: Self { self }
-    }
     
     var body: some View {
         NavigationStack {
             ZStack {
-                SunHatAtmosphereBackground(
-                    condition: viewModel.weatherCondition,
-                    intensity: viewModel.hasWeatherData ? 1 : 0.55,
-                    showsConditionAccent: false
-                )
+                Color(.systemBackground)
                     .ignoresSafeArea()
 
                 RefreshableScrollView {
@@ -45,11 +32,6 @@ struct DashboardView: View {
                             .opacity(cardsVisible ? 1 : 0)
                             .offset(y: cardsVisible || reduceMotion ? 0 : 16)
                             .animation(SunHatMotion.reveal(reduceMotion: reduceMotion), value: cardsVisible)
-
-                        if showingDetailedWeather {
-                            detailedWeatherMetrics
-                                .transition(detailsTransition)
-                        }
 
                         NextReadyReminderCompactView(
                             snapshot: NextReadyReminderSelector.snapshot(from: viewModel.activeReminders)
@@ -77,16 +59,6 @@ struct DashboardView: View {
             }
             .navigationTitle("SunHat")
             .navigationBarTitleDisplayMode(.large)
-            .sheet(item: $activeSheet) { sheet in
-                switch sheet {
-                case .allReminders:
-                    NavigationStack {
-                        AllRemindersView()
-                    }
-                case .weatherAlerts:
-                    WeatherAlertsView(alerts: viewModel.activeAlerts)
-                }
-            }
             .onAppear {
                 viewModel.configure(modelContext: modelContext)
                 cardsVisible = true
@@ -98,20 +70,12 @@ struct DashboardView: View {
 
     @ViewBuilder
     private var currentTemperatureWidget: some View {
-        if viewModel.hasWeatherData {
-            Button(action: {
-                withAnimation(cardToggleAnimation) {
-                    showingDetailedWeather.toggle()
-                }
-            }) {
-                temperatureWidgetContent
-            }
-            .buttonStyle(SunHatPressButtonStyle())
-            .accessibilityHint(showingDetailedWeather ? "Double tap to hide weather details." : "Double tap to show weather details.")
-        } else {
-            temperatureWidgetContent
-                .accessibilityHint("Pull down to refresh when weather access is available.")
-        }
+        temperatureWidgetContent
+            .accessibilityHint(
+                viewModel.hasWeatherData
+                    ? ""
+                    : "Pull down to refresh when weather access is available."
+            )
     }
     
     private var temperatureWidgetContent: some View {
@@ -160,13 +124,6 @@ struct DashboardView: View {
             
             weatherSummaryContent
 
-            if viewModel.hasWeatherData {
-                ForecastDetailToggleControl(
-                    isExpanded: showingDetailedWeather,
-                    tint: viewModel.weatherIconColor,
-                    reduceMotion: reduceMotion
-                )
-            }
         }
         .padding(18)
         .sunHatSurface(tint: viewModel.weatherIconColor, cornerRadius: 26, prominence: 0.88)
@@ -320,12 +277,7 @@ struct DashboardView: View {
             title: "Watching",
             systemImage: "bell.badge.fill",
             subtitle: "\(viewModel.activeReminders.count) active task\(viewModel.activeReminders.count == 1 ? "" : "s")",
-            actionTitle: "View All",
-            actionSystemImage: "chevron.right",
-            tint: .accentColor,
-            action: {
-                activeSheet = .allReminders
-            }
+            tint: .accentColor
         ) {
             if viewModel.activeReminders.isEmpty {
                 SunHatEmptyState(
@@ -344,10 +296,6 @@ struct DashboardView: View {
         }
     }
     
-    private var cardToggleAnimation: Animation {
-        SunHatMotion.cardToggle(reduceMotion: reduceMotion)
-    }
-
     private var detailsTransition: AnyTransition {
         SunHatMotion.transition(reduceMotion: reduceMotion)
     }
@@ -365,57 +313,7 @@ struct DashboardView: View {
             return "Pull down to refresh when weather access is available"
         }
 
-        return showingDetailedWeather ? "Details shown" : "Details hidden"
-    }
-
-    // MARK: - Detailed Weather Metrics
-
-    private var detailedWeatherMetrics: some View {
-        SunHatCardSection(
-            title: "Forecast Details",
-            systemImage: "info.circle.fill",
-            subtitle: "Forecast context for your reminders",
-            actionTitle: "Less",
-            actionSystemImage: "chevron.up",
-            tint: .blue,
-            action: {
-                withAnimation(SunHatMotion.emphasized(reduceMotion: reduceMotion)) {
-                    showingDetailedWeather = false
-                }
-            }
-        ) {
-            VStack(alignment: .leading, spacing: 12) {
-                DashboardMetricRow(
-                    systemImage: "thermometer.medium",
-                    tint: .orange,
-                    title: "Temperature",
-                    primary: "Current \(viewModel.currentTemperatureDisplay)° • Feels like \(viewModel.feelsLikeTemperatureDisplay)°",
-                    secondary: "High \(viewModel.highTemperatureDisplay)° • Low \(viewModel.lowTemperatureDisplay)°"
-                )
-
-                Divider()
-
-                DashboardMetricRow(
-                    systemImage: "cloud.fill",
-                    tint: .blue,
-                    title: viewModel.weatherDescription,
-                    primary: "Humidity \(viewModel.humidity)%",
-                    secondary: "Wind \(viewModel.windSpeedDisplay)"
-                )
-
-                Divider()
-
-                DashboardMetricRow(
-                    systemImage: "eye.fill",
-                    tint: .purple,
-                    title: "Visibility & UV",
-                    primary: "Visibility \(viewModel.visibilityDisplay)",
-                    secondary: "UV Index \(viewModel.uvIndexDisplay)"
-                )
-            }
-            .padding(14)
-            .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 14))
-        }
+        return "High \(viewModel.highTemperatureDisplay) degrees, low \(viewModel.lowTemperatureDisplay) degrees, wind \(viewModel.windSpeedDisplay)"
     }
 
 }

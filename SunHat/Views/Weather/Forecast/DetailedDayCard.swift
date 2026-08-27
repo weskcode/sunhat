@@ -9,20 +9,15 @@ import SwiftUI
 
 struct DetailedDayCard: View {
     let day: WeatherForecastDay
-    let reminder: CustomReminder
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             header
-
-            Divider()
-
-            triggerAnalysis
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
+        .padding(.vertical, 8)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(
+            "\(day.dayName), \(day.shortDate), high \(day.highTemp) degrees, low \(day.lowTemp) degrees"
         )
     }
 
@@ -40,7 +35,7 @@ struct DetailedDayCard: View {
 
             Spacer()
 
-            VStack(alignment: .trailing) {
+            VStack(alignment: .trailing, spacing: 4) {
                 HStack {
                     Image(systemName: day.weatherIcon)
                         .foregroundStyle(day.weatherColor)
@@ -51,34 +46,7 @@ struct DetailedDayCard: View {
                 }
 
                 Text("Low \(day.lowTemp)°")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    private var triggerAnalysis: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Trigger Analysis")
                     .font(.subheadline)
-                    .fontWeight(.medium)
-
-                Text("Perfect conditions for \(reminder.displayTitle.lowercased())")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing) {
-                Text("85%")
-                    .font(.title3)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.green)
-
-                Text("Likelihood")
-                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
         }

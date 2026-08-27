@@ -35,12 +35,13 @@ struct LocationPickerSearchField: View {
                     searchText = ""
                 }
                 .labelStyle(.iconOnly)
-                .buttonStyle(SunHatPressButtonStyle())
+                .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
             }
         }
-        .padding(14)
-        .sunHatSurface(tint: .blue, cornerRadius: 18, prominence: 0.58)
+        .padding(.horizontal, 12)
+        .frame(minHeight: 44)
+        .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 12))
         .accessibilityElement(children: .contain)
     }
 }

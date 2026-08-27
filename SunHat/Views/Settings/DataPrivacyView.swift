@@ -12,7 +12,6 @@ struct DataPrivacyView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
     @State private var viewModel = DataPrivacyViewModel()
-    
     @State private var showingDeleteConfirmation = false
     @State private var activeSheet: ActiveSheet?
 
@@ -23,42 +22,23 @@ struct DataPrivacyView: View {
 
         var id: Self { self }
     }
-    
+
     var body: some View {
         NavigationStack {
             Form {
-                // Data Collection Overview
-                dataCollectionSection
-
-                // Data Storage Info (CloudKit disabled)
-                storageSection
-
-                // Data Export
-                dataExportSection
-
-                // Data Deletion
-                dataDeletionSection
-
-                // Weather Data Sources
-                weatherDataSourcesSection
-
-                // Third-Party Services
-                thirdPartyServicesSection
-
-                // Privacy Rights (GDPR/CCPA)
+                overviewSection
+                storedDataSection
+                dataActionsSection
+                weatherProvidersSection
                 privacyRightsSection
-
-                // Contact & Support
-                contactSection
+                privacySupportSection
+                deletionSection
             }
             .navigationTitle("Data & Privacy")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
                 }
             }
             .task {
@@ -66,7 +46,7 @@ struct DataPrivacyView: View {
                 await viewModel.loadDataSummary()
             }
             .alert(
-                "Something Went Wrong",
+                "Couldn't Complete Request",
                 isPresented: Binding(
                     get: { viewModel.errorMessage != nil },
                     set: { if !$0 { viewModel.errorMessage = nil } }
@@ -78,15 +58,18 @@ struct DataPrivacyView: View {
             }
             .alert("Delete All Data", isPresented: $showingDeleteConfirmation) {
                 TextField("Type DELETE to confirm", text: $viewModel.deleteConfirmationText)
+                    .textInputAutocapitalization(.characters)
+
                 Button("Delete Everything", role: .destructive) {
-                    Task {
-                        await viewModel.deleteAllUserData()
-                    }
+                    Task { await viewModel.deleteAllUserData() }
                 }
-                .disabled(!viewModel.deleteConfirmationValid)
-                Button("Cancel", role: .cancel) {}
+                .disabled(!viewModel.deleteConfirmationValid || viewModel.isDeleting)
+
+                Button("Cancel", role: .cancel) {
+                    viewModel.deleteConfirmationText = ""
+                }
             } message: {
-                Text("This action cannot be undone. All your reminders, preferences, and weather data will be permanently deleted from this device.")
+                Text("This permanently removes your reminders, preferences, saved locations, and cached weather data from this device.")
             }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
@@ -100,612 +83,172 @@ struct DataPrivacyView: View {
             }
         }
     }
-    
-    // MARK: - Data Collection Section
-    
-    private var dataCollectionSection: some View {
+
+    private var overviewSection: some View {
         Section {
-            VStack(alignment: .leading, spacing: 12) {
+            Text("SunHat stores your reminders and preferences on this device. Location coordinates are sent to enabled weather providers only when needed to retrieve weather data.")
+                .foregroundStyle(.secondary)
+        } header: {
+            Text("How SunHat Uses Data")
+        }
+    }
+
+    private var storedDataSection: some View {
+        Section("Stored on This Device") {
+            if let summary = viewModel.dataSummary {
+                LabeledContent("Reminders", value: summary.reminderCount.formatted())
+                LabeledContent("Locations", value: summary.locationCount.formatted())
+                LabeledContent("Weather records", value: summary.weatherRecordCount.formatted())
+                LabeledContent("Estimated size", value: summary.totalDataSize)
+            } else {
                 HStack {
-                    Image(systemName: "shield.checkered")
-                        .foregroundStyle(.green)
-                        .font(.title2)
-                    
-                    Text("Privacy First")
-                        .font(.headline)
-                        .fontWeight(.semibold)
+                    Text("Loading data summary")
+                    Spacer()
+                    ProgressView()
+                        .controlSize(.small)
                 }
-                
-                Text("SunHat is designed with your privacy in mind. We collect minimal data necessary to provide weather-based reminders.")
+                .accessibilityElement(children: .combine)
+            }
+        }
+    }
+
+    private var dataActionsSection: some View {
+        Section {
+            Button("Export My Data", systemImage: "square.and.arrow.up") {
+                activeSheet = .exportOptions
+            }
+        } header: {
+            Text("Your Data")
+        } footer: {
+            Text("Exports include reminders, preferences, locations, notification settings, and reminder history.")
+        }
+    }
+
+    private var weatherProvidersSection: some View {
+        Section("Weather Providers") {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Apple WeatherKit")
+                Text("Primary forecast provider")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-            .padding(.vertical, 4)
-            
-            // Data Collection Details
-            DisclosureGroup("What Data We Collect") {
-                VStack(alignment: .leading, spacing: 8) {
-                    DataCollectionRow(
-                        icon: "thermometer",
-                        title: "Weather Preferences",
-                        description: "Temperature units, reminder settings, and trigger conditions you configure",
-                        dataType: .essential
-                    )
-                    
-                    DataCollectionRow(
-                        icon: "location",
-                        title: "Location Data",
-                        description: "City-level location for weather data (precise location never stored)",
-                        dataType: .essential
-                    )
-                    
-                    DataCollectionRow(
-                        icon: "bell",
-                        title: "Notification Settings",
-                        description: "Your notification preferences and quiet hours",
-                        dataType: .functional
-                    )
-                    
-                    DataCollectionRow(
-                        icon: "icloud",
-                        title: "Sync Data",
-                        description: "Reminder data synced across your devices via iCloud (when enabled)",
-                        dataType: .optional
-                    )
-                    
-                    DataCollectionRow(
-                        icon: "chart.line.uptrend.xyaxis",
-                        title: "Usage Analytics",
-                        description: "Anonymous app usage patterns to improve the experience",
-                        dataType: .optional
-                    )
-                }
-                .padding(.vertical, 8)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("OpenWeatherMap")
+                Text("Optional backup provider")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
-            
-            // Data Storage Summary
-            if let summary = viewModel.dataSummary {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Your Data Summary")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    HStack {
-                        Text("Reminders:")
-                        Spacer()
-                        Text("\(summary.reminderCount)")
-                            .fontWeight(.medium)
-                    }
-                    .font(.caption)
-                    
-                    HStack {
-                        Text("Locations:")
-                        Spacer()
-                        Text("\(summary.locationCount)")
-                            .fontWeight(.medium)
-                    }
-                    .font(.caption)
-                    
-                    HStack {
-                        Text("Weather Records:")
-                        Spacer()
-                        Text("\(summary.weatherRecordCount)")
-                            .fontWeight(.medium)
-                    }
-                    .font(.caption)
-                    
-                    HStack {
-                        Text("Data Size:")
-                        Spacer()
-                        Text(summary.totalDataSize)
-                            .fontWeight(.medium)
-                    }
-                    .font(.caption)
-                }
-                .padding(12)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(.rect(cornerRadius: 8))
-            }
-            
-        } header: {
-            Label("Data Collection", systemImage: "doc.text.magnifyingglass")
-        } footer: {
-            Text("We only collect data necessary to provide weather reminders. You have full control over your data.")
         }
     }
-    
-    // MARK: - Storage Section
 
-    private var storageSection: some View {
-        Section {
-            // Storage Status
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Data Storage")
-                        .font(.body)
-                        .fontWeight(.medium)
-
-                    Text(viewModel.syncStatusDescription)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "internaldrive.fill")
-                    .foregroundStyle(.blue)
-            }
-
-            // Storage Information
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "checkmark.shield.fill")
-                        .foregroundStyle(.green)
-                    Text("Local Storage")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("• Data is stored securely on this device")
-                    Text("• No data is shared with external servers")
-                    Text("• Full control over your information")
-                    Text("• iCloud sync coming in a future update")
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-            .padding(12)
-            .background(Color.green.opacity(0.05))
-            .clipShape(.rect(cornerRadius: 8))
-
-        } header: {
-            Label("Data Storage", systemImage: "internaldrive")
-        } footer: {
-            Text("Your data is currently stored locally on this device. iCloud sync will be available in a future update.")
-        }
-    }
-    
-    // MARK: - Data Export Section
-    
-    private var dataExportSection: some View {
-        Section {
-            Button("Export My Data") {
-                activeSheet = .exportOptions
-            }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "square.and.arrow.up")
-                        .foregroundStyle(.blue)
-                    Text("Export Includes")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("• All your weather reminders and settings")
-                    Text("• Location data and preferences")
-                    Text("• Notification settings and history")
-                    Text("• App preferences and customizations")
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-            .padding(12)
-            .background(Color.blue.opacity(0.05))
-            .clipShape(.rect(cornerRadius: 8))
-            
-        } header: {
-            Label("Data Export", systemImage: "square.and.arrow.up")
-        } footer: {
-            Text("Export your data in a machine-readable format (JSON). This includes all personal data we store about you.")
-        }
-    }
-    
-    // MARK: - Data Deletion Section
-    
-    private var dataDeletionSection: some View {
-        Section {
-            Button("Delete All My Data", role: .destructive) {
-                showingDeleteConfirmation = true
-            }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
-                    Text("This Will Delete")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.red)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("• All weather reminders and triggers")
-                    Text("• Location data and preferences")
-                    Text("• Notification settings and history")
-                    Text("• Weather data cache")
-                    Text("• iCloud synced data (if enabled)")
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-            .padding(12)
-            .background(Color.red.opacity(0.05))
-            .clipShape(.rect(cornerRadius: 8))
-            
-        } header: {
-            Label("Data Deletion", systemImage: "trash")
-        } footer: {
-            Text("Permanently delete all your data from this device and iCloud. This action cannot be undone.")
-        }
-    }
-    
-    // MARK: - Weather Data Sources Section
-    
-    private var weatherDataSourcesSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 12) {
-                WeatherSourceCard(
-                    name: "Apple WeatherKit",
-                    description: "Primary weather data source",
-                    privacyPolicy: "https://developer.apple.com/weatherkit/",
-                    dataShared: "Location (city-level only)",
-                    isPrimary: true
-                )
-                
-                WeatherSourceCard(
-                    name: "OpenWeatherMap",
-                    description: "Backup weather data source",
-                    privacyPolicy: "https://openweathermap.org/privacy-policy",
-                    dataShared: "Location (coordinates)",
-                    isPrimary: false
-                )
-            }
-            
-        } header: {
-            Label("Weather Data Sources", systemImage: "cloud.sun")
-        } footer: {
-            Text("We use these third-party services to provide accurate weather data. Only necessary location information is shared.")
-        }
-    }
-    
-    // MARK: - Third-Party Services Section
-    
-    private var thirdPartyServicesSection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 12) {
-                ThirdPartyServiceCard(
-                    name: "Apple CloudKit",
-                    purpose: "Data synchronization across devices",
-                    dataShared: "Reminder data, preferences (encrypted)",
-                    privacyPolicy: "https://www.apple.com/legal/privacy/"
-                )
-                
-                ThirdPartyServiceCard(
-                    name: "Apple Core Location",
-                    purpose: "Location services for weather data",
-                    dataShared: "City-level location only",
-                    privacyPolicy: "https://www.apple.com/legal/privacy/"
-                )
-                
-                ThirdPartyServiceCard(
-                    name: "Apple UserNotifications",
-                    purpose: "Weather reminder notifications",
-                    dataShared: "Notification content (local only)",
-                    privacyPolicy: "https://www.apple.com/legal/privacy/"
-                )
-
-                ThirdPartyServiceCard(
-                    name: "OpenWeatherMap",
-                    purpose: "Backup weather data provider when enabled",
-                    dataShared: "Location coordinates for forecast requests",
-                    privacyPolicy: "https://openweathermap.org/privacy-policy"
-                )
-            }
-            
-        } header: {
-            Label("Third-Party Services", systemImage: "building.2")
-        } footer: {
-            Text("Apple services are integrated into iOS. OpenWeatherMap is contacted only when its provider is enabled for weather data.")
-        }
-    }
-    
-    // MARK: - Privacy Rights Section
-    
     private var privacyRightsSection: some View {
         Section {
-            VStack(alignment: .leading, spacing: 12) {
-                PrivacyRightCard(
-                    title: "Right to Access",
-                    description: "View and export all data we have about you",
-                    regulation: "GDPR Art. 15, CCPA",
-                    action: "Export Data"
-                ) {
-                    activeSheet = .exportOptions
-                }
-                
-                PrivacyRightCard(
-                    title: "Right to Deletion",
-                    description: "Request deletion of all your personal data",
-                    regulation: "GDPR Art. 17, CCPA",
-                    action: "Delete All Data"
-                ) {
-                    showingDeleteConfirmation = true
-                }
-                
-                PrivacyRightCard(
-                    title: "Right to Portability",
-                    description: "Receive your data in a machine-readable format",
-                    regulation: "GDPR Art. 20",
-                    action: "Export as JSON"
-                ) {
-                    Task {
-                        await viewModel.exportDataAsJSON()
-                    }
-                }
-                
-                PrivacyRightCard(
-                    title: "Right to Rectification",
-                    description: "Correct or update your personal information",
-                    regulation: "GDPR Art. 16",
-                    action: "Contact Support"
-                ) {
-                    activeSheet = .contactOptions
-                }
+            privacyRightRow(
+                title: "Right to Access",
+                description: "View and export all data we have about you",
+                regulation: "GDPR Art. 15, CCPA",
+                action: "Export Data"
+            ) {
+                activeSheet = .exportOptions
             }
-            
+
+            privacyRightRow(
+                title: "Right to Portability",
+                description: "Receive your data in a machine-readable format",
+                regulation: "GDPR Art. 20",
+                action: "Export as JSON"
+            ) {
+                Task { await viewModel.exportDataAsJSON() }
+            }
+
+            privacyRightRow(
+                title: "Right to Rectification",
+                description: "Correct or update your personal information",
+                regulation: "GDPR Art. 16",
+                action: "Contact Support"
+            ) {
+                activeSheet = .contactOptions
+            }
+
+            privacyRightRow(
+                title: "Right to Deletion",
+                description: "Request deletion of all your personal data",
+                regulation: "GDPR Art. 17, CCPA",
+                action: "Delete All Data"
+            ) {
+                showingDeleteConfirmation = true
+            }
         } header: {
-            Label("Your Privacy Rights", systemImage: "hand.raised")
+            Text("Your Privacy Rights")
         } footer: {
             Text("Under GDPR and CCPA, you have specific rights regarding your personal data. We're committed to honoring these rights.")
         }
     }
-    
-    // MARK: - Contact Section
-    
-    private var contactSection: some View {
-        Section {
+
+    private func privacyRightRow(
+        title: String,
+        description: String,
+        regulation: String,
+        action: String,
+        perform: @escaping () -> Void
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .fontWeight(.medium)
+
+            Text(description)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Text(regulation)
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+
+            Button(action, action: perform)
+                .font(.subheadline)
+                .padding(.top, 2)
+        }
+        .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var privacySupportSection: some View {
+        Section("Privacy Information") {
             Button("Privacy Policy") {
                 activeSheet = .privacyPolicy
             }
-            
-            Button("Contact Privacy Officer") {
+
+            Button("Contact About Privacy") {
                 activeSheet = .contactOptions
             }
-            
-            Button {
-                viewModel.contactPrivacyOfficer()
-            } label: {
-                HStack {
-                    Text("Data Protection Officer")
-                    Spacer()
-                    Text(AppSupportLinks.privacyEmail)
-                        .font(.caption)
-                        .foregroundStyle(.blue)
-                }
+        }
+    }
+
+    private var deletionSection: some View {
+        Section {
+            Button("Delete All Data", role: .destructive) {
+                showingDeleteConfirmation = true
             }
-            .buttonStyle(.plain)
-            
-            HStack {
-                Text("Response Time")
-                Spacer()
-                Text("Within 30 days")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-        } header: {
-            Label("Privacy Support", systemImage: "questionmark.circle")
+            .disabled(viewModel.isDeleting)
         } footer: {
-            Text("For privacy-related questions or to exercise your rights, contact our Data Protection Officer. We respond to all requests within 30 days as required by law.")
+            Text("Deletion cannot be undone. System permission choices remain managed in the Settings app.")
         }
     }
 }
-
-// MARK: - Supporting Views
-
-struct DataCollectionRow: View {
-    let icon: String
-    let title: String
-    let description: String
-    let dataType: DataCollectionType
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .foregroundStyle(dataType.color)
-                .frame(width: 20)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                HStack {
-                    Text(title)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    Spacer()
-                    
-                    Text(dataType.displayName)
-                        .font(.caption2)
-                        .fontWeight(.medium)
-                        .foregroundStyle(dataType.color)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(dataType.color.opacity(0.1))
-                        .clipShape(.rect(cornerRadius: 4))
-                }
-                
-                Text(description)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-}
-
-struct WeatherSourceCard: View {
-    let name: String
-    let description: String
-    let privacyPolicy: String
-    let dataShared: String
-    let isPrimary: Bool
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(name)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Spacer()
-                
-                if isPrimary {
-                    Text("Primary")
-                        .font(.caption2)
-                        .fontWeight(.medium)
-                        .foregroundStyle(.blue)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.blue.opacity(0.1))
-                        .clipShape(.rect(cornerRadius: 4))
-                }
-            }
-            
-            Text(description)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
-            HStack {
-                Text("Data Shared:")
-                Text(dataShared)
-                    .fontWeight(.medium)
-            }
-            .font(.caption)
-            
-            if let url = URL(string: privacyPolicy) {
-                Link("View Privacy Policy", destination: url)
-                    .font(.caption)
-                    .foregroundStyle(.blue)
-            }
-        }
-        .padding(12)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(.rect(cornerRadius: 8))
-    }
-}
-
-struct ThirdPartyServiceCard: View {
-    let name: String
-    let purpose: String
-    let dataShared: String
-    let privacyPolicy: String
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(name)
-                .font(.subheadline)
-                .fontWeight(.medium)
-            
-            Text("Purpose: \(purpose)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
-            Text("Data Shared: \(dataShared)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
-            if let url = URL(string: privacyPolicy) {
-                Link("Privacy Policy", destination: url)
-                    .font(.caption)
-                    .foregroundStyle(.blue)
-            }
-        }
-        .padding(12)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(.rect(cornerRadius: 8))
-    }
-}
-
-struct PrivacyRightCard: View {
-    let title: String
-    let description: String
-    let regulation: String
-    let action: String
-    let onAction: () -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Spacer()
-                
-                Text(regulation)
-                    .font(.caption2)
-                    .foregroundStyle(.blue)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.blue.opacity(0.1))
-                    .clipShape(.rect(cornerRadius: 4))
-            }
-            
-            Text(description)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
-            Button(action) {
-                onAction()
-            }
-            .font(.caption)
-            .foregroundStyle(.blue)
-        }
-        .padding(12)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(.rect(cornerRadius: 8))
-    }
-}
-
-// MARK: - Supporting Types
-
-enum DataCollectionType {
-    case essential
-    case functional
-    case optional
-    
-    var displayName: String {
-        switch self {
-        case .essential:
-            return "Essential"
-        case .functional:
-            return "Functional"
-        case .optional:
-            return "Optional"
-        }
-    }
-    
-    var color: Color {
-        switch self {
-        case .essential:
-            return .red
-        case .functional:
-            return .orange
-        case .optional:
-            return .green
-        }
-    }
-}
-
-// MARK: - Preview
 
 #Preview {
     DataPrivacyView()
         .modelContainer(for: [
-            UserPreferences.self,
             WeatherReminder.self,
+            TriggerCondition.self,
+            LocationData.self,
             WeatherData.self,
-            LocationData.self
+            ForecastDay.self,
+            NotificationConfig.self,
+            ReminderHistory.self,
+            UserPreferences.self,
+            SavedLocation.self,
+            LocationHistory.self
         ], inMemory: true)
 }

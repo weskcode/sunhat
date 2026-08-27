@@ -15,15 +15,21 @@ struct DetailedForecastView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LazyVStack(spacing: 16) {
-                    ForEach(forecast, id: \.date) { day in
-                        DetailedDayCard(day: day, reminder: reminder)
+            Group {
+                if forecast.isEmpty {
+                    ContentUnavailableView(
+                        "Forecast Unavailable",
+                        systemImage: "cloud.sun",
+                        description: Text("Weather data for this reminder is not available right now.")
+                    )
+                } else {
+                    List(forecast, id: \.date) { day in
+                        DetailedDayCard(day: day)
                     }
+                    .listStyle(.plain)
                 }
-                .padding()
             }
-            .navigationTitle("Detailed Forecast")
+            .navigationTitle("Forecast")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

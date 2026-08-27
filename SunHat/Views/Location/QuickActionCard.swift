@@ -14,8 +14,6 @@ struct QuickActionCard: View {
     let color: Color
     let action: () -> Void
 
-    @State private var isPressed = false
-
     var body: some View {
         Button(action: action) {
             VStack(spacing: 12) {
@@ -45,14 +43,8 @@ struct QuickActionCard: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .padding(.horizontal, 12)
-            .glassEffect(in: .rect(cornerRadius: 12))
+            .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 12))
         }
         .buttonStyle(.plain)
-        .scaleEffect(isPressed ? 0.95 : 1.0)
-        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            withAnimation(.easeInOut(duration: 0.1)) {
-                isPressed = pressing
-            }
-        }, perform: {})
     }
 }

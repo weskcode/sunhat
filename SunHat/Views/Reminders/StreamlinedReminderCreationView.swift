@@ -160,9 +160,6 @@ struct StreamlinedReminderCreationView: View {
     private func createReminder() {
         guard viewModel.createReminder() else { return }
 
-        let notificationFeedback = UINotificationFeedbackGenerator()
-        notificationFeedback.notificationOccurred(.success)
-
         onReminderCreated?()
         dismiss()
     }

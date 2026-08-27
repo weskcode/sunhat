@@ -72,7 +72,7 @@ struct SavedLocationCard: View {
             .accessibilityLabel("Location actions")
         }
         .padding(12)
-        .glassEffect(in: .rect(cornerRadius: 10))
+        .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 12))
         .confirmationDialog("Location Actions", isPresented: $showingActions) {
             Button(location.isFavorite ? "Remove from Favorites" : "Add to Favorites") {
                 onToggleFavorite()

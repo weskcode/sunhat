@@ -59,14 +59,17 @@ struct WeatherView: View {
                             weatherAlertsSection
                         }
                         
-                        // Additional weather metrics
-                        additionalMetricsSection
-                        
-                        // Historical comparison section
-                        historicalComparisonSection
-                        
-                        // Reminder trigger predictions
-                        triggerPredictionsSection
+                        if selectedTimeframe == .current {
+                            additionalMetricsSection
+
+                            if hasHistoricalComparison {
+                                historicalComparisonSection
+                            }
+
+                            if !viewModel.triggerPredictions.isEmpty {
+                                triggerPredictionsSection
+                            }
+                        }
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 20)
@@ -475,14 +478,13 @@ struct WeatherView: View {
     // MARK: - Computed Properties
     
     private var backgroundGradient: some View {
-        SunHatAtmosphereBackground(
-            condition: viewModel.weatherCondition,
-            intensity: viewModel.hasWeatherData ? 0.92 : 0.58,
-            showsConditionAccent: viewModel.hasWeatherData,
-            weatherPalette: viewModel.backdropPalette
-        )
-        .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: viewModel.backdropPalette)
-        .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: viewModel.weatherCondition)
+        Color(.systemBackground)
+    }
+
+    private var hasHistoricalComparison: Bool {
+        viewModel.yesterdayTemp != nil ||
+            viewModel.lastWeekTemp != nil ||
+            viewModel.historicalAvgTemp != nil
     }
     
     private var humidityDescription: String {
