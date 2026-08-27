@@ -55,6 +55,15 @@ You describe the conditions you want. SunHat watches the forecast in the backgro
 | **Liquid Glass UI** | Native iOS 26 design language with `.glassEffect()` surfaces |
 | **Zero tracking** | No accounts, no analytics, no third-party SDKs |
 
+## Screenshots
+
+Captured on iOS 26 (iPhone). SunHat is iPhone-first; iPad, widget, and watch surfaces are planned (see [Project status](#project-status)).
+
+| | | |
+|---|---|---|
+| ![Welcome](Screenshots/01_hero_welcome.png) | ![Dashboard](Screenshots/02_dashboard_ready_now.png) | ![Weather](Screenshots/03_weather_predictions.png) |
+| ![Create a reminder](Screenshots/04_creation_range.png) | ![Reminders](Screenshots/08_reminders_list.png) | ![Settings](Screenshots/10_settings.png) |
+
 ## Requirements
 
 | | |
