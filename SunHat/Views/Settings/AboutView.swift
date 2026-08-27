@@ -103,7 +103,7 @@ struct AboutView: View {
             Text("Built With")
                 .font(.headline)
 
-            Text("SunHat is a private project built with Swift — Apple's open source programming language — and Apple's modern iOS frameworks.")
+            Text("SunHat is a private project built with Swift (Apple's open source programming language) and Apple's modern iOS frameworks.")
                 .font(.body)
                 .foregroundStyle(.secondary)
         }

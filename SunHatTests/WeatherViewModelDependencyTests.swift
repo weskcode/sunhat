@@ -205,8 +205,7 @@ struct WeatherViewModelDependencyTests {
         let context = container.mainContext
         let calendar = Calendar.current
 
-        // Matches FakeLocationManager's fixed coordinate exactly, mirroring how
-        // ScreenshotSeeder stamps locationLatitude/Longitude on seeded rows.
+        // Matches FakeLocationManager's fixed coordinate exactly.
         let plan: [(daysAgo: Int, temperature: Double)] = [(1, 68), (7, 64), (10, 71)]
         for entry in plan {
             let data = WeatherData(temperature: entry.temperature, feelsLike: entry.temperature - 2, humidity: 55)
