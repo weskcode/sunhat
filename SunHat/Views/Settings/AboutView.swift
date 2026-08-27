@@ -17,7 +17,7 @@ struct AboutView: View {
                     appIdentity
                     mission
                     acknowledgments
-                    openSourceNotice
+                    builtWithNotice
                     contactFooter
                 }
                 .padding()
@@ -98,12 +98,12 @@ struct AboutView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var openSourceNotice: some View {
+    private var builtWithNotice: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Open Source")
+            Text("Built With")
                 .font(.headline)
 
-            Text("SunHat is built with love using Apple's open source Swift language and modern iOS frameworks.")
+            Text("SunHat is a private project built with Swift — Apple's open source programming language — and Apple's modern iOS frameworks.")
                 .font(.body)
                 .foregroundStyle(.secondary)
         }
