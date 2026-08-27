@@ -149,12 +149,6 @@ struct SunHatApp: App {
         let container = sharedModelContainer
         BackgroundWeatherManager.shared.configure(modelContainer: container)
 
-        #if DEBUG
-        MainActor.assumeIsolated {
-            ScreenshotSeeder.seedIfRequested(modelContainer: container)
-        }
-        #endif
-
         Task {
             // Configure the weather service before any background refresh can run,
             // so BackgroundWeatherManager's refresh path never hits an unconfigured actor.
