@@ -5,6 +5,7 @@
 //  Created by Wesley Keetch on 1/10/26.
 //
 
+import Foundation
 import SwiftUI
 import SwiftData
 import Testing
@@ -45,7 +46,7 @@ struct DashboardViewModelTests {
     func viewModelInitialState() {
         #expect(viewModel.currentTemperature == 0.0)
         #expect(viewModel.humidity == 0)
-        #expect(viewModel.weatherDescription == "Loading...")
+        #expect(viewModel.weatherDescription == String(localized: "Loading...", comment: "Placeholder shown before weather data has loaded"))
         #expect(viewModel.errorMessage == nil)
         #expect(viewModel.activeReminders.isEmpty)
         #expect(viewModel.forecastData.isEmpty)

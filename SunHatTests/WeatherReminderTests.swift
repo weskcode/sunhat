@@ -19,7 +19,7 @@ struct WeatherReminderTests {
     @Test("Empty titles fall back to a placeholder display title")
     func displayTitleFallsBackWhenEmpty() {
         let reminder = WeatherReminder(title: "")
-        #expect(reminder.displayTitle == "Untitled Reminder")
+        #expect(reminder.displayTitle == String(localized: "Untitled Reminder", comment: "Fallback title when reminder has no title"))
     }
 
     @Test("Non-empty titles are used verbatim as the display title")
@@ -37,7 +37,7 @@ struct WeatherReminderTests {
     @Test("Short description falls back to generic copy with no description or condition")
     func shortDescriptionFallsBackToGeneric() {
         let reminder = WeatherReminder(title: "Run")
-        #expect(reminder.shortDescription == "Weather reminder")
+        #expect(reminder.shortDescription == String(localized: "Weather reminder", comment: "Fallback short description for a reminder"))
     }
 
     // MARK: - Status text state machine
@@ -47,34 +47,34 @@ struct WeatherReminderTests {
         let reminder = WeatherReminder(title: "Test")
         reminder.isActive = false
         reminder.isPaused = true
-        #expect(reminder.statusText == "Inactive")
+        #expect(reminder.statusText == String(localized: "Inactive", comment: "Reminder status"))
     }
 
     @Test("Paused active reminders report Paused")
     func statusTextPaused() {
         let reminder = WeatherReminder(title: "Test")
         reminder.isPaused = true
-        #expect(reminder.statusText == "Paused")
+        #expect(reminder.statusText == String(localized: "Paused", comment: "Reminder status"))
     }
 
     @Test("Completed active reminders report Completed")
     func statusTextCompleted() {
         let reminder = WeatherReminder(title: "Test")
         reminder.isCompleted = true
-        #expect(reminder.statusText == "Completed")
+        #expect(reminder.statusText == String(localized: "Completed", comment: "Reminder status"))
     }
 
     @Test("Snoozed reminders report Snoozed while the snooze window is in the future")
     func statusTextSnoozed() {
         let reminder = WeatherReminder(title: "Test")
         reminder.snoozedUntil = Date().addingTimeInterval(3600)
-        #expect(reminder.statusText == "Snoozed")
+        #expect(reminder.statusText == String(localized: "Snoozed", comment: "Reminder status"))
     }
 
     @Test("Default reminders report Active")
     func statusTextActive() {
         let reminder = WeatherReminder(title: "Test")
-        #expect(reminder.statusText == "Active")
+        #expect(reminder.statusText == String(localized: "Active", comment: "Reminder status"))
     }
 
     // MARK: - isCurrentlyActive
