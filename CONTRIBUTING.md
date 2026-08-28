@@ -22,6 +22,12 @@ These aren't style preferences. Breaking them is a correctness bug and the chang
 
 **Controls must actually work.** A toggle that doesn't persist or a screen that does nothing gets deleted, not shipped. An entire settings screen was removed for this reason.
 
+## Branching
+
+`main` is always deployable. Every change, including your own, goes through a short-lived `feature/<short-description>` branch (e.g. `feature/dry-period-fix`) merged back via PR — no direct commits to `main`. Bug fixes use `fix/<short-description>` instead of `feature/`. Delete the branch after merge.
+
+This project doesn't use `develop`/`release`/`hotfix` branches — there's no release train to coordinate, so that overhead isn't worth it here. Revisit if the project grows a real release cadence or more contributors.
+
 ## Before you open a PR
 
 1. **Build cleanly.** Zero warnings.
