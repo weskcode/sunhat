@@ -58,10 +58,19 @@ You describe the conditions you care about. SunHat checks the forecast in the ba
 
 Captured on iOS 26 (iPhone). SunHat is iPhone-first. iPad, widget, and watch surfaces are planned (see [Project status](#project-status)).
 
+**Dark**
+
 | | | |
 |---|---|---|
 | ![Welcome](Screenshots/01_hero_welcome.png) | ![Dashboard](Screenshots/02_dashboard_ready_now.png) | ![Weather](Screenshots/03_weather_predictions.png) |
 | ![Create a reminder](Screenshots/04_creation_range.png) | ![Reminders](Screenshots/08_reminders_list.png) | ![Settings](Screenshots/10_settings.png) |
+
+**Light**
+
+| | | |
+|---|---|---|
+| ![Welcome](Screenshots/Light/01_hero_welcome.png) | ![Dashboard](Screenshots/Light/02_dashboard_ready_now.png) | ![Weather](Screenshots/Light/03_weather_predictions.png) |
+| ![Create a reminder](Screenshots/Light/04_creation_range.png) | ![Reminders](Screenshots/Light/08_reminders_list.png) | ![Settings](Screenshots/Light/10_settings.png) |
 
 ## Requirements
 
