@@ -245,21 +245,21 @@ struct DashboardView: View {
 
     private var readyNowSection: some View {
         SunHatCardSection(
-            title: "Ready Now",
+            title: String(localized: "Ready Now", comment: "Dashboard section title for tasks matching the current forecast"),
             systemImage: "checkmark.circle.fill",
-            subtitle: "Tasks matching the current forecast",
+            subtitle: String(localized: "Tasks matching the current forecast", comment: "Dashboard section subtitle for the Ready Now card"),
             tint: .green
         ) {
             if viewModel.activeReminders.isEmpty {
                 SunHatEmptyState(
-                    title: "No Tasks Yet",
-                    message: "Create a weather task and SunHat will watch for matching conditions.",
+                    title: String(localized: "No Tasks Yet", comment: "Empty state title when the user has no weather tasks"),
+                    message: String(localized: "Create a weather task and SunHat will watch for matching conditions.", comment: "Empty state message when the user has no weather tasks"),
                     systemImage: "bell.slash"
                 )
             } else if viewModel.activeAlerts.isEmpty {
                 SunHatEmptyState(
-                    title: "Nothing Ready Right Now",
-                    message: "SunHat is still watching your active tasks and will notify you when the weather matches.",
+                    title: String(localized: "Nothing Ready Right Now", comment: "Empty state title when no active tasks currently match the weather"),
+                    message: String(localized: "SunHat is still watching your active tasks and will notify you when the weather matches.", comment: "Empty state message when no active tasks currently match the weather"),
                     systemImage: "clock.badge.checkmark"
                 )
             } else {
@@ -274,15 +274,15 @@ struct DashboardView: View {
     
     private var activeRemindersSection: some View {
         SunHatCardSection(
-            title: "Watching",
+            title: String(localized: "Watching", comment: "Dashboard section title for the list of active weather tasks"),
             systemImage: "bell.badge.fill",
-            subtitle: "\(viewModel.activeReminders.count) active task\(viewModel.activeReminders.count == 1 ? "" : "s")",
+            subtitle: String(localized: "\(viewModel.activeReminders.count) active task\(viewModel.activeReminders.count == 1 ? "" : "s")", comment: "Dashboard subtitle showing the count of active weather tasks being watched"),
             tint: .accentColor
         ) {
             if viewModel.activeReminders.isEmpty {
                 SunHatEmptyState(
-                    title: "No Active Tasks",
-                    message: "Create a weather task and SunHat will watch for matching conditions.",
+                    title: String(localized: "No Active Tasks", comment: "Empty state title when the user has no active weather tasks"),
+                    message: String(localized: "Create a weather task and SunHat will watch for matching conditions.", comment: "Empty state message when the user has no active weather tasks"),
                     systemImage: "list.bullet.clipboard"
                 )
                 .padding(.vertical, 4)
@@ -302,18 +302,18 @@ struct DashboardView: View {
 
     private var weatherAccessibilityLabel: String {
         guard viewModel.hasWeatherData else {
-            return "Weather unavailable for \(viewModel.currentLocationName)"
+            return String(localized: "Weather unavailable for \(viewModel.currentLocationName)", comment: "Accessibility label when weather data could not be loaded for the current location")
         }
 
-        return "Current weather for \(viewModel.currentLocationName): \(viewModel.currentTemperatureDisplay) degrees, feels like \(viewModel.feelsLikeTemperatureDisplay) degrees, \(viewModel.weatherDescription)"
+        return String(localized: "Current weather for \(viewModel.currentLocationName): \(viewModel.currentTemperatureDisplay) degrees, feels like \(viewModel.feelsLikeTemperatureDisplay) degrees, \(viewModel.weatherDescription)", comment: "Accessibility label summarizing the current weather for the dashboard's weather card")
     }
 
     private var weatherAccessibilityValue: String {
         guard viewModel.hasWeatherData else {
-            return "Pull down to refresh when weather access is available"
+            return String(localized: "Pull down to refresh when weather access is available", comment: "Accessibility value hint shown when weather data isn't available yet")
         }
 
-        return "High \(viewModel.highTemperatureDisplay) degrees, low \(viewModel.lowTemperatureDisplay) degrees, wind \(viewModel.windSpeedDisplay)"
+        return String(localized: "High \(viewModel.highTemperatureDisplay) degrees, low \(viewModel.lowTemperatureDisplay) degrees, wind \(viewModel.windSpeedDisplay)", comment: "Accessibility value with high/low temperature and wind speed for the dashboard's weather card")
     }
 
 }

@@ -563,10 +563,10 @@ struct ConditionMatchIndicator: View {
     }
     
     private var matchText: String {
-        guard let condition = reminder.triggerCondition else { return "No condition set" }
-        
+        guard let condition = reminder.triggerCondition else { return String(localized: "No condition set", comment: "Reminder detail status when no trigger condition is configured") }
+
         let matches = currentWeather.evaluateCondition(condition)
-        return matches ? "Conditions met!" : "Waiting for conditions"
+        return matches ? String(localized: "Conditions met!", comment: "Reminder detail status when the trigger condition currently matches") : String(localized: "Waiting for conditions", comment: "Reminder detail status when the trigger condition doesn't currently match")
     }
 }
 

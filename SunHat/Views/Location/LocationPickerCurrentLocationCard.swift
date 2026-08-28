@@ -47,7 +47,7 @@ struct LocationPickerCurrentLocationCard: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Current Location")
         .accessibilityHint("Uses the device location for live local weather.")
-        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+        .accessibilityValue(isSelected ? String(localized: "Selected", comment: "Accessibility value for the current-location card when chosen") : String(localized: "Not selected", comment: "Accessibility value for the current-location card when not chosen"))
     }
 }
 

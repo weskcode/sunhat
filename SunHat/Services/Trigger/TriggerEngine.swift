@@ -280,7 +280,7 @@ actor TriggerEngine {
                     triggered: false,
                     confidence: result.confidence,
                     weatherData: currentWeatherData,
-                    triggerReason: "Temperature matched but sky conditions didn't (\(conditionData.conditionModeRaw): \(conditionData.selectedSkyConditionsRaw))"
+                    triggerReason: String(localized: "Temperature matched but sky conditions didn't (\(conditionData.conditionModeRaw): \(conditionData.selectedSkyConditionsRaw))", comment: "Notification body explaining a reminder did not fire because sky conditions failed even though temperature matched")
                 )
             }
         }
@@ -409,36 +409,36 @@ extension TriggerEngine {
         case .above:
             triggered = currentTemp > targetTemp
             confidence = min(1.0, max(0.0, (currentTemp - targetTemp) / 10.0))
-            triggerReason = triggered ? 
-                "Temperature \(String(format: "%.1f", currentTemp))° is above target \(String(format: "%.1f", targetTemp))°" :
-                "Temperature \(String(format: "%.1f", currentTemp))° is below target \(String(format: "%.1f", targetTemp))°"
-            
+            triggerReason = triggered ?
+                String(localized: "Temperature \(String(format: "%.1f", currentTemp))° is above target \(String(format: "%.1f", targetTemp))°", comment: "Notification body: current temperature exceeded the target") :
+                String(localized: "Temperature \(String(format: "%.1f", currentTemp))° is below target \(String(format: "%.1f", targetTemp))°", comment: "Notification body: current temperature is below the target")
+
         case .below:
             triggered = currentTemp < targetTemp
             confidence = min(1.0, max(0.0, (targetTemp - currentTemp) / 10.0))
             triggerReason = triggered ?
-                "Temperature \(String(format: "%.1f", currentTemp))° is below target \(String(format: "%.1f", targetTemp))°" :
-                "Temperature \(String(format: "%.1f", currentTemp))° is above target \(String(format: "%.1f", targetTemp))°"
-            
+                String(localized: "Temperature \(String(format: "%.1f", currentTemp))° is below target \(String(format: "%.1f", targetTemp))°", comment: "Notification body: current temperature is below the target") :
+                String(localized: "Temperature \(String(format: "%.1f", currentTemp))° is above target \(String(format: "%.1f", targetTemp))°", comment: "Notification body: current temperature exceeded the target")
+
         case .equals:
             let difference = abs(currentTemp - targetTemp)
             triggered = difference <= tolerance
             confidence = max(0.0, 1.0 - (difference / tolerance))
             triggerReason = triggered ?
-                "Temperature \(String(format: "%.1f", currentTemp))° matches target \(String(format: "%.1f", targetTemp))° (±\(String(format: "%.1f", tolerance))°)" :
-                "Temperature \(String(format: "%.1f", currentTemp))° differs from target \(String(format: "%.1f", targetTemp))° by \(String(format: "%.1f", difference))°"
-            
+                String(localized: "Temperature \(String(format: "%.1f", currentTemp))° matches target \(String(format: "%.1f", targetTemp))° (±\(String(format: "%.1f", tolerance))°)", comment: "Notification body: current temperature matches the target within tolerance") :
+                String(localized: "Temperature \(String(format: "%.1f", currentTemp))° differs from target \(String(format: "%.1f", targetTemp))° by \(String(format: "%.1f", difference))°", comment: "Notification body: current temperature misses the target by some amount")
+
         case .between:
             if let minTemp = conditionData.minTemperature, let maxTemp = conditionData.maxTemperature {
                 triggered = currentTemp >= minTemp && currentTemp <= maxTemp
                 confidence = triggered ? 1.0 : 0.0
                 triggerReason = triggered ?
-                    "Temperature \(String(format: "%.1f", currentTemp))° is within range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°" :
-                    "Temperature \(String(format: "%.1f", currentTemp))° is outside range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°"
+                    String(localized: "Temperature \(String(format: "%.1f", currentTemp))° is within range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°", comment: "Notification body: current temperature falls inside the configured range") :
+                    String(localized: "Temperature \(String(format: "%.1f", currentTemp))° is outside range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°", comment: "Notification body: current temperature falls outside the configured range")
             } else {
                 triggered = false
                 confidence = 0.0
-                triggerReason = "Invalid temperature range configuration"
+                triggerReason = String(localized: "Invalid temperature range configuration", comment: "Notification body fallback when a range trigger is misconfigured")
             }
         }
         
@@ -474,7 +474,7 @@ extension TriggerEngine {
                 triggered: false,
                 confidence: 0.0,
                 weatherData: weatherData,
-                triggerReason: "Invalid temperature range - missing min or max temperature"
+                triggerReason: String(localized: "Invalid temperature range - missing min or max temperature", comment: "Notification body fallback when a range trigger is missing its bounds")
             )
         }
         
@@ -494,8 +494,8 @@ extension TriggerEngine {
         }
         
         let triggerReason = triggered ?
-            "Temperature \(String(format: "%.1f", currentTemp))° is within range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°" :
-            "Temperature \(String(format: "%.1f", currentTemp))° is outside range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°"
+            String(localized: "Temperature \(String(format: "%.1f", currentTemp))° is within range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°", comment: "Notification body: current temperature falls inside the configured range") :
+            String(localized: "Temperature \(String(format: "%.1f", currentTemp))° is outside range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°", comment: "Notification body: current temperature falls outside the configured range")
         
         let metadata = [
             "current_temperature": String(currentTemp),

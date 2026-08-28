@@ -197,30 +197,30 @@ final class WeatherReminder {
     }
     
     var displayTitle: String {
-        return title.isEmpty ? "Untitled Reminder" : title
+        return title.isEmpty ? String(localized: "Untitled Reminder", comment: "Fallback title when reminder has no title") : title
     }
-    
+
     var shortDescription: String {
         if !reminderDescription.isEmpty {
             return String(reminderDescription.prefix(100))
         } else if let condition = triggerCondition {
-            return "When temperature is \(condition.comparisonType.rawValue) \(condition.targetTemperature)°"
+            return String(localized: "When temperature is \(condition.comparisonType.rawValue) \(condition.targetTemperature)°", comment: "Short description of a reminder's temperature trigger")
         } else {
-            return "Weather reminder"
+            return String(localized: "Weather reminder", comment: "Fallback short description for a reminder")
         }
     }
-    
+
     var statusText: String {
         if !isActive {
-            return "Inactive"
+            return String(localized: "Inactive", comment: "Reminder status")
         } else if isPaused {
-            return "Paused"
+            return String(localized: "Paused", comment: "Reminder status")
         } else if isCompleted {
-            return "Completed"
+            return String(localized: "Completed", comment: "Reminder status")
         } else if let snoozedUntil = snoozedUntil, snoozedUntil > Date() {
-            return "Snoozed"
+            return String(localized: "Snoozed", comment: "Reminder status")
         } else {
-            return "Active"
+            return String(localized: "Active", comment: "Reminder status")
         }
     }
     
@@ -257,39 +257,39 @@ final class WeatherReminder {
         triggerCount += 1
         totalNotificationsSent += 1
         
-        addHistoryEntry(.triggered, details: "Reminder triggered", weatherData: weatherData)
+        addHistoryEntry(.triggered, details: String(localized: "Reminder triggered", comment: "Reminder history timeline entry"), weatherData: weatherData)
     }
-    
+
     func complete() {
         isCompleted = true
         completedDate = Date()
         successfulCompletions += 1
-        addHistoryEntry(.completed, details: "Reminder marked as complete")
+        addHistoryEntry(.completed, details: String(localized: "Reminder marked as complete", comment: "Reminder history timeline entry"))
     }
-    
+
     func snooze(for hours: Int = 2) {
         snoozedUntil = Calendar.current.date(byAdding: .hour, value: hours, to: Date())
         lastUserInteraction = Date()
-        addHistoryEntry(.snoozed, details: "Snoozed for \(hours) hours")
+        addHistoryEntry(.snoozed, details: String(localized: "Snoozed for \(hours) hours", comment: "Reminder history timeline entry"))
     }
-    
+
     func skip() {
         skippedCount += 1
         lastUserInteraction = Date()
-        addHistoryEntry(.skipped, details: "Reminder skipped by user")
+        addHistoryEntry(.skipped, details: String(localized: "Reminder skipped by user", comment: "Reminder history timeline entry"))
     }
-    
+
     func pause() {
         isPaused = true
         lastModified = Date()
-        addHistoryEntry(.paused, details: "Reminder paused")
+        addHistoryEntry(.paused, details: String(localized: "Reminder paused", comment: "Reminder history timeline entry"))
     }
-    
+
     func resume() {
         isPaused = false
         snoozedUntil = nil
         lastModified = Date()
-        addHistoryEntry(.resumed, details: "Reminder resumed")
+        addHistoryEntry(.resumed, details: String(localized: "Reminder resumed", comment: "Reminder history timeline entry"))
     }
 
     /// Deletes the reminder and records that are exclusively owned by it.
@@ -368,18 +368,18 @@ enum ReminderCategory: String, Codable, CaseIterable, Sendable {
     
     var displayName: String {
         switch self {
-        case .general: return "General"
-        case .outdoor: return "Outdoor Activities"
-        case .gardening: return "Gardening"
-        case .exercise: return "Exercise & Fitness"
-        case .maintenance: return "Home Maintenance"
-        case .travel: return "Travel"
-        case .health: return "Health & Wellness"
-        case .sports: return "Sports"
-        case .work: return "Work Related"
-        case .seasonal: return "Seasonal Tasks"
-        case .emergency: return "Emergency Preparedness"
-        case .custom: return "Custom"
+        case .general: return String(localized: "General", comment: "Reminder category name")
+        case .outdoor: return String(localized: "Outdoor Activities", comment: "Reminder category name")
+        case .gardening: return String(localized: "Gardening", comment: "Reminder category name")
+        case .exercise: return String(localized: "Exercise & Fitness", comment: "Reminder category name")
+        case .maintenance: return String(localized: "Home Maintenance", comment: "Reminder category name")
+        case .travel: return String(localized: "Travel", comment: "Reminder category name")
+        case .health: return String(localized: "Health & Wellness", comment: "Reminder category name")
+        case .sports: return String(localized: "Sports", comment: "Reminder category name")
+        case .work: return String(localized: "Work Related", comment: "Reminder category name")
+        case .seasonal: return String(localized: "Seasonal Tasks", comment: "Reminder category name")
+        case .emergency: return String(localized: "Emergency Preparedness", comment: "Reminder category name")
+        case .custom: return String(localized: "Custom", comment: "Reminder category name")
         }
     }
     
@@ -409,10 +409,10 @@ enum ReminderPriority: String, Codable, CaseIterable, Sendable {
     
     var displayName: String {
         switch self {
-        case .low: return "Low"
-        case .normal: return "Normal"
-        case .high: return "High"
-        case .urgent: return "Urgent"
+        case .low: return String(localized: "Low", comment: "Reminder priority level")
+        case .normal: return String(localized: "Normal", comment: "Reminder priority level")
+        case .high: return String(localized: "High", comment: "Reminder priority level")
+        case .urgent: return String(localized: "Urgent", comment: "Reminder priority level")
         }
     }
     
@@ -443,19 +443,19 @@ enum HistoryAction: String, Codable, CaseIterable {
     
     var displayName: String {
         switch self {
-        case .created: return "Created"
-        case .triggered: return "Triggered"
-        case .completed: return "Completed"
-        case .snoozed: return "Snoozed"
-        case .skipped: return "Skipped"
-        case .paused: return "Paused"
-        case .resumed: return "Resumed"
-        case .modified: return "Modified"
-        case .deleted: return "Deleted"
-        case .notificationSent: return "Notification Sent"
-        case .notificationFailed: return "Notification Failed"
-        case .conditionMet: return "Condition Met"
-        case .conditionNoLongerMet: return "Condition No Longer Met"
+        case .created: return String(localized: "Created", comment: "Reminder history action label")
+        case .triggered: return String(localized: "Triggered", comment: "Reminder history action label")
+        case .completed: return String(localized: "Completed", comment: "Reminder history action label")
+        case .snoozed: return String(localized: "Snoozed", comment: "Reminder history action label")
+        case .skipped: return String(localized: "Skipped", comment: "Reminder history action label")
+        case .paused: return String(localized: "Paused", comment: "Reminder history action label")
+        case .resumed: return String(localized: "Resumed", comment: "Reminder history action label")
+        case .modified: return String(localized: "Modified", comment: "Reminder history action label")
+        case .deleted: return String(localized: "Deleted", comment: "Reminder history action label")
+        case .notificationSent: return String(localized: "Notification Sent", comment: "Reminder history action label")
+        case .notificationFailed: return String(localized: "Notification Failed", comment: "Reminder history action label")
+        case .conditionMet: return String(localized: "Condition Met", comment: "Reminder history action label")
+        case .conditionNoLongerMet: return String(localized: "Condition No Longer Met", comment: "Reminder history action label")
         }
     }
 }

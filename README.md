@@ -150,11 +150,11 @@ xcrun simctl privacy <device-udid> grant location org.wesley.sunhat
 
 Version 1.0, iPhone-first, preparing for App Store submission.
 
-**Working:** Weather-triggered reminders across 7 trigger types, background monitoring, notifications, App Intents and Shortcuts, Spotlight indexing, data export and deletion, notification deep-linking, and complete privacy deletion.
+**Working:** Weather-triggered reminders across 7 trigger types, background monitoring, notifications, App Intents and Shortcuts, Spotlight indexing, data export and deletion, notification deep-linking, complete privacy deletion, and full English/Spanish localization (String Catalog, neutral international Spanish).
 
-**Tested:** A unit test suite covers the trigger engine, weather service, privacy deletion parity, notification delivery, and location persistence.
+**Tested:** A unit test suite covers the trigger engine, weather service, privacy deletion parity, notification delivery, location persistence, and localization catalog completeness.
 
-**Planned:** WidgetKit and Lock Screen widgets, a watchOS complication, an iPad-optimized layout, CloudKit sync (already prepared in code, needs provisioning), and a String Catalog for localization (all copy is currently inline English).
+**Planned:** WidgetKit and Lock Screen widgets, a watchOS complication, an iPad-optimized layout, CloudKit sync (already prepared in code, needs provisioning), and additional locales beyond English/Spanish if a market need arises.
 
 ### Toolchain note
 

@@ -264,27 +264,27 @@ final class LocationPermissionManager: NSObject, ObservableObject {
             return LocationDisplayFormatter.privacyPreservingName(from: manual.displayName)
         } else if let current = currentLocation {
             logger.debug("Current location available for broad display: \(current.coordinate.latitude), \(current.coordinate.longitude)")
-            return "Current Location"
+            return String(localized: "Current Location", comment: "Displayed in place of an exact location when using GPS")
         } else {
-            return "No Location Set"
+            return String(localized: "No Location Set", comment: "Displayed when the user has neither GPS nor a manual location configured")
         }
     }
-    
+
     // MARK: - Privacy Information
-    
+
     func getPrivacyExplanation() -> String {
-        return """
+        return String(localized: """
         SunHat uses your location to:
         • Provide accurate weather data for your area
         • Send timely reminders based on local conditions
         • Ensure weather triggers work for your specific location
-        
+
         Your location data:
         • Stays on your device
         • Is only used for weather updates
         • Is sent only to enabled weather providers to fetch forecasts
         • Can be changed to manual entry at any time
-        """
+        """, comment: "Multi-paragraph explanation of location data usage shown in a privacy info sheet; keep the bullet ('•') formatting")
     }
 }
 
@@ -404,63 +404,63 @@ enum LocationError: LocalizedError, Sendable {
     nonisolated var errorDescription: String? {
         switch self {
         case .permissionDenied:
-            return "Location permission denied"
+            return String(localized: "Location permission denied", comment: "Location error title")
         case .locationServicesDisabled:
-            return "Location services are disabled"
+            return String(localized: "Location services are disabled", comment: "Location error title")
         case .networkError:
-            return "Network error while getting location"
+            return String(localized: "Network error while getting location", comment: "Location error title")
         case .timeout:
-            return "Location request timed out"
+            return String(localized: "Location request timed out", comment: "Location error title")
         case .inaccurateLocation:
-            return "Location accuracy is too low"
+            return String(localized: "Location accuracy is too low", comment: "Location error title")
         case .staleLocation:
-            return "Location data is too old"
+            return String(localized: "Location data is too old", comment: "Location error title")
         case .locationUnavailable:
-            return "Current location is unavailable"
+            return String(localized: "Current location is unavailable", comment: "Location error title")
         case .unknown:
-            return "Unknown location error"
+            return String(localized: "Unknown location error", comment: "Location error title fallback")
         }
     }
-    
+
     nonisolated var failureReason: String? {
         switch self {
         case .permissionDenied:
-            return "The app does not have permission to access your location"
+            return String(localized: "The app does not have permission to access your location", comment: "Location error failure reason")
         case .locationServicesDisabled:
-            return "Location services are turned off in device settings"
+            return String(localized: "Location services are turned off in device settings", comment: "Location error failure reason")
         case .networkError:
-            return "Unable to connect to location services"
+            return String(localized: "Unable to connect to location services", comment: "Location error failure reason")
         case .timeout:
-            return "Location request took too long to complete"
+            return String(localized: "Location request took too long to complete", comment: "Location error failure reason")
         case .inaccurateLocation:
-            return "The GPS signal is too weak for accurate positioning"
+            return String(localized: "The GPS signal is too weak for accurate positioning", comment: "Location error failure reason")
         case .staleLocation:
-            return "The last known location is too old to be useful"
+            return String(localized: "The last known location is too old to be useful", comment: "Location error failure reason")
         case .locationUnavailable:
-            return "Your current location cannot be determined"
+            return String(localized: "Your current location cannot be determined", comment: "Location error failure reason")
         case .unknown:
-            return "An unexpected error occurred"
+            return String(localized: "An unexpected error occurred", comment: "Location error failure reason fallback")
         }
     }
-    
+
     nonisolated var recoverySuggestion: String? {
         switch self {
         case .permissionDenied:
-            return "Go to Settings > Privacy & Security > Location Services to enable location access"
+            return String(localized: "Go to Settings > Privacy & Security > Location Services to enable location access", comment: "Location error recovery suggestion; \">\" separates iOS Settings menu levels and should stay as-is")
         case .locationServicesDisabled:
-            return "Enable Location Services in Settings > Privacy & Security > Location Services"
+            return String(localized: "Enable Location Services in Settings > Privacy & Security > Location Services", comment: "Location error recovery suggestion; \">\" separates iOS Settings menu levels and should stay as-is")
         case .networkError:
-            return "Check your internet connection and try again"
+            return String(localized: "Check your internet connection and try again", comment: "Location error recovery suggestion")
         case .timeout:
-            return "Try moving to an area with better GPS reception"
+            return String(localized: "Try moving to an area with better GPS reception", comment: "Location error recovery suggestion")
         case .inaccurateLocation:
-            return "Move to an open area away from buildings and try again"
+            return String(localized: "Move to an open area away from buildings and try again", comment: "Location error recovery suggestion")
         case .staleLocation:
-            return "Try getting your location again"
+            return String(localized: "Try getting your location again", comment: "Location error recovery suggestion")
         case .locationUnavailable:
-            return "Try entering your city manually instead"
+            return String(localized: "Try entering your city manually instead", comment: "Location error recovery suggestion")
         case .unknown:
-            return "Try again or enter your city manually"
+            return String(localized: "Try again or enter your city manually", comment: "Location error recovery suggestion fallback")
         }
     }
 }

@@ -135,49 +135,49 @@ private struct IconPickerSheet: View {
 
 private func reminderIconName(_ symbol: String) -> String {
     switch symbol {
-    case "figure.walk": "Walking"
-    case "figure.run": "Running"
-    case "figure.hiking": "Hiking"
-    case "bicycle", "figure.outdoor.cycle": "Cycling"
-    case "leaf.fill": "Gardening"
-    case "tree.fill": "Trees"
-    case "drop.fill": "Water"
-    case "flame.fill": "Fire"
-    case "snowflake": "Snow"
-    case "tennis.racket", "figure.tennis": "Tennis"
-    case "figure.golf": "Golf"
-    case "figure.yoga": "Yoga"
-    case "dumbbell.fill": "Fitness"
-    case "camera.fill": "Photography"
-    case "paintbrush.fill": "Painting"
-    case "pencil.and.outline": "Writing"
-    case "music.note": "Music"
-    case "book.fill": "Reading"
-    case "basket.fill": "Picnic"
-    case "cart.fill": "Shopping"
-    case "cup.and.saucer.fill": "Coffee"
-    case "takeoutbag.and.cup.and.straw.fill": "Takeout"
-    case "briefcase.fill": "Work"
-    case "laptopcomputer": "Laptop"
-    case "desktopcomputer": "Computer"
-    case "note.text": "Notes"
-    case "dog.fill": "Dog"
-    case "cat.fill": "Cat"
-    case "bird.fill": "Bird"
-    case "fish.fill": "Fish"
-    case "car.fill": "Driving"
-    case "bus.fill": "Bus"
-    case "airplane": "Flight"
-    case "sailboat.fill": "Sailing"
-    case "house.fill": "Home"
-    case "lightbulb.fill": "Idea"
-    case "wrench.and.screwdriver.fill": "Maintenance"
-    case "hammer.fill": "Projects"
-    case "star.fill": "Favorite"
-    case "heart.fill": "Heart"
-    case "flag.fill": "Flag"
-    case "bell.fill": "Reminder"
-    default: "Activity"
+    case "figure.walk": String(localized: "Walking", comment: "Reminder icon activity name")
+    case "figure.run": String(localized: "Running", comment: "Reminder icon activity name")
+    case "figure.hiking": String(localized: "Hiking", comment: "Reminder icon activity name")
+    case "bicycle", "figure.outdoor.cycle": String(localized: "Cycling", comment: "Reminder icon activity name")
+    case "leaf.fill": String(localized: "Gardening", comment: "Reminder icon activity name")
+    case "tree.fill": String(localized: "Trees", comment: "Reminder icon activity name")
+    case "drop.fill": String(localized: "Water", comment: "Reminder icon activity name")
+    case "flame.fill": String(localized: "Fire", comment: "Reminder icon activity name")
+    case "snowflake": String(localized: "Snow", comment: "Reminder icon activity name")
+    case "tennis.racket", "figure.tennis": String(localized: "Tennis", comment: "Reminder icon activity name")
+    case "figure.golf": String(localized: "Golf", comment: "Reminder icon activity name")
+    case "figure.yoga": String(localized: "Yoga", comment: "Reminder icon activity name")
+    case "dumbbell.fill": String(localized: "Fitness", comment: "Reminder icon activity name")
+    case "camera.fill": String(localized: "Photography", comment: "Reminder icon activity name")
+    case "paintbrush.fill": String(localized: "Painting", comment: "Reminder icon activity name")
+    case "pencil.and.outline": String(localized: "Writing", comment: "Reminder icon activity name")
+    case "music.note": String(localized: "Music", comment: "Reminder icon activity name")
+    case "book.fill": String(localized: "Reading", comment: "Reminder icon activity name")
+    case "basket.fill": String(localized: "Picnic", comment: "Reminder icon activity name")
+    case "cart.fill": String(localized: "Shopping", comment: "Reminder icon activity name")
+    case "cup.and.saucer.fill": String(localized: "Coffee", comment: "Reminder icon activity name")
+    case "takeoutbag.and.cup.and.straw.fill": String(localized: "Takeout", comment: "Reminder icon activity name")
+    case "briefcase.fill": String(localized: "Work", comment: "Reminder icon activity name")
+    case "laptopcomputer": String(localized: "Laptop", comment: "Reminder icon activity name")
+    case "desktopcomputer": String(localized: "Computer", comment: "Reminder icon activity name")
+    case "note.text": String(localized: "Notes", comment: "Reminder icon activity name")
+    case "dog.fill": String(localized: "Dog", comment: "Reminder icon activity name")
+    case "cat.fill": String(localized: "Cat", comment: "Reminder icon activity name")
+    case "bird.fill": String(localized: "Bird", comment: "Reminder icon activity name")
+    case "fish.fill": String(localized: "Fish", comment: "Reminder icon activity name")
+    case "car.fill": String(localized: "Driving", comment: "Reminder icon activity name")
+    case "bus.fill": String(localized: "Bus", comment: "Reminder icon activity name")
+    case "airplane": String(localized: "Flight", comment: "Reminder icon activity name")
+    case "sailboat.fill": String(localized: "Sailing", comment: "Reminder icon activity name")
+    case "house.fill": String(localized: "Home", comment: "Reminder icon activity name")
+    case "lightbulb.fill": String(localized: "Idea", comment: "Reminder icon activity name")
+    case "wrench.and.screwdriver.fill": String(localized: "Maintenance", comment: "Reminder icon activity name")
+    case "hammer.fill": String(localized: "Projects", comment: "Reminder icon activity name")
+    case "star.fill": String(localized: "Favorite", comment: "Reminder icon activity name")
+    case "heart.fill": String(localized: "Heart", comment: "Reminder icon activity name")
+    case "flag.fill": String(localized: "Flag", comment: "Reminder icon activity name")
+    case "bell.fill": String(localized: "Reminder", comment: "Reminder icon activity name")
+    default: String(localized: "Activity", comment: "Reminder icon activity name")
     }
 }
 

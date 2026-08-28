@@ -8,10 +8,10 @@ import SwiftUI
 extension ComparisonType {
     var displayName: String {
         switch self {
-        case .above: return "above"
-        case .below: return "below"
-        case .equals: return "exactly"
-        case .between: return "between"
+        case .above: return String(localized: "above", comment: "Temperature comparison word, e.g. 'temperature is above 70°'")
+        case .below: return String(localized: "below", comment: "Temperature comparison word, e.g. 'temperature is below 70°'")
+        case .equals: return String(localized: "exactly", comment: "Temperature comparison word, e.g. 'temperature is exactly 70°'")
+        case .between: return String(localized: "between", comment: "Temperature comparison word, e.g. 'temperature is between 60° and 70°'")
         }
     }
 }
@@ -19,13 +19,13 @@ extension ComparisonType {
 extension TriggerType {
     var displayName: String {
         switch self {
-        case .exactTemperature: return "Exact"
-        case .temperatureRange: return "Range"
-        case .consecutiveDays: return "Trend"
-        case .averageTemperature: return "Average"
-        case .seasonalMarker: return "Seasonal"
-        case .composite: return "Complex"
-        case .historicalComparison: return "Historical"
+        case .exactTemperature: return String(localized: "Exact", comment: "Trigger type name: exact temperature match")
+        case .temperatureRange: return String(localized: "Range", comment: "Trigger type name: temperature range")
+        case .consecutiveDays: return String(localized: "Trend", comment: "Trigger type name: consecutive days trend")
+        case .averageTemperature: return String(localized: "Average", comment: "Trigger type name: average temperature")
+        case .seasonalMarker: return String(localized: "Seasonal", comment: "Trigger type name: seasonal marker")
+        case .composite: return String(localized: "Complex", comment: "Trigger type name: multiple combined conditions")
+        case .historicalComparison: return String(localized: "Historical", comment: "Trigger type name: historical comparison")
         }
     }
 
@@ -55,13 +55,13 @@ extension TriggerType {
 
     var descriptionText: String {
         switch self {
-        case .exactTemperature: return "Trigger at specific temperature"
-        case .temperatureRange: return "Trigger within temperature range"
-        case .consecutiveDays: return "Trigger on temperature trends"
-        case .averageTemperature: return "Trigger on average over time"
-        case .seasonalMarker: return "Trigger on seasonal changes"
-        case .composite: return "Multiple conditions required"
-        case .historicalComparison: return "Compare to past years"
+        case .exactTemperature: return String(localized: "Trigger at specific temperature", comment: "Trigger type description")
+        case .temperatureRange: return String(localized: "Trigger within temperature range", comment: "Trigger type description")
+        case .consecutiveDays: return String(localized: "Trigger on temperature trends", comment: "Trigger type description")
+        case .averageTemperature: return String(localized: "Trigger on average over time", comment: "Trigger type description")
+        case .seasonalMarker: return String(localized: "Trigger on seasonal changes", comment: "Trigger type description")
+        case .composite: return String(localized: "Multiple conditions required", comment: "Trigger type description")
+        case .historicalComparison: return String(localized: "Compare to past years", comment: "Trigger type description")
         }
     }
 }

@@ -130,9 +130,9 @@ final class UserPreferences {
 
     var quietHoursDescription: String {
         if quietHoursEnabled {
-            return "\(quietHoursStartTime) - \(quietHoursEndTime)"
+            return String(localized: "\(quietHoursStartTime) - \(quietHoursEndTime)", comment: "Quiet hours time range, e.g. 10:00 PM - 7:00 AM")
         } else {
-            return "Disabled"
+            return String(localized: "Disabled", comment: "Quiet hours status: feature turned off")
         }
     }
     
@@ -189,29 +189,29 @@ enum ActivityInterest: String, CaseIterable, Codable {
     var displayName: String {
         switch self {
         case .gardening:
-            return "Gardening"
+            return String(localized: "Gardening", comment: "Activity interest option: gardening")
         case .exercise:
-            return "Exercise"
+            return String(localized: "Exercise", comment: "Activity interest option: exercise")
         case .maintenance:
-            return "Home Maintenance"
+            return String(localized: "Home Maintenance", comment: "Activity interest option: home maintenance")
         case .photography:
-            return "Photography"
+            return String(localized: "Photography", comment: "Activity interest option: photography")
         case .outdoorDining:
-            return "Outdoor Dining"
+            return String(localized: "Outdoor Dining", comment: "Activity interest option: outdoor dining")
         case .sports:
-            return "Sports"
+            return String(localized: "Sports", comment: "Activity interest option: sports")
         case .walking:
-            return "Walking"
+            return String(localized: "Walking", comment: "Activity interest option: walking")
         case .cycling:
-            return "Cycling"
+            return String(localized: "Cycling", comment: "Activity interest option: cycling")
         case .hiking:
-            return "Hiking"
+            return String(localized: "Hiking", comment: "Activity interest option: hiking")
         case .cleaning:
-            return "Cleaning"
+            return String(localized: "Cleaning", comment: "Activity interest option: cleaning")
         case .carWash:
-            return "Car Washing"
+            return String(localized: "Car Washing", comment: "Activity interest option: car washing")
         case .petCare:
-            return "Pet Care"
+            return String(localized: "Pet Care", comment: "Activity interest option: pet care")
         }
     }
     
@@ -276,29 +276,29 @@ enum ActivityInterest: String, CaseIterable, Codable {
     var description: String {
         switch self {
         case .gardening:
-            return "Plant care, yard work, and outdoor gardening activities"
+            return String(localized: "Plant care, yard work, and outdoor gardening activities", comment: "Description of gardening activity interest")
         case .exercise:
-            return "Outdoor workouts, running, and fitness activities"
+            return String(localized: "Outdoor workouts, running, and fitness activities", comment: "Description of exercise activity interest")
         case .maintenance:
-            return "Home repairs, painting, and outdoor maintenance tasks"
+            return String(localized: "Home repairs, painting, and outdoor maintenance tasks", comment: "Description of home maintenance activity interest")
         case .photography:
-            return "Outdoor photo sessions and landscape photography"
+            return String(localized: "Outdoor photo sessions and landscape photography", comment: "Description of photography activity interest")
         case .outdoorDining:
-            return "Picnics, barbecues, and outdoor meal planning"
+            return String(localized: "Picnics, barbecues, and outdoor meal planning", comment: "Description of outdoor dining activity interest")
         case .sports:
-            return "Outdoor sports and recreational activities"
+            return String(localized: "Outdoor sports and recreational activities", comment: "Description of sports activity interest")
         case .walking:
-            return "Daily walks, dog walking, and casual strolls"
+            return String(localized: "Daily walks, dog walking, and casual strolls", comment: "Description of walking activity interest")
         case .cycling:
-            return "Bike rides and cycling adventures"
+            return String(localized: "Bike rides and cycling adventures", comment: "Description of cycling activity interest")
         case .hiking:
-            return "Trail hiking and nature exploration"
+            return String(localized: "Trail hiking and nature exploration", comment: "Description of hiking activity interest")
         case .cleaning:
-            return "Outdoor cleaning and washing tasks"
+            return String(localized: "Outdoor cleaning and washing tasks", comment: "Description of cleaning activity interest")
         case .carWash:
-            return "Vehicle washing and detailing"
+            return String(localized: "Vehicle washing and detailing", comment: "Description of car washing activity interest")
         case .petCare:
-            return "Pet grooming and outdoor pet activities"
+            return String(localized: "Pet grooming and outdoor pet activities", comment: "Description of pet care activity interest")
         }
     }
 }
@@ -314,26 +314,26 @@ enum NotificationGrouping: String, CaseIterable, Codable {
     var displayName: String {
         switch self {
         case .none:
-            return "No Grouping"
+            return String(localized: "No Grouping", comment: "Notification grouping option: don't group notifications")
         case .byType:
-            return "Group by Type"
+            return String(localized: "Group by Type", comment: "Notification grouping option: group by reminder category")
         case .byTime:
-            return "Group by Time"
+            return String(localized: "Group by Time", comment: "Notification grouping option: group by delivery time")
         case .byLocation:
-            return "Group by Location"
+            return String(localized: "Group by Location", comment: "Notification grouping option: group by location")
         }
     }
-    
+
     var description: String {
         switch self {
         case .none:
-            return "Show each notification separately"
+            return String(localized: "Show each notification separately", comment: "Description of no-grouping notification option")
         case .byType:
-            return "Group notifications by reminder category"
+            return String(localized: "Group notifications by reminder category", comment: "Description of group-by-type notification option")
         case .byTime:
-            return "Group notifications by delivery time"
+            return String(localized: "Group notifications by delivery time", comment: "Description of group-by-time notification option")
         case .byLocation:
-            return "Group notifications by location"
+            return String(localized: "Group notifications by location", comment: "Description of group-by-location notification option")
         }
     }
     
@@ -359,22 +359,22 @@ enum LockScreenBehavior: String, CaseIterable, Codable {
     var displayName: String {
         switch self {
         case .showPreviews:
-            return "Show Previews"
+            return String(localized: "Show Previews", comment: "Lock screen behavior option: show full notification previews")
         case .hideDetails:
-            return "Hide Details"
+            return String(localized: "Hide Details", comment: "Lock screen behavior option: hide notification content details")
         case .hideNotifications:
-            return "Hide Notifications"
+            return String(localized: "Hide Notifications", comment: "Lock screen behavior option: hide notifications entirely")
         }
     }
-    
+
     var description: String {
         switch self {
         case .showPreviews:
-            return "Show full notification content on lock screen"
+            return String(localized: "Show full notification content on lock screen", comment: "Description of show-previews lock screen option")
         case .hideDetails:
-            return "Show notification but hide content details"
+            return String(localized: "Show notification but hide content details", comment: "Description of hide-details lock screen option")
         case .hideNotifications:
-            return "Hide notifications completely on lock screen"
+            return String(localized: "Hide notifications completely on lock screen", comment: "Description of hide-notifications lock screen option")
         }
     }
     
@@ -402,38 +402,38 @@ enum VibrationPattern: String, CaseIterable, Codable {
     var displayName: String {
         switch self {
         case .none:
-            return "None"
+            return String(localized: "None", comment: "Vibration pattern option: no vibration")
         case .default:
-            return "Default"
+            return String(localized: "Default", comment: "Vibration pattern option: system default")
         case .subtle:
-            return "Subtle"
+            return String(localized: "Subtle", comment: "Vibration pattern option: light gentle vibration")
         case .prominent:
-            return "Prominent"
+            return String(localized: "Prominent", comment: "Vibration pattern option: strong noticeable vibration")
         case .alert:
-            return "Alert"
+            return String(localized: "Alert", comment: "Vibration pattern option: urgent alert pattern")
         case .heartbeat:
-            return "Heartbeat"
+            return String(localized: "Heartbeat", comment: "Vibration pattern option: rhythmic pulse pattern")
         case .sos:
-            return "SOS"
+            return String(localized: "SOS", comment: "Vibration pattern option: emergency SOS pattern")
         }
     }
-    
+
     var description: String {
         switch self {
         case .none:
-            return "No vibration"
+            return String(localized: "No vibration", comment: "Description of no-vibration pattern option")
         case .default:
-            return "Standard system vibration"
+            return String(localized: "Standard system vibration", comment: "Description of default vibration pattern option")
         case .subtle:
-            return "Light, gentle vibration"
+            return String(localized: "Light, gentle vibration", comment: "Description of subtle vibration pattern option")
         case .prominent:
-            return "Strong, noticeable vibration"
+            return String(localized: "Strong, noticeable vibration", comment: "Description of prominent vibration pattern option")
         case .alert:
-            return "Urgent alert pattern"
+            return String(localized: "Urgent alert pattern", comment: "Description of alert vibration pattern option")
         case .heartbeat:
-            return "Rhythmic pulse pattern"
+            return String(localized: "Rhythmic pulse pattern", comment: "Description of heartbeat vibration pattern option")
         case .sos:
-            return "Emergency SOS pattern"
+            return String(localized: "Emergency SOS pattern", comment: "Description of SOS vibration pattern option")
         }
     }
     
@@ -490,23 +490,23 @@ enum NotificationSound: String, CaseIterable, Codable {
     var displayName: String {
         switch self {
         case .default:
-            return "Default"
+            return String(localized: "Default", comment: "Notification sound option: system default")
         case .none:
-            return "None"
+            return String(localized: "None", comment: "Notification sound option: no sound")
         case .chime:
-            return "Chime"
+            return String(localized: "Chime", comment: "Notification sound option: chime")
         case .bell:
-            return "Bell"
+            return String(localized: "Bell", comment: "Notification sound option: bell")
         case .alert:
-            return "Alert"
+            return String(localized: "Alert", comment: "Notification sound option: alert")
         case .gentle:
-            return "Gentle"
+            return String(localized: "Gentle", comment: "Notification sound option: gentle")
         case .urgent:
-            return "Urgent"
+            return String(localized: "Urgent", comment: "Notification sound option: urgent")
         case .weather:
-            return "Weather"
+            return String(localized: "Weather", comment: "Notification sound option: weather-themed")
         case .nature:
-            return "Nature"
+            return String(localized: "Nature", comment: "Notification sound option: nature-themed")
         }
     }
     

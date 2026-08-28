@@ -286,27 +286,27 @@ final class SettingsViewModel {
 
     func sendFeedback() {
         let email = AppSupportLinks.feedbackEmail
-        let subject = "SunHat Feedback"
-        let body = """
+        let subject = String(localized: "SunHat Feedback", comment: "Pre-filled subject line of the feedback email the app composes; 'SunHat' is the app name")
+        let body = String(localized: """
 
         ---
         App Version: \(appVersion)
         Build: \(buildNumber)
         Device: \(UIDevice.current.model)
         iOS Version: \(UIDevice.current.systemVersion)
-        """
+        """, comment: "Pre-filled body of the feedback email the app composes, listing diagnostic info after the user's own message")
 
         if let url = AppSupportLinks.mailURL(to: email, subject: subject, body: body) {
-            open(url, failureMessage: "Couldn't open Mail. Set up a mail account, or email \(email) directly.")
+            open(url, failureMessage: String(localized: "Couldn't open Mail. Set up a mail account, or email \(email) directly.", comment: "Error shown when deep-linking to the Mail app fails"))
         }
     }
 
     func contactSupport() {
         let email = AppSupportLinks.supportEmail
-        let subject = "SunHat Support Request"
+        let subject = String(localized: "SunHat Support Request", comment: "Pre-filled subject line of the support email the app composes; 'SunHat' is the app name")
 
         if let url = AppSupportLinks.mailURL(to: email, subject: subject) {
-            open(url, failureMessage: "Couldn't open Mail. Set up a mail account, or email \(email) directly.")
+            open(url, failureMessage: String(localized: "Couldn't open Mail. Set up a mail account, or email \(email) directly.", comment: "Error shown when deep-linking to the Mail app fails"))
         }
     }
 
@@ -337,13 +337,13 @@ final class SettingsViewModel {
     func openTermsOfService() {
         open(
             AppSupportLinks.termsOfServiceURL,
-            failureMessage: "Couldn't open the Terms of Service. Visit \(AppSupportLinks.termsOfServiceURL.absoluteString) in a browser."
+            failureMessage: String(localized: "Couldn't open the Terms of Service. Visit \(AppSupportLinks.termsOfServiceURL.absoluteString) in a browser.", comment: "Error shown when opening the Terms of Service link fails")
         )
     }
 
     func openAppSettings() {
         if let url = URL(string: UIApplication.openSettingsURLString) {
-            open(url, failureMessage: "Couldn't open Settings. Open the Settings app manually to change SunHat's permissions.")
+            open(url, failureMessage: String(localized: "Couldn't open Settings. Open the Settings app manually to change SunHat's permissions.", comment: "Error shown when deep-linking to the iOS Settings app fails"))
         }
     }
 
@@ -353,14 +353,16 @@ final class SettingsViewModel {
         if quietHoursEnabled {
             let formatter = DateFormatter()
             formatter.timeStyle = .short
-            return "\(formatter.string(from: quietHoursStart)) - \(formatter.string(from: quietHoursEnd))"
+            let startTime = formatter.string(from: quietHoursStart)
+            let endTime = formatter.string(from: quietHoursEnd)
+            return String(localized: "\(startTime) - \(endTime)", comment: "Quiet hours time range, e.g. '10:00 PM - 7:00 AM'")
         } else {
-            return "Disabled"
+            return String(localized: "Disabled", comment: "Quiet hours state when the user has turned them off")
         }
     }
 
     var appVersion: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? String(localized: "Unknown", comment: "Fallback app version when it cannot be read from the bundle")
     }
 
     var buildNumber: String {

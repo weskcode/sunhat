@@ -29,7 +29,7 @@ extension TriggerEngine {
             triggered: false,
             confidence: 0.0,
             weatherData: currentWeather,
-            triggerReason: "Seasonal marker evaluation not yet fully implemented with ModelActor"
+            triggerReason: String(localized: "Seasonal marker evaluation not yet fully implemented with ModelActor", comment: "Internal placeholder notification body for a trigger type that is not yet implemented")
         )
     }
     
@@ -64,33 +64,33 @@ extension TriggerEngine {
             triggered = historicalComparison.isWarmerThanHistorical
             confidence = historicalComparison.temperatureDifferenceConfidence
             triggerReason = triggered ?
-                "Current temperature \(String(format: "%.1f", currentTemp))° is \(String(format: "%.1f", historicalComparison.temperatureDifference))° warmer than historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° for this date" :
-                "Current temperature \(String(format: "%.1f", currentTemp))° is \(String(format: "%.1f", abs(historicalComparison.temperatureDifference)))° cooler than historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° for this date"
-            
+                String(localized: "Current temperature \(String(format: "%.1f", currentTemp))° is \(String(format: "%.1f", historicalComparison.temperatureDifference))° warmer than historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° for this date", comment: "Notification body comparing current temperature to the historical average for today's date") :
+                String(localized: "Current temperature \(String(format: "%.1f", currentTemp))° is \(String(format: "%.1f", abs(historicalComparison.temperatureDifference)))° cooler than historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° for this date", comment: "Notification body comparing current temperature to the historical average for today's date")
+
         case .below:
             triggered = !historicalComparison.isWarmerThanHistorical
             confidence = historicalComparison.temperatureDifferenceConfidence
             triggerReason = triggered ?
-                "Current temperature \(String(format: "%.1f", currentTemp))° is \(String(format: "%.1f", abs(historicalComparison.temperatureDifference)))° cooler than historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° for this date" :
-                "Current temperature \(String(format: "%.1f", currentTemp))° is \(String(format: "%.1f", historicalComparison.temperatureDifference))° warmer than historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° for this date"
-            
+                String(localized: "Current temperature \(String(format: "%.1f", currentTemp))° is \(String(format: "%.1f", abs(historicalComparison.temperatureDifference)))° cooler than historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° for this date", comment: "Notification body comparing current temperature to the historical average for today's date") :
+                String(localized: "Current temperature \(String(format: "%.1f", currentTemp))° is \(String(format: "%.1f", historicalComparison.temperatureDifference))° warmer than historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° for this date", comment: "Notification body comparing current temperature to the historical average for today's date")
+
         case .equals:
             let difference = abs(historicalComparison.temperatureDifference)
             let tolerance = conditionData.temperatureTolerance
             triggered = difference <= tolerance
             confidence = max(0.0, 1.0 - (difference / (tolerance * 2)))
             triggerReason = triggered ?
-                "Current temperature \(String(format: "%.1f", currentTemp))° matches historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° within \(String(format: "%.1f", tolerance))°" :
-                "Current temperature \(String(format: "%.1f", currentTemp))° differs from historical average by \(String(format: "%.1f", difference))° (tolerance: \(String(format: "%.1f", tolerance))°)"
-            
+                String(localized: "Current temperature \(String(format: "%.1f", currentTemp))° matches historical average \(String(format: "%.1f", historicalComparison.historicalAverage))° within \(String(format: "%.1f", tolerance))°", comment: "Notification body: current temperature matches the historical average within tolerance") :
+                String(localized: "Current temperature \(String(format: "%.1f", currentTemp))° differs from historical average by \(String(format: "%.1f", difference))° (tolerance: \(String(format: "%.1f", tolerance))°)", comment: "Notification body: current temperature misses the historical average by some amount")
+
         case .between:
             // For historical comparison, "between" means within a certain percentile range
             let percentileRange = historicalComparison.percentileRange
             triggered = percentileRange.0 <= 0.25 && percentileRange.1 >= 0.75 // Middle 50%
             confidence = triggered ? 1.0 : 0.0
             triggerReason = triggered ?
-                "Current temperature is within typical range for this date (percentile: \(String(format: "%.0f", percentileRange.0 * 100))-\(String(format: "%.0f", percentileRange.1 * 100))%)" :
-                "Current temperature is outside typical range for this date (percentile: \(String(format: "%.0f", percentileRange.0 * 100))-\(String(format: "%.0f", percentileRange.1 * 100))%)"
+                String(localized: "Current temperature is within typical range for this date (percentile: \(String(format: "%.0f", percentileRange.0 * 100))-\(String(format: "%.0f", percentileRange.1 * 100))%)", comment: "Notification body: current temperature is within the typical historical percentile range") :
+                String(localized: "Current temperature is outside typical range for this date (percentile: \(String(format: "%.0f", percentileRange.0 * 100))-\(String(format: "%.0f", percentileRange.1 * 100))%)", comment: "Notification body: current temperature is outside the typical historical percentile range")
         }
         
         // Build metadata dictionary in parts to avoid compiler timeout

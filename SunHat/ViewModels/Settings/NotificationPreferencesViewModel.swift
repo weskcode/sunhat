@@ -77,12 +77,12 @@ final class NotificationPreferencesViewModel {
                 userPreferences = defaultPreferences
             }
         } catch {
-            errorMessage = "Failed to load notification settings: \(error.localizedDescription)"
+            errorMessage = String(localized: "Failed to load notification settings: \(error.localizedDescription)", comment: "Error shown in Settings when saved notification preferences could not be read")
         }
-        
+
         isLoading = false
     }
-    
+
     func saveSettings() async {
         guard let preferences = userPreferences else { return }
         
@@ -105,7 +105,7 @@ final class NotificationPreferencesViewModel {
             hasUnsavedChanges = false
             
         } catch {
-            errorMessage = "Failed to save notification settings: \(error.localizedDescription)"
+            errorMessage = String(localized: "Failed to save notification settings: \(error.localizedDescription)", comment: "Error shown in Settings when notification preferences could not be saved")
         }
         
         isLoading = false
@@ -148,9 +148,9 @@ final class NotificationPreferencesViewModel {
             formatter.timeStyle = .short
             let startTime = formatter.string(from: quietHoursStart)
             let endTime = formatter.string(from: quietHoursEnd)
-            return "\(startTime) - \(endTime)"
+            return String(localized: "\(startTime) - \(endTime)", comment: "Quiet hours time range, e.g. '10:00 PM - 7:00 AM'")
         } else {
-            return "Disabled"
+            return String(localized: "Disabled", comment: "Quiet hours state when the user has turned them off")
         }
     }
     
@@ -217,10 +217,10 @@ final class NotificationPreferencesViewModel {
         do {
             let granted = try await notificationPermissions.requestAuthorization(options: options)
             if !granted {
-                errorMessage = "Notification permissions are required for weather alerts"
+                errorMessage = String(localized: "Notification permissions are required for weather alerts", comment: "Error shown when the user denies notification permission needed for reminders")
             }
         } catch {
-            errorMessage = "Failed to request notification permissions: \(error.localizedDescription)"
+            errorMessage = String(localized: "Failed to request notification permissions: \(error.localizedDescription)", comment: "Error shown when the system permission request itself fails")
         }
     }
     
@@ -243,11 +243,11 @@ enum NotificationError: LocalizedError, Sendable {
     nonisolated var errorDescription: String? {
         switch self {
         case .noModelContext:
-            return "Unable to access app data"
+            return String(localized: "Unable to access app data", comment: "Notification error when the local data store is unavailable")
         case .permissionDenied:
-            return "Notification permissions were denied"
+            return String(localized: "Notification permissions were denied", comment: "Notification error when the system permission was denied")
         case .invalidSettings:
-            return "Invalid notification settings"
+            return String(localized: "Invalid notification settings", comment: "Notification error for malformed preferences")
         }
     }
 }
@@ -260,8 +260,8 @@ extension NotificationPreferencesViewModel {
         let center = UNUserNotificationCenter.current()
         
         let content = UNMutableNotificationContent()
-        content.title = "Test Notification"
-        content.body = "This is how your \(type) notifications will appear"
+        content.title = String(localized: "Test Notification", comment: "Title of a sample notification the user triggers to preview notification style")
+        content.body = String(localized: "This is how your \(type) notifications will appear", comment: "Body of a sample notification; 'type' is a reminder category name such as Exercise or Gardening")
         content.sound = .default
         
         // Apply current settings
@@ -292,7 +292,7 @@ extension NotificationPreferencesViewModel {
         do {
             try await center.add(request)
         } catch {
-            errorMessage = "Failed to send test notification: \(error.localizedDescription)"
+            errorMessage = String(localized: "Failed to send test notification: \(error.localizedDescription)", comment: "Error shown when the sample notification could not be scheduled")
         }
     }
     
@@ -305,7 +305,7 @@ extension NotificationPreferencesViewModel {
             Task {
                 let opened = await settingsOpener.open(settingsUrl)
                 if opened == false {
-                    errorMessage = "Couldn't open Settings. Open the Settings app manually to change SunHat's notification permissions."
+                    errorMessage = String(localized: "Couldn't open Settings. Open the Settings app manually to change SunHat's notification permissions.", comment: "Error shown when deep-linking to the iOS Settings app fails")
                 }
             }
         }
