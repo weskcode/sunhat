@@ -5,6 +5,7 @@
 //  Created by Wesley Keetch on 7/20/25.
 //
 
+import Foundation
 import SwiftData
 import CoreLocation
 import WeatherKit
@@ -183,7 +184,7 @@ struct WeatherErrorTests {
     @Test("Network unavailable error has correct description")
     func networkError() {
         let networkError = WeatherError.networkUnavailable
-        #expect(networkError.errorDescription == "Network connection unavailable")
+        #expect(networkError.errorDescription == String(localized: "Network connection unavailable", comment: "Weather error shown when the device has no network connection"))
         #expect(networkError.failureReason != nil)
         #expect(networkError.recoverySuggestion != nil)
     }
@@ -327,8 +328,8 @@ struct WeatherProviderEnumTests {
         let appleProvider = WeatherProvider.appleWeatherKit
         let openWeatherProvider = WeatherProvider.openWeatherMap
 
-        #expect(appleProvider.displayName == "Apple WeatherKit")
-        #expect(openWeatherProvider.displayName == "OpenWeatherMap")
+        #expect(appleProvider.displayName == String(localized: "Apple WeatherKit", comment: "Weather data provider name; 'WeatherKit' is an Apple product name and should not be translated"))
+        #expect(openWeatherProvider.displayName == String(localized: "OpenWeatherMap", comment: "Weather data provider name; product name, should not be translated"))
         #expect(appleProvider.priority < openWeatherProvider.priority)
 
         let allProviders = WeatherProvider.allCases
@@ -385,11 +386,11 @@ struct WeatherReminderCategoryTests {
         #expect(categories.count > 5)
 
         let outdoorCategory = ReminderCategory.outdoor
-        #expect(outdoorCategory.displayName == "Outdoor Activities")
+        #expect(outdoorCategory.displayName == String(localized: "Outdoor Activities", comment: "Reminder category name"))
         #expect(outdoorCategory.iconName == "figure.hiking")
 
         let gardeningCategory = ReminderCategory.gardening
-        #expect(gardeningCategory.displayName == "Gardening")
+        #expect(gardeningCategory.displayName == String(localized: "Gardening", comment: "Reminder category name"))
         #expect(gardeningCategory.iconName == "leaf")
     }
 }

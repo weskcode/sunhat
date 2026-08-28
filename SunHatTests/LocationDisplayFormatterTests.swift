@@ -5,6 +5,7 @@
 //  Created by Codex on 6/3/26.
 //
 
+import Foundation
 import Testing
 @testable import SunHat
 
@@ -47,6 +48,6 @@ struct LocationDisplayFormatterTests {
             from: "Current Location (37.77, -122.42)"
         )
 
-        #expect(displayName == "Current Location")
+        #expect(displayName == String(localized: "Current Location", comment: "Displayed in place of an exact location when using GPS"))
     }
 }

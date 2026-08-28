@@ -5,6 +5,7 @@
 //  Created by Wesley Keetch on 2/12/26.
 //
 
+import Foundation
 import SwiftUI
 import SwiftData
 import CoreLocation
@@ -38,7 +39,7 @@ struct CustomReminderTests {
     @Test("Empty title falls back to New Reminder")
     func displayTitleWhenEmpty() {
         let reminder = CustomReminder()
-        #expect(reminder.displayTitle == "New Reminder")
+        #expect(reminder.displayTitle == String(localized: "New Reminder", comment: "Fallback reminder title shown when the user hasn't entered one"))
     }
 
     @Test("Custom title is used verbatim")
@@ -74,7 +75,7 @@ struct CustomReminderTests {
         var reminder = CustomReminder()
         reminder.selectedSkyConditions = [.sunny]
         reminder.conditionMode = .include
-        #expect(reminder.skyConditionDescription == "Sunny")
+        #expect(reminder.skyConditionDescription == String(localized: "Sunny", comment: "Sky condition option label"))
     }
 
     @Test("Exclude mode prefixes with Not")
@@ -99,7 +100,7 @@ struct CustomReminderTests {
     func skyConditionDescriptionEmpty() {
         var reminder = CustomReminder()
         reminder.selectedSkyConditions = []
-        #expect(reminder.skyConditionDescription == "Any weather")
+        #expect(reminder.skyConditionDescription == String(localized: "Any weather", comment: "Sky condition summary when no specific sky conditions are selected"))
     }
 
     // MARK: - Sky Condition Matching
@@ -143,7 +144,7 @@ struct CustomReminderTests {
     @Test("Current location shows Current Location")
     func locationDisplayNameCurrentLocation() {
         let reminder = CustomReminder()
-        #expect(reminder.locationDisplayName == "Current Location")
+        #expect(reminder.locationDisplayName == String(localized: "Current Location", comment: "Displayed in place of an exact location when using GPS"))
     }
 
     @Test("Manual location shows city, state, country")
@@ -221,7 +222,7 @@ struct ReminderLocationSelectionTests {
     @Test("Current location display name")
     func currentLocationDisplayName() {
         let selection = ReminderLocationSelection.currentLocation
-        #expect(selection.displayName == "Current Location")
+        #expect(selection.displayName == String(localized: "Current Location", comment: "Displayed in place of an exact location when using GPS"))
     }
 
     @Test("Current location flag is true")
@@ -295,11 +296,11 @@ struct SkyConditionTests {
 
     @Test("Display names match expected values")
     func displayNames() {
-        #expect(SkyCondition.sunny.displayName == "Sunny")
-        #expect(SkyCondition.partlyCloudy.displayName == "Partly Cloudy")
-        #expect(SkyCondition.cloudy.displayName == "Cloudy")
-        #expect(SkyCondition.rainy.displayName == "Rainy")
-        #expect(SkyCondition.snowy.displayName == "Snowy")
+        #expect(SkyCondition.sunny.displayName == String(localized: "Sunny", comment: "Sky condition option label"))
+        #expect(SkyCondition.partlyCloudy.displayName == String(localized: "Partly Cloudy", comment: "Sky condition option label"))
+        #expect(SkyCondition.cloudy.displayName == String(localized: "Cloudy", comment: "Sky condition option label"))
+        #expect(SkyCondition.rainy.displayName == String(localized: "Rainy", comment: "Sky condition option label"))
+        #expect(SkyCondition.snowy.displayName == String(localized: "Snowy", comment: "Sky condition option label"))
     }
 
     @Test("Icons match expected SF Symbols")
@@ -618,7 +619,7 @@ struct ReminderCreationViewModelTests {
         viewModel.selectCurrentLocation()
 
         #expect(viewModel.customReminder.selectedLocation.isCurrentLocation == true)
-        #expect(viewModel.customReminder.locationDisplayName == "Current Location")
+        #expect(viewModel.customReminder.locationDisplayName == String(localized: "Current Location", comment: "Displayed in place of an exact location when using GPS"))
         #expect(viewModel.showLocationPicker == false)
     }
 
