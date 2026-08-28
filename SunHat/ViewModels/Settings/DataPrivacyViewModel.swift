@@ -51,7 +51,7 @@ final class DataPrivacyViewModel {
     }
     
     var syncStatusDescription: String {
-        "Your data is stored locally on this device. iCloud sync will be available in a future update."
+        String(localized: "Your data is stored locally on this device. iCloud sync will be available in a future update.", comment: "Data & Privacy screen sync status")
     }
     
     // MARK: - Private Properties
@@ -119,7 +119,7 @@ final class DataPrivacyViewModel {
             )
             
         } catch {
-            errorMessage = "Failed to load data summary: \(error.localizedDescription)"
+            errorMessage = String(localized: "Failed to load data summary: \(error.localizedDescription)", comment: "Data & Privacy screen error")
         }
     }
     
@@ -136,12 +136,12 @@ final class DataPrivacyViewModel {
             await saveAndShareFile(data: jsonData, fileName: fileName, contentType: .json)
             
         } catch {
-            errorMessage = "Failed to export data: \(error.localizedDescription)"
+            errorMessage = String(localized: "Failed to export data: \(error.localizedDescription)", comment: "Data & Privacy screen error")
         }
-        
+
         isExporting = false
     }
-    
+
     func exportDataAsCSV() async {
         isExporting = true
         errorMessage = nil
@@ -153,7 +153,7 @@ final class DataPrivacyViewModel {
             await saveAndShareFile(data: csvData, fileName: fileName, contentType: .commaSeparatedText)
             
         } catch {
-            errorMessage = "Failed to export CSV: \(error.localizedDescription)"
+            errorMessage = String(localized: "Failed to export CSV: \(error.localizedDescription)", comment: "Data & Privacy screen error")
         }
         
         isExporting = false
@@ -176,10 +176,10 @@ final class DataPrivacyViewModel {
             // Reset app to initial state
             try await resetAppState()
 
-            statusMessage = "All data has been successfully deleted"
+            statusMessage = String(localized: "All data has been successfully deleted", comment: "Data & Privacy screen confirmation after delete-all completes")
 
         } catch {
-            errorMessage = "Failed to delete data: \(error.localizedDescription)"
+            errorMessage = String(localized: "Failed to delete data: \(error.localizedDescription)", comment: "Data & Privacy screen error")
         }
 
         isDeleting = false
@@ -191,39 +191,39 @@ final class DataPrivacyViewModel {
     func enableSync() async {
         // CloudKit sync is currently disabled
         // This method is preserved for future CloudKit integration
-        statusMessage = "iCloud sync will be available in a future update."
+        statusMessage = String(localized: "iCloud sync will be available in a future update.", comment: "Data & Privacy screen sync status")
     }
 
     func disableSync() async {
         // CloudKit sync is currently disabled
         syncEnabled = false
-        statusMessage = "Data is stored locally on this device."
+        statusMessage = String(localized: "Data is stored locally on this device.", comment: "Data & Privacy screen sync status")
     }
 
     func forceSyncNow() async {
         // CloudKit sync is currently disabled
-        statusMessage = "Sync is currently unavailable. Data is stored locally."
+        statusMessage = String(localized: "Sync is currently unavailable. Data is stored locally.", comment: "Data & Privacy screen sync status")
     }
     
     func contactPrivacyOfficer() {
         let email = AppSupportLinks.privacyEmail
-        let subject = "Privacy Inquiry - SunHat App"
-        let body = """
+        let subject = String(localized: "Privacy Inquiry - SunHat App", comment: "Pre-filled subject line of the privacy-request email the app composes")
+        let body = String(localized: """
         Hello,
-        
+
         I am contacting you regarding my privacy rights under GDPR/CCPA.
-        
+
         My request:
-        
-        
+
+
         Thank you,
-        """
-        
+        """, comment: "Pre-filled body of the privacy-request email the app composes; GDPR/CCPA are legal acronyms and should not be translated")
+
         if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&body=\(body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
             Task {
                 let opened = await settingsOpener.open(url)
                 if opened == false {
-                    errorMessage = "Couldn't open Mail. Set up a mail account, or email \(email) directly."
+                    errorMessage = String(localized: "Couldn't open Mail. Set up a mail account, or email \(email) directly.", comment: "Error shown when deep-linking to the Mail app fails")
                 }
             }
         }
@@ -521,7 +521,7 @@ final class DataPrivacyViewModel {
             
         } catch {
             await MainActor.run {
-                errorMessage = "Failed to save export file: \(error.localizedDescription)"
+                errorMessage = String(localized: "Failed to save export file: \(error.localizedDescription)", comment: "Data & Privacy screen error")
             }
         }
     }
@@ -568,13 +568,13 @@ enum DataPrivacyError: LocalizedError, Sendable {
     nonisolated var errorDescription: String? {
         switch self {
         case .noModelContext:
-            return "Unable to access app data"
+            return String(localized: "Unable to access app data", comment: "Data & Privacy error")
         case .cloudKitUnavailable:
-            return "iCloud is not available"
+            return String(localized: "iCloud is not available", comment: "Data & Privacy error")
         case .exportFailed:
-            return "Failed to export data"
+            return String(localized: "Failed to export data", comment: "Data & Privacy error")
         case .deletionFailed:
-            return "Failed to delete data"
+            return String(localized: "Failed to delete data", comment: "Data & Privacy error")
         }
     }
 }

@@ -274,17 +274,17 @@ final class FirstReminderCreationViewModel: ObservableObject {
     private func likelihoodDescription(for percentage: Double) -> String {
         switch percentage {
         case 0:
-            return "Unlikely"
+            return String(localized: "Unlikely", comment: "Trigger likelihood: 0% chance the reminder's conditions will occur")
         case 1...25:
-            return "Low chance"
+            return String(localized: "Low chance", comment: "Trigger likelihood: 1-25% chance the reminder's conditions will occur")
         case 26...50:
-            return "Moderate chance"
+            return String(localized: "Moderate chance", comment: "Trigger likelihood: 26-50% chance the reminder's conditions will occur")
         case 51...75:
-            return "Good chance"
+            return String(localized: "Good chance", comment: "Trigger likelihood: 51-75% chance the reminder's conditions will occur")
         case 76...100:
-            return "Very likely"
+            return String(localized: "Very likely", comment: "Trigger likelihood: 76-100% chance the reminder's conditions will occur")
         default:
-            return "Unknown"
+            return String(localized: "Unknown", comment: "Trigger likelihood: percentage outside the expected 0-100 range")
         }
     }
     
@@ -469,18 +469,18 @@ struct CustomReminder {
     // MARK: - Color Palette
 
     static let availableColors: [ReminderColor] = [
-        ReminderColor(name: "Blue", color: .blue),
-        ReminderColor(name: "Purple", color: .purple),
-        ReminderColor(name: "Pink", color: .pink),
-        ReminderColor(name: "Red", color: .red),
-        ReminderColor(name: "Orange", color: .orange),
-        ReminderColor(name: "Yellow", color: .yellow),
-        ReminderColor(name: "Green", color: .green),
-        ReminderColor(name: "Teal", color: .teal),
-        ReminderColor(name: "Cyan", color: .cyan),
-        ReminderColor(name: "Indigo", color: .indigo),
-        ReminderColor(name: "Mint", color: .mint),
-        ReminderColor(name: "Brown", color: .brown)
+        ReminderColor(name: String(localized: "Blue", comment: "Reminder color swatch name"), color: .blue),
+        ReminderColor(name: String(localized: "Purple", comment: "Reminder color swatch name"), color: .purple),
+        ReminderColor(name: String(localized: "Pink", comment: "Reminder color swatch name"), color: .pink),
+        ReminderColor(name: String(localized: "Red", comment: "Reminder color swatch name"), color: .red),
+        ReminderColor(name: String(localized: "Orange", comment: "Reminder color swatch name"), color: .orange),
+        ReminderColor(name: String(localized: "Yellow", comment: "Reminder color swatch name"), color: .yellow),
+        ReminderColor(name: String(localized: "Green", comment: "Reminder color swatch name"), color: .green),
+        ReminderColor(name: String(localized: "Teal", comment: "Reminder color swatch name"), color: .teal),
+        ReminderColor(name: String(localized: "Cyan", comment: "Reminder color swatch name"), color: .cyan),
+        ReminderColor(name: String(localized: "Indigo", comment: "Reminder color swatch name"), color: .indigo),
+        ReminderColor(name: String(localized: "Mint", comment: "Reminder color swatch name"), color: .mint),
+        ReminderColor(name: String(localized: "Brown", comment: "Reminder color swatch name"), color: .brown)
     ]
 
     var iconColor: Color {
@@ -488,21 +488,21 @@ struct CustomReminder {
     }
 
     var displayTitle: String {
-        title.isEmpty ? "New Reminder" : title
+        title.isEmpty ? String(localized: "New Reminder", comment: "Fallback reminder title shown when the user hasn't entered one") : title
     }
 
     var temperatureDescription: String {
         switch temperatureType {
         case .temperatureRange:
-            return "\(Int(minTemperature))° - \(Int(maxTemperature))°F"
+            return String(localized: "\(Int(minTemperature))° - \(Int(maxTemperature))°F", comment: "Temperature range shown for a reminder, e.g. '65° - 75°F'")
         case .exactTemperature:
-            return "\(Int(minTemperature))°F"
+            return String(localized: "\(Int(minTemperature))°F", comment: "Exact target temperature shown for a reminder, e.g. '70°F'")
         }
     }
 
     var skyConditionDescription: String {
         guard !selectedSkyConditions.isEmpty else {
-            return "Any weather"
+            return String(localized: "Any weather", comment: "Sky condition summary when no specific sky conditions are selected")
         }
         let names = selectedSkyConditions
             .sorted { $0.rawValue < $1.rawValue }
@@ -512,20 +512,20 @@ struct CustomReminder {
         case .include:
             return joined
         case .exclude:
-            return "Not \(joined.lowercased())"
+            return String(localized: "Not \(joined.lowercased())", comment: "Sky condition summary when excluding the listed conditions, e.g. 'Not rainy'")
         }
     }
 
     var previewTitle: String {
-        "Perfect weather for \(displayTitle)! ✨"
+        String(localized: "Perfect weather for \(displayTitle)! ✨", comment: "Preview notification title shown while creating a reminder")
     }
 
     var previewBody: String {
         let tempDesc = temperatureType == .temperatureRange ?
-            "It's \(Int(minTemperature + (maxTemperature - minTemperature) / 2))°F" :
-            "It's \(Int(minTemperature))°F"
+            String(localized: "It's \(Int(minTemperature + (maxTemperature - minTemperature) / 2))°F", comment: "Preview notification body temperature clause for a temperature range reminder") :
+            String(localized: "It's \(Int(minTemperature))°F", comment: "Preview notification body temperature clause for an exact temperature reminder")
 
-        return "\(tempDesc) and \(skyConditionDescription.lowercased()), ideal for your \(displayTitle.lowercased()) reminder."
+        return String(localized: "\(tempDesc) and \(skyConditionDescription.lowercased()), ideal for your \(displayTitle.lowercased()) reminder.", comment: "Full preview notification body combining temperature and sky condition")
     }
 
     /// Evaluate if a forecast day matches the sky conditions
@@ -549,7 +549,7 @@ enum ReminderLocationSelection: Equatable {
     var displayName: String {
         switch self {
         case .currentLocation:
-            return "Current Location"
+            return String(localized: "Current Location", comment: "Location label shown when using the device's current location")
         case .manual(let data):
             return data.displayName
         }
@@ -597,15 +597,15 @@ enum WeatherConditionType: String, CaseIterable, Hashable {
     var displayName: String {
         switch self {
         case .temperatureRange:
-            return "Temperature Range"
+            return String(localized: "Temperature Range", comment: "Weather condition type option label")
         case .exactTemperature:
-            return "Exact Temperature"
+            return String(localized: "Exact Temperature", comment: "Weather condition type option label")
         case .sunny:
-            return "Sunny"
+            return String(localized: "Sunny", comment: "Weather condition type option label")
         case .partlyCloudy:
-            return "Partly Cloudy"
+            return String(localized: "Partly Cloudy", comment: "Weather condition type option label")
         case .rainy:
-            return "No Rain"
+            return String(localized: "No Rain", comment: "Weather condition type option label")
         }
     }
 
@@ -638,11 +638,11 @@ enum SkyCondition: String, Codable, CaseIterable, Hashable, Identifiable, Sendab
 
     var displayName: String {
         switch self {
-        case .sunny: return "Sunny"
-        case .partlyCloudy: return "Partly Cloudy"
-        case .cloudy: return "Cloudy"
-        case .rainy: return "Rainy"
-        case .snowy: return "Snowy"
+        case .sunny: return String(localized: "Sunny", comment: "Sky condition option label")
+        case .partlyCloudy: return String(localized: "Partly Cloudy", comment: "Sky condition option label")
+        case .cloudy: return String(localized: "Cloudy", comment: "Sky condition option label")
+        case .rainy: return String(localized: "Rainy", comment: "Sky condition option label")
+        case .snowy: return String(localized: "Snowy", comment: "Sky condition option label")
         }
     }
 
@@ -703,8 +703,8 @@ enum TemperatureConditionType: String, CaseIterable, Hashable {
 
     var displayName: String {
         switch self {
-        case .temperatureRange: return "Temperature Range"
-        case .exactTemperature: return "Exact Temperature"
+        case .temperatureRange: return String(localized: "Temperature Range", comment: "Temperature condition type option label")
+        case .exactTemperature: return String(localized: "Exact Temperature", comment: "Temperature condition type option label")
         }
     }
 
@@ -725,13 +725,13 @@ enum TimeRange: String, CaseIterable, Hashable {
     var displayName: String {
         switch self {
         case .morning:
-            return "Morning"
+            return String(localized: "Morning", comment: "Time-of-day preference option label")
         case .afternoon:
-            return "Afternoon"
+            return String(localized: "Afternoon", comment: "Time-of-day preference option label")
         case .evening:
-            return "Evening"
+            return String(localized: "Evening", comment: "Time-of-day preference option label")
         case .allDay:
-            return "All Day"
+            return String(localized: "All Day", comment: "Time-of-day preference option label")
         }
     }
     
@@ -777,9 +777,7 @@ struct WeatherForecastDay: Identifiable {
     }
     
     var shortDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "M/d"
-        return formatter.string(from: date)
+        date.formatted(.dateTime.month(.defaultDigits).day())
     }
     
     var weatherIcon: String {

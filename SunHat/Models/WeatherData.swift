@@ -183,31 +183,31 @@ enum WeatherCondition: String, Codable, CaseIterable {
     var displayName: String {
         switch self {
         case .clear:
-            return "Clear"
+            return String(localized: "Clear", comment: "Weather condition name")
         case .partlyCloudy:
-            return "Partly Cloudy"
+            return String(localized: "Partly Cloudy", comment: "Weather condition name")
         case .cloudy:
-            return "Cloudy"
+            return String(localized: "Cloudy", comment: "Weather condition name")
         case .overcast:
-            return "Overcast"
+            return String(localized: "Overcast", comment: "Weather condition name")
         case .fog:
-            return "Fog"
+            return String(localized: "Fog", comment: "Weather condition name")
         case .rain:
-            return "Rain"
+            return String(localized: "Rain", comment: "Weather condition name")
         case .drizzle:
-            return "Drizzle"
+            return String(localized: "Drizzle", comment: "Weather condition name")
         case .snow:
-            return "Snow"
+            return String(localized: "Snow", comment: "Weather condition name")
         case .sleet:
-            return "Sleet"
+            return String(localized: "Sleet", comment: "Weather condition name")
         case .hail:
-            return "Hail"
+            return String(localized: "Hail", comment: "Weather condition name")
         case .thunderstorm:
-            return "Thunderstorm"
+            return String(localized: "Thunderstorm", comment: "Weather condition name")
         case .windy:
-            return "Windy"
+            return String(localized: "Windy", comment: "Weather condition name")
         case .unknown:
-            return "Unknown"
+            return String(localized: "Unknown", comment: "Weather condition name")
         }
     }
     
@@ -292,8 +292,24 @@ extension WeatherData {
     }
     
     var windDirectionCardinal: String {
-        let directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-                         "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+        let directions = [
+            String(localized: "N", comment: "Wind direction abbreviation: North"),
+            String(localized: "NNE", comment: "Wind direction abbreviation: North-northeast"),
+            String(localized: "NE", comment: "Wind direction abbreviation: Northeast"),
+            String(localized: "ENE", comment: "Wind direction abbreviation: East-northeast"),
+            String(localized: "E", comment: "Wind direction abbreviation: East"),
+            String(localized: "ESE", comment: "Wind direction abbreviation: East-southeast"),
+            String(localized: "SE", comment: "Wind direction abbreviation: Southeast"),
+            String(localized: "SSE", comment: "Wind direction abbreviation: South-southeast"),
+            String(localized: "S", comment: "Wind direction abbreviation: South"),
+            String(localized: "SSW", comment: "Wind direction abbreviation: South-southwest"),
+            String(localized: "SW", comment: "Wind direction abbreviation: Southwest"),
+            String(localized: "WSW", comment: "Wind direction abbreviation: West-southwest"),
+            String(localized: "W", comment: "Wind direction abbreviation: West"),
+            String(localized: "WNW", comment: "Wind direction abbreviation: West-northwest"),
+            String(localized: "NW", comment: "Wind direction abbreviation: Northwest"),
+            String(localized: "NNW", comment: "Wind direction abbreviation: North-northwest")
+        ]
         let index = Int((Double(windDirection) + 11.25) / 22.5) % 16
         return directions[index]
     }
@@ -305,19 +321,23 @@ extension WeatherData {
     var precipitationDescription: String {
         switch precipitationType {
         case .none:
-            return "No precipitation"
+            return String(localized: "No precipitation", comment: "Precipitation description")
         case .rain:
-            return precipitationAmount > 0.1 ? "Rain" : "Light rain"
+            return precipitationAmount > 0.1
+                ? String(localized: "Rain", comment: "Precipitation description")
+                : String(localized: "Light rain", comment: "Precipitation description")
         case .snow:
-            return precipitationAmount > 0.1 ? "Snow" : "Light snow"
+            return precipitationAmount > 0.1
+                ? String(localized: "Snow", comment: "Precipitation description")
+                : String(localized: "Light snow", comment: "Precipitation description")
         case .sleet:
-            return "Sleet"
+            return String(localized: "Sleet", comment: "Precipitation description")
         case .hail:
-            return "Hail"
+            return String(localized: "Hail", comment: "Precipitation description")
         case .freezingRain:
-            return "Freezing rain"
+            return String(localized: "Freezing rain", comment: "Precipitation description")
         case .mixed:
-            return "Mixed precipitation"
+            return String(localized: "Mixed precipitation", comment: "Precipitation description")
         }
     }
     

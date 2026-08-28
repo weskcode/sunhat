@@ -167,7 +167,7 @@ final class DetailedReminderViewModel: ObservableObject {
             SunHatSearchIndexer.index(reminder: reminder)
             
             // Add history entry
-            reminder.addHistoryEntry(.modified, details: "Reminder updated")
+            reminder.addHistoryEntry(.modified, details: String(localized: "Reminder updated", comment: "Reminder history timeline entry"))
             
             // Reload current weather if location changed
             if editedReminder.location.hasChanged {
@@ -340,12 +340,12 @@ final class DetailedReminderViewModel: ObservableObject {
             
             let relativeString = formatter.localizedString(for: nextDate, relativeTo: Date())
             
-            let confidenceText = confidence > 0.7 ? "Very likely" :
-                                confidence > 0.4 ? "Likely" : "Possibly"
-            
-            return "\(confidenceText) to trigger \(relativeString)"
+            let confidenceText = confidence > 0.7 ? String(localized: "Very likely", comment: "Prediction confidence level for when a reminder will next trigger") :
+                                confidence > 0.4 ? String(localized: "Likely", comment: "Prediction confidence level for when a reminder will next trigger") : String(localized: "Possibly", comment: "Prediction confidence level for when a reminder will next trigger")
+
+            return String(localized: "\(confidenceText) to trigger \(relativeString)", comment: "Live prediction description, e.g. 'Very likely to trigger in 2 days'")
         } else {
-            return "No triggers expected in the next 7 days"
+            return String(localized: "No triggers expected in the next 7 days", comment: "Live prediction description shown when no trigger is expected in the forecast window")
         }
     }
     
@@ -482,7 +482,7 @@ struct EditableLocation {
             self.isCurrentLocation = false
         } else {
             self.coordinate = CLLocationCoordinate2D(latitude: 0, longitude: 0)
-            self.displayName = "Current Location"
+            self.displayName = String(localized: "Current Location", comment: "Location label shown when using the device's current location")
             self.fullAddress = nil
             self.isCurrentLocation = true
         }

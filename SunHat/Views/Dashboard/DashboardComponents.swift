@@ -88,7 +88,7 @@ struct ActiveReminderCard: View {
                     .lineLimit(1)
 
                 if let condition = reminder.triggerCondition {
-                    Text("Trigger: When temperature is \(condition.comparisonType.rawValue) \(condition.targetTemperature, specifier: "%.1f")°")
+                    Text("Trigger: When temperature is \(condition.comparisonType.displayName) \(condition.targetTemperature, specifier: "%.1f")°")
                         .font(AppFontStyle.caption.font)
                         .foregroundStyle(.secondary)
                 } else {
@@ -136,10 +136,10 @@ struct ActiveReminderCard: View {
 
     private var statusText: String {
         guard weatherData != nil else {
-            return "Waiting for weather data"
+            return String(localized: "Waiting for weather data", comment: "Status text shown on a reminder card while weather data hasn't loaded yet")
         }
 
-        return "Monitoring"
+        return String(localized: "Monitoring", comment: "Status text shown on a reminder card while actively watching the weather")
     }
 
     private var reminderAccessibilityLabel: String {
@@ -147,14 +147,14 @@ struct ActiveReminderCard: View {
 
         if let condition = reminder.triggerCondition {
             let temperature = String(format: "%.1f", condition.targetTemperature)
-            parts.append("Trigger when temperature is \(condition.comparisonType.rawValue) \(temperature) degrees")
+            parts.append(String(localized: "Trigger when temperature is \(condition.comparisonType.displayName) \(temperature) degrees", comment: "Accessibility label clause describing a reminder's temperature trigger condition"))
         } else {
-            parts.append("No trigger condition set")
+            parts.append(String(localized: "No trigger condition set", comment: "Accessibility label clause when a reminder has no trigger condition configured"))
         }
 
         if let weatherData {
             let temperature = String(format: "%.0f", weatherData.temperature)
-            parts.append("Current temperature \(temperature) degrees")
+            parts.append(String(localized: "Current temperature \(temperature) degrees", comment: "Accessibility label clause stating the current temperature"))
         }
 
         return parts.joined(separator: ", ")
@@ -166,8 +166,8 @@ struct ActiveReminderCard: View {
 struct EmptyActiveRemindersView: View {
     var body: some View {
         SunHatEmptyState(
-            title: "No Tasks Yet",
-            message: "Create a weather task and SunHat will watch for matching conditions.",
+            title: String(localized: "No Tasks Yet", comment: "Empty state title when the user has no weather tasks"),
+            message: String(localized: "Create a weather task and SunHat will watch for matching conditions.", comment: "Empty state message when the user has no weather tasks"),
             systemImage: "bell.slash"
         )
     }

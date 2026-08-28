@@ -17,11 +17,11 @@ final class WeatherViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published var isLoading = false
     @Published var lastUpdateTime: Date?
-    @Published var locationName: String = "Loading location..."
+    @Published var locationName: String = String(localized: "Loading location...", comment: "Placeholder shown before the user's location is resolved")
 
     @Published var currentTemperature: Double = 0
     @Published var feelsLikeTemperature: Double = 0
-    @Published var weatherDescription: String = "Clear"
+    @Published var weatherDescription: String = String(localized: "Clear", comment: "Placeholder weather condition shown before weather data has loaded")
     @Published var weatherCondition: WeatherCondition = .unknown
     @Published var weatherIconName: String = "sun.max.fill"
     @Published var weatherIconColor: Color = .orange
@@ -272,22 +272,22 @@ final class WeatherViewModel: ObservableObject {
         if currentTemperature > 95 {
             alerts.append(.init(
                 id: .init(),
-                title: "SunHat Heat Advisory",
-                description: "Current temperature is above SunHat's 95°F advisory threshold.",
+                title: String(localized: "SunHat Heat Advisory", comment: "Title of an in-app weather advisory; 'SunHat' is the app name and should not be translated"),
+                description: String(localized: "Current temperature is above SunHat's 95°F advisory threshold.", comment: "In-app weather advisory description"),
                 severity: .advisory,
                 area: locationName,
-                instructions: "Stay hydrated and limit time outdoors",
+                instructions: String(localized: "Stay hydrated and limit time outdoors", comment: "In-app weather advisory instructions"),
                 expiresAt: Date().addingTimeInterval(8 * 3600)
             ))
         }
         if uvIndex > 8 {
             alerts.append(.init(
                 id: .init(),
-                title: "SunHat UV Advisory",
-                description: "Current UV index (\(Int(uvIndex))) is above SunHat's advisory threshold of 8.",
+                title: String(localized: "SunHat UV Advisory", comment: "Title of an in-app weather advisory; 'SunHat' is the app name and should not be translated"),
+                description: String(localized: "Current UV index (\(Int(uvIndex))) is above SunHat's advisory threshold of 8.", comment: "In-app weather advisory description"),
                 severity: .advisory,
                 area: locationName,
-                instructions: "Use sunscreen and seek shade midday",
+                instructions: String(localized: "Use sunscreen and seek shade midday", comment: "In-app weather advisory instructions"),
                 expiresAt: Date().addingTimeInterval(6 * 3600)
             ))
         }
@@ -371,8 +371,8 @@ final class WeatherViewModel: ObservableObject {
     }
 
     private static func label(for date: Date) -> String {
-        if Self.calendar.isDateInToday(date) { return "Today" }
-        if Self.calendar.isDateInTomorrow(date) { return "Tomorrow" }
+        if Self.calendar.isDateInToday(date) { return String(localized: "Today", comment: "Relative day label in the weekly forecast") }
+        if Self.calendar.isDateInTomorrow(date) { return String(localized: "Tomorrow", comment: "Relative day label in the weekly forecast") }
         return Self.dayFormatter.string(from: date)
     }
 
@@ -467,22 +467,22 @@ final class WeatherViewModel: ObservableObject {
     // MARK: - Display Calculation Helpers
 
     private func formatConditionDescription(_ condition: TriggerConditionData?) -> String {
-        guard let condition = condition else { return "No condition set" }
+        guard let condition = condition else { return String(localized: "No condition set", comment: "Trigger prediction summary when a reminder has no condition configured") }
 
         let tempStr = String(format: "%.1f°", condition.targetTemperature)
 
         switch condition.comparisonType {
         case .above:
-            return "When temp > \(tempStr)"
+            return String(localized: "When temp > \(tempStr)", comment: "Short trigger prediction summary; keep the '>' comparison symbol")
         case .below:
-            return "When temp < \(tempStr)"
+            return String(localized: "When temp < \(tempStr)", comment: "Short trigger prediction summary; keep the '<' comparison symbol")
         case .equals:
-            return "When temp = \(tempStr)"
+            return String(localized: "When temp = \(tempStr)", comment: "Short trigger prediction summary; keep the '=' comparison symbol")
         case .between:
             if let min = condition.minTemperature, let max = condition.maxTemperature {
-                return "When temp between \(String(format: "%.1f°", min)) and \(String(format: "%.1f°", max))"
+                return String(localized: "When temp between \(String(format: "%.1f°", min)) and \(String(format: "%.1f°", max))", comment: "Short trigger prediction summary for a temperature range")
             }
-            return "When temp = \(tempStr)"
+            return String(localized: "When temp = \(tempStr)", comment: "Short trigger prediction summary; keep the '=' comparison symbol")
         }
     }
 

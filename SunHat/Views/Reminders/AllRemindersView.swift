@@ -23,6 +23,14 @@ struct AllRemindersView: View {
         case all = "All"
         case active = "Active"
         case inactive = "Inactive"
+
+        var displayName: String {
+            switch self {
+            case .all: return String(localized: "All", comment: "Reminder list filter: show all reminders")
+            case .active: return String(localized: "Active", comment: "Reminder list filter: show only active reminders")
+            case .inactive: return String(localized: "Inactive", comment: "Reminder list filter: show only inactive reminders")
+            }
+        }
     }
 
     var filteredReminders: [WeatherReminder] {
@@ -176,7 +184,7 @@ struct AllRemindersView: View {
             HStack(spacing: 8) {
                 ForEach(ReminderFilter.allCases, id: \.self) { filter in
                     FilterChip(
-                        title: filter.rawValue,
+                        title: filter.displayName,
                         isSelected: selectedFilter == filter
                     ) {
                         withAnimation(SunHatMotion.cardToggle(reduceMotion: reduceMotion)) {
@@ -239,8 +247,8 @@ struct AllRemindersView: View {
             Spacer(minLength: 0)
 
             SunHatEmptyState(
-                title: "No Tasks Yet",
-                message: "Create your first weather-triggered task to start watching the weather.",
+                title: String(localized: "No Tasks Yet", comment: "Empty state title when the user has no weather tasks"),
+                message: String(localized: "Create your first weather-triggered task to start watching the weather.", comment: "Empty state message when the user has no weather tasks"),
                 systemImage: "list.bullet.clipboard"
             )
             .sunHatSurface(tint: .accentColor, cornerRadius: 24, prominence: 0.70)
@@ -255,8 +263,8 @@ struct AllRemindersView: View {
 
     private var noResultsView: some View {
         SunHatEmptyState(
-            title: "No Tasks Found",
-            message: "Try a different search or switch back to all tasks.",
+            title: String(localized: "No Tasks Found", comment: "Empty state title when a search or filter matches no weather tasks"),
+            message: String(localized: "Try a different search or switch back to all tasks.", comment: "Empty state message when a search or filter matches no weather tasks"),
             systemImage: "magnifyingglass"
         )
         .frame(maxWidth: .infinity)

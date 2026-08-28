@@ -10,16 +10,20 @@ import Foundation
 import MapKit
 
 enum LocationDisplayFormatter {
+    private static var currentLocationLabel: String {
+        String(localized: "Current Location", comment: "Displayed in place of an exact location when using GPS")
+    }
+
     static func reverseGeocodedName(for location: CLLocation) async -> String {
         guard let request = MKReverseGeocodingRequest(location: location) else {
-            return "Current Location"
+            return currentLocationLabel
         }
 
         do {
             let mapItems = try await request.mapItems
-            return mapItems.compactMap(displayName(from:)).first ?? "Current Location"
+            return mapItems.compactMap(displayName(from:)).first ?? currentLocationLabel
         } catch {
-            return "Current Location"
+            return currentLocationLabel
         }
     }
 
@@ -56,17 +60,17 @@ enum LocationDisplayFormatter {
             return cleanCity
         }
 
-        return cleaned(administrativeArea) ?? "Current Location"
+        return cleaned(administrativeArea) ?? currentLocationLabel
     }
 
     static func privacyPreservingName(from rawName: String) -> String {
         let trimmed = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            return "Current Location"
+            return currentLocationLabel
         }
 
         if trimmed.localizedCaseInsensitiveContains("current location") {
-            return "Current Location"
+            return currentLocationLabel
         }
 
         let components = trimmed
@@ -75,15 +79,15 @@ enum LocationDisplayFormatter {
             .filter { !$0.isEmpty }
 
         guard !components.isEmpty else {
-            return "Current Location"
+            return currentLocationLabel
         }
 
         if components.count == 1 {
-            return looksLikeExactAddress(components[0]) ? "Current Location" : components[0]
+            return looksLikeExactAddress(components[0]) ? currentLocationLabel : components[0]
         }
 
         if looksLikeExactAddress(components[0]) {
-            return components.dropFirst().first ?? "Current Location"
+            return components.dropFirst().first ?? currentLocationLabel
         }
 
         return components[0]
