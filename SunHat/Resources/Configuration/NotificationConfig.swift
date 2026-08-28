@@ -39,8 +39,8 @@ final class NotificationConfig {
     var includeActionButtons: Bool = true
     
     // Action buttons
-    var primaryActionTitle: String = "Mark Complete"
-    var secondaryActionTitle: String = "Snooze"
+    var primaryActionTitle: String = String(localized: "Mark Complete", comment: "Default notification action button title")
+    var secondaryActionTitle: String = String(localized: "Snooze", comment: "Default notification action button title")
     var snoozeHours: Int = 2
     
     // Advanced features
@@ -73,8 +73,8 @@ final class NotificationConfig {
     var successfulDeliveries: Int = 0
     
     init(
-        title: String = "Weather Reminder",
-        message: String = "Your weather condition has been met!",
+        title: String = String(localized: "Weather Reminder", comment: "Default notification title"),
+        message: String = String(localized: "Your weather condition has been met!", comment: "Default notification body"),
         deliveryTime: NotificationDeliveryTime = .immediate
     ) {
         self.title = title

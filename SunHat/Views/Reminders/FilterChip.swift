@@ -27,7 +27,7 @@ struct FilterChip: View {
         }
         .buttonStyle(SunHatPressButtonStyle())
         .accessibilityLabel(title)
-        .accessibilityValue(isSelected ? "Selected" : "Not selected")
+        .accessibilityValue(isSelected ? String(localized: "Selected", comment: "Accessibility value for a toggled filter chip") : String(localized: "Not selected", comment: "Accessibility value for a toggled filter chip"))
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
         .animation(SunHatMotion.cardToggle(reduceMotion: reduceMotion), value: isSelected)
     }

@@ -107,12 +107,12 @@ nonisolated enum SunHatNotificationCategoryRegistry {
             actions: [
                 UNNotificationAction(
                     identifier: SunHatNotificationActionIdentifier.viewAlert,
-                    title: "View Alert",
+                    title: String(localized: "View Alert", comment: "Notification action button"),
                     options: [.foreground]
                 ),
                 UNNotificationAction(
                     identifier: SunHatNotificationActionIdentifier.postponeReminder,
-                    title: "Postpone Reminder",
+                    title: String(localized: "Postpone Reminder", comment: "Notification action button"),
                     options: []
                 )
             ],
@@ -128,7 +128,7 @@ nonisolated enum SunHatNotificationCategoryRegistry {
                 completeAction,
                 UNNotificationAction(
                     identifier: SunHatNotificationActionIdentifier.reschedule,
-                    title: "Reschedule",
+                    title: String(localized: "Reschedule", comment: "Notification action button"),
                     options: [.foreground]
                 )
             ],
@@ -143,12 +143,12 @@ nonisolated enum SunHatNotificationCategoryRegistry {
             actions: [
                 UNNotificationAction(
                     identifier: SunHatNotificationActionIdentifier.startWorkout,
-                    title: "Start Workout",
+                    title: String(localized: "Start Workout", comment: "Notification action button"),
                     options: [.foreground]
                 ),
                 UNNotificationAction(
                     identifier: SunHatNotificationActionIdentifier.skipToday,
-                    title: "Skip Today",
+                    title: String(localized: "Skip Today", comment: "Notification action button"),
                     options: []
                 )
             ],
@@ -163,12 +163,12 @@ nonisolated enum SunHatNotificationCategoryRegistry {
             actions: [
                 UNNotificationAction(
                     identifier: SunHatNotificationActionIdentifier.waterPlants,
-                    title: "Water Plants",
+                    title: String(localized: "Water Plants", comment: "Notification action button"),
                     options: []
                 ),
                 UNNotificationAction(
                     identifier: SunHatNotificationActionIdentifier.remindLater,
-                    title: "Remind Later",
+                    title: String(localized: "Remind Later", comment: "Notification action button"),
                     options: []
                 )
             ],
@@ -183,12 +183,12 @@ nonisolated enum SunHatNotificationCategoryRegistry {
             actions: [
                 UNNotificationAction(
                     identifier: SunHatNotificationActionIdentifier.startTask,
-                    title: "Start Task",
+                    title: String(localized: "Start Task", comment: "Notification action button"),
                     options: [.foreground]
                 ),
                 UNNotificationAction(
                     identifier: SunHatNotificationActionIdentifier.postponeReminder,
-                    title: "Postpone",
+                    title: String(localized: "Postpone", comment: "Notification action button"),
                     options: []
                 )
             ],
@@ -203,12 +203,12 @@ nonisolated enum SunHatNotificationCategoryRegistry {
             actions: [
                 UNNotificationAction(
                     identifier: SunHatNotificationActionIdentifier.view,
-                    title: "View Details",
+                    title: String(localized: "View Details", comment: "Notification action button"),
                     options: [.foreground]
                 ),
                 UNNotificationAction(
                     identifier: SunHatNotificationActionIdentifier.acknowledge,
-                    title: "Acknowledge",
+                    title: String(localized: "Acknowledge", comment: "Notification action button"),
                     options: []
                 )
             ],
@@ -220,7 +220,7 @@ nonisolated enum SunHatNotificationCategoryRegistry {
     private static var completeAction: UNNotificationAction {
         UNNotificationAction(
             identifier: SunHatNotificationActionIdentifier.complete,
-            title: "Mark Done",
+            title: String(localized: "Mark Done", comment: "Notification action button"),
             options: []
         )
     }
@@ -228,7 +228,7 @@ nonisolated enum SunHatNotificationCategoryRegistry {
     private static var snoozeAction: UNNotificationAction {
         UNNotificationAction(
             identifier: SunHatNotificationActionIdentifier.snooze,
-            title: "Snooze 2h",
+            title: String(localized: "Snooze 2h", comment: "Notification action button; 'h' is an abbreviation for hours"),
             options: []
         )
     }
@@ -236,7 +236,7 @@ nonisolated enum SunHatNotificationCategoryRegistry {
     private static var pauseAction: UNNotificationAction {
         UNNotificationAction(
             identifier: SunHatNotificationActionIdentifier.pause,
-            title: "Pause This Reminder",
+            title: String(localized: "Pause This Reminder", comment: "Notification action button"),
             options: []
         )
     }
@@ -244,7 +244,7 @@ nonisolated enum SunHatNotificationCategoryRegistry {
     private static var viewForecastAction: UNNotificationAction {
         UNNotificationAction(
             identifier: SunHatNotificationActionIdentifier.viewForecast,
-            title: "View Forecast",
+            title: String(localized: "View Forecast", comment: "Notification action button"),
             options: [.foreground]
         )
     }

@@ -103,11 +103,13 @@ struct HourlyForecastCard: View {
     }
 
     private var hourlyAccessibilityLabel: String {
-        var label = "At \(hourData.timeLabel): \(hourData.temperature.formatted(.number.precision(.fractionLength(0)))) degrees, \(hourData.condition)"
+        let time = hourData.timeLabel
+        let temperature = hourData.temperature.formatted(.number.precision(.fractionLength(0)))
+        let condition = hourData.condition
         if hourData.precipitationProbability > 0 {
-            label += ", \(hourData.precipitationProbability) percent chance of precipitation"
+            return String(localized: "At \(time): \(temperature) degrees, \(condition), \(hourData.precipitationProbability) percent chance of precipitation", comment: "VoiceOver label for one hour in the hourly forecast, including precipitation chance")
         }
-        return label
+        return String(localized: "At \(time): \(temperature) degrees, \(condition)", comment: "VoiceOver label for one hour in the hourly forecast")
     }
 }
 
@@ -161,9 +163,9 @@ struct WeeklyForecastRow: View {
     }
 
     private var weeklyRowAccessibilityLabel: String {
-        var label = "\(dayData.dayOfWeek): \(dayData.condition), high \(Int(dayData.highTemp.rounded())), low \(Int(dayData.lowTemp.rounded())) degrees"
+        var label = String(localized: "\(dayData.dayOfWeek): \(dayData.condition), high \(Int(dayData.highTemp.rounded())), low \(Int(dayData.lowTemp.rounded())) degrees", comment: "Accessibility label for a weekly forecast row, e.g. 'Monday: Sunny, high 75, low 60 degrees'")
         if dayData.precipitationProbability > 0 {
-            label += ", \(dayData.precipitationProbability) percent chance of precipitation"
+            label += String(localized: ", \(dayData.precipitationProbability) percent chance of precipitation", comment: "Accessibility label suffix noting the chance of precipitation for a weekly forecast row")
         }
         return label
     }

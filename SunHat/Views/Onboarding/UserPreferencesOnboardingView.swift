@@ -104,7 +104,7 @@ struct UserPreferencesOnboardingView: View {
         .buttonStyle(.glassProminent)
         .tint(Color.accentColor)
         .disabled(isSaving)
-        .accessibilityLabel(isSaving ? "Saving preferences" : "Finish setup")
+        .accessibilityLabel(isSaving ? String(localized: "Saving preferences", comment: "Accessibility label while onboarding preferences are being saved") : String(localized: "Finish setup", comment: "Accessibility label for the final onboarding button"))
     }
 
     private func finishSetup() {

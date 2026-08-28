@@ -115,8 +115,8 @@ final class AppLifecyclePromptCoordinator: ObservableObject {
         showsFeedbackForm = false
         feedbackText = ""
 
-        let body = message.isEmpty ? "I have feedback about SunHat." : message
-        let subject = "SunHat Feedback"
+        let body = message.isEmpty ? String(localized: "I have feedback about SunHat.", comment: "Default body of the feedback email when the user submits without typing anything") : message
+        let subject = String(localized: "SunHat Feedback", comment: "Pre-filled subject line of the feedback email the app composes; 'SunHat' is the app name")
 
         guard let url = AppSupportLinks.mailURL(
             to: AppSupportLinks.feedbackEmail,

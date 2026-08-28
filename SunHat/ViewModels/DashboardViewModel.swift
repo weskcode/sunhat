@@ -25,12 +25,12 @@ final class DashboardViewModel: ObservableObject {
     @Published var windSpeed: Double = 0.0
     @Published var visibility: Double = 0.0
     @Published var uvIndex: Double = 0.0
-    @Published var weatherDescription: String = "Loading..."
+    @Published var weatherDescription: String = String(localized: "Loading...", comment: "Placeholder shown before weather data has loaded")
     @Published var weatherIconName: String = "cloud.fill"
     @Published var weatherIconColor: Color = .gray
     @Published var weatherCondition: WeatherCondition = .unknown
-    
-    @Published var currentLocationName: String = "Unknown Location"
+
+    @Published var currentLocationName: String = String(localized: "Unknown Location", comment: "Placeholder shown before the user's location is resolved")
     @Published var currentWeatherData: WeatherDataTransfer?
     @Published var forecastData: [ForecastDay] = []
     @Published var activeReminders: [WeatherReminderDisplay] = []
@@ -61,11 +61,25 @@ final class DashboardViewModel: ObservableObject {
     }
 
     var windSpeedDisplay: String {
-        hasWeatherData ? "\(windSpeed.formatted(.number.precision(.fractionLength(0)))) mph" : "--"
+        guard hasWeatherData else { return "--" }
+        switch temperatureUnit {
+        case .fahrenheit:
+            return String(localized: "\(windSpeed.formatted(.number.precision(.fractionLength(0)))) mph", comment: "Wind speed in miles per hour")
+        case .celsius:
+            let kmh = windSpeed * 1.60934
+            return String(localized: "\(kmh.formatted(.number.precision(.fractionLength(0)))) km/h", comment: "Wind speed in kilometers per hour")
+        }
     }
 
     var visibilityDisplay: String {
-        hasWeatherData ? "\(visibility.formatted(.number.precision(.fractionLength(1)))) mi" : "--"
+        guard hasWeatherData else { return "--" }
+        switch temperatureUnit {
+        case .fahrenheit:
+            return String(localized: "\(visibility.formatted(.number.precision(.fractionLength(1)))) mi", comment: "Visibility distance in miles")
+        case .celsius:
+            let km = visibility * 1.60934
+            return String(localized: "\(km.formatted(.number.precision(.fractionLength(1)))) km", comment: "Visibility distance in kilometers")
+        }
     }
 
     var uvIndexDisplay: String {

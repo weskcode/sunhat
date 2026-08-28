@@ -46,7 +46,7 @@ struct ReminderGlassCard: View {
 
                 if let condition = reminder.triggerCondition {
                     HStack(spacing: 8) {
-                        Text("When temperature is \(condition.comparisonType.rawValue) \(Int(condition.targetTemperature))°")
+                        Text("When temperature is \(condition.comparisonType.displayName) \(Int(condition.targetTemperature))°")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
@@ -67,14 +67,19 @@ struct ReminderGlassCard: View {
     }
 
     private var accessibilityLabel: String {
-        var parts = [reminder.displayTitle, reminder.isCurrentlyActive ? "Active" : "Paused"]
+        var parts = [
+            reminder.displayTitle,
+            reminder.isCurrentlyActive
+                ? String(localized: "Active", comment: "Accessibility label clause: the reminder is active")
+                : String(localized: "Paused", comment: "Accessibility label clause: the reminder is paused")
+        ]
 
         if !reminder.reminderDescription.isEmpty {
             parts.append(reminder.reminderDescription)
         }
 
         if let condition = reminder.triggerCondition {
-            parts.append("When temperature is \(condition.comparisonType.rawValue) \(Int(condition.targetTemperature)) degrees")
+            parts.append(String(localized: "When temperature is \(condition.comparisonType.rawValue) \(Int(condition.targetTemperature)) degrees", comment: "Accessibility label clause describing a reminder's temperature trigger condition"))
         }
 
         return parts.joined(separator: ", ")

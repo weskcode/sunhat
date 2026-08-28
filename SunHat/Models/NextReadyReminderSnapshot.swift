@@ -17,8 +17,8 @@ struct NextReadyReminderSnapshot: Equatable, Sendable, Codable {
 
     static let unavailable = NextReadyReminderSnapshot(
         id: nil,
-        title: "No Ready Reminder",
-        subtitle: "SunHat is watching your weather tasks.",
+        title: String(localized: "No Ready Reminder", comment: "Compact surface title when no reminder is currently ready"),
+        subtitle: String(localized: "SunHat is watching your weather tasks.", comment: "Compact surface subtitle when no reminder is currently ready"),
         systemImageName: "bell",
         isReady: false
     )
@@ -60,12 +60,12 @@ private extension WeatherReminderDisplay {
     }
 
     var displayTitle: String {
-        title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Untitled Reminder" : title
+        title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? String(localized: "Untitled Reminder", comment: "Fallback title for a reminder with no title, shown on compact surfaces") : title
     }
 
     var compactTriggerSummary: String {
         guard let triggerCondition else {
-            return "Ready when the weather matches."
+            return String(localized: "Ready when the weather matches.", comment: "Compact surface summary when a reminder has no specific trigger condition")
         }
 
         if let minTemperature = triggerCondition.minTemperature,

@@ -488,7 +488,7 @@ private enum WeatherCredentialStore {
         var errorDescription: String? {
             switch self {
             case .unhandledStatus(let status):
-                return "Keychain operation failed with status \(status)"
+                return String(localized: "Keychain operation failed with status \(status)", comment: "Low-level Keychain error surfaced through the weather API key error path")
             }
         }
     }

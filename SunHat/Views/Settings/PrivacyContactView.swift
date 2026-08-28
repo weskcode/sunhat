@@ -184,7 +184,7 @@ struct PrivacyContactView: View {
     }
     
     private func openEmailClient() {
-        let subject = "Privacy Inquiry - \(selectedInquiryType.displayName)"
+        let subject = String(localized: "Privacy Inquiry - \(selectedInquiryType.displayName)", comment: "Pre-filled subject line of the privacy-request email the app composes")
         let body = generateEmailBody()
         
         if let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
@@ -194,8 +194,8 @@ struct PrivacyContactView: View {
                 let opened = await urlOpener.open(url)
                 if opened == false {
                     statusAlert = PrivacyContactStatusAlert(
-                        title: "Couldn't Open Mail",
-                        message: "Set up a mail account, or email \(AppSupportLinks.privacyEmail) directly. You can also use Copy Email Template."
+                        title: String(localized: "Couldn't Open Mail", comment: "Alert title"),
+                        message: String(localized: "Set up a mail account, or email \(AppSupportLinks.privacyEmail) directly. You can also use Copy Email Template.", comment: "Alert message")
                     )
                 }
             }
@@ -207,36 +207,40 @@ struct PrivacyContactView: View {
         UIPasteboard.general.string = template
 
         statusAlert = PrivacyContactStatusAlert(
-            title: "Copied",
-            message: "The email template was copied to your clipboard. Paste it into any email to \(AppSupportLinks.privacyEmail)."
+            title: String(localized: "Copied", comment: "Alert title after copying the email template to the clipboard"),
+            message: String(localized: "The email template was copied to your clipboard. Paste it into any email to \(AppSupportLinks.privacyEmail).", comment: "Alert message")
         )
     }
     
     private func generateEmailBody() -> String {
-        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
-        let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
-        
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? String(localized: "Unknown", comment: "Fallback app version when it cannot be read from the bundle")
+        let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? String(localized: "Unknown", comment: "Fallback build number when it cannot be read from the bundle")
+
         let legalBasisLine = selectedInquiryType.hasLegalBasis
-            ? "\nLegal Basis: \(selectedInquiryType.legalBasis)\n"
+            ? String(localized: "\nLegal Basis: \(selectedInquiryType.legalBasis)\n", comment: "Line in the privacy-request email template naming the applicable GDPR/CCPA legal basis")
             : ""
 
-        return """
+        let inquiryLine = inquiryText.isEmpty ? String(localized: "[Please describe your privacy request]", comment: "Placeholder in the privacy-request email template when the user left the inquiry field empty") : inquiryText
+        let emailLine = userEmail.isEmpty ? String(localized: "[Your email address]", comment: "Placeholder in the privacy-request email template when the user left the email field empty") : userEmail
+        let dateLine = DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short)
+
+        return String(localized: """
         Privacy Inquiry Type: \(selectedInquiryType.displayName)
         \(legalBasisLine)
         Your Inquiry:
-        \(inquiryText.isEmpty ? "[Please describe your privacy request]" : inquiryText)
+        \(inquiryLine)
 
         Contact Information:
-        Email: \(userEmail.isEmpty ? "[Your email address]" : userEmail)
+        Email: \(emailLine)
 
         App Information:
         - App: SunHat
         - Version: \(appVersion) (\(buildNumber))
         - Platform: iOS
-        - Date: \(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))
+        - Date: \(dateLine)
 
         Thank you for contacting our Data Protection Officer. We will respond within 30 days as required by law.
-        """
+        """, comment: "Pre-filled body of the GDPR/CCPA privacy-request email the app composes; keep the field labels (Privacy Inquiry Type, Your Inquiry, Contact Information, Email, App Information, App, Version, Platform, Date) and the '- ' bullet formatting")
     }
     
     private func openPrivacyPolicy() {
@@ -244,8 +248,8 @@ struct PrivacyContactView: View {
             let opened = await urlOpener.open(AppSupportLinks.privacyPolicyURL)
             if opened == false {
                 statusAlert = PrivacyContactStatusAlert(
-                    title: "Couldn't Open",
-                    message: "Visit \(AppSupportLinks.privacyPolicyURL.absoluteString) in a browser."
+                    title: String(localized: "Couldn't Open", comment: "Alert title when opening the privacy policy link fails"),
+                    message: String(localized: "Visit \(AppSupportLinks.privacyPolicyURL.absoluteString) in a browser.", comment: "Alert message")
                 )
             }
         }
@@ -273,7 +277,7 @@ struct MailComposeView: UIViewControllerRepresentable {
         let composer = MFMailComposeViewController()
         composer.mailComposeDelegate = context.coordinator
         composer.setToRecipients([AppSupportLinks.privacyEmail])
-        composer.setSubject("Privacy Inquiry - \(inquiryType.displayName)")
+        composer.setSubject(String(localized: "Privacy Inquiry - \(inquiryType.displayName)", comment: "Pre-filled subject line of the privacy-request email the app composes"))
         
         let body = generateEmailBody()
         composer.setMessageBody(body, isHTML: false)
@@ -288,32 +292,36 @@ struct MailComposeView: UIViewControllerRepresentable {
     }
     
     private func generateEmailBody() -> String {
-        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
-        let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown"
-        
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? String(localized: "Unknown", comment: "Fallback app version when it cannot be read from the bundle")
+        let buildNumber = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? String(localized: "Unknown", comment: "Fallback build number when it cannot be read from the bundle")
+
         let legalBasisLine = inquiryType.hasLegalBasis
-            ? "\nLegal Basis: \(inquiryType.legalBasis)\n"
+            ? String(localized: "\nLegal Basis: \(inquiryType.legalBasis)\n", comment: "Line in the privacy-request email template naming the applicable GDPR/CCPA legal basis")
             : ""
 
-        return """
+        let inquiryLine = inquiryText.isEmpty ? String(localized: "[Please describe your privacy request]", comment: "Placeholder in the privacy-request email template when the user left the inquiry field empty") : inquiryText
+        let emailLine = userEmail.isEmpty ? String(localized: "[Your email address]", comment: "Placeholder in the privacy-request email template when the user left the email field empty") : userEmail
+        let dateLine = DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short)
+
+        return String(localized: """
         Privacy Inquiry Type: \(inquiryType.displayName)
         \(legalBasisLine)
         Your Inquiry:
-        \(inquiryText.isEmpty ? "[Please describe your privacy request]" : inquiryText)
+        \(inquiryLine)
 
         Contact Information:
-        Email: \(userEmail.isEmpty ? "[Your email address]" : userEmail)
+        Email: \(emailLine)
 
         App Information:
         - App: SunHat
         - Version: \(appVersion) (\(buildNumber))
         - Platform: iOS
-        - Date: \(DateFormatter.localizedString(from: Date(), dateStyle: .medium, timeStyle: .short))
+        - Date: \(dateLine)
 
         Thank you for contacting our Data Protection Officer. We will respond within 30 days as required by law.
-        """
+        """, comment: "Pre-filled body of the GDPR/CCPA privacy-request email the app composes; keep the field labels (Privacy Inquiry Type, Your Inquiry, Contact Information, Email, App Information, App, Version, Platform, Date) and the '- ' bullet formatting")
     }
-    
+
     class Coordinator: NSObject, @preconcurrency MFMailComposeViewControllerDelegate {
         let parent: MailComposeView
         
@@ -343,42 +351,42 @@ enum PrivacyInquiryType: CaseIterable {
     var displayName: String {
         switch self {
         case .dataAccess:
-            return "Access My Data"
+            return String(localized: "Access My Data", comment: "Privacy inquiry type")
         case .dataPortability:
-            return "Data Portability"
+            return String(localized: "Data Portability", comment: "Privacy inquiry type")
         case .dataDeletion:
-            return "Delete My Data"
+            return String(localized: "Delete My Data", comment: "Privacy inquiry type")
         case .dataCorrection:
-            return "Correct My Data"
+            return String(localized: "Correct My Data", comment: "Privacy inquiry type")
         case .dataProcessing:
-            return "Data Processing Inquiry"
+            return String(localized: "Data Processing Inquiry", comment: "Privacy inquiry type")
         case .marketingOptOut:
-            return "Marketing Opt-Out"
+            return String(localized: "Marketing Opt-Out", comment: "Privacy inquiry type")
         case .securityConcern:
-            return "Security Concern"
+            return String(localized: "Security Concern", comment: "Privacy inquiry type")
         case .generalInquiry:
-            return "General Privacy Question"
+            return String(localized: "General Privacy Question", comment: "Privacy inquiry type")
         }
     }
-    
+
     var description: String {
         switch self {
         case .dataAccess:
-            return "Request a copy of all data we have about you"
+            return String(localized: "Request a copy of all data we have about you", comment: "Privacy inquiry type description")
         case .dataPortability:
-            return "Export your data in a machine-readable format"
+            return String(localized: "Export your data in a machine-readable format", comment: "Privacy inquiry type description")
         case .dataDeletion:
-            return "Request deletion of all your personal data"
+            return String(localized: "Request deletion of all your personal data", comment: "Privacy inquiry type description")
         case .dataCorrection:
-            return "Update or correct your personal information"
+            return String(localized: "Update or correct your personal information", comment: "Privacy inquiry type description")
         case .dataProcessing:
-            return "Questions about how we process your data"
+            return String(localized: "Questions about how we process your data", comment: "Privacy inquiry type description")
         case .marketingOptOut:
-            return "Opt out of marketing communications"
+            return String(localized: "Opt out of marketing communications", comment: "Privacy inquiry type description")
         case .securityConcern:
-            return "Report a security or privacy concern"
+            return String(localized: "Report a security or privacy concern", comment: "Privacy inquiry type description")
         case .generalInquiry:
-            return "Other privacy-related questions"
+            return String(localized: "Other privacy-related questions", comment: "Privacy inquiry type description")
         }
     }
     
@@ -433,16 +441,21 @@ enum PrivacyInquiryType: CaseIterable {
         }
     }
     
+    // NOTE (localization): legal citation numbers/section references (GDPR Article N,
+    // CCPA Section N) are kept verbatim across locales by design; only the parenthetical
+    // plain-language description of the right is translated. Flagged for legal review of
+    // whether Spanish-market users should instead see the EU's Spanish-language RGPD
+    // naming convention.
     var legalBasis: String {
         switch self {
         case .dataAccess:
-            return "GDPR Article 15 (Right of Access), CCPA Section 1798.110"
+            return String(localized: "GDPR Article 15 (Right of Access), CCPA Section 1798.110", comment: "Legal citation; keep 'GDPR Article 15' and 'CCPA Section 1798.110' untranslated, translate only '(Right of Access)'")
         case .dataPortability:
-            return "GDPR Article 20 (Right to Data Portability)"
+            return String(localized: "GDPR Article 20 (Right to Data Portability)", comment: "Legal citation; keep 'GDPR Article 20' untranslated, translate only '(Right to Data Portability)'")
         case .dataDeletion:
-            return "GDPR Article 17 (Right to Erasure), CCPA Section 1798.105"
+            return String(localized: "GDPR Article 17 (Right to Erasure), CCPA Section 1798.105", comment: "Legal citation; keep 'GDPR Article 17' and 'CCPA Section 1798.105' untranslated, translate only '(Right to Erasure)'")
         case .dataCorrection:
-            return "GDPR Article 16 (Right to Rectification)"
+            return String(localized: "GDPR Article 16 (Right to Rectification)", comment: "Legal citation; keep 'GDPR Article 16' untranslated, translate only '(Right to Rectification)'")
         default:
             return ""
         }

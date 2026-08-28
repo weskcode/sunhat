@@ -49,9 +49,9 @@ extension TriggerEngine {
                 isAbove: true
             )
             triggerReason = triggered ?
-                "Temperature has been above \(String(format: "%.1f", targetTemperature))° for \(trendAnalysis.consecutiveDaysAbove) consecutive days (required: \(requiredConsecutiveDays))" :
-                "Temperature has been above \(String(format: "%.1f", targetTemperature))° for only \(trendAnalysis.consecutiveDaysAbove) consecutive days (required: \(requiredConsecutiveDays))"
-            
+                String(localized: "Temperature has been above \(String(format: "%.1f", targetTemperature))° for \(trendAnalysis.consecutiveDaysAbove) consecutive days (required: \(requiredConsecutiveDays))", comment: "Notification body: consecutive-days-above-target trigger satisfied") :
+                String(localized: "Temperature has been above \(String(format: "%.1f", targetTemperature))° for only \(trendAnalysis.consecutiveDaysAbove) consecutive days (required: \(requiredConsecutiveDays))", comment: "Notification body: consecutive-days-above-target trigger not yet satisfied")
+
         case .below:
             triggered = trendAnalysis.consecutiveDaysBelow >= requiredConsecutiveDays
             confidence = calculateConsecutiveDaysConfidence(
@@ -62,9 +62,9 @@ extension TriggerEngine {
                 isAbove: false
             )
             triggerReason = triggered ?
-                "Temperature has been below \(String(format: "%.1f", targetTemperature))° for \(trendAnalysis.consecutiveDaysBelow) consecutive days (required: \(requiredConsecutiveDays))" :
-                "Temperature has been below \(String(format: "%.1f", targetTemperature))° for only \(trendAnalysis.consecutiveDaysBelow) consecutive days (required: \(requiredConsecutiveDays))"
-            
+                String(localized: "Temperature has been below \(String(format: "%.1f", targetTemperature))° for \(trendAnalysis.consecutiveDaysBelow) consecutive days (required: \(requiredConsecutiveDays))", comment: "Notification body: consecutive-days-below-target trigger satisfied") :
+                String(localized: "Temperature has been below \(String(format: "%.1f", targetTemperature))° for only \(trendAnalysis.consecutiveDaysBelow) consecutive days (required: \(requiredConsecutiveDays))", comment: "Notification body: consecutive-days-below-target trigger not yet satisfied")
+
         case .equals, .between:
             // For equals/between, we need custom logic for consecutive days
             let consecutiveDaysInRange = await calculateConsecutiveDaysInRange(
@@ -76,8 +76,8 @@ extension TriggerEngine {
             triggered = consecutiveDaysInRange >= requiredConsecutiveDays
             confidence = Double(consecutiveDaysInRange) / Double(requiredConsecutiveDays)
             triggerReason = triggered ?
-                "Temperature has been in target range for \(consecutiveDaysInRange) consecutive days (required: \(requiredConsecutiveDays))" :
-                "Temperature has been in target range for only \(consecutiveDaysInRange) consecutive days (required: \(requiredConsecutiveDays))"
+                String(localized: "Temperature has been in target range for \(consecutiveDaysInRange) consecutive days (required: \(requiredConsecutiveDays))", comment: "Notification body: consecutive-days-in-range trigger satisfied") :
+                String(localized: "Temperature has been in target range for only \(consecutiveDaysInRange) consecutive days (required: \(requiredConsecutiveDays))", comment: "Notification body: consecutive-days-in-range trigger not yet satisfied")
         }
         
         metadata = [
@@ -138,36 +138,36 @@ extension TriggerEngine {
             triggered = averageTemp > targetTemperature
             confidence = min(1.0, max(0.0, (averageTemp - targetTemperature) / 5.0))
             triggerReason = triggered ?
-                "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is above target \(String(format: "%.1f", targetTemperature))°" :
-                "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is below target \(String(format: "%.1f", targetTemperature))°"
-            
+                String(localized: "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is above target \(String(format: "%.1f", targetTemperature))°", comment: "Notification body: average temperature over N days exceeded the target") :
+                String(localized: "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is below target \(String(format: "%.1f", targetTemperature))°", comment: "Notification body: average temperature over N days is below the target")
+
         case .below:
             triggered = averageTemp < targetTemperature
             confidence = min(1.0, max(0.0, (targetTemperature - averageTemp) / 5.0))
             triggerReason = triggered ?
-                "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is below target \(String(format: "%.1f", targetTemperature))°" :
-                "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is above target \(String(format: "%.1f", targetTemperature))°"
-            
+                String(localized: "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is below target \(String(format: "%.1f", targetTemperature))°", comment: "Notification body: average temperature over N days is below the target") :
+                String(localized: "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is above target \(String(format: "%.1f", targetTemperature))°", comment: "Notification body: average temperature over N days exceeded the target")
+
         case .equals:
             let difference = abs(averageTemp - targetTemperature)
             let tolerance = condition.temperatureTolerance
             triggered = difference <= tolerance
             confidence = max(0.0, 1.0 - (difference / tolerance))
             triggerReason = triggered ?
-                "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days matches target \(String(format: "%.1f", targetTemperature))° (±\(String(format: "%.1f", tolerance))°)" :
-                "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days differs from target by \(String(format: "%.1f", difference))°"
-            
+                String(localized: "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days matches target \(String(format: "%.1f", targetTemperature))° (±\(String(format: "%.1f", tolerance))°)", comment: "Notification body: average temperature over N days matches the target within tolerance") :
+                String(localized: "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days differs from target by \(String(format: "%.1f", difference))°", comment: "Notification body: average temperature over N days misses the target")
+
         case .between:
             if let minTemp = condition.minTemperature, let maxTemp = condition.maxTemperature {
                 triggered = averageTemp >= minTemp && averageTemp <= maxTemp
                 confidence = triggered ? 1.0 : 0.0
                 triggerReason = triggered ?
-                    "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is within range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°" :
-                    "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is outside range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°"
+                    String(localized: "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is within range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°", comment: "Notification body: average temperature over N days falls inside the configured range") :
+                    String(localized: "Average temperature \(String(format: "%.1f", averageTemp))° over \(averagingPeriod) days is outside range \(String(format: "%.1f", minTemp))° - \(String(format: "%.1f", maxTemp))°", comment: "Notification body: average temperature over N days falls outside the configured range")
             } else {
                 triggered = false
                 confidence = 0.0
-                triggerReason = "Invalid temperature range configuration"
+                triggerReason = String(localized: "Invalid temperature range configuration", comment: "Notification body fallback when a range trigger is misconfigured")
             }
         }
         

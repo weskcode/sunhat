@@ -134,7 +134,7 @@ struct SettingsView: View {
             HStack {
                 SettingsIconLabel(title: "Location Access", systemImage: "location.fill", color: .blue)
                 Spacer()
-                Text(viewModel.locationEnabled ? "While Using" : "Off")
+                Text(viewModel.locationEnabled ? String(localized: "While Using", comment: "Location access status") : String(localized: "Off", comment: "Location access status"))
                     .foregroundStyle(.secondary)
             }
 
@@ -287,11 +287,11 @@ enum AppearanceMode: String, CaseIterable {
     var displayName: String {
         switch self {
         case .system:
-            return "System"
+            return String(localized: "System", comment: "Appearance mode option: follow the system light/dark setting")
         case .light:
-            return "Light"
+            return String(localized: "Light", comment: "Appearance mode option: always light")
         case .dark:
-            return "Dark"
+            return String(localized: "Dark", comment: "Appearance mode option: always dark")
         }
     }
 }

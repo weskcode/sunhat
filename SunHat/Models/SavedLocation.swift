@@ -54,7 +54,7 @@ final class SavedLocation {
     }
     
     convenience init(from clLocation: CLLocation, placemark: CLPlacemark?, source: LocationSource = .gps) {
-        let name = placemark?.name ?? placemark?.locality ?? "Unknown Location"
+        let name = placemark?.name ?? placemark?.locality ?? String(localized: "Unknown Location", comment: "Fallback name when reverse geocoding returns no place name")
         let address = [placemark?.thoroughfare, placemark?.locality, placemark?.administrativeArea]
             .compactMap { $0 }
             .joined(separator: ", ")
@@ -118,13 +118,13 @@ enum LocationSource: String, Codable, CaseIterable {
     var displayName: String {
         switch self {
         case .gps:
-            return "GPS"
+            return String(localized: "GPS", comment: "Location source name")
         case .manual:
-            return "Manual Entry"
+            return String(localized: "Manual Entry", comment: "Location source name")
         case .search:
-            return "Search"
+            return String(localized: "Search", comment: "Location source name")
         case .imported:
-            return "Imported"
+            return String(localized: "Imported", comment: "Location source name")
         }
     }
     

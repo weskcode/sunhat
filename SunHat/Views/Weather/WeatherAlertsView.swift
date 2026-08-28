@@ -55,7 +55,7 @@ struct WeatherAlertDetailCard: View {
                         .font(.headline)
                         .foregroundStyle(.primary)
                     
-                    Text(alert.severity.rawValue.capitalized)
+                    Text(alert.severity.displayName)
                         .font(.caption)
                         .foregroundStyle(alert.severityColor)
                         .padding(.horizontal, 8)

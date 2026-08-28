@@ -21,23 +21,23 @@ enum NotificationTiming: String, CaseIterable, Codable {
     var displayName: String {
         switch self {
         case .immediate:
-            return "Immediately"
+            return String(localized: "Immediately", comment: "Notification timing option")
         case .fifteenMinutes:
-            return "15 minutes before"
+            return String(localized: "15 minutes before", comment: "Notification timing option")
         case .thirtyMinutes:
-            return "30 minutes before"
+            return String(localized: "30 minutes before", comment: "Notification timing option")
         case .oneHour:
-            return "1 hour before"
+            return String(localized: "1 hour before", comment: "Notification timing option")
         case .twoHours:
-            return "2 hours before"
+            return String(localized: "2 hours before", comment: "Notification timing option")
         case .fourHours:
-            return "4 hours before"
+            return String(localized: "4 hours before", comment: "Notification timing option")
         case .sixHours:
-            return "6 hours before"
+            return String(localized: "6 hours before", comment: "Notification timing option")
         case .twelveHours:
-            return "12 hours before"
+            return String(localized: "12 hours before", comment: "Notification timing option")
         case .oneDayBefore:
-            return "1 day before"
+            return String(localized: "1 day before", comment: "Notification timing option")
         }
     }
     
@@ -108,9 +108,9 @@ enum TemperatureUnit: String, CaseIterable, Codable {
     var shortName: String {
         switch self {
         case .fahrenheit:
-            return "Fahrenheit"
+            return String(localized: "Fahrenheit", comment: "Temperature unit name")
         case .celsius:
-            return "Celsius"
+            return String(localized: "Celsius", comment: "Temperature unit name")
         }
     }
 }

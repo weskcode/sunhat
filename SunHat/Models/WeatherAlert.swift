@@ -53,6 +53,18 @@ enum WeatherAlertSeverity: String, CaseIterable, Sendable {
     case warning = "warning"
     case advisory = "advisory"
     case watch = "watch"
+
+    var displayName: String {
+        switch self {
+        case .minor: return String(localized: "Minor", comment: "Weather alert severity level")
+        case .moderate: return String(localized: "Moderate", comment: "Weather alert severity level")
+        case .severe: return String(localized: "Severe", comment: "Weather alert severity level")
+        case .extreme: return String(localized: "Extreme", comment: "Weather alert severity level")
+        case .warning: return String(localized: "Warning", comment: "Weather alert severity level")
+        case .advisory: return String(localized: "Advisory", comment: "Weather alert severity level")
+        case .watch: return String(localized: "Watch", comment: "Weather alert severity level")
+        }
+    }
 }
 
 enum WeatherAlertType: String, CaseIterable, Sendable {

@@ -31,7 +31,7 @@ struct NextReadyReminderCompactView: View {
         .padding(14)
         .glassEffect(.regular, in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(snapshot.isReady ? "Next ready reminder, \(snapshot.title)" : snapshot.title)
+        .accessibilityLabel(snapshot.isReady ? String(localized: "Next ready reminder, \(snapshot.title)", comment: "Accessibility label announcing the next ready reminder by name") : snapshot.title)
         .accessibilityHint(snapshot.subtitle)
     }
 }

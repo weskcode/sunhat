@@ -93,9 +93,12 @@ extension TriggerEngine {
         
         let triggerReason: String
         if allConditionsMet {
-            triggerReason = "All composite conditions met: " + conditionsMet.joined(separator: ", ")
+            let metList = conditionsMet.joined(separator: ", ")
+            triggerReason = String(localized: "All composite conditions met: \(metList)", comment: "Notification body summarizing every satisfied condition of a multi-condition reminder; metList is a comma-separated list of already-localized clauses like 'temperature 75° above target 70°'")
         } else {
-            triggerReason = "Composite conditions not fully met. Met: [\(conditionsMet.joined(separator: ", "))]. Failed: [\(conditionsFailed.joined(separator: ", "))]"
+            let metList = conditionsMet.joined(separator: ", ")
+            let failedList = conditionsFailed.joined(separator: ", ")
+            triggerReason = String(localized: "Composite conditions not fully met. Met: [\(metList)]. Failed: [\(failedList)]", comment: "Notification body summarizing which conditions of a multi-condition reminder passed and which failed; metList/failedList are comma-separated lists of already-localized clauses")
         }
         
         let metadata = [
@@ -216,7 +219,7 @@ extension TriggerEngine {
                 conditionData: conditionData,
                 triggered: false,
                 confidence: 0.0,
-                triggerReason: "Unable to fetch forecast data: \(error.localizedDescription)"
+                triggerReason: String(localized: "Unable to fetch forecast data: \(error.localizedDescription)", comment: "Notification body fallback when the forecast could not be fetched for a prediction-based trigger")
             )
         }
     }
@@ -235,21 +238,19 @@ extension TriggerEngine {
         case .above:
             let met = currentTemp > targetTemp
             let confidence = met ? min(1.0, (currentTemp - targetTemp) / 10.0) : max(0.0, 1.0 - (targetTemp - currentTemp) / 10.0)
-            return ComponentEvaluationResult(
-                met: met,
-                confidence: confidence,
-                description: "Temperature \(String(format: "%.1f", currentTemp))° \(met ? "above" : "below") target \(String(format: "%.1f", targetTemp))°"
-            )
-            
+            let description = met ?
+                String(localized: "temperature \(String(format: "%.1f", currentTemp))° above target \(String(format: "%.1f", targetTemp))°", comment: "Short clause listing one satisfied condition of a multi-condition reminder") :
+                String(localized: "temperature \(String(format: "%.1f", currentTemp))° below target \(String(format: "%.1f", targetTemp))°", comment: "Short clause listing one unsatisfied condition of a multi-condition reminder")
+            return ComponentEvaluationResult(met: met, confidence: confidence, description: description)
+
         case .below:
             let met = currentTemp < targetTemp
             let confidence = met ? min(1.0, (targetTemp - currentTemp) / 10.0) : max(0.0, 1.0 - (currentTemp - targetTemp) / 10.0)
-            return ComponentEvaluationResult(
-                met: met,
-                confidence: confidence,
-                description: "Temperature \(String(format: "%.1f", currentTemp))° \(met ? "below" : "above") target \(String(format: "%.1f", targetTemp))°"
-            )
-            
+            let description = met ?
+                String(localized: "temperature \(String(format: "%.1f", currentTemp))° below target \(String(format: "%.1f", targetTemp))°", comment: "Short clause listing one satisfied condition of a multi-condition reminder") :
+                String(localized: "temperature \(String(format: "%.1f", currentTemp))° above target \(String(format: "%.1f", targetTemp))°", comment: "Short clause listing one unsatisfied condition of a multi-condition reminder")
+            return ComponentEvaluationResult(met: met, confidence: confidence, description: description)
+
         case .equals:
             let difference = abs(currentTemp - targetTemp)
             let tolerance = conditionData.temperatureTolerance
@@ -262,55 +263,59 @@ extension TriggerEngine {
             } else {
                 confidence = 0.0
             }
-            return ComponentEvaluationResult(
-                met: met,
-                confidence: confidence,
-                description: "Temperature \(String(format: "%.1f", currentTemp))° \(met ? "matches" : "differs from") target \(String(format: "%.1f", targetTemp))° (±\(String(format: "%.1f", tolerance))°)"
-            )
-            
+            let description = met ?
+                String(localized: "temperature \(String(format: "%.1f", currentTemp))° matches target \(String(format: "%.1f", targetTemp))° (±\(String(format: "%.1f", tolerance))°)", comment: "Short clause listing one satisfied condition of a multi-condition reminder") :
+                String(localized: "temperature \(String(format: "%.1f", currentTemp))° differs from target \(String(format: "%.1f", targetTemp))° (±\(String(format: "%.1f", tolerance))°)", comment: "Short clause listing one unsatisfied condition of a multi-condition reminder")
+            return ComponentEvaluationResult(met: met, confidence: confidence, description: description)
+
         case .between:
             guard let minTemp = conditionData.minTemperature, let maxTemp = conditionData.maxTemperature else {
                 return ComponentEvaluationResult(
                     met: false,
                     confidence: 0.0,
-                    description: "Invalid temperature range configuration"
+                    description: String(localized: "Invalid temperature range configuration", comment: "Notification body fallback when a range trigger is misconfigured")
                 )
             }
-            
+
             let met = currentTemp >= minTemp && currentTemp <= maxTemp
             let confidence = met ? 1.0 : 0.0
-            return ComponentEvaluationResult(
-                met: met,
-                confidence: confidence,
-                description: "Temperature \(String(format: "%.1f", currentTemp))° \(met ? "within" : "outside") range \(String(format: "%.1f", minTemp))°-\(String(format: "%.1f", maxTemp))°"
-            )
+            let description = met ?
+                String(localized: "temperature \(String(format: "%.1f", currentTemp))° within range \(String(format: "%.1f", minTemp))°-\(String(format: "%.1f", maxTemp))°", comment: "Short clause listing one satisfied condition of a multi-condition reminder") :
+                String(localized: "temperature \(String(format: "%.1f", currentTemp))° outside range \(String(format: "%.1f", minTemp))°-\(String(format: "%.1f", maxTemp))°", comment: "Short clause listing one unsatisfied condition of a multi-condition reminder")
+            return ComponentEvaluationResult(met: met, confidence: confidence, description: description)
         }
     }
-    
+
     private func evaluateHumidityComponent(_ conditionData: TriggerConditionData, humidity: Int) -> ComponentEvaluationResult {
         guard let target = conditionData.targetHumidity else {
-            return ComponentEvaluationResult(met: false, confidence: 0, description: "humidity target is missing")
+            return ComponentEvaluationResult(met: false, confidence: 0, description: String(localized: "humidity target is missing", comment: "Short clause for a misconfigured humidity condition"))
         }
 
         let difference = abs(Double(humidity) - target)
         let met = difference <= conditionData.humidityTolerance
+        let description = met ?
+            String(localized: "humidity \(humidity)% within \(Int(target))% ±\(Int(conditionData.humidityTolerance))%", comment: "Short clause listing one satisfied humidity condition of a multi-condition reminder") :
+            String(localized: "humidity \(humidity)% outside \(Int(target))% ±\(Int(conditionData.humidityTolerance))%", comment: "Short clause listing one unsatisfied humidity condition of a multi-condition reminder")
         return ComponentEvaluationResult(
             met: met,
             confidence: met ? max(0, 1 - (difference / max(conditionData.humidityTolerance, 1))) : 0,
-            description: "humidity \(humidity)% \(met ? "within" : "outside") \(Int(target))% ±\(Int(conditionData.humidityTolerance))%"
+            description: description
         )
     }
 
     private func evaluateWindComponent(_ conditionData: TriggerConditionData, windSpeed: Double) -> ComponentEvaluationResult {
         guard let maxWindSpeed = conditionData.maxWindSpeed else {
-            return ComponentEvaluationResult(met: false, confidence: 0, description: "wind limit is missing")
+            return ComponentEvaluationResult(met: false, confidence: 0, description: String(localized: "wind limit is missing", comment: "Short clause for a misconfigured wind condition"))
         }
 
         let met = windSpeed <= maxWindSpeed
+        let description = met ?
+            String(localized: "wind \(Int(windSpeed)) mph at or below \(Int(maxWindSpeed)) mph", comment: "Short clause listing one satisfied wind condition of a multi-condition reminder") :
+            String(localized: "wind \(Int(windSpeed)) mph above \(Int(maxWindSpeed)) mph", comment: "Short clause listing one unsatisfied wind condition of a multi-condition reminder")
         return ComponentEvaluationResult(
             met: met,
             confidence: met ? 1 : max(0, 1 - ((windSpeed - maxWindSpeed) / max(maxWindSpeed, 1))),
-            description: "wind \(Int(windSpeed)) mph \(met ? "at or below" : "above") \(Int(maxWindSpeed)) mph"
+            description: description
         )
     }
 
@@ -327,17 +332,29 @@ extension TriggerEngine {
 
         switch requirement {
         case .none:
-            return ComponentEvaluationResult(met: true, confidence: 1, description: "no precipitation requirement")
+            return ComponentEvaluationResult(met: true, confidence: 1, description: String(localized: "no precipitation requirement", comment: "Short clause for a reminder with no precipitation condition"))
         case .dry:
-            return ComponentEvaluationResult(met: !isWet, confidence: isWet ? 0 : 1, description: isWet ? "precipitation expected" : "dry conditions expected")
+            let description = isWet ?
+                String(localized: "precipitation expected", comment: "Short clause listing one unsatisfied dry-weather condition of a multi-condition reminder") :
+                String(localized: "dry conditions expected", comment: "Short clause listing one satisfied dry-weather condition of a multi-condition reminder")
+            return ComponentEvaluationResult(met: !isWet, confidence: isWet ? 0 : 1, description: description)
         case .anyPrecipitation:
-            return ComponentEvaluationResult(met: isWet, confidence: isWet ? max(0.5, Double(probability) / 100) : 0, description: isWet ? "precipitation expected" : "no precipitation expected")
+            let description = isWet ?
+                String(localized: "precipitation expected", comment: "Short clause listing one satisfied precipitation condition of a multi-condition reminder") :
+                String(localized: "no precipitation expected", comment: "Short clause listing one unsatisfied precipitation condition of a multi-condition reminder")
+            return ComponentEvaluationResult(met: isWet, confidence: isWet ? max(0.5, Double(probability) / 100) : 0, description: description)
         case .rain:
             let met = [.rain, .drizzle, .thunderstorm].contains(type)
-            return ComponentEvaluationResult(met: met, confidence: met ? max(0.5, Double(probability) / 100) : 0, description: met ? "rain expected" : "rain not expected")
+            let description = met ?
+                String(localized: "rain expected", comment: "Short clause listing one satisfied rain condition of a multi-condition reminder") :
+                String(localized: "rain not expected", comment: "Short clause listing one unsatisfied rain condition of a multi-condition reminder")
+            return ComponentEvaluationResult(met: met, confidence: met ? max(0.5, Double(probability) / 100) : 0, description: description)
         case .snow:
             let met = [.snow, .sleet, .hail].contains(type)
-            return ComponentEvaluationResult(met: met, confidence: met ? max(0.5, Double(probability) / 100) : 0, description: met ? "snow expected" : "snow not expected")
+            let description = met ?
+                String(localized: "snow expected", comment: "Short clause listing one satisfied snow condition of a multi-condition reminder") :
+                String(localized: "snow not expected", comment: "Short clause listing one unsatisfied snow condition of a multi-condition reminder")
+            return ComponentEvaluationResult(met: met, confidence: met ? max(0.5, Double(probability) / 100) : 0, description: description)
         case .noPrecipitationFor24Hours, .noPrecipitationFor48Hours:
             return evaluateDryPeriod(
                 hoursRequired: requirement == .noPrecipitationFor24Hours ? 24 : 48,
@@ -363,7 +380,7 @@ extension TriggerEngine {
         startingAt: Date = Date()
     ) -> ComponentEvaluationResult {
         if currentIsWet {
-            return ComponentEvaluationResult(met: false, confidence: 0, description: "precipitation now, \(hoursRequired)h dry requirement not met")
+            return ComponentEvaluationResult(met: false, confidence: 0, description: String(localized: "precipitation now, \(hoursRequired)h dry requirement not met", comment: "Short clause: it is currently raining/snowing so the N-hour dry window condition fails"))
         }
 
         let calendar = Calendar.current
@@ -385,7 +402,7 @@ extension TriggerEngine {
             return ComponentEvaluationResult(
                 met: false,
                 confidence: 0,
-                description: "forecast doesn't cover the full \(hoursRequired)h dry window"
+                description: String(localized: "forecast doesn't cover the full \(hoursRequired)h dry window", comment: "Short clause: not enough forecast data exists to evaluate the N-hour dry window condition")
             )
         }
 
@@ -397,7 +414,7 @@ extension TriggerEngine {
                 return ComponentEvaluationResult(
                     met: false,
                     confidence: 0,
-                    description: "precipitation expected within the \(hoursRequired)h window"
+                    description: String(localized: "precipitation expected within the \(hoursRequired)h window", comment: "Short clause: rain/snow is forecast within the N-hour dry window, so the condition fails")
                 )
             }
         }
@@ -408,14 +425,14 @@ extension TriggerEngine {
         return ComponentEvaluationResult(
             met: true,
             confidence: max(0.5, lowestDryConfidence),
-            description: "no precipitation expected for the next \(hoursRequired)h"
+            description: String(localized: "no precipitation expected for the next \(hoursRequired)h", comment: "Short clause: the N-hour dry window condition is satisfied")
         )
     }
 
     private func evaluateTimeWindowComponent(_ conditionData: TriggerConditionData, date: Date) -> ComponentEvaluationResult {
         guard let start = conditionData.timeOfDayStart ?? conditionData.timeOfDayEnd,
               let end = conditionData.timeOfDayEnd ?? conditionData.timeOfDayStart else {
-            return ComponentEvaluationResult(met: true, confidence: 1, description: "no time window")
+            return ComponentEvaluationResult(met: true, confidence: 1, description: String(localized: "no time window", comment: "Short clause for a reminder with no time-of-day condition"))
         }
 
         let calendar = Calendar.current
@@ -429,11 +446,10 @@ extension TriggerEngine {
             ? currentMinutes >= startMinutes && currentMinutes <= endMinutes
             : currentMinutes >= startMinutes || currentMinutes <= endMinutes
 
-        return ComponentEvaluationResult(
-            met: met,
-            confidence: met ? 1 : 0,
-            description: met ? "inside notification time window" : "outside notification time window"
-        )
+        let description = met ?
+            String(localized: "inside notification time window", comment: "Short clause listing one satisfied time-of-day condition of a multi-condition reminder") :
+            String(localized: "outside notification time window", comment: "Short clause listing one unsatisfied time-of-day condition of a multi-condition reminder")
+        return ComponentEvaluationResult(met: met, confidence: met ? 1 : 0, description: description)
     }
     
     // MARK: - Helper Methods
@@ -501,7 +517,7 @@ extension TriggerEngine {
         return ForecastAnalysis(
             willTriggerInAdvancePeriod: earliestMatch != nil,
             confidence: earliestMatch?.1.confidence ?? averageConfidence,
-            description: earliestMatch?.1.description ?? "No forecast day matches this reminder condition",
+            description: earliestMatch?.1.description ?? String(localized: "No forecast day matches this reminder condition", comment: "Notification body fallback when no upcoming forecast day satisfies the reminder's condition"),
             daysAnalyzed: forecastDays.count,
             triggerProbability: earliestMatch == nil ? averageConfidence : max(averageConfidence, earliestMatch?.1.confidence ?? 0),
             earliestTriggerTime: earliestMatch?.0.date,
@@ -536,17 +552,19 @@ extension TriggerEngine {
         let dateLabel = day.date.formatted(.dateTime.month(.abbreviated).day())
 
         if failed.isEmpty {
+            let checkList = checks.map(\.description).joined(separator: ", ")
             return ComponentEvaluationResult(
                 met: true,
                 confidence: confidence,
-                description: "Forecast matches on \(dateLabel): " + checks.map(\.description).joined(separator: ", ")
+                description: String(localized: "Forecast matches on \(dateLabel): \(checkList)", comment: "Notification body: a specific upcoming forecast day satisfies every condition; dateLabel is a short localized date like 'Jun 12', checkList is a comma-separated list of already-localized clauses")
             )
         }
 
+        let failedList = failed.map(\.description).joined(separator: ", ")
         return ComponentEvaluationResult(
             met: false,
             confidence: confidence,
-            description: "Forecast does not match on \(dateLabel): " + failed.map(\.description).joined(separator: ", ")
+            description: String(localized: "Forecast does not match on \(dateLabel): \(failedList)", comment: "Notification body: a specific upcoming forecast day fails some conditions; dateLabel is a short localized date like 'Jun 12', failedList is a comma-separated list of already-localized clauses")
         )
     }
 
@@ -560,22 +578,26 @@ extension TriggerEngine {
         case .above:
             let met = day.highTemperature > target
             let confidence = met ? min(1, (day.highTemperature - target) / 10) : max(0, 1 - ((target - day.highTemperature) / 10))
-            return ComponentEvaluationResult(met: met, confidence: confidence, description: "high \(Int(day.highTemperature))° above \(Int(target))°")
+            let description = String(localized: "high \(Int(day.highTemperature))° above \(Int(target))°", comment: "Short clause describing a forecast day's high temperature versus target, used inside a comma-separated list")
+            return ComponentEvaluationResult(met: met, confidence: confidence, description: description)
         case .below:
             let met = day.lowTemperature < target
             let confidence = met ? min(1, (target - day.lowTemperature) / 10) : max(0, 1 - ((day.lowTemperature - target) / 10))
-            return ComponentEvaluationResult(met: met, confidence: confidence, description: "low \(Int(day.lowTemperature))° below \(Int(target))°")
+            let description = String(localized: "low \(Int(day.lowTemperature))° below \(Int(target))°", comment: "Short clause describing a forecast day's low temperature versus target, used inside a comma-separated list")
+            return ComponentEvaluationResult(met: met, confidence: confidence, description: description)
         case .equals:
             let difference = abs(day.averageTemperature - target)
             let tolerance = max(conditionData.temperatureTolerance, 0.1)
             let met = difference <= tolerance
-            return ComponentEvaluationResult(met: met, confidence: met ? max(0, 1 - (difference / tolerance)) : 0, description: "average \(Int(day.averageTemperature))° near \(Int(target))°")
+            let description = String(localized: "average \(Int(day.averageTemperature))° near \(Int(target))°", comment: "Short clause describing a forecast day's average temperature versus target, used inside a comma-separated list")
+            return ComponentEvaluationResult(met: met, confidence: met ? max(0, 1 - (difference / tolerance)) : 0, description: description)
         case .between:
             guard let minTemp = conditionData.minTemperature, let maxTemp = conditionData.maxTemperature else {
-                return ComponentEvaluationResult(met: false, confidence: 0, description: "invalid forecast temperature range")
+                return ComponentEvaluationResult(met: false, confidence: 0, description: String(localized: "invalid forecast temperature range", comment: "Short clause for a misconfigured forecast temperature range condition"))
             }
             let met = day.highTemperature >= minTemp && day.lowTemperature <= maxTemp
-            return ComponentEvaluationResult(met: met, confidence: met ? 1 : 0, description: "forecast overlaps \(Int(minTemp))°-\(Int(maxTemp))°")
+            let description = String(localized: "forecast overlaps \(Int(minTemp))°-\(Int(maxTemp))°", comment: "Short clause describing a forecast day's temperature range overlap with the target range, used inside a comma-separated list")
+            return ComponentEvaluationResult(met: met, confidence: met ? 1 : 0, description: description)
         }
     }
 
@@ -589,7 +611,7 @@ extension TriggerEngine {
                 .compactMap { SkyCondition(rawValue: $0) }
         )
         guard !selectedConditions.isEmpty else {
-            return ComponentEvaluationResult(met: true, confidence: 1, description: "no sky condition filter")
+            return ComponentEvaluationResult(met: true, confidence: 1, description: String(localized: "no sky condition filter", comment: "Short clause for a reminder with no sky condition filter"))
         }
 
         let currentSky: SkyCondition
@@ -604,11 +626,10 @@ extension TriggerEngine {
 
         let mode = ConditionSelectionMode(rawValue: conditionData.conditionModeRaw) ?? .include
         let met = mode == .include ? selectedConditions.contains(currentSky) : !selectedConditions.contains(currentSky)
-        return ComponentEvaluationResult(
-            met: met,
-            confidence: met ? 1 : 0,
-            description: "sky condition \(currentSky.rawValue) \(met ? "matches" : "does not match")"
-        )
+        let description = met ?
+            String(localized: "sky condition \(currentSky.rawValue) matches", comment: "Short clause listing one satisfied sky-condition filter of a multi-condition reminder") :
+            String(localized: "sky condition \(currentSky.rawValue) does not match", comment: "Short clause listing one unsatisfied sky-condition filter of a multi-condition reminder")
+        return ComponentEvaluationResult(met: met, confidence: met ? 1 : 0, description: description)
     }
     
     private func calculateForecastEvaluationTime(

@@ -191,7 +191,10 @@ struct WeatherView: View {
                                 .font(.caption2)
                                 .foregroundStyle(tempDifference > 0 ? .red : .blue)
                             
-                            Text("\(String(format: "%.1f", abs(tempDifference)))° \(tempDifference > 0 ? "warmer" : "cooler")")
+                            Text(tempDifference > 0 ?
+                                String(localized: "\(String(format: "%.1f", abs(tempDifference)))° warmer", comment: "Feels-like temperature is warmer than the actual temperature") :
+                                String(localized: "\(String(format: "%.1f", abs(tempDifference)))° cooler", comment: "Feels-like temperature is cooler than the actual temperature")
+                            )
                                 .font(AppFontStyle.caption.font)
                                 .foregroundStyle(.secondary)
                         }
@@ -489,41 +492,41 @@ struct WeatherView: View {
     
     private var humidityDescription: String {
         switch viewModel.humidity {
-        case 0..<30: return "Very dry"
-        case 30..<50: return "Comfortable"
-        case 50..<70: return "Ideal"
-        case 70..<85: return "Humid"
-        default: return "Very humid"
+        case 0..<30: return String(localized: "Very dry", comment: "Humidity level description")
+        case 30..<50: return String(localized: "Comfortable", comment: "Humidity level description")
+        case 50..<70: return String(localized: "Ideal", comment: "Humidity level description")
+        case 70..<85: return String(localized: "Humid", comment: "Humidity level description")
+        default: return String(localized: "Very humid", comment: "Humidity level description")
         }
     }
-    
+
     private var visibilityDescription: String {
         switch viewModel.visibility {
-        case 0..<1: return "Poor"
-        case 1..<3: return "Limited"
-        case 3..<6: return "Good"
-        default: return "Excellent"
+        case 0..<1: return String(localized: "Poor", comment: "Visibility level description")
+        case 1..<3: return String(localized: "Limited", comment: "Visibility level description")
+        case 3..<6: return String(localized: "Good", comment: "Visibility level description")
+        default: return String(localized: "Excellent", comment: "Visibility level description")
         }
     }
-    
+
     private var pressureDescription: String {
         switch viewModel.pressure {
-        case 0..<29.80: return "Low pressure"
-        case 29.80..<30.20: return "Normal"
-        default: return "High pressure"
+        case 0..<29.80: return String(localized: "Low pressure", comment: "Barometric pressure level description")
+        case 29.80..<30.20: return String(localized: "Normal", comment: "Barometric pressure level description")
+        default: return String(localized: "High pressure", comment: "Barometric pressure level description")
         }
     }
-    
+
     private var uvIndexDescription: String {
         switch Int(viewModel.uvIndex) {
-        case 0...2: return "Low"
-        case 3...5: return "Moderate"
-        case 6...7: return "High"
-        case 8...10: return "Very high"
-        default: return "Extreme"
+        case 0...2: return String(localized: "Low", comment: "UV index level description")
+        case 3...5: return String(localized: "Moderate", comment: "UV index level description")
+        case 6...7: return String(localized: "High", comment: "UV index level description")
+        case 8...10: return String(localized: "Very high", comment: "UV index level description")
+        default: return String(localized: "Extreme", comment: "UV index level description")
         }
     }
-    
+
     private var uvIndexColor: Color {
         switch Int(viewModel.uvIndex) {
         case 0...2: return .green
@@ -533,25 +536,25 @@ struct WeatherView: View {
         default: return .purple
         }
     }
-    
+
     private var dewPointDescription: String {
         let difference = viewModel.currentTemperature - viewModel.dewPoint
         switch difference {
-        case 0..<10: return "Very humid"
-        case 10..<20: return "Humid"
-        case 20..<30: return "Comfortable"
-        default: return "Dry"
+        case 0..<10: return String(localized: "Very humid", comment: "Dew point comfort description")
+        case 10..<20: return String(localized: "Humid", comment: "Dew point comfort description")
+        case 20..<30: return String(localized: "Comfortable", comment: "Dew point comfort description")
+        default: return String(localized: "Dry", comment: "Dew point comfort description")
         }
     }
-    
+
     private var airQualityDescription: String {
         switch viewModel.airQualityIndex {
-        case 0...50: return "Good"
-        case 51...100: return "Moderate"
-        case 101...150: return "Unhealthy for sensitive"
-        case 151...200: return "Unhealthy"
-        case 201...300: return "Very unhealthy"
-        default: return "Hazardous"
+        case 0...50: return String(localized: "Good", comment: "Air quality index level description")
+        case 51...100: return String(localized: "Moderate", comment: "Air quality index level description")
+        case 101...150: return String(localized: "Unhealthy for sensitive", comment: "Air quality index level description, short for 'unhealthy for sensitive groups'")
+        case 151...200: return String(localized: "Unhealthy", comment: "Air quality index level description")
+        case 201...300: return String(localized: "Very unhealthy", comment: "Air quality index level description")
+        default: return String(localized: "Hazardous", comment: "Air quality index level description")
         }
     }
 }
