@@ -80,3 +80,17 @@ None outstanding. Homepage URL was set in this session with owner approval.
 - `main` unchanged at `8f9eebd4ba444c2540aeafa2b0480a831300c3fc`
 - Working tree still carries the pre-existing, unrelated, uncommitted UI/UX refactor (~32 files) — preserved untouched throughout, not included in this branch's commit.
 - Nothing pushed. No force-push, no history rewrite, no branch deletion performed.
+
+---
+
+## Addendum — 2026-08-28: published
+
+Everything above described the state at authoring time. Since then, with owner approval at each step:
+
+- `chore/open-source-release-prep` was fast-forward merged into `main`.
+- The previously-uncommitted UI/UX refactor was reviewed (dedicated code-review pass), fixed (a reachable degenerate-range crash risk in the temperature sliders, two missing 44pt hit-target `contentShape`s, a stale VoiceOver hint, an inconsistent forecast accessibility label), had its unintended GDPR/CCPA content deletions restored per owner decision, and was committed as `0cc560b`.
+- All README screenshots were recaptured against the committed redesign, in both dark and light appearance (`f5f9c52`); `Screenshots/Light/` is new.
+- `main` was pushed to `origin` after resolving a stale-credential issue (the `gh` session predated the owner's GitHub username rename from `keetchcode` to `weskcode`; a fresh `gh auth login` with `workflow` scope fixed it).
+- The repository is now **PUBLIC** (visibility was changed by the owner directly in GitHub) and was verified publicly accessible: repo page, raw README, CI badge, and screenshots all reachable unauthenticated; MIT license detected; homepage and topics intact.
+- The `iOS Build` workflow ran green on the pushed `main` with the hardened `permissions: contents: read`.
+- `actions/checkout` was subsequently bumped from `@v4` (deprecated Node 20 runtime warning) to `@v7`.
