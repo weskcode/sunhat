@@ -58,7 +58,7 @@ struct NextReadyReminderSelectorTests {
             makeReminder(title: "   ")
         ])
 
-        #expect(snapshot.title == "Untitled Reminder")
+        #expect(snapshot.title == String(localized: "Untitled Reminder", comment: "Fallback title for a reminder with no title, shown on compact surfaces"))
     }
 
     @Test("Compact snapshot uses category icon and default trigger copy")
@@ -68,7 +68,7 @@ struct NextReadyReminderSelectorTests {
         ])
 
         #expect(snapshot.systemImageName == "figure.run")
-        #expect(snapshot.subtitle == "Ready when the weather matches.")
+        #expect(snapshot.subtitle == String(localized: "Ready when the weather matches.", comment: "Compact surface summary when a reminder has no specific trigger condition"))
     }
 
     @Test("Snapshot round-trips through Codable for widget/watch transport")

@@ -97,7 +97,7 @@ struct UserPreferencesTests {
         let preferences = UserPreferences()
         preferences.quietHoursEnabled = false
 
-        #expect(preferences.quietHoursDescription == "Disabled")
+        #expect(preferences.quietHoursDescription == String(localized: "Disabled", comment: "Quiet hours state when the user has turned them off"))
     }
 
     // MARK: - Timestamp bookkeeping

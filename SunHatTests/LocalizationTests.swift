@@ -89,7 +89,11 @@ struct LocalizableCatalogTests {
         // legitimately identical across languages (e.g. "SunHat", "°", "GPS").
         let allowedIdentical: Set<String> = [
             "SunHat", "GPS", "N", "S", "E", "AQI", "°", "OK", "SOS", "Fahrenheit",
-            "Celsius", "Apple WeatherKit", "OpenWeatherMap", "100°F", "32°F", "Sí"
+            "Celsius", "Apple WeatherKit", "OpenWeatherMap", "100°F", "32°F", "Sí",
+            // Genuine Spanish/English cognates and loanwords: identical spelling is
+            // the correct translation, not a missed one.
+            "General", "Yoga", "Laptop", "Ideal", "Picnic", "Golf", "Idea", "Normal",
+            "Color", "Fitness"
         ]
         var suspicious: [String] = []
         for (key, entry) in file.strings {
@@ -148,8 +152,19 @@ struct InfoPlistCatalogTests {
 @MainActor
 struct RuntimeLocalizationTests {
     @Test("A representative catalog string resolves to Spanish text, not the raw key")
-    func resolvesToSpanish() {
-        let spanish = String(localized: "Settings", locale: Locale(identifier: "es"))
+    func resolvesToSpanish() throws {
+        // `String(localized:)` resolves its bundle from the call site's own module by
+        // default, so calling it directly from this test file looks in SunHatTests'
+        // bundle, which doesn't carry SunHat's compiled Localizable.xcstrings. Load the
+        // compiled .strings dictionary from the SunHat app bundle directly instead, the
+        // same mechanism `String(localized:)` itself uses under the hood.
+        let sunHatBundle = Bundle(for: LocationPermissionManager.self)
+        guard let esBundleURL = sunHatBundle.url(forResource: "es", withExtension: "lproj"),
+              let esBundle = Bundle(url: esBundleURL) else {
+            Issue.record("Could not locate the compiled es.lproj resources in the SunHat app bundle")
+            return
+        }
+        let spanish = esBundle.localizedString(forKey: "Settings", value: nil, table: "Localizable")
         #expect(spanish != "Settings")
         #expect(spanish == "Ajustes")
     }
@@ -164,8 +179,8 @@ struct RuntimeLocalizationTests {
 
     @Test("Temperature unit display names resolve for both units under Spanish locale")
     func temperatureUnitDisplayNames() {
-        #expect(!TemperatureUnit.fahrenheit.displayName.isEmpty)
-        #expect(!TemperatureUnit.celsius.displayName.isEmpty)
+        #expect(!TemperatureUnit.fahrenheit.shortName.isEmpty)
+        #expect(!TemperatureUnit.celsius.shortName.isEmpty)
     }
 
     @Test("Weather condition display names never crash across every case")
