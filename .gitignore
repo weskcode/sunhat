@@ -71,3 +71,6 @@ buildServer.json
 
 ## App Store internals (only framed screenshots are public)
 AppStore/
+
+## Internal audit/process docs (not needed in public repo)
+docs/
