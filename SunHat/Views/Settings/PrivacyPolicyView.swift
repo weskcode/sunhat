@@ -7,27 +7,19 @@
 
 import SwiftUI
 
+/// A hierarchical push destination, not a sheet: it relies on the presenting
+/// NavigationStack's own back button rather than providing its own
+/// NavigationStack or a Done button.
 struct PrivacyPolicyView: View {
-    @Environment(\.dismiss) private var dismiss
-
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    privacyPolicyContent
-                }
-                .padding()
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                privacyPolicyContent
             }
-            .navigationTitle("Privacy Policy")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
+            .padding()
         }
+        .navigationTitle("Privacy Policy")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private var privacyPolicyContent: some View {
@@ -95,5 +87,7 @@ struct PrivacyPolicyView: View {
 }
 
 #Preview {
-    PrivacyPolicyView()
+    NavigationStack {
+        PrivacyPolicyView()
+    }
 }
