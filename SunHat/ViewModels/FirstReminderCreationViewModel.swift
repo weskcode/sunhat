@@ -740,7 +740,7 @@ enum TimeRange: String, CaseIterable, Hashable {
     case evening
     case allDay
     
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
         case .morning:
             return String(localized: "Morning", comment: "Time-of-day preference option label")
@@ -752,8 +752,8 @@ enum TimeRange: String, CaseIterable, Hashable {
             return String(localized: "All Day", comment: "Time-of-day preference option label")
         }
     }
-    
-    var icon: String {
+
+    nonisolated var icon: String {
         switch self {
         case .morning:
             return "sunrise.fill"
@@ -765,8 +765,8 @@ enum TimeRange: String, CaseIterable, Hashable {
             return "clock.fill"
         }
     }
-    
-    var hours: ClosedRange<Int> {
+
+    nonisolated var hours: ClosedRange<Int> {
         switch self {
         case .morning:
             return 6...11

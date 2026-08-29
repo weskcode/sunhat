@@ -188,6 +188,21 @@ extension NotificationConfig {
         }
     }
     
+    /// The TimeRange (morning/afternoon/evening/allDay) that produced this
+    /// config's preferredStartHour/preferredEndHour/avoidNighttime, inverse of
+    /// the mapping FirstReminderCreationViewModel.createReminder() applies when
+    /// a TimeRange is saved onto a NotificationConfig. Falls back to .allDay
+    /// for any window that doesn't match one of the four presets exactly.
+    var preferredTimeRange: TimeRange {
+        guard avoidNighttime else { return .allDay }
+        for candidate: TimeRange in [.morning, .afternoon, .evening] {
+            if candidate.hours.lowerBound == preferredStartHour && candidate.hours.upperBound == preferredEndHour {
+                return candidate
+            }
+        }
+        return .allDay
+    }
+
     private func nextDeliveryTime(at hour: Int, after date: Date) -> Date? {
         let calendar = Calendar.current
         var components = calendar.dateComponents([.year, .month, .day], from: date)

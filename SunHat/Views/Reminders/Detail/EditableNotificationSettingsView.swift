@@ -45,6 +45,36 @@ struct EditableNotificationSettingsView: View {
                 Toggle("Show badge", isOn: $config.enableBadge)
                 Toggle("Play sound", isOn: $config.enableSound)
             }
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Preferred Delivery Time")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+
+                Picker("Preferred Delivery Time", selection: $config.preferredTimeRange) {
+                    ForEach(TimeRange.allCases, id: \.self) { range in
+                        Text(range.displayName).tag(range)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+            }
+
+            Toggle(isOn: $config.respectsQuietHours) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Respect Quiet Hours")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.primary)
+
+                    Text("Avoid notifications during sleep")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
     }
 }
