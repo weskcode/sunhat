@@ -55,6 +55,16 @@ final class WeatherReminder {
     var snoozedUntil: Date?
     var userNotes: String = ""
     var tags: [String] = []
+
+    // Appearance chosen in the creation flow; nil falls back to the category's
+    // defaults. Tint is stored as a stable ReminderTint raw value, not a
+    // localized color name.
+    var customIconName: String?
+    var customTintName: String?
+
+    var displayIconName: String {
+        customIconName ?? category.iconName
+    }
     
     // Success tracking
     var successfulCompletions: Int = 0
@@ -158,7 +168,7 @@ final class WeatherReminder {
     
     // Removed previous partial init
     
-    var isCurrentlyActive: Bool {
+    nonisolated var isCurrentlyActive: Bool {
         guard isActive && !isCompleted && !isPaused else { return false }
         
         if let snoozedUntil = snoozedUntil, snoozedUntil > Date() {
@@ -180,7 +190,7 @@ final class WeatherReminder {
         return true
     }
     
-    var canTrigger: Bool {
+    nonisolated var canTrigger: Bool {
         guard isCurrentlyActive else { return false }
         
         // Check cooldown period
@@ -196,7 +206,7 @@ final class WeatherReminder {
         return true
     }
     
-    var displayTitle: String {
+    nonisolated var displayTitle: String {
         return title.isEmpty ? String(localized: "Untitled Reminder", comment: "Fallback title when reminder has no title") : title
     }
 
@@ -383,7 +393,7 @@ enum ReminderCategory: String, Codable, CaseIterable, Sendable {
         }
     }
     
-    var iconName: String {
+    nonisolated var iconName: String {
         switch self {
         case .general: return "bell"
         case .outdoor: return "figure.hiking"
