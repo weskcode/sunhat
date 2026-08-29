@@ -43,6 +43,9 @@ struct LocationPermissionView: View {
                 }
             )
         }
+        .sensoryFeedback(.success, trigger: locationManager.authorizationStatus) { _, newValue in
+            newValue == .authorizedWhenInUse || newValue == .authorizedAlways
+        }
         .alert("Location Access", isPresented: $locationManager.showPermissionDeniedAlert) {
             Button("Open Settings") {
                 locationManager.openAppSettings()

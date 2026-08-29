@@ -100,6 +100,9 @@ struct MainTabView: View {
         ) { _ in
             consumePendingNotificationDestination()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .sunHatShowRemindersTab)) { _ in
+            selectedTab = .reminders
+        }
         .onChange(of: scenePhase) {
             switch scenePhase {
             case .active:
@@ -197,6 +200,12 @@ struct MainTabView: View {
             selectedTab = .settings
         }
     }
+}
+
+extension Notification.Name {
+    /// Posted by views nested in other tabs (e.g. the dashboard's truncated
+    /// task list) to switch the tab bar to the Reminders tab.
+    static let sunHatShowRemindersTab = Notification.Name("SunHat.showRemindersTab")
 }
 
 private struct NotificationReminderDestination: View {
