@@ -112,6 +112,26 @@ struct NotificationDeliveryPolicyTests {
         #expect(preferences.allowsNotificationDelivery(at: tomorrow, calendar: calendar))
     }
 
+    @Test("A reminder opted out of quiet hours can deliver inside the window")
+    func quietHoursOptOut() {
+        let preferences = makePreferences(quietHoursEnabled: true)
+        let insideQuietHours = weekday(at: 23)
+
+        #expect(preferences.allowsNotificationDelivery(at: insideQuietHours, calendar: calendar) == false)
+        #expect(preferences.allowsNotificationDelivery(at: insideQuietHours, calendar: calendar, respectingQuietHours: false) == true)
+    }
+
+    @Test("The quiet-hours opt-out never bypasses the master switch or daily limit")
+    func quietHoursOptOutRespectsOtherRules() {
+        let disabled = makePreferences(notificationsEnabled: false, quietHoursEnabled: true)
+        #expect(disabled.allowsNotificationDelivery(at: weekday(at: 23), calendar: calendar, respectingQuietHours: false) == false)
+
+        let limited = makePreferences(quietHoursEnabled: true)
+        limited.maximumDailyNotifications = 1
+        limited.recordNotificationDelivered(at: weekday(at: 10), calendar: calendar)
+        #expect(limited.allowsNotificationDelivery(at: weekday(at: 23), calendar: calendar, respectingQuietHours: false) == false)
+    }
+
     @Test("recordNotificationDelivered increments within a day and resets on new day")
     func recordDeliveryCountBehavior() {
         let preferences = makePreferences()
