@@ -96,22 +96,20 @@ final class DashboardViewModel: ObservableObject {
     
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "DashboardViewModel")
     
-    // Timer for automatic refresh
-    private var refreshTimer: Timer?
+    // Periodic refresh loop. A Task instead of a Timer so deinit can cancel it
+    // from any thread (Task.cancel is nonisolated; Timer.invalidate is not).
+    private var refreshTask: Task<Void, Never>?
     private let refreshInterval: TimeInterval = 300 // 5 minutes
-    
+
     // MARK: - Initialization
-    
+
     init() {
         setupBindings()
         loadTemperatureUnit()
     }
-    
+
     deinit {
-        // deinit is nonisolated, but we know we're on MainActor since the class is @MainActor
-        MainActor.assumeIsolated {
-            refreshTimer?.invalidate()
-        }
+        refreshTask?.cancel()
     }
     
     // MARK: - Public Methods
@@ -141,12 +139,9 @@ final class DashboardViewModel: ObservableObject {
 
         do {
             // Get current location
-            let location = await getCurrentLocation()
-
-            // Validate location is not the (0,0) fallback
-            if location.coordinate.latitude == 0 && location.coordinate.longitude == 0 {
-                logger.error("Location unavailable, cannot fetch weather for (0,0)")
-                errorMessage = "Unable to determine your location. Please check location permissions in Settings."
+            guard let location = await getCurrentLocation() else {
+                logger.error("Location unavailable, cannot fetch weather")
+                errorMessage = String(localized: "Unable to determine your location. Please check location permissions in Settings.", comment: "Dashboard error when no location can be resolved for a weather refresh")
                 connectionStatus = .disconnected
                 isLoading = false
                 return
@@ -167,11 +162,15 @@ final class DashboardViewModel: ObservableObject {
 
             logger.info("Weather data refresh completed successfully")
 
+        } catch is CancellationError {
+            // A superseded refresh is not an error; leave current state as-is.
+            isLoading = false
+            return
         } catch {
-            errorMessage = "Weather data unavailable: \(error.localizedDescription)"
+            errorMessage = String(localized: "Weather data unavailable: \(error.localizedDescription)", comment: "Dashboard error banner; the placeholder is the underlying error message")
             connectionStatus = .disconnected
             if !hasWeatherData {
-                weatherDescription = "Weather unavailable"
+                weatherDescription = String(localized: "Weather unavailable", comment: "Dashboard placeholder when no weather data could be loaded")
                 activeAlerts = []
                 forecastData = []
             }
@@ -213,8 +212,15 @@ final class DashboardViewModel: ObservableObject {
     }
     
     private func setupRefreshTimer() {
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: refreshInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+        let interval = refreshInterval
+        refreshTask?.cancel()
+        refreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                do {
+                    try await Task.sleep(for: .seconds(interval))
+                } catch {
+                    return
+                }
                 await self?.refreshWeatherDataIfNeeded()
             }
         }
@@ -234,7 +240,7 @@ final class DashboardViewModel: ObservableObject {
         await refreshWeatherData()
     }
     
-    private func getCurrentLocation() async -> CLLocation {
+    private func getCurrentLocation() async -> CLLocation? {
         // 1) Check UserPreferences for saved manual location
         if let modelContext = modelContext {
             let descriptor = FetchDescriptor<UserPreferences>()
@@ -243,7 +249,7 @@ final class DashboardViewModel: ObservableObject {
                prefs.manualLocationLatitude != 0 || prefs.manualLocationLongitude != 0 {
                 let loc = CLLocation(latitude: prefs.manualLocationLatitude, longitude: prefs.manualLocationLongitude)
                 currentLocationName = prefs.manualLocationName.isEmpty
-                    ? "Manual Location"
+                    ? String(localized: "Manual Location", comment: "Dashboard location label for an unnamed manually entered location")
                     : LocationDisplayFormatter.privacyPreservingName(from: prefs.manualLocationName)
                 return loc
             }
@@ -285,16 +291,19 @@ final class DashboardViewModel: ObservableObject {
             }
         }
 
-        // 6) Real fallback - use last known or log warning
-        logger.warning("Could not obtain location, using default")
-        currentLocationName = "Location Unavailable"
-        // Return a zero-coordinate so weather fetch will fail gracefully
-        return CLLocation(latitude: 0, longitude: 0)
+        // 6) No usable location; the caller shows an explicit error state.
+        logger.warning("Could not obtain location")
+        currentLocationName = String(localized: "Location Unavailable", comment: "Dashboard location label when no location can be determined")
+        return nil
     }
 
     private func waitForCurrentLocation(maxAttempts: Int = 20) async -> CLLocation? {
         for _ in 0..<maxAttempts {
-            try? await Task.sleep(for: .milliseconds(500))
+            do {
+                try await Task.sleep(for: .milliseconds(500))
+            } catch {
+                return nil
+            }
 
             if let loc = locationPermissionManager.currentLocation {
                 return loc

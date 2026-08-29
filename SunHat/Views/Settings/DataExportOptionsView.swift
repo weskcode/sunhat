@@ -33,10 +33,12 @@ struct DataExportOptionsView: View {
 
                 Section {
                     Label("Reminders and trigger conditions", systemImage: "bell")
-                    Label("Preferences and notification settings", systemImage: "gearshape")
-                    Label("Saved locations", systemImage: "location")
 
+                    // The CSV format contains reminders only; listing more here
+                    // would overstate the export on a data-portability surface.
                     if selectedFormat == .json {
+                        Label("Preferences and notification settings", systemImage: "gearshape")
+                        Label("Saved locations", systemImage: "location")
                         Label("Reminder history and related records", systemImage: "clock")
                     }
                 } header: {
@@ -92,10 +94,8 @@ struct DataExportOptionsView: View {
         case .csv:
             await viewModel.exportDataAsCSV()
         }
-
-        if !viewModel.isExporting && viewModel.errorMessage == nil {
-            dismiss()
-        }
+        // The share sheet is presented on top of this sheet, so dismissing here
+        // would tear it down. The user closes this screen with Cancel when done.
     }
 }
 
