@@ -8,7 +8,9 @@ import SwiftUI
 /// The stable palette behind the creation screen's color picker. Raw values
 /// are persisted on WeatherReminder.customTintName, so they must never change
 /// or be localized.
-enum ReminderTint: String, CaseIterable {
+/// Nonisolated: a pure value table that must be readable from nonisolated
+/// model types (WeatherReminder) as well as MainActor views.
+nonisolated enum ReminderTint: String, CaseIterable {
     case blue, purple, pink, red, orange, yellow, green, teal, cyan, indigo, mint, brown
 
     var color: Color {

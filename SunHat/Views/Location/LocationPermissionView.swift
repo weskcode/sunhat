@@ -18,6 +18,25 @@ struct LocationPermissionView: View {
     @State private var isProcessingPermission = false
 
     var body: some View {
+        scrollContent
+            .sheet(isPresented: $showManualEntry) {
+                manualEntrySheet
+            }
+            .sensoryFeedback(.success, trigger: locationManager.authorizationStatus) { (_: CLAuthorizationStatus, newValue: CLAuthorizationStatus) in
+                newValue == .authorizedWhenInUse || newValue == .authorizedAlways
+            }
+            .alert(
+                "Location Access",
+                isPresented: $locationManager.showPermissionDeniedAlert,
+                actions: { permissionDeniedActions },
+                message: { Text("Allow location access in Settings for local forecasts, or enter a city manually.") }
+            )
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Location setup")
+            .accessibilityHint("Step 2 of 4")
+    }
+
+    private var scrollContent: some View {
         ScrollView {
             VStack(spacing: 28) {
                 progressIndicator
@@ -33,33 +52,28 @@ struct LocationPermissionView: View {
         }
         .background(Color(.systemBackground))
         .scrollIndicators(.hidden)
-        .sheet(isPresented: $showManualEntry) {
-            ManualLocationEntryView(
-                isPresented: $showManualEntry,
-                onLocationSelected: { location in
-                    locationManager.manualLocation = location
-                    saveManualLocationToPreferences(location)
-                    coordinator.nextStep()
-                }
-            )
-        }
-        .sensoryFeedback(.success, trigger: locationManager.authorizationStatus) { _, newValue in
-            newValue == .authorizedWhenInUse || newValue == .authorizedAlways
-        }
-        .alert("Location Access", isPresented: $locationManager.showPermissionDeniedAlert) {
-            Button("Open Settings") {
-                locationManager.openAppSettings()
+    }
+
+    private var manualEntrySheet: some View {
+        ManualLocationEntryView(
+            isPresented: $showManualEntry,
+            onLocationSelected: { location in
+                locationManager.manualLocation = location
+                saveManualLocationToPreferences(location)
+                coordinator.nextStep()
             }
-            Button("Enter City Manually") {
-                showManualEntry = true
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("Allow location access in Settings for local forecasts, or enter a city manually.")
+        )
+    }
+
+    @ViewBuilder
+    private var permissionDeniedActions: some View {
+        Button("Open Settings") {
+            locationManager.openAppSettings()
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Location setup")
-        .accessibilityHint("Step 2 of 4")
+        Button("Enter City Manually") {
+            showManualEntry = true
+        }
+        Button("Cancel", role: .cancel) {}
     }
 
     private var progressIndicator: some View {
