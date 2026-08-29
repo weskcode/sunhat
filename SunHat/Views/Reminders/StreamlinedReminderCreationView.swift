@@ -24,6 +24,10 @@ struct StreamlinedReminderCreationView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
+                    if viewModel.isWriteBlocked {
+                        writeBlockedNotice
+                    }
+
                     ReminderIconColorPicker(
                         selectedIcon: $viewModel.customReminder.selectedIcon,
                         selectedColor: $viewModel.customReminder.selectedColor
@@ -49,7 +53,7 @@ struct StreamlinedReminderCreationView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create", action: createReminder)
                         .fontWeight(.semibold)
-                        .disabled(!viewModel.isReminderValid)
+                        .disabled(!viewModel.isReminderValid || viewModel.isWriteBlocked)
                 }
             }
         }
@@ -87,6 +91,22 @@ struct StreamlinedReminderCreationView: View {
         } message: {
             Text(viewModel.creationErrorMessage ?? "")
         }
+    }
+
+    // MARK: - Write Blocked Notice
+
+    private var writeBlockedNotice: some View {
+        Label {
+            Text("SunHat couldn't load your data and can't save new reminders right now. Restart SunHat to try again.", comment: "Notice shown on the creation screen when the app is in temporary in-memory recovery mode")
+        } icon: {
+            Image(systemName: "exclamationmark.triangle.fill")
+        }
+        .font(.subheadline)
+        .foregroundStyle(.primary)
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.yellow.opacity(0.18), in: .rect(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Details Card

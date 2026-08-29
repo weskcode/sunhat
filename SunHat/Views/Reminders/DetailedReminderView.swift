@@ -51,6 +51,10 @@ struct DetailedReminderView: View {
 
                             // Main content
                             VStack(spacing: 24) {
+                                if isEditMode && viewModel.isWriteBlocked {
+                                    writeBlockedNotice
+                                }
+
                                 // Live prediction section
                                 if !isEditMode {
                                     livePredictionSection
@@ -116,7 +120,7 @@ struct DetailedReminderView: View {
                         saveChanges()
                     }
                     .fontWeight(.semibold)
-                    .disabled(!editedReminder.isValid)
+                    .disabled(!editedReminder.isValid || viewModel.isWriteBlocked)
                 } else {
                     HStack(spacing: 16) {
                         Button {
@@ -169,6 +173,22 @@ struct DetailedReminderView: View {
         }
     }
     
+    // MARK: - Write Blocked Notice
+
+    private var writeBlockedNotice: some View {
+        Label {
+            Text("SunHat couldn't load your data and can't save changes right now. Restart SunHat to try again.", comment: "Notice shown while editing a reminder when the app is in temporary in-memory recovery mode")
+        } icon: {
+            Image(systemName: "exclamationmark.triangle.fill")
+        }
+        .font(.subheadline)
+        .foregroundStyle(.primary)
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.yellow.opacity(0.18), in: .rect(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+    }
+
     // MARK: - Weather Condition Header
 
     private var weatherConditionHeader: some View {
