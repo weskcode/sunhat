@@ -403,7 +403,7 @@ struct ManualLocationEntryView: View {
     }
     
     private func dismissView() {
-        withAnimation(.easeInOut(duration: 0.3)) {
+        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.3)) {
             isPresented = false
         }
     }

@@ -13,7 +13,6 @@ struct WeatherView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel = WeatherViewModel()
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var selectedTimeframe: WeatherTimeframe = .current
     @State private var activeSheet: ActiveSheet?
