@@ -145,6 +145,26 @@
         }
       }
     },
+    "%@ hPa": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ hPa"
+          }
+        }
+      }
+    },
+    "%@ inHg": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ inHg"
+          }
+        }
+      }
+    },
     "%@ km": {
       "comment": "Visibility distance in kilometers",
       "localizations": {
@@ -233,6 +253,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@, se activa %@"
+          }
+        }
+      }
+    },
+    "%@ • Steady": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ • Constante"
           }
         }
       }
@@ -831,6 +861,16 @@
         }
       }
     },
+    "Add a location or enable Location Services to load accurate weather for this reminder.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Añade una ubicación o activa los Servicios de Localización para cargar el clima exacto de este recordatorio."
+          }
+        }
+      }
+    },
     "Add to Favorites": {
       "localizations": {
         "es": {
@@ -1002,6 +1042,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ocurrió un error inesperado"
+          }
+        }
+      }
+    },
+    "Analytics": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Análisis"
           }
         }
       }
@@ -1319,6 +1369,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Calculando predicción..."
+          }
+        }
+      }
+    },
+    "Can I set reminders for multiple locations?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Puedo crear recordatorios para varias ubicaciones?"
+          }
+        }
+      }
+    },
+    "Can I use the app without location access?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Puedo usar la app sin acceso a la ubicación?"
           }
         }
       }
@@ -1907,6 +1977,36 @@
         }
       }
     },
+    "Couldn't open the share sheet. Please try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo abrir la hoja para compartir. Inténtalo de nuevo."
+          }
+        }
+      }
+    },
+    "Couldn't save changes. Please try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron guardar los cambios. Inténtalo de nuevo."
+          }
+        }
+      }
+    },
+    "Couldn't save your reminder. Please try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo guardar tu recordatorio. Inténtalo de nuevo."
+          }
+        }
+      }
+    },
     "Create": {
       "localizations": {
         "es": {
@@ -1933,6 +2033,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Crear recordatorio del clima"
+          }
+        }
+      }
+    },
+    "Create a Task": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crear una tarea"
           }
         }
       }
@@ -3014,6 +3124,16 @@
         }
       }
     },
+    "Failed to load history": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo cargar el historial"
+          }
+        }
+      }
+    },
     "Failed to load notification settings: %@": {
       "comment": "Error shown in Settings when saved notification preferences could not be read",
       "localizations": {
@@ -3043,6 +3163,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No se pudieron solicitar los permisos de notificación: %@"
+          }
+        }
+      }
+    },
+    "Failed to save changes": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudieron guardar los cambios"
           }
         }
       }
@@ -3308,6 +3438,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "El pronóstico coincide el %@: %@"
+          }
+        }
+      }
+    },
+    "Forecast provider": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proveedor de pronósticos"
           }
         }
       }
@@ -3614,6 +3754,26 @@
         }
       }
     },
+    "Gusts %@ km/h": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rachas de %@ km/h"
+          }
+        }
+      }
+    },
+    "Gusts %@ mph": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rachas de %@ mph"
+          }
+        }
+      }
+    },
     "H %.0f°": {
       "localizations": {
         "es": {
@@ -3867,6 +4027,36 @@
         }
       }
     },
+    "How accurate is the weather data?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Qué tan precisos son los datos del clima?"
+          }
+        }
+      }
+    },
+    "How do I delete a reminder?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Cómo elimino un recordatorio?"
+          }
+        }
+      }
+    },
+    "How do weather-triggered reminders work?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Cómo funcionan los recordatorios activados por el clima?"
+          }
+        }
+      }
+    },
     "Humid": {
       "comment": "Dew point comfort description\nHumidity level description",
       "localizations": {
@@ -4080,6 +4270,16 @@
         }
       }
     },
+    "Is my data synced to iCloud?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Mis datos se sincronizan con iCloud?"
+          }
+        }
+      }
+    },
     "It is 72°F and sunny at your selected location.": {
       "localizations": {
         "es": {
@@ -4153,6 +4353,16 @@
         }
       }
     },
+    "Last updated: August 28, 2026": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Última actualización: 28 de agosto de 2026"
+          }
+        }
+      }
+    },
     "Last updated: January 30, 2026": {
       "localizations": {
         "es": {
@@ -4169,6 +4379,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Latitud"
+          }
+        }
+      }
+    },
+    "Latitude must be between -90 and 90 degrees.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La latitud debe estar entre -90 y 90 grados."
           }
         }
       }
@@ -4290,6 +4510,16 @@
         }
       }
     },
+    "Loading weather...": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cargando el clima..."
+          }
+        }
+      }
+    },
     "Loading...": {
       "comment": "Placeholder shown before weather data has loaded",
       "localizations": {
@@ -4331,6 +4561,16 @@
         }
       }
     },
+    "Location Data": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datos de ubicación"
+          }
+        }
+      }
+    },
     "Location Details": {
       "localizations": {
         "es": {
@@ -4357,6 +4597,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Error en la búsqueda de ubicación"
+          }
+        }
+      }
+    },
+    "Location Unavailable": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ubicación no disponible"
+          }
+        }
+      }
+    },
+    "Location access is required for current-location weather reminders. You can also save manual locations. Coordinates are sent only to enabled weather providers to fetch forecasts.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El acceso a la ubicación es necesario para los recordatorios basados en tu ubicación actual. También puedes guardar ubicaciones manuales. Las coordenadas se envían solo a los proveedores de clima activados para obtener pronósticos."
           }
         }
       }
@@ -4499,6 +4759,16 @@
         }
       }
     },
+    "Longitude must be between -180 and 180 degrees.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La longitud debe estar entre -180 y 180 grados."
+          }
+        }
+      }
+    },
     "Low": {
       "comment": "Reminder priority level\nUV index level description",
       "localizations": {
@@ -4563,6 +4833,16 @@
         }
       }
     },
+    "Make sure notifications are enabled in Settings, your reminder is active, and the weather conditions match your trigger settings. Also check that you're not in quiet hours and haven't reached your daily notification limit.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asegúrate de que las notificaciones estén activadas en Ajustes, de que tu recordatorio esté activo y de que las condiciones del clima coincidan con tu configuración. Comprueba también que no estés en horas de silencio y que no hayas alcanzado tu límite diario de notificaciones."
+          }
+        }
+      }
+    },
     "Manage Reminders": {
       "localizations": {
         "es": {
@@ -4580,6 +4860,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Entrada manual"
+          }
+        }
+      }
+    },
+    "Manual Location": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ubicación manual"
           }
         }
       }
@@ -5215,6 +5505,16 @@
         }
       }
     },
+    "Not yet. Your reminders and preferences are stored locally on this device. iCloud sync is planned for a future update.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todavía no. Tus recordatorios y preferencias se almacenan localmente en este dispositivo. La sincronización con iCloud está prevista para una futura actualización."
+          }
+        }
+      }
+    },
     "Notes": {
       "comment": "Reminder icon activity name",
       "localizations": {
@@ -5347,6 +5647,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ahora"
+          }
+        }
+      }
+    },
+    "Now: %@ • %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ahora: %@ • %@"
           }
         }
       }
@@ -5771,6 +6081,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reproducir sonido"
+          }
+        }
+      }
+    },
+    "Please enter a location name.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introduce un nombre de ubicación."
+          }
+        }
+      }
+    },
+    "Please enter valid numeric coordinates.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Introduce coordenadas numéricas válidas."
           }
         }
       }
@@ -6349,6 +6679,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Recordatorios"
+          }
+        }
+      }
+    },
+    "Reminders & Preferences": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recordatorios y preferencias"
           }
         }
       }
@@ -7561,6 +7901,26 @@
         }
       }
     },
+    "SunHat couldn't determine your current location. Pick a location for this reminder, or try again once location is available.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SunHat no pudo determinar tu ubicación actual. Elige una ubicación para este recordatorio o inténtalo de nuevo cuando la ubicación esté disponible."
+          }
+        }
+      }
+    },
+    "SunHat couldn't load weather for this location. Check your connection and location settings, then try again.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SunHat no pudo cargar el clima para esta ubicación. Comprueba tu conexión y los ajustes de ubicación, e inténtalo de nuevo."
+          }
+        }
+      }
+    },
     "SunHat is built with Swift and Apple's iOS frameworks.": {
       "localizations": {
         "es": {
@@ -7577,6 +7937,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "SunHat está diseñado pensando en tu privacidad. Así es como manejamos tus datos:"
+          }
+        }
+      }
+    },
+    "SunHat is running in temporary recovery mode, changes made now will NOT be saved after you close the app. Contact support@sunhat.app for help recovering your data.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SunHat está en modo de recuperación temporal; los cambios realizados ahora NO se guardarán al cerrar la app. Escribe a support@sunhat.app para recuperar tus datos."
           }
         }
       }
@@ -7599,6 +7969,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "SunHat está vigilando tus tareas del clima."
+          }
+        }
+      }
+    },
+    "SunHat monitors weather conditions and sends you notifications when the temperature, humidity, or other conditions match your preferences. For example, you can set a reminder to water your garden when it hasn't rained and the temperature is above 70°F.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SunHat vigila las condiciones del clima y te envía notificaciones cuando la temperatura, la humedad u otras condiciones coinciden con tus preferencias. Por ejemplo, puedes crear un recordatorio para regar el jardín cuando no haya llovido y la temperatura supere los 70°F."
+          }
+        }
+      }
+    },
+    "SunHat repaired a local data store issue and preserved the previous store for recovery.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SunHat reparó un problema en el almacén de datos local y conservó el almacén anterior para su recuperación."
           }
         }
       }
@@ -7681,6 +8071,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Soporte"
+          }
+        }
+      }
+    },
+    "Swipe left on any reminder in the list, or open the reminder and choose Delete from its detail screen.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desliza hacia la izquierda sobre cualquier recordatorio de la lista, o abre el recordatorio y elige Eliminar en su pantalla de detalles."
           }
         }
       }
@@ -8015,6 +8415,16 @@
         }
       }
     },
+    "Temperature is the actual air temperature, while 'feels like' accounts for humidity and wind chill to represent what the temperature actually feels like to your body.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La temperatura es la temperatura real del aire, mientras que la sensación térmica tiene en cuenta la humedad y el viento para representar lo que realmente se siente."
+          }
+        }
+      }
+    },
     "Temperature matched but sky conditions didn't (%@: %@)": {
       "comment": "Notification body explaining a reminder did not fire because sky conditions failed even though temperature matched",
       "localizations": {
@@ -8165,6 +8575,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "El servicio meteorológico está teniendo problemas temporales"
+          }
+        }
+      }
+    },
+    "Third-Party Services": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Servicios de terceros"
           }
         }
       }
@@ -8662,6 +9082,16 @@
         }
       }
     },
+    "Unable to determine your location. Please check location permissions in Settings.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo determinar tu ubicación. Comprueba los permisos de ubicación en Ajustes."
+          }
+        }
+      }
+    },
     "Unable to fetch forecast data: %@": {
       "comment": "Notification body fallback when the forecast could not be fetched for a prediction-based trigger",
       "localizations": {
@@ -9022,6 +9452,16 @@
         }
       }
     },
+    "View All %lld Tasks": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ver las %lld tareas"
+          }
+        }
+      }
+    },
     "View Details": {
       "comment": "Notification action button",
       "localizations": {
@@ -9187,12 +9627,42 @@
         }
       }
     },
+    "We do not collect any personal analytics or tracking data. The app works entirely on your device.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No recopilamos datos personales de análisis ni de seguimiento. La app funciona íntegramente en tu dispositivo."
+          }
+        }
+      }
+    },
+    "We only access your location to provide relevant weather information. Coordinates are sent only to enabled weather providers to fetch forecasts for your area.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo accedemos a tu ubicación para ofrecerte información del clima relevante. Las coordenadas se envían únicamente a los proveedores de clima activados para obtener pronósticos de tu zona."
+          }
+        }
+      }
+    },
     "We respond to privacy inquiries within 30 days, as required by GDPR and CCPA.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Respondemos las consultas de privacidad dentro de 30 días, según lo exigen el GDPR y el CCPA."
+          }
+        }
+      }
+    },
+    "We use Apple WeatherKit as our data source. Weather data is typically accurate for the next 24-48 hours, with longer forecasts being less precise.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usamos Apple WeatherKit como fuente de datos. Los datos del clima suelen ser precisos para las próximas 24-48 horas; los pronósticos a más largo plazo son menos exactos."
           }
         }
       }
@@ -9226,6 +9696,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "La clave de la API meteorológica no está configurada"
+          }
+        }
+      }
+    },
+    "Weather Condition Met": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Condición del clima cumplida"
+          }
+        }
+      }
+    },
+    "Weather Data": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datos del clima"
           }
         }
       }
@@ -9271,12 +9761,62 @@
         }
       }
     },
+    "Weather Unavailable": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clima no disponible"
+          }
+        }
+      }
+    },
     "Weather data for this reminder is not available right now.": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Los datos meteorológicos de este recordatorio no están disponibles en este momento."
+          }
+        }
+      }
+    },
+    "Weather data is provided by Apple WeatherKit. Please review Apple's privacy policy for information on how it handles data.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los datos del clima los proporciona Apple WeatherKit. Consulta la política de privacidad de Apple para saber cómo trata los datos."
+          }
+        }
+      }
+    },
+    "Weather data provider": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Proveedor de datos del clima"
+          }
+        }
+      }
+    },
+    "Weather data unavailable: %@": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datos del clima no disponibles: %@"
+          }
+        }
+      }
+    },
+    "Weather information is fetched from reliable sources and cached locally on your device for better performance. This data is not transmitted to our servers.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La información del clima se obtiene de fuentes fiables y se guarda en caché localmente en tu dispositivo para mejorar el rendimiento. Estos datos no se transmiten a nuestros servidores."
           }
         }
       }
@@ -9369,6 +9909,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "¿Qué podría mejorar SunHat?"
+          }
+        }
+      }
+    },
+    "What's the difference between temperature and 'feels like'?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Cuál es la diferencia entre la temperatura y la sensación térmica?"
           }
         }
       }
@@ -9484,6 +10034,16 @@
         }
       }
     },
+    "Why isn't my reminder triggering?": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Por qué no se activa mi recordatorio?"
+          }
+        }
+      }
+    },
     "Windy": {
       "comment": "Weather condition name",
       "localizations": {
@@ -9545,6 +10105,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sí"
+          }
+        }
+      }
+    },
+    "Yes. Each reminder stores its own location: use your current location or pick a city when creating or editing a reminder.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sí. Cada recordatorio guarda su propia ubicación: usa tu ubicación actual o elige una ciudad al crear o editar un recordatorio."
           }
         }
       }
@@ -9658,6 +10228,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tu ubicación se usa solo para obtener pronósticos de los proveedores meteorológicos habilitados para tus recordatorios."
+          }
+        }
+      }
+    },
+    "Your reminders and app preferences are stored locally on your device. We never have access to your personal reminder content.": {
+      "localizations": {
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tus recordatorios y preferencias de la app se almacenan localmente en tu dispositivo. Nunca tenemos acceso al contenido personal de tus recordatorios."
           }
         }
       }

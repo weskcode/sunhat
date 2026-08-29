@@ -45,6 +45,10 @@ final class NotificationConfig {
     
     // Advanced features
     var requiresLocationPermission: Bool = true
+    /// Per-reminder opt-out of the app-level quiet-hours window. When false,
+    /// this reminder may deliver during quiet hours (master switch and daily
+    /// limit still apply).
+    var respectsQuietHours: Bool = true
     var respectsDoNotDisturb: Bool = true
     var respectsFocusModes: Bool = true
     var criticalAlert: Bool = false

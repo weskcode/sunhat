@@ -253,12 +253,23 @@ final class TriggerEngineManager: ObservableObject {
         guard !Task.isCancelled else { return false }
 
         // Honor the user's app-level notification preferences (master switch,
-        // quiet hours, weekend rule, daily limit).
+        // quiet hours, weekend rule, daily limit) plus the reminder's own
+        // quiet-hours opt-out and preferred delivery window.
         if let modelContainer {
             let context = ModelContext(modelContainer)
+            let reminderId = result.reminderId
+            let config = (try? context.fetch(
+                FetchDescriptor<WeatherReminder>(predicate: #Predicate { $0.id == reminderId })
+            ).first)?.notificationConfig
+
             if let preferences = try? context.fetch(FetchDescriptor<UserPreferences>()).first,
-               !preferences.allowsNotificationDelivery() {
+               !preferences.allowsNotificationDelivery(respectingQuietHours: config?.respectsQuietHours ?? true) {
                 logger.info("Suppressed notification for \(result.reminderId), notifications are off, quiet hours active, or daily limit reached")
+                return false
+            }
+
+            if let config, !config.shouldDeliverAt(Date()) {
+                logger.info("Suppressed notification for \(result.reminderId), outside the reminder's preferred delivery window")
                 return false
             }
         }
@@ -400,21 +411,58 @@ actor TriggerNotificationManager: TriggerNotificationSending {
             throw WeatherError.serviceUnavailable(provider: .appleWeatherKit)
         }
         
+        // Prefer the reminder's own notification settings; fall back to the
+        // trigger reason so the user always learns why this fired.
+        var title = String(localized: "Weather Condition Met", comment: "Default weather reminder notification title")
+        var body = result.triggerReason
+        var includeWeatherSummary = true
+        var temperatureUnit = TemperatureUnit.fahrenheit
+
+        if let modelContainer {
+            let context = ModelContext(modelContainer)
+            let reminderId = result.reminderId
+            if let reminder = try? context.fetch(
+                FetchDescriptor<WeatherReminder>(predicate: #Predicate { $0.id == reminderId })
+            ).first {
+                if let config = reminder.notificationConfig {
+                    if !config.title.isEmpty {
+                        title = config.title
+                    } else if !reminder.displayTitle.isEmpty {
+                        title = reminder.displayTitle
+                    }
+                    // The placeholder message from NotificationConfig's default
+                    // init carries no information; keep the trigger reason then.
+                    let defaultMessage = String(localized: "Your weather condition has been met!", comment: "Default notification body")
+                    if !config.message.isEmpty && config.message != defaultMessage {
+                        body = config.message
+                    }
+                    includeWeatherSummary = config.includeWeatherSummary
+                } else {
+                    title = reminder.displayTitle
+                }
+            }
+            if let preferences = try? context.fetch(FetchDescriptor<UserPreferences>()).first {
+                temperatureUnit = preferences.temperatureUnit
+            }
+        }
+
         let content = UNMutableNotificationContent()
-        content.title = "Weather Condition Met!"
-        content.body = result.triggerReason
+        content.title = title
+        content.body = body
         content.categoryIdentifier = SunHatNotificationCategoryIdentifier.weatherTrigger
         content.sound = .default
-        
-        // Add weather context if available
-        if let weatherData = result.weatherData {
-            let weatherContext = "Current: \(Int(weatherData.temperature))°F • \(weatherData.weatherDescription.capitalized)"
+
+        // Add weather context in the user's preferred unit if available
+        if includeWeatherSummary, let weatherData = result.weatherData {
+            let temperatureText: String
+            switch temperatureUnit {
+            case .fahrenheit:
+                temperatureText = "\(Int(weatherData.temperature.rounded()))°F"
+            case .celsius:
+                temperatureText = "\(Int(((weatherData.temperature - 32) * 5 / 9).rounded()))°C"
+            }
+            let weatherContext = String(localized: "Now: \(temperatureText) • \(weatherData.weatherDescription.capitalized)", comment: "Weather summary line appended to a reminder notification, e.g. 'Now: 72°F • Sunny'")
             content.body += "\n\n\(weatherContext)"
-        }
-        
-        // Add confidence and metadata
-        if result.confidence > 0 {
-            content.subtitle = "Confidence: \(Int(result.confidence * 100))%"
         }
         
         // Set badge
@@ -538,20 +586,12 @@ actor TriggerNotificationManager: TriggerNotificationSending {
             try await actor.snoozeReminder(id: reminderId, hours: hours)
         }
         
-        // Remove from current triggered list
+        // Remove from current triggered list. No dedicated wake-up task is
+        // needed: evaluation excludes snoozed reminders via isCurrentlyActive,
+        // and the periodic cycle picks the reminder back up once snoozedUntil
+        // lapses.
         await MainActor.run {
             TriggerEngineManager.shared.triggeredReminders.removeAll { $0 == reminderId }
-        }
-        
-        // Schedule re-evaluation after snooze period
-        Task {
-            do {
-                try await Task.sleep(for: .seconds(hours * 3600))
-                guard !Task.isCancelled else { return }
-                // Re-evaluate this specific reminder after snooze.
-                // This would typically involve fetching the reminder from the database.
-                self.logger.info("Re-evaluating snoozed reminder \(reminderId)")
-            } catch { }
         }
     }
 

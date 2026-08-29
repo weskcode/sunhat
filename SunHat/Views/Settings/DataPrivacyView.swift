@@ -128,14 +128,7 @@ struct DataPrivacyView: View {
         Section("Weather Providers") {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Apple WeatherKit")
-                Text("Primary forecast provider")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("OpenWeatherMap")
-                Text("Optional backup provider")
+                Text("Forecast provider")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

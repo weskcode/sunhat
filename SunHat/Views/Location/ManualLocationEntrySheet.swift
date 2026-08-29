@@ -192,26 +192,26 @@ struct ManualLocationEntrySheet: View {
     private func saveLocation() {
         guard let lat = Double(latitudeText),
               let lon = Double(longitudeText) else {
-            errorMessage = "Please enter valid numeric coordinates."
+            errorMessage = String(localized: "Please enter valid numeric coordinates.", comment: "Validation error in the manual location entry form")
             showingError = true
             return
         }
 
         guard lat >= -90 && lat <= 90 else {
-            errorMessage = "Latitude must be between -90 and 90 degrees."
+            errorMessage = String(localized: "Latitude must be between -90 and 90 degrees.", comment: "Validation error in the manual location entry form")
             showingError = true
             return
         }
 
         guard lon >= -180 && lon <= 180 else {
-            errorMessage = "Longitude must be between -180 and 180 degrees."
+            errorMessage = String(localized: "Longitude must be between -180 and 180 degrees.", comment: "Validation error in the manual location entry form")
             showingError = true
             return
         }
 
         let trimmedName = locationName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else {
-            errorMessage = "Please enter a location name."
+            errorMessage = String(localized: "Please enter a location name.", comment: "Validation error in the manual location entry form")
             showingError = true
             return
         }

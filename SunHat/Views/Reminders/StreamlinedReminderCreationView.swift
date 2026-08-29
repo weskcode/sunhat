@@ -18,6 +18,7 @@ struct StreamlinedReminderCreationView: View {
     var onReminderCreated: (() -> Void)?
 
     @State private var showLocationPicker = false
+    @State private var didCreateReminder = false
 
     var body: some View {
         NavigationStack {
@@ -71,6 +72,9 @@ struct StreamlinedReminderCreationView: View {
         }
         .onChange(of: viewModel.customReminder.title) { _, newTitle in
             viewModel.applyActivityDefaults(from: newTitle)
+        }
+        .sensoryFeedback(.success, trigger: didCreateReminder) { _, newValue in
+            newValue
         }
         .alert(
             "Couldn't Save",
@@ -160,6 +164,7 @@ struct StreamlinedReminderCreationView: View {
     private func createReminder() {
         guard viewModel.createReminder() else { return }
 
+        didCreateReminder = true
         onReminderCreated?()
         dismiss()
     }

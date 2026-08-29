@@ -20,6 +20,11 @@ final class WeatherService: ObservableObject {
     @Published var lastUpdateTime: Date?
     @Published var connectionStatus: ConnectionStatus = .unknown
 
+    /// Fetches can overlap; isLoading stays true until the last one finishes.
+    private var activeFetchCount = 0 {
+        didSet { isLoading = activeFetchCount > 0 }
+    }
+
     private var weatherActor: WeatherServiceActor?
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "WeatherService")
 
@@ -39,8 +44,8 @@ final class WeatherService: ObservableObject {
             throw WeatherError.serviceUnavailable(provider: .appleWeatherKit)
         }
 
-        isLoading = true
-        defer { isLoading = false }
+        activeFetchCount += 1
+        defer { activeFetchCount -= 1 }
 
         do {
             let weatherData = try await weatherActor.fetchWeatherData(for: location, forceRefresh: forceRefresh)

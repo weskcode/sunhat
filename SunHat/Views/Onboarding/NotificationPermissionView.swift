@@ -34,6 +34,9 @@ struct NotificationPermissionView: View {
         .onAppear {
             notificationManager.setupNotificationCategories()
         }
+        .sensoryFeedback(.success, trigger: notificationManager.notificationStatus) { _, newValue in
+            newValue == .authorized
+        }
         .alert("Notification Access", isPresented: $notificationManager.showPermissionDeniedAlert) {
             Button("Open Settings") {
                 notificationManager.openAppSettings()
@@ -168,7 +171,7 @@ final class NotificationPermissionManager: NSObject, ObservableObject {
     func requestNotificationPermission(completion: @escaping (Bool) -> Void) {
         Task {
             do {
-                let granted = try await notificationCenter.requestAuthorization(options: [.alert, .badge, .sound, .provisional])
+                let granted = try await notificationCenter.requestAuthorization(options: [.alert, .badge, .sound])
                 await MainActor.run {
                     checkNotificationStatus()
                     if !granted {

@@ -16,10 +16,10 @@ struct ReminderGlassCard: View {
         } label: {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    Image(systemName: reminder.category.iconName)
+                    Image(systemName: reminder.displayIconName)
                         .font(.body)
                         .symbolRenderingMode(.hierarchical)
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(reminder.displayTint ?? Color.accentColor)
                         .frame(width: 24)
                     .accessibilityHidden(true)
 

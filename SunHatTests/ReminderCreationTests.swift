@@ -723,6 +723,70 @@ struct ReminderCreationViewModelTests {
         #expect(reminders.count == 0)
     }
 
+    @Test("Icon, color, time range, and quiet hours are persisted on save")
+    func createReminderPersistsAppearanceAndDeliveryPreferences() throws {
+        viewModel.customReminder.title = "Evening Run"
+        viewModel.customReminder.selectedIcon = "figure.run"
+        viewModel.customReminder.selectedColor = .orange
+        viewModel.customReminder.preferredTimeRange = .evening
+        viewModel.customReminder.respectQuietHours = false
+
+        let location = ManualLocationData(
+            name: "Boston",
+            coordinate: CLLocationCoordinate2D(latitude: 42.3601, longitude: -71.0589)
+        )
+        viewModel.selectManualLocation(location)
+        #expect(viewModel.createReminder() == true)
+
+        let reminder = try #require(try modelContext.fetch(FetchDescriptor<WeatherReminder>()).first)
+        #expect(reminder.customIconName == "figure.run")
+        #expect(reminder.customTintName == "orange")
+        #expect(reminder.displayIconName == "figure.run")
+
+        let config = try #require(reminder.notificationConfig)
+        #expect(config.respectsQuietHours == false)
+        #expect(config.avoidNighttime == true)
+        #expect(config.preferredStartHour == TimeRange.evening.hours.lowerBound)
+        #expect(config.preferredEndHour == TimeRange.evening.hours.upperBound)
+        // Empty title/message keep the trigger reason in delivered notifications.
+        #expect(config.title.isEmpty)
+        #expect(config.message.isEmpty)
+    }
+
+    @Test("All Day time range does not restrict the delivery window")
+    func createReminderAllDayHasNoDeliveryWindow() throws {
+        viewModel.customReminder.title = "Anytime Walk"
+        viewModel.customReminder.preferredTimeRange = .allDay
+
+        let location = ManualLocationData(
+            name: "Phoenix",
+            coordinate: CLLocationCoordinate2D(latitude: 33.4484, longitude: -112.0740)
+        )
+        viewModel.selectManualLocation(location)
+        #expect(viewModel.createReminder() == true)
+
+        let reminder = try #require(try modelContext.fetch(FetchDescriptor<WeatherReminder>()).first)
+        let config = try #require(reminder.notificationConfig)
+        #expect(config.avoidNighttime == false)
+        #expect(config.avoidEarlyMorning == false)
+    }
+
+    @Test("Current location without a fix fails with a clear error instead of saving a dead reminder")
+    func createReminderWithoutResolvableLocationFails() throws {
+        // Deterministic only when the shared manager has no cached fix; in that
+        // environment this test asserts nothing rather than racing CoreLocation.
+        guard LocationPermissionManager.shared.currentLocation == nil else { return }
+
+        viewModel.customReminder.title = "Garden Watering"
+        viewModel.customReminder.selectedLocation = .currentLocation
+
+        #expect(viewModel.createReminder() == false)
+        #expect(viewModel.creationErrorMessage != nil)
+
+        let reminders = try modelContext.fetch(FetchDescriptor<WeatherReminder>())
+        #expect(reminders.isEmpty)
+    }
+
     // MARK: - Forecast & Likelihood
 
     @Test("Loading weather without a location does not fabricate forecast data")
