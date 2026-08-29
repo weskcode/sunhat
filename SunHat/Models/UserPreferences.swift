@@ -82,10 +82,16 @@ final class UserPreferences {
     /// the user's app-level notification preferences: the master switch, quiet
     /// hours (handling windows that cross midnight, e.g. 22:00–07:00), and the
     /// weekend rule. System permission is checked separately by the senders.
-    func allowsNotificationDelivery(at date: Date = Date(), calendar: Calendar = .current) -> Bool {
+    /// `respectingQuietHours` lets a reminder that has opted out of quiet hours
+    /// skip that one check; the master switch and daily limit always apply.
+    func allowsNotificationDelivery(
+        at date: Date = Date(),
+        calendar: Calendar = .current,
+        respectingQuietHours: Bool = true
+    ) -> Bool {
         guard notificationsEnabled else { return false }
         if !allowWeekendNotifications && calendar.isDateInWeekend(date) { return false }
-        if quietHoursEnabled && isInQuietHours(date, calendar: calendar) { return false }
+        if respectingQuietHours && quietHoursEnabled && isInQuietHours(date, calendar: calendar) { return false }
         let todayCount: Int
         if let lastDate = lastNotificationDate, calendar.isDate(lastDate, inSameDayAs: date) {
             todayCount = dailyNotificationCount
