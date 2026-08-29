@@ -165,6 +165,11 @@ final class DetailedReminderViewModel: ObservableObject {
             config.title = editedReminder.notificationConfig.title
             config.message = editedReminder.notificationConfig.message
             config.cooldownPeriodHours = editedReminder.notificationConfig.cooldownPeriodHours
+            config.respectsQuietHours = editedReminder.notificationConfig.respectsQuietHours
+            let timeRange = editedReminder.notificationConfig.preferredTimeRange
+            config.avoidNighttime = timeRange != .allDay
+            config.preferredStartHour = timeRange.hours.lowerBound
+            config.preferredEndHour = timeRange.hours.upperBound
             
             // Update location if changed
             if editedReminder.location.hasChanged {
@@ -472,13 +477,17 @@ struct EditableNotificationConfig {
     var cooldownPeriodHours: Int
     var enableBadge: Bool
     var enableSound: Bool
-    
+    var respectsQuietHours: Bool
+    var preferredTimeRange: TimeRange
+
     init(from config: NotificationConfig?) {
         self.title = config?.title ?? ""
         self.message = config?.message ?? ""
         self.cooldownPeriodHours = config?.cooldownPeriodHours ?? 2
         self.enableBadge = true // Default value since NotificationConfig doesn't have this property
         self.enableSound = config?.customSound != nil // Use presence of customSound to determine if sound is enabled
+        self.respectsQuietHours = config?.respectsQuietHours ?? true
+        self.preferredTimeRange = config?.preferredTimeRange ?? .allDay
     }
 }
 

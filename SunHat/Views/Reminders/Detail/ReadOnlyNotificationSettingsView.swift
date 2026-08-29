@@ -54,6 +54,18 @@ struct ReadOnlyNotificationSettingsView: View {
                                 .foregroundStyle(.blue)
                         }
                     }
+
+                    HStack {
+                        Label(preferredTimeRangeDisplayName, systemImage: "clock")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+
+                        if config.respectsQuietHours {
+                            Label("Quiet hours respected", systemImage: "moon.zzz")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             } else {
                 Text("Default notification settings")
@@ -63,5 +75,9 @@ struct ReadOnlyNotificationSettingsView: View {
         }
         .padding(12)
         .glassEffect(.regular.tint(.blue.opacity(0.05)), in: .rect(cornerRadius: 10))
+    }
+
+    private var preferredTimeRangeDisplayName: String {
+        (config?.preferredTimeRange ?? .allDay).displayName
     }
 }
