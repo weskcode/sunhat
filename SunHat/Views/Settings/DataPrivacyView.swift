@@ -17,7 +17,6 @@ struct DataPrivacyView: View {
 
     private enum ActiveSheet: Identifiable {
         case exportOptions
-        case privacyPolicy
         case contactOptions
 
         var id: Self { self }
@@ -75,8 +74,6 @@ struct DataPrivacyView: View {
                 switch sheet {
                 case .exportOptions:
                     DataExportOptionsView(viewModel: viewModel)
-                case .privacyPolicy:
-                    PrivacyPolicyView()
                 case .contactOptions:
                     PrivacyContactView()
                 }
@@ -208,8 +205,8 @@ struct DataPrivacyView: View {
 
     private var privacySupportSection: some View {
         Section("Privacy Information") {
-            Button("Privacy Policy") {
-                activeSheet = .privacyPolicy
+            NavigationLink("Privacy Policy") {
+                PrivacyPolicyView()
             }
 
             Button("Contact About Privacy") {
