@@ -50,10 +50,6 @@ final class DataPrivacyViewModel {
         deleteConfirmationText.uppercased() == "DELETE"
     }
     
-    var syncStatusDescription: String {
-        String(localized: "Your data is stored locally on this device. iCloud sync will be available in a future update.", comment: "Data & Privacy screen sync status")
-    }
-    
     // MARK: - Private Properties
 
     private var modelContext: ModelContext?
@@ -205,30 +201,6 @@ final class DataPrivacyViewModel {
         statusMessage = String(localized: "Sync is currently unavailable. Data is stored locally.", comment: "Data & Privacy screen sync status")
     }
     
-    func contactPrivacyOfficer() {
-        let email = AppSupportLinks.privacyEmail
-        let subject = String(localized: "Privacy Inquiry - SunHat App", comment: "Pre-filled subject line of the privacy-request email the app composes")
-        let body = String(localized: """
-        Hello,
-
-        I am contacting you regarding my privacy rights under GDPR/CCPA.
-
-        My request:
-
-
-        Thank you,
-        """, comment: "Pre-filled body of the privacy-request email the app composes; GDPR/CCPA are legal acronyms and should not be translated")
-
-        if let url = URL(string: "mailto:\(email)?subject=\(subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")&body=\(body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")") {
-            Task {
-                let opened = await settingsOpener.open(url)
-                if opened == false {
-                    errorMessage = String(localized: "Couldn't open Mail. Set up a mail account, or email \(email) directly.", comment: "Error shown when deep-linking to the Mail app fails")
-                }
-            }
-        }
-    }
-
     // MARK: - Private Methods
 
     private func generateExportData() async throws -> [String: Any] {
@@ -503,19 +475,27 @@ final class DataPrivacyViewModel {
                 }
                 
                 if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let window = windowScene.windows.first,
+                   let window = windowScene.windows.first(where: \.isKeyWindow) ?? windowScene.windows.first,
                    let rootVC = window.rootViewController {
-                    
+
                     // Handle iPad presentation
                     if let popover = activityVC.popoverPresentationController {
                         popover.sourceView = window
                         popover.sourceRect = CGRect(x: window.bounds.midX, y: window.bounds.midY, width: 0, height: 0)
                         popover.permittedArrowDirections = []
                     }
-                    
-                    rootVC.present(activityVC, animated: true)
+
+                    // Present from the topmost presented controller. The export
+                    // options sheet is still up at this point, and UIKit refuses
+                    // a present on a controller that is already presenting.
+                    var presenter = rootVC
+                    while let presented = presenter.presentedViewController {
+                        presenter = presented
+                    }
+                    presenter.present(activityVC, animated: true)
                 } else {
                     try? FileManager.default.removeItem(at: fileURL)
+                    errorMessage = String(localized: "Couldn't open the share sheet. Please try again.", comment: "Data & Privacy screen error when the export share sheet can't be presented")
                 }
             }
             
