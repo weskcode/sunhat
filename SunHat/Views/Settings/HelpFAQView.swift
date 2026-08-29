@@ -17,36 +17,36 @@ struct HelpFAQView: View {
 
     private let faqItems = [
         FAQItem(
-            question: "How do weather-triggered reminders work?",
-            answer: "SunHat monitors weather conditions and sends you notifications when the temperature, humidity, or other conditions match your preferences. For example, you can set a reminder to water your garden when it hasn't rained and the temperature is above 70°F."
+            question: String(localized: "How do weather-triggered reminders work?", comment: "FAQ question"),
+            answer: String(localized: "SunHat monitors weather conditions and sends you notifications when the temperature, humidity, or other conditions match your preferences. For example, you can set a reminder to water your garden when it hasn't rained and the temperature is above 70°F.", comment: "FAQ answer")
         ),
         FAQItem(
-            question: "Why isn't my reminder triggering?",
-            answer: "Make sure notifications are enabled in Settings, your reminder is active, and the weather conditions match your trigger settings. Also check that you're not in quiet hours and haven't reached your daily notification limit."
+            question: String(localized: "Why isn't my reminder triggering?", comment: "FAQ question"),
+            answer: String(localized: "Make sure notifications are enabled in Settings, your reminder is active, and the weather conditions match your trigger settings. Also check that you're not in quiet hours and haven't reached your daily notification limit.", comment: "FAQ answer")
         ),
         FAQItem(
-            question: "How accurate is the weather data?",
-            answer: "We use Apple WeatherKit as our primary data source, with OpenWeatherMap as backup. Weather data is typically accurate for the next 24-48 hours, with longer forecasts being less precise."
+            question: String(localized: "How accurate is the weather data?", comment: "FAQ question"),
+            answer: String(localized: "We use Apple WeatherKit as our data source. Weather data is typically accurate for the next 24-48 hours, with longer forecasts being less precise.", comment: "FAQ answer")
         ),
         FAQItem(
-            question: "Can I use the app without location access?",
-            answer: "Location access is required for current-location weather reminders. You can also save manual locations. Coordinates are sent only to enabled weather providers to fetch forecasts."
+            question: String(localized: "Can I use the app without location access?", comment: "FAQ question"),
+            answer: String(localized: "Location access is required for current-location weather reminders. You can also save manual locations. Coordinates are sent only to enabled weather providers to fetch forecasts.", comment: "FAQ answer")
         ),
         FAQItem(
-            question: "Is my data synced to iCloud?",
-            answer: "Not yet. Your reminders and preferences are stored locally on this device. iCloud sync is planned for a future update."
+            question: String(localized: "Is my data synced to iCloud?", comment: "FAQ question"),
+            answer: String(localized: "Not yet. Your reminders and preferences are stored locally on this device. iCloud sync is planned for a future update.", comment: "FAQ answer")
         ),
         FAQItem(
-            question: "What's the difference between temperature and 'feels like'?",
-            answer: "Temperature is the actual air temperature, while 'feels like' accounts for humidity and wind chill to represent what the temperature actually feels like to your body."
+            question: String(localized: "What's the difference between temperature and 'feels like'?", comment: "FAQ question"),
+            answer: String(localized: "Temperature is the actual air temperature, while 'feels like' accounts for humidity and wind chill to represent what the temperature actually feels like to your body.", comment: "FAQ answer")
         ),
         FAQItem(
-            question: "Can I set reminders for multiple locations?",
-            answer: "Currently, reminders are based on your current location. Multiple location support is planned for a future update."
+            question: String(localized: "Can I set reminders for multiple locations?", comment: "FAQ question"),
+            answer: String(localized: "Yes. Each reminder stores its own location: use your current location or pick a city when creating or editing a reminder.", comment: "FAQ answer")
         ),
         FAQItem(
-            question: "How do I delete a reminder?",
-            answer: "Swipe left on any reminder in the list view, or use the edit button to select multiple reminders for deletion."
+            question: String(localized: "How do I delete a reminder?", comment: "FAQ question"),
+            answer: String(localized: "Swipe left on any reminder in the list, or open the reminder and choose Delete from its detail screen.", comment: "FAQ answer")
         )
     ]
 

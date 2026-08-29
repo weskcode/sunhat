@@ -73,12 +73,7 @@ struct AboutView: View {
             VStack(alignment: .leading, spacing: 8) {
                 acknowledgmentRow(
                     service: "Apple WeatherKit",
-                    description: "Primary weather data provider"
-                )
-
-                acknowledgmentRow(
-                    service: "OpenWeatherMap",
-                    description: "Backup weather data service"
+                    description: "Weather data provider"
                 )
 
                 acknowledgmentRow(

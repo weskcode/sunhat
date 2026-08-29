@@ -15,9 +15,12 @@ struct AllRemindersView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \WeatherReminder.createdDate, order: .reverse) private var reminders: [WeatherReminder]
 
+    @EnvironmentObject private var onboardingCoordinator: OnboardingCoordinator
+
     @State private var searchText = ""
     @State private var selectedFilter: ReminderFilter = .all
     @State private var deletionErrorMessage: String?
+    @State private var showingCreateSheet = false
 
     enum ReminderFilter: String, CaseIterable {
         case all = "All"
@@ -104,6 +107,13 @@ struct AllRemindersView: View {
         }
         .navigationTitle("Reminders")
         .navigationBarTitleDisplayMode(.large)
+        .sheet(isPresented: $showingCreateSheet) {
+            StreamlinedReminderCreationView(onReminderCreated: {
+                if !onboardingCoordinator.hasCreatedFirstReminder {
+                    onboardingCoordinator.markFirstReminderCreated()
+                }
+            })
+        }
         .alert(
             "Couldn't Delete Task",
             isPresented: Binding(
@@ -246,11 +256,28 @@ struct AllRemindersView: View {
         VStack {
             Spacer(minLength: 0)
 
-            SunHatEmptyState(
-                title: String(localized: "No Tasks Yet", comment: "Empty state title when the user has no weather tasks"),
-                message: String(localized: "Create your first weather-triggered task to start watching the weather.", comment: "Empty state message when the user has no weather tasks"),
-                systemImage: "list.bullet.clipboard"
-            )
+            VStack(spacing: 16) {
+                SunHatEmptyState(
+                    title: String(localized: "No Tasks Yet", comment: "Empty state title when the user has no weather tasks"),
+                    message: String(localized: "Create your first weather-triggered task to start watching the weather.", comment: "Empty state message when the user has no weather tasks"),
+                    systemImage: "list.bullet.clipboard"
+                )
+
+                Button {
+                    showingCreateSheet = true
+                } label: {
+                    Label {
+                        Text("Create a Task", comment: "Button on the empty reminders list that opens the creation screen")
+                    } icon: {
+                        Image(systemName: "plus")
+                    }
+                    .font(.headline)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                }
+                .buttonStyle(.glass)
+                .padding(.bottom, 20)
+            }
             .sunHatSurface(tint: .accentColor, cornerRadius: 24, prominence: 0.70)
 
             Spacer(minLength: 120)
@@ -297,6 +324,7 @@ struct AllRemindersView: View {
         AllRemindersView()
     }
     .modelContainer(for: [WeatherReminder.self], inMemory: true)
+    .environmentObject(OnboardingCoordinator())
 }
 
 #Preview("Dark Mode") {
@@ -305,6 +333,7 @@ struct AllRemindersView: View {
     }
     .modelContainer(for: [WeatherReminder.self], inMemory: true)
     .preferredColorScheme(.dark)
+    .environmentObject(OnboardingCoordinator())
 }
 
 #Preview("With Data") {
@@ -322,4 +351,5 @@ struct AllRemindersView: View {
         AllRemindersView()
     }
     .modelContainer(container)
+    .environmentObject(OnboardingCoordinator())
 }

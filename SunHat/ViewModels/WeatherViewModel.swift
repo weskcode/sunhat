@@ -56,8 +56,13 @@ final class WeatherViewModel: ObservableObject {
     @Published var weatherAlerts: [WeatherAlert] = []
     @Published var triggerPredictions: [TriggerPrediction] = []
 
+    /// The user's temperature/measurement preference. Stored weather values
+    /// stay in the provider's imperial units; conversion happens at display.
+    @Published var temperatureUnit: TemperatureUnit = .fahrenheit
+
     // MARK: - Private Properties
     private var weatherModelActor: WeatherModelActor?
+    private var modelContainer: ModelContainer?
     private var weatherService: any WeatherProviding
     private var locationManager: LocationManaging
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "WeatherVM")
@@ -80,6 +85,7 @@ final class WeatherViewModel: ObservableObject {
         locationManager: LocationManaging
     ) {
         self.weatherModelActor = WeatherModelActor(modelContainer: modelContainer)
+        self.modelContainer = modelContainer
         self.weatherService = weatherService
         self.locationManager = locationManager
 
@@ -114,6 +120,7 @@ final class WeatherViewModel: ObservableObject {
     func configure(modelContainer: ModelContainer) {
         guard weatherModelActor == nil else { return }
         weatherModelActor = WeatherModelActor(modelContainer: modelContainer)
+        self.modelContainer = modelContainer
         Task { @MainActor in
             await loadAllData(forceRefresh: false)
         }
@@ -141,6 +148,7 @@ final class WeatherViewModel: ObservableObject {
         loadGeneration += 1
         let generation = loadGeneration
         let selection = selectedLocation
+        loadTemperatureUnit()
         isLoading = true
 
         defer {
@@ -251,7 +259,7 @@ final class WeatherViewModel: ObservableObject {
         hourlyForecast = hours.map { hour in
             HourlyWeatherData(
                 hour: hour.date,
-                temperature: hour.temperature,
+                temperature: convertedTemperature(hour.temperature),
                 condition: hour.weatherCondition.displayName,
                 iconName: hour.weatherCondition.iconName,
                 iconColor: hour.weatherCondition.iconColor,
@@ -261,7 +269,18 @@ final class WeatherViewModel: ObservableObject {
     }
 
     private func loadWeekly(from forecastDays: [ForecastDay]) {
-        weeklyForecast = Self.dailyWeatherData(from: forecastDays)
+        weeklyForecast = Self.dailyWeatherData(from: forecastDays).map { day in
+            DailyWeatherData(
+                date: day.date,
+                dayOfWeek: day.dayOfWeek,
+                condition: day.condition,
+                iconName: day.iconName,
+                iconColor: day.iconColor,
+                highTemp: convertedTemperature(day.highTemp),
+                lowTemp: convertedTemperature(day.lowTemp),
+                precipitationProbability: day.precipitationProbability
+            )
+        }
     }
 
     /// SunHat's own threshold-based advisories. These are NOT official government or
@@ -333,10 +352,10 @@ final class WeatherViewModel: ObservableObject {
                 let prediction = TriggerPrediction(
                     reminderId: reminder.id,
                     reminderTitle: reminder.title,
-                    reminderIcon: reminder.category.iconName,
+                    reminderIcon: reminder.displayIconName,
                     conditionDescription: formatConditionDescription(reminder.triggerCondition),
-                    currentTemperature: data.temperature,
-                    targetTemperature: reminder.triggerCondition?.targetTemperature ?? 70.0,
+                    currentTemperature: convertedTemperature(data.temperature),
+                    targetTemperature: convertedTemperature(reminder.triggerCondition?.targetTemperature ?? 70.0),
                     likelihood: likelihood,
                     estimatedTriggerTime: eta
                 )
@@ -346,6 +365,79 @@ final class WeatherViewModel: ObservableObject {
             triggerPredictions = preds.sorted { $0.likelihood > $1.likelihood }
         } catch {
             logger.error("Trigger load error: \(error)")
+        }
+    }
+
+    // MARK: - Unit Conversion & Display
+
+    private func loadTemperatureUnit() {
+        guard let modelContainer else { return }
+        let context = ModelContext(modelContainer)
+        if let preferences = try? context.fetch(FetchDescriptor<UserPreferences>()).first {
+            temperatureUnit = preferences.temperatureUnit
+        }
+    }
+
+    /// Converts a stored (imperial) temperature into the user's preferred unit.
+    func convertedTemperature(_ fahrenheit: Double) -> Double {
+        switch temperatureUnit {
+        case .fahrenheit: return fahrenheit
+        case .celsius: return (fahrenheit - 32) * 5 / 9
+        }
+    }
+
+    func displayTemperature(_ fahrenheit: Double, fractionDigits: Int = 0) -> String {
+        convertedTemperature(fahrenheit).formatted(.number.precision(.fractionLength(fractionDigits)))
+    }
+
+    /// Converts a temperature difference (scale only, no offset).
+    func displayTemperatureDelta(_ fahrenheitDelta: Double, fractionDigits: Int = 1) -> String {
+        let value = temperatureUnit == .celsius ? fahrenheitDelta * 5 / 9 : fahrenheitDelta
+        return value.formatted(.number.precision(.fractionLength(fractionDigits)))
+    }
+
+    var windSpeedDisplay: String {
+        switch temperatureUnit {
+        case .fahrenheit:
+            return String(localized: "\(windSpeed.formatted(.number.precision(.fractionLength(1)))) mph", comment: "Wind speed in miles per hour")
+        case .celsius:
+            let kmh = windSpeed * 1.60934
+            return String(localized: "\(kmh.formatted(.number.precision(.fractionLength(1)))) km/h", comment: "Wind speed in kilometers per hour")
+        }
+    }
+
+    var windDetailDisplay: String {
+        guard windGust > 0 else {
+            return String(localized: "\(windDirection) • Steady", comment: "Wind detail line: cardinal direction and steady (no gusts)")
+        }
+        let gustText: String
+        switch temperatureUnit {
+        case .fahrenheit:
+            gustText = String(localized: "Gusts \(windGust.formatted(.number.precision(.fractionLength(0)))) mph", comment: "Wind gust speed in miles per hour")
+        case .celsius:
+            let kmh = windGust * 1.60934
+            gustText = String(localized: "Gusts \(kmh.formatted(.number.precision(.fractionLength(0)))) km/h", comment: "Wind gust speed in kilometers per hour")
+        }
+        return "\(windDirection) • \(gustText)"
+    }
+
+    var visibilityDisplay: String {
+        switch temperatureUnit {
+        case .fahrenheit:
+            return String(localized: "\(visibility.formatted(.number.precision(.fractionLength(1)))) mi", comment: "Visibility distance in miles")
+        case .celsius:
+            let km = visibility * 1.60934
+            return String(localized: "\(km.formatted(.number.precision(.fractionLength(1)))) km", comment: "Visibility distance in kilometers")
+        }
+    }
+
+    var pressureDisplay: String {
+        switch temperatureUnit {
+        case .fahrenheit:
+            return String(localized: "\(pressure.formatted(.number.precision(.fractionLength(2)))) inHg", comment: "Barometric pressure in inches of mercury")
+        case .celsius:
+            let hPa = pressure * 33.8639
+            return String(localized: "\(hPa.formatted(.number.precision(.fractionLength(0)))) hPa", comment: "Barometric pressure in hectopascals")
         }
     }
 

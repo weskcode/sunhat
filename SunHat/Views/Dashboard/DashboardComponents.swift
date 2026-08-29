@@ -65,17 +65,17 @@ struct ActiveReminderCard: View {
         let shouldReduceMotion = reduceMotion
 
         HStack(spacing: 14) {
-            Image(systemName: reminder.category.iconName)
+            Image(systemName: reminder.displayIconName)
                 .font(AppFontStyle.title3.font)
                 .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(reminder.displayTint ?? Color.accentColor)
                 .frame(width: 42, height: 42)
                 .background {
                     Circle()
-                        .fill(Color.accentColor.opacity(0.12))
+                        .fill((reminder.displayTint ?? Color.accentColor).opacity(0.12))
                         .overlay {
                             Circle()
-                                .stroke(Color.accentColor.opacity(0.22), lineWidth: 0.8)
+                                .stroke((reminder.displayTint ?? Color.accentColor).opacity(0.22), lineWidth: 0.8)
                         }
                 }
                 .accessibilityHidden(true)
@@ -158,18 +158,6 @@ struct ActiveReminderCard: View {
         }
 
         return parts.joined(separator: ", ")
-    }
-}
-
-// MARK: - Empty Active Reminders View
-
-struct EmptyActiveRemindersView: View {
-    var body: some View {
-        SunHatEmptyState(
-            title: String(localized: "No Tasks Yet", comment: "Empty state title when the user has no weather tasks"),
-            message: String(localized: "Create a weather task and SunHat will watch for matching conditions.", comment: "Empty state message when the user has no weather tasks"),
-            systemImage: "bell.slash"
-        )
     }
 }
 

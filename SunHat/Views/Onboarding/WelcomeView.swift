@@ -47,7 +47,7 @@ struct WelcomeView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Welcome to SunHat")
-        .dynamicTypeSize(.large ... .accessibility5)
+        .dynamicTypeSize(...(.accessibility5))
     }
 
     private var actionSection: some View {

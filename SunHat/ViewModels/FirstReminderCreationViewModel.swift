@@ -294,6 +294,34 @@ final class FirstReminderCreationViewModel: ObservableObject {
     func createReminder() -> Bool {
         guard isReminderValid, let modelContext else { return false }
 
+        // Resolve the location before creating anything. A reminder without a
+        // usable location can never be evaluated, so saving one would silently
+        // do nothing; fail with a clear message instead.
+        let locationData: LocationData
+        switch customReminder.selectedLocation {
+        case .currentLocation:
+            guard let clLocation = locationPermissionManager.currentLocation else {
+                creationErrorMessage = String(localized: "SunHat couldn't determine your current location. Pick a location for this reminder, or try again once location is available.", comment: "Error shown when saving a reminder set to current location while no location fix is available")
+                return false
+            }
+            locationData = LocationData(
+                latitude: clLocation.coordinate.latitude,
+                longitude: clLocation.coordinate.longitude
+            )
+            locationData.isUserLocation = true
+            locationData.displayName = String(localized: "Current Location", comment: "Location label shown when using the device's current location")
+        case .manual(let manualData):
+            locationData = LocationData(
+                latitude: manualData.coordinate.latitude,
+                longitude: manualData.coordinate.longitude,
+                city: manualData.name
+            )
+            locationData.isManuallyEntered = true
+            locationData.state = manualData.administrativeArea ?? ""
+            locationData.country = manualData.country ?? ""
+            locationData.displayName = manualData.displayName
+        }
+
         isCreatingReminder = true
 
         let reminder = WeatherReminder(title: customReminder.displayTitle)
@@ -301,6 +329,8 @@ final class FirstReminderCreationViewModel: ObservableObject {
         reminder.userNotes = customReminder.notes
         reminder.category = .general
         reminder.isActive = true
+        reminder.customIconName = customReminder.selectedIcon
+        reminder.customTintName = ReminderTint.name(for: customReminder.selectedColor)
 
         // Build trigger condition from the custom reminder settings
         let trigger = TriggerCondition()
@@ -322,31 +352,19 @@ final class FirstReminderCreationViewModel: ObservableObject {
         }
 
         reminder.triggerCondition = trigger
+        reminder.location = locationData
 
-        // Set location on the reminder
-        switch customReminder.selectedLocation {
-        case .currentLocation:
-            if let clLocation = locationPermissionManager.currentLocation {
-                let locationData = LocationData(
-                    latitude: clLocation.coordinate.latitude,
-                    longitude: clLocation.coordinate.longitude
-                )
-                locationData.isUserLocation = true
-                locationData.displayName = "Current Location"
-                reminder.location = locationData
-            }
-        case .manual(let manualData):
-            let locationData = LocationData(
-                latitude: manualData.coordinate.latitude,
-                longitude: manualData.coordinate.longitude,
-                city: manualData.name
-            )
-            locationData.isManuallyEntered = true
-            locationData.state = manualData.administrativeArea ?? ""
-            locationData.country = manualData.country ?? ""
-            locationData.displayName = manualData.displayName
-            reminder.location = locationData
-        }
+        // Persist the delivery preferences the creation screen collects. The
+        // title/message stay empty so notifications keep the specific trigger
+        // reason until the user customizes them in the reminder's settings.
+        let notificationConfig = NotificationConfig(title: "", message: "")
+        notificationConfig.respectsQuietHours = customReminder.respectQuietHours
+        let timeRange = customReminder.preferredTimeRange
+        notificationConfig.avoidNighttime = timeRange != .allDay
+        notificationConfig.preferredStartHour = timeRange.hours.lowerBound
+        notificationConfig.preferredEndHour = timeRange.hours.upperBound
+        notificationConfig.avoidEarlyMorning = false
+        reminder.notificationConfig = notificationConfig
 
         modelContext.insert(reminder)
         do {
@@ -354,7 +372,7 @@ final class FirstReminderCreationViewModel: ObservableObject {
             SunHatSearchIndexer.index(reminder: reminder)
         } catch {
             modelContext.delete(reminder)
-            creationErrorMessage = "Couldn't save your reminder. Please try again."
+            creationErrorMessage = String(localized: "Couldn't save your reminder. Please try again.", comment: "Error shown when creating a reminder fails to persist")
             isCreatingReminder = false
             return false
         }

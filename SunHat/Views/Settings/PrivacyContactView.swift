@@ -243,17 +243,6 @@ struct PrivacyContactView: View {
         """, comment: "Pre-filled body of the GDPR/CCPA privacy-request email the app composes; keep the field labels (Privacy Inquiry Type, Your Inquiry, Contact Information, Email, App Information, App, Version, Platform, Date) and the '- ' bullet formatting")
     }
     
-    private func openPrivacyPolicy() {
-        Task {
-            let opened = await urlOpener.open(AppSupportLinks.privacyPolicyURL)
-            if opened == false {
-                statusAlert = PrivacyContactStatusAlert(
-                    title: String(localized: "Couldn't Open", comment: "Alert title when opening the privacy policy link fails"),
-                    message: String(localized: "Visit \(AppSupportLinks.privacyPolicyURL.absoluteString) in a browser.", comment: "Alert message")
-                )
-            }
-        }
-    }
 }
 
 /// Typed alert state for `PrivacyContactView`, one alert surface for

@@ -185,11 +185,14 @@ do {
             }
         )
         
-        let reminders = try modelContext.fetch(descriptor)
-        
+        // The predicate covers the cheap flags; isCurrentlyActive additionally
+        // excludes snoozed, not-yet-started, expired, and max-trigger reminders
+        // so no evaluation entry point can notify outside the lifecycle.
+        let reminders = try modelContext.fetch(descriptor).filter(\.isCurrentlyActive)
+
         // Convert each reminder to ReminderEvaluationData
         var evaluationDataList: [ReminderEvaluationData] = []
-        
+
         for reminder in reminders {
             guard let triggerCondition = reminder.triggerCondition,
                   let locationData = reminder.location else {
@@ -453,7 +456,9 @@ do {
                 createdDate: reminder.createdDate,
                 lastTriggered: reminder.lastTriggered,
                 triggerCondition: triggerConditionData,
-                location: locationDataTransfer
+                location: locationDataTransfer,
+                customIconName: reminder.customIconName,
+                customTintName: reminder.customTintName
             )
         }
 
@@ -602,6 +607,12 @@ struct WeatherReminderDisplay: Sendable {
     let lastTriggered: Date?
     let triggerCondition: TriggerConditionData?
     let location: LocationDataTransfer?
+    var customIconName: String? = nil
+    var customTintName: String? = nil
+
+    var displayIconName: String {
+        customIconName ?? category.iconName
+    }
 }
 
 /// Sendable data for reminder evaluation
