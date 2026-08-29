@@ -291,6 +291,19 @@ struct DashboardView: View {
                     SwiftUI.ForEach(Array(viewModel.activeReminders.prefix(3)), id: \.id) { reminder in
                         ActiveReminderCard(reminder: reminder, weatherData: viewModel.currentWeatherData)
                     }
+
+                    if viewModel.activeReminders.count > 3 {
+                        Button {
+                            NotificationCenter.default.post(name: .sunHatShowRemindersTab, object: nil)
+                        } label: {
+                            Text("View All \(viewModel.activeReminders.count) Tasks", comment: "Button under the dashboard's truncated task list; opens the Reminders tab")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 8)
+                        }
+                        .buttonStyle(.glass)
+                    }
                 }
             }
         }
