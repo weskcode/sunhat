@@ -74,6 +74,12 @@ final class FirstReminderCreationViewModel: ObservableObject {
     var isReminderValid: Bool {
         !customReminder.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
+
+    /// True while the app is running on a throwaway in-memory store; saving
+    /// now would silently vanish at termination, so creation must be blocked.
+    var isWriteBlocked: Bool {
+        StoreRecoveryState.shared.isWriteUnsafe
+    }
     
     func selectTemplate(_ template: ReminderTemplate) {
         selectedTemplate = template
@@ -293,6 +299,11 @@ final class FirstReminderCreationViewModel: ObservableObject {
     @discardableResult
     func createReminder() -> Bool {
         guard isReminderValid, let modelContext else { return false }
+
+        guard !isWriteBlocked else {
+            creationErrorMessage = String(localized: "SunHat can't save new reminders right now because your data couldn't be loaded. Restart SunHat to try again.", comment: "Error shown when trying to create a reminder while the app is in temporary in-memory recovery mode")
+            return false
+        }
 
         // Resolve the location before creating anything. A reminder without a
         // usable location can never be evaluated, so saving one would silently

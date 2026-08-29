@@ -134,9 +134,20 @@ final class DetailedReminderViewModel: ObservableObject {
         return true
     }
     
+    /// True while the app is running on a throwaway in-memory store; saving
+    /// now would silently vanish at termination, so edits must be blocked.
+    var isWriteBlocked: Bool {
+        StoreRecoveryState.shared.isWriteUnsafe
+    }
+
     func saveChanges(_ editedReminder: EditableReminder) async -> Bool {
         guard let modelContext = modelContext else { return false }
-        
+
+        guard !isWriteBlocked else {
+            errorMessage = String(localized: "SunHat can't save changes right now because your data couldn't be loaded. Restart SunHat to try again.", comment: "Error shown when trying to edit a reminder while the app is in temporary in-memory recovery mode")
+            return false
+        }
+
         do {
             // Update reminder properties
             reminder.title = editedReminder.title

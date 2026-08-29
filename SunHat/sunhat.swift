@@ -170,11 +170,27 @@ struct SunHatApp: App {
     }
 }
 
+/// How degraded the persistent store is. `.storeRepaired` means a fresh real
+/// store replaced a corrupted one (writes persist normally, informational
+/// only); `.inMemoryFallback` means the app is running on a throwaway
+/// in-memory container (writes vanish at termination) and must not let the
+/// user create or edit data without warning.
+enum StoreRecoveryLevel: Equatable {
+    case none
+    case storeRepaired
+    case inMemoryFallback
+}
+
 @MainActor
 final class StoreRecoveryState: ObservableObject {
     static let shared = StoreRecoveryState()
 
     @Published private(set) var recoveryMessage: String?
+    @Published private(set) var level: StoreRecoveryLevel = .none
+
+    /// True when a save made right now will not survive app termination.
+    /// Creation and edit flows must check this before persisting.
+    var isWriteUnsafe: Bool { level == .inMemoryFallback }
 
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "StoreRecovery")
 
@@ -185,19 +201,41 @@ final class StoreRecoveryState: ObservableObject {
         logger.error("Persistent store creation failed: \(error.localizedDescription)")
         Task { @MainActor in
             recoveryMessage = message
+            level = .storeRepaired
         }
     }
 
     nonisolated func reportRecoveryFailure(_ error: Error) {
-        let message = String(localized: "SunHat is running in temporary recovery mode, changes made now will NOT be saved after you close the app. Contact support@sunhat.app for help recovering your data.", comment: "Banner shown when the app is running on a temporary in-memory database")
+        let message = String(localized: "SunHat couldn't load your data and is running in temporary recovery mode. Creating and editing reminders is disabled until this is fixed. Restart SunHat to try again, or contact support@sunhat.app for help.", comment: "Banner shown when the app is running on a temporary in-memory database")
         logger.error("Persistent store recovery failed: \(error.localizedDescription)")
         Task { @MainActor in
             recoveryMessage = message
+            level = .inMemoryFallback
         }
     }
 
     nonisolated func reportQuarantineFailure(_ error: Error) {
         logger.error("Failed to quarantine persistent store: \(error.localizedDescription)")
+    }
+
+    /// Restores normal operation. Production code never calls this, since
+    /// ModelContainer degradation only happens once at app launch and isn't
+    /// expected to self-heal within a running process; exists so tests that
+    /// exercise a degraded state can clean up this process-wide singleton
+    /// afterward instead of leaking it into unrelated tests.
+    func resetForTesting() {
+        recoveryMessage = nil
+        level = .none
+    }
+
+    /// Test support: sets the level directly and synchronously. Production
+    /// code always goes through reportPersistentStoreFailure/
+    /// reportRecoveryFailure instead, which are nonisolated and hop via Task
+    /// because their real caller (the ModelContainer init closure) isn't
+    /// MainActor-isolated; tests exercising gating behavior don't need that
+    /// hop and would otherwise race it.
+    func setLevelForTesting(_ level: StoreRecoveryLevel) {
+        self.level = level
     }
 }
 
