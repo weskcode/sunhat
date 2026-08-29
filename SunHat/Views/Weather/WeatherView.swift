@@ -35,40 +35,48 @@ struct WeatherView: View {
                     await viewModel.refresh()
                 } content: {
                     LazyVStack(spacing: 20) {
-                        // Weather timeframe picker
-                        weatherTimeframePicker
-                            .padding(.top, 8)
-                        
-                        // Current conditions section
-                        if selectedTimeframe == .current {
-                            currentConditionsSection
-                        }
-                        
-                        // Hourly forecast section (24 hours)
-                        if selectedTimeframe == .hourly {
-                            hourlyForecastSection
-                        }
-                        
-                        // 7-day forecast section
-                        if selectedTimeframe == .weekly {
-                            weeklyForecastSection
-                        }
-                        
-                        // Weather alerts section
-                        if !viewModel.weatherAlerts.isEmpty {
-                            weatherAlertsSection
-                        }
-                        
-                        if selectedTimeframe == .current {
-                            additionalMetricsSection
+                        if viewModel.hasWeatherData {
+                            // Weather timeframe picker
+                            weatherTimeframePicker
+                                .padding(.top, 8)
 
-                            if hasHistoricalComparison {
-                                historicalComparisonSection
+                            // Current conditions section
+                            if selectedTimeframe == .current {
+                                currentConditionsSection
                             }
 
-                            if !viewModel.triggerPredictions.isEmpty {
-                                triggerPredictionsSection
+                            // Hourly forecast section (24 hours)
+                            if selectedTimeframe == .hourly {
+                                hourlyForecastSection
                             }
+
+                            // 7-day forecast section
+                            if selectedTimeframe == .weekly {
+                                weeklyForecastSection
+                            }
+
+                            // Weather alerts section
+                            if !viewModel.weatherAlerts.isEmpty {
+                                weatherAlertsSection
+                            }
+
+                            if selectedTimeframe == .current {
+                                additionalMetricsSection
+
+                                if hasHistoricalComparison {
+                                    historicalComparisonSection
+                                }
+
+                                if !viewModel.triggerPredictions.isEmpty {
+                                    triggerPredictionsSection
+                                }
+                            }
+                        } else if viewModel.isLoading {
+                            ProgressView(String(localized: "Loading weather...", comment: "Progress label while the weather tab loads"))
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 120)
+                        } else {
+                            weatherUnavailableSection
                         }
                     }
                     .padding(.horizontal, 16)
@@ -101,8 +109,28 @@ struct WeatherView: View {
         }
     }
     
+    // MARK: - Unavailable State
+
+    /// Shown instead of weather content when a load failed or no location is
+    /// available. Placeholder zeros are never rendered as real measurements.
+    private var weatherUnavailableSection: some View {
+        ContentUnavailableView {
+            Label(String(localized: "Weather Unavailable", comment: "Title of the weather tab's unavailable state"), systemImage: "cloud.slash")
+        } description: {
+            Text("SunHat couldn't load weather for this location. Check your connection and location settings, then try again.", comment: "Description of the weather tab's unavailable state")
+        } actions: {
+            Button {
+                Task { await viewModel.refresh() }
+            } label: {
+                Text("Try Again", comment: "Retry button in the weather tab's unavailable state")
+            }
+            .buttonStyle(.glass)
+        }
+        .padding(.top, 60)
+    }
+
     // MARK: - Weather Timeframe Picker
-    
+
     private var weatherTimeframePicker: some View {
         Picker("Weather Timeframe", selection: $selectedTimeframe) {
             Text("Now").tag(WeatherTimeframe.current)
@@ -161,7 +189,7 @@ struct WeatherView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     // Current temperature with large display
                     HStack(alignment: .top, spacing: 4) {
-                        Text(String(format: "%.1f", viewModel.currentTemperature))
+                        Text(viewModel.displayTemperature(viewModel.currentTemperature, fractionDigits: 1))
                             .font(.system(size: dynamicTypeSize.isAccessibilitySize ? 68 : 80, weight: .ultraLight, design: .rounded))
                             .foregroundStyle(.primary)
                         
@@ -177,7 +205,7 @@ struct WeatherView: View {
                             .font(AppFontStyle.caption.font)
                             .foregroundStyle(.orange)
                         
-                        Text("Feels like \(String(format: "%.1f", viewModel.feelsLikeTemperature))°")
+                        Text("Feels like \(viewModel.displayTemperature(viewModel.feelsLikeTemperature, fractionDigits: 1))°")
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundStyle(.primary)
@@ -192,8 +220,8 @@ struct WeatherView: View {
                                 .foregroundStyle(tempDifference > 0 ? .red : .blue)
                             
                             Text(tempDifference > 0 ?
-                                String(localized: "\(String(format: "%.1f", abs(tempDifference)))° warmer", comment: "Feels-like temperature is warmer than the actual temperature") :
-                                String(localized: "\(String(format: "%.1f", abs(tempDifference)))° cooler", comment: "Feels-like temperature is cooler than the actual temperature")
+                                String(localized: "\(viewModel.displayTemperatureDelta(abs(tempDifference)))° warmer", comment: "Feels-like temperature is warmer than the actual temperature") :
+                                String(localized: "\(viewModel.displayTemperatureDelta(abs(tempDifference)))° cooler", comment: "Feels-like temperature is cooler than the actual temperature")
                             )
                                 .font(AppFontStyle.caption.font)
                                 .foregroundStyle(.secondary)
@@ -224,7 +252,7 @@ struct WeatherView: View {
                             Image(systemName: "arrow.up")
                                 .font(.caption2)
                                 .foregroundStyle(.red)
-                            Text("\(String(format: "%.0f", viewModel.highTemperature))°")
+                            Text("\(viewModel.displayTemperature(viewModel.highTemperature))°")
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(.primary)
@@ -234,7 +262,7 @@ struct WeatherView: View {
                             Image(systemName: "arrow.down")
                                 .font(.caption2)
                                 .foregroundStyle(.blue)
-                            Text("\(String(format: "%.0f", viewModel.lowTemperature))°")
+                            Text("\(viewModel.displayTemperature(viewModel.lowTemperature))°")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
@@ -247,7 +275,7 @@ struct WeatherView: View {
         .shadow(color: .black.opacity(0.1), radius: 12, x: 0, y: 6)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "Current weather: \(String(format: "%.1f", viewModel.currentTemperature)) degrees, feels like \(String(format: "%.1f", viewModel.feelsLikeTemperature)) degrees, \(viewModel.weatherDescription). High \(String(format: "%.0f", viewModel.highTemperature)), low \(String(format: "%.0f", viewModel.lowTemperature)) degrees"
+            "Current weather: \(viewModel.displayTemperature(viewModel.currentTemperature, fractionDigits: 1)) degrees, feels like \(viewModel.displayTemperature(viewModel.feelsLikeTemperature, fractionDigits: 1)) degrees, \(viewModel.weatherDescription). High \(viewModel.displayTemperature(viewModel.highTemperature)), low \(viewModel.displayTemperature(viewModel.lowTemperature)) degrees"
         )
     }
     
@@ -267,23 +295,23 @@ struct WeatherView: View {
             DetailedMetricCard(
                 icon: "wind",
                 title: "Wind",
-                value: "\(String(format: "%.1f", viewModel.windSpeed)) mph",
-                description: "\(viewModel.windDirection) • \(viewModel.windGust > 0 ? "Gusts \(String(format: "%.0f", viewModel.windGust)) mph" : "Steady")",
+                value: viewModel.windSpeedDisplay,
+                description: viewModel.windDetailDisplay,
                 color: .green
             )
-            
+
             DetailedMetricCard(
                 icon: "eye.fill",
                 title: "Visibility",
-                value: "\(String(format: "%.1f", viewModel.visibility)) mi",
+                value: viewModel.visibilityDisplay,
                 description: visibilityDescription,
                 color: .purple
             )
-            
+
             DetailedMetricCard(
                 icon: "barometer",
                 title: "Pressure",
-                value: "\(String(format: "%.2f", viewModel.pressure)) inHg",
+                value: viewModel.pressureDisplay,
                 description: pressureDescription,
                 color: .indigo
             )
@@ -299,7 +327,7 @@ struct WeatherView: View {
             DetailedMetricCard(
                 icon: "thermometer.snowflake",
                 title: "Dew Point",
-                value: "\(String(format: "%.0f", viewModel.dewPoint))°",
+                value: "\(viewModel.displayTemperature(viewModel.dewPoint))°",
                 description: dewPointDescription,
                 color: .mint
             )
@@ -412,8 +440,8 @@ struct WeatherView: View {
                     if let yesterdayTemp = viewModel.yesterdayTemp {
                         HistoricalComparisonRow(
                             title: "vs. Yesterday",
-                            currentTemp: viewModel.currentTemperature,
-                            historicalTemp: yesterdayTemp,
+                            currentTemp: viewModel.convertedTemperature(viewModel.currentTemperature),
+                            historicalTemp: viewModel.convertedTemperature(yesterdayTemp),
                             timeframe: "24h ago"
                         )
                     }
@@ -421,8 +449,8 @@ struct WeatherView: View {
                     if let lastWeekTemp = viewModel.lastWeekTemp {
                         HistoricalComparisonRow(
                             title: "vs. Last Week",
-                            currentTemp: viewModel.currentTemperature,
-                            historicalTemp: lastWeekTemp,
+                            currentTemp: viewModel.convertedTemperature(viewModel.currentTemperature),
+                            historicalTemp: viewModel.convertedTemperature(lastWeekTemp),
                             timeframe: "7 days ago"
                         )
                     }
@@ -430,8 +458,8 @@ struct WeatherView: View {
                     if let historicalAvgTemp = viewModel.historicalAvgTemp {
                         HistoricalComparisonRow(
                             title: "vs. Monthly Average",
-                            currentTemp: viewModel.currentTemperature,
-                            historicalTemp: historicalAvgTemp,
+                            currentTemp: viewModel.convertedTemperature(viewModel.currentTemperature),
+                            historicalTemp: viewModel.convertedTemperature(historicalAvgTemp),
                             timeframe: "Stored average for this month"
                         )
                     }
