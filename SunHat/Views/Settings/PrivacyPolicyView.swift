@@ -51,17 +51,17 @@ struct PrivacyPolicyView: View {
 
             privacySection(
                 title: "Reminders & Preferences",
-                content: "Your reminders and app preferences are stored locally on your device and synced via iCloud when enabled. We never have access to your personal reminder content."
+                content: "Your reminders and app preferences are stored locally on your device. We never have access to your personal reminder content."
             )
 
             privacySection(
                 title: "Analytics",
-                content: "We do not collect any personal analytics or tracking data. The app works entirely locally with optional iCloud sync under your control."
+                content: "We do not collect any personal analytics or tracking data. The app works entirely on your device."
             )
 
             privacySection(
                 title: "Third-Party Services",
-                content: "Weather data is provided by Apple WeatherKit and OpenWeatherMap. Please review their privacy policies for information on how they handle data."
+                content: "Weather data is provided by Apple WeatherKit. Please review Apple's privacy policy for information on how it handles data."
             )
 
             Text("Contact Us")
@@ -72,14 +72,16 @@ struct PrivacyPolicyView: View {
             Text("If you have any questions about this privacy policy, please contact us at \(AppSupportLinks.privacyEmail)")
                 .font(.body)
 
-            Text("Last updated: January 30, 2026")
+            Text("Last updated: August 28, 2026")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.top, 20)
         }
     }
 
-    private func privacySection(title: String, content: String) -> some View {
+    // LocalizedStringKey so the literal sections above resolve through the
+    // String Catalog instead of rendering raw English in every locale.
+    private func privacySection(title: LocalizedStringKey, content: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.headline)
