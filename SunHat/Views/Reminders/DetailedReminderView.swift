@@ -17,6 +17,7 @@ struct DetailedReminderView: View {
 
     @State private var isEditMode = false
     @State private var showingDeleteConfirmation = false
+    @State private var showingLocationEditor = false
     @State private var activeSheet: ActiveSheet?
     @State private var editedReminder: EditableReminder
 
@@ -120,6 +121,15 @@ struct DetailedReminderView: View {
             case .duplicate:
                 DuplicateReminderView(reminder: reminder)
             }
+        }
+        .sheet(isPresented: $showingLocationEditor) {
+            ManualLocationEntryView(
+                isPresented: $showingLocationEditor,
+                onLocationSelected: { location in
+                    applyEditedLocation(location)
+                },
+                onUseCurrentLocation: nil
+            )
         }
         .onAppear {
             viewModel.configure(modelContext: modelContext)
@@ -263,9 +273,9 @@ struct DetailedReminderView: View {
             // Title and description
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Image(systemName: reminder.category.iconName)
+                    Image(systemName: reminder.displayIconName)
                         .font(AppFontStyle.title3.font)
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(reminder.displayTint ?? .blue)
                     
                     if isEditMode {
                         TextField("Reminder title", text: $editedReminder.title)
@@ -393,7 +403,7 @@ struct DetailedReminderView: View {
             if isEditMode {
                 EditableLocationView(
                     location: $editedReminder.location,
-                    showingLocationPicker: .constant(false)
+                    showingLocationPicker: $showingLocationEditor
                 )
             } else {
                 ReadOnlyLocationView(
@@ -503,6 +513,20 @@ struct DetailedReminderView: View {
             try? await Task.sleep(for: .milliseconds(300))
             isAnimatingTransition = false
         }
+    }
+
+    private func applyEditedLocation(_ location: ManualLocationData) {
+        var updated = editedReminder.location
+        updated.coordinate = location.coordinate
+        updated.displayName = location.name
+        let address = [location.administrativeArea, location.country]
+            .compactMap { $0 }
+            .joined(separator: ", ")
+        updated.fullAddress = address.isEmpty ? nil : address
+        updated.isCurrentLocation = false
+        updated.hasChanged = true
+        editedReminder.location = updated
+        showingLocationEditor = false
     }
 
     private func saveChanges() {
