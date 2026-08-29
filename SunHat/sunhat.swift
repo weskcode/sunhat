@@ -181,7 +181,7 @@ final class StoreRecoveryState: ObservableObject {
     private init() {}
 
     nonisolated func reportPersistentStoreFailure(_ error: Error) {
-        let message = "SunHat repaired a local data store issue and preserved the previous store for recovery."
+        let message = String(localized: "SunHat repaired a local data store issue and preserved the previous store for recovery.", comment: "Banner shown after the local database was quarantined and recreated")
         logger.error("Persistent store creation failed: \(error.localizedDescription)")
         Task { @MainActor in
             recoveryMessage = message
@@ -189,7 +189,7 @@ final class StoreRecoveryState: ObservableObject {
     }
 
     nonisolated func reportRecoveryFailure(_ error: Error) {
-        let message = "SunHat is running in temporary recovery mode, changes made now will NOT be saved after you close the app. Contact support@sunhat.app for help recovering your data."
+        let message = String(localized: "SunHat is running in temporary recovery mode, changes made now will NOT be saved after you close the app. Contact support@sunhat.app for help recovering your data.", comment: "Banner shown when the app is running on a temporary in-memory database")
         logger.error("Persistent store recovery failed: \(error.localizedDescription)")
         Task { @MainActor in
             recoveryMessage = message
