@@ -28,10 +28,6 @@ struct DetailedReminderView: View {
         var id: Self { self }
     }
     
-    // Animation states
-    @State private var headerOffset: CGFloat = 0
-    @State private var isAnimatingTransition = false
-    
     init(reminder: WeatherReminder) {
         self.reminder = reminder
         self._viewModel = StateObject(wrappedValue: DetailedReminderViewModel(reminder: reminder))
@@ -99,15 +95,46 @@ struct DetailedReminderView: View {
                 }
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
         .animation(.smooth(duration: 0.3), value: isEditMode)
-        .safeAreaInset(edge: .top, spacing: 0) {
-            // Custom navigation bar. `safeAreaInset` (not `.overlay`) reserves this
-            // height in the ScrollView's layout so section headers can never scroll
-            // underneath it, an `.overlay` here let "Notification Settings" (and any
-            // other section) end up hidden beneath the floating bar and status bar
-            // once scrolled to that position (see ScreenshotCaptureUITests testShot09).
-            customNavigationBar
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                if isEditMode {
+                    Button("Cancel") {
+                        cancelEditing()
+                    }
+                } else {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Label("Back", systemImage: "chevron.left")
+                    }
+                }
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                if isEditMode {
+                    Button("Save") {
+                        saveChanges()
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(!editedReminder.isValid)
+                } else {
+                    HStack(spacing: 16) {
+                        Button {
+                            enterEditMode()
+                        } label: {
+                            Image(systemName: "pencil")
+                        }
+                        .accessibilityLabel("Edit reminder")
+
+                        Menu {
+                            moreOptionsMenu
+                        } label: {
+                            Image(systemName: "ellipsis")
+                        }
+                        .accessibilityLabel("More options")
+                    }
+                }
+            }
         }
         .confirmationDialog("Delete Reminder", isPresented: $showingDeleteConfirmation) {
             deleteConfirmationDialogButtons()
@@ -142,87 +169,6 @@ struct DetailedReminderView: View {
         }
     }
     
-    // MARK: - Custom Navigation Bar
-    
-    private var customNavigationBar: some View {
-        HStack {
-            // Back button
-            Button(action: {
-                if isEditMode {
-                    cancelEditing()
-                } else {
-                    dismiss()
-                }
-            }) {
-                HStack(spacing: 4) {
-                    Image(systemName: isEditMode ? "xmark" : "chevron.left")
-                        .font(AppFontStyle.title3.font)
-                        .fontWeight(.medium)
-                    
-                    if !isEditMode {
-                        Text("Back")
-                            .font(.body)
-                    }
-                }
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .glassEffect(in: .capsule)
-            }
-            .buttonStyle(.plain)
-            
-            Spacer()
-            
-            // Action buttons
-            HStack(spacing: 12) {
-                if isEditMode {
-                    // Save button
-                    Button("Save") {
-                        saveChanges()
-                    }
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(editedReminder.isValid ? Color.blue : Color.gray)
-                    .clipShape(Capsule())
-                    .disabled(!editedReminder.isValid)
-                } else {
-                    Button(action: {
-                        enterEditMode()
-                    }) {
-                        Image(systemName: "pencil")
-                            .font(AppFontStyle.title3.font)
-                            .foregroundStyle(.primary)
-                            .padding(8)
-                            .glassEffect(in: .circle)
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Edit reminder")
-
-                    Menu {
-                        moreOptionsMenu
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(AppFontStyle.title3.font)
-                            .foregroundStyle(.primary)
-                            .padding(8)
-                            .glassEffect(in: .circle)
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .accessibilityLabel("More options")
-                }
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 8)
-        .padding(.bottom, 8)
-    }
-
     // MARK: - Weather Condition Header
 
     private var weatherConditionHeader: some View {
@@ -495,11 +441,6 @@ struct DetailedReminderView: View {
     private func enterEditMode() {
         withAnimation(.smooth(duration: 0.3)) {
             isEditMode = true
-            isAnimatingTransition = true
-        }
-        Task {
-            try? await Task.sleep(for: .milliseconds(300))
-            isAnimatingTransition = false
         }
     }
 
@@ -507,11 +448,6 @@ struct DetailedReminderView: View {
         editedReminder = EditableReminder(from: reminder)
         withAnimation(.smooth(duration: 0.3)) {
             isEditMode = false
-            isAnimatingTransition = true
-        }
-        Task {
-            try? await Task.sleep(for: .milliseconds(300))
-            isAnimatingTransition = false
         }
     }
 
@@ -535,10 +471,7 @@ struct DetailedReminderView: View {
             if success {
                 withAnimation(.smooth(duration: 0.3)) {
                     isEditMode = false
-                    isAnimatingTransition = true
                 }
-                try? await Task.sleep(for: .milliseconds(300))
-                isAnimatingTransition = false
             }
         }
     }
