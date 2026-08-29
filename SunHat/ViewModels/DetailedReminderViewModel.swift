@@ -32,6 +32,12 @@ final class DetailedReminderViewModel: ObservableObject {
     private var locationManager = CLLocationManager()
     private var cancellables = Set<AnyCancellable>()
     private let timers = DetailedReminderTimers()
+
+    // In-flight load ownership: a newer load bumps the generation and cancels
+    // the previous task so a stale response can never overwrite newer state.
+    private var loadGeneration = 0
+    private var weatherLoadTask: Task<Void, Never>?
+    private var predictionUpdateTask: Task<Void, Never>?
     
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "DetailedReminderViewModel")
     
@@ -74,7 +80,7 @@ final class DetailedReminderViewModel: ObservableObject {
             logger.info("Loaded \(self.triggerHistory.count) history entries")
         } catch {
             logger.error("Failed to load trigger history: \(error.localizedDescription)")
-            errorMessage = "Failed to load history"
+            errorMessage = String(localized: "Failed to load history", comment: "Error shown when the reminder's history timeline can't be loaded")
         }
     }
     
@@ -93,11 +99,15 @@ final class DetailedReminderViewModel: ObservableObject {
     func stopLivePrediction() {
         timers.predictionTimer?.invalidate()
         timers.predictionTimer = nil
+        predictionUpdateTask?.cancel()
+        predictionUpdateTask = nil
     }
 
     func stopWeatherRefresh() {
         timers.weatherRefreshTimer?.invalidate()
         timers.weatherRefreshTimer = nil
+        weatherLoadTask?.cancel()
+        weatherLoadTask = nil
     }
     
     func pauseReminder() {
@@ -145,12 +155,16 @@ final class DetailedReminderViewModel: ObservableObject {
                 condition.maxTemperature = editedReminder.triggerCondition.maxTemperature
             }
             
-            // Update notification config
-            if let config = reminder.notificationConfig {
-                config.title = editedReminder.notificationConfig.title
-                config.message = editedReminder.notificationConfig.message
-                config.cooldownPeriodHours = editedReminder.notificationConfig.cooldownPeriodHours
-            }
+            // Update notification config, creating one for reminders saved
+            // before configs were attached at creation time.
+            let config = reminder.notificationConfig ?? {
+                let newConfig = NotificationConfig(title: "", message: "")
+                reminder.notificationConfig = newConfig
+                return newConfig
+            }()
+            config.title = editedReminder.notificationConfig.title
+            config.message = editedReminder.notificationConfig.message
+            config.cooldownPeriodHours = editedReminder.notificationConfig.cooldownPeriodHours
             
             // Update location if changed
             if editedReminder.location.hasChanged {
@@ -163,12 +177,12 @@ final class DetailedReminderViewModel: ObservableObject {
                 reminder.location = locationData
             }
             
+            // Record the history entry before saving so it persists with the edit
+            reminder.addHistoryEntry(.modified, details: String(localized: "Reminder updated", comment: "Reminder history timeline entry"))
+
             try modelContext.save()
             SunHatSearchIndexer.index(reminder: reminder)
-            
-            // Add history entry
-            reminder.addHistoryEntry(.modified, details: String(localized: "Reminder updated", comment: "Reminder history timeline entry"))
-            
+
             // Reload current weather if location changed
             if editedReminder.location.hasChanged {
                 loadCurrentWeather()
@@ -179,7 +193,7 @@ final class DetailedReminderViewModel: ObservableObject {
             
         } catch {
             logger.error("Failed to save changes: \(error.localizedDescription)")
-            errorMessage = "Failed to save changes"
+            errorMessage = String(localized: "Failed to save changes", comment: "Error shown when edits to a reminder can't be saved")
             return false
         }
     }
@@ -213,31 +227,33 @@ final class DetailedReminderViewModel: ObservableObject {
     
     private func loadCurrentWeather() {
         isLoading = true
-        
-        Task {
+        loadGeneration += 1
+        let generation = loadGeneration
+
+        weatherLoadTask?.cancel()
+        weatherLoadTask = Task {
             do {
                 guard let location = getCurrentLocation() else {
-                    await MainActor.run {
-                        errorMessage = "Add a location or enable Location Services to load accurate weather for this reminder."
-                        isLoading = false
-                    }
+                    guard generation == loadGeneration else { return }
+                    errorMessage = String(localized: "Add a location or enable Location Services to load accurate weather for this reminder.", comment: "Error shown on the reminder detail screen when no location is available for a weather load")
+                    isLoading = false
                     logger.warning("Skipped current weather load because no reminder or device location is available")
                     return
                 }
 
                 let weatherData = try await weatherService.fetchCurrentWeather(for: location)
-                
-                await MainActor.run {
-                    currentWeatherData = weatherData
-                    isLoading = false
-                    calculateLivePrediction()
-                }
-                
+
+                // A newer load supersedes this one; never overwrite its result.
+                guard generation == loadGeneration else { return }
+                currentWeatherData = weatherData
+                isLoading = false
+                calculateLivePrediction()
+            } catch is CancellationError {
+                return
             } catch {
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    isLoading = false
-                }
+                guard generation == loadGeneration else { return }
+                errorMessage = error.localizedDescription
+                isLoading = false
                 logger.error("Failed to load current weather: \(error.localizedDescription)")
             }
         }
@@ -256,8 +272,10 @@ final class DetailedReminderViewModel: ObservableObject {
     
     private func calculateLivePrediction() {
         guard let condition = reminder.triggerCondition else { return }
-        
-        Task {
+
+        let generation = loadGeneration
+        predictionUpdateTask?.cancel()
+        predictionUpdateTask = Task {
             do {
                 // Fetch forecast data
                 guard let location = getCurrentLocation() else {
@@ -266,17 +284,17 @@ final class DetailedReminderViewModel: ObservableObject {
                 }
 
                 let weatherData = try await weatherService.fetchWeatherData(for: location)
-                
+
                 // Calculate next trigger prediction
                 let prediction = await calculateNextTrigger(
                     condition: condition,
                     forecast: weatherData.forecastDays
                 )
-                
-                await MainActor.run {
-                    livePrediction = prediction
-                }
-                
+
+                guard generation == loadGeneration, !Task.isCancelled else { return }
+                livePrediction = prediction
+            } catch is CancellationError {
+                return
             } catch {
                 logger.error("Failed to calculate live prediction: \(error.localizedDescription)")
             }
@@ -361,7 +379,7 @@ final class DetailedReminderViewModel: ObservableObject {
             return true
         } catch {
             logger.error("Failed to save context: \(error.localizedDescription)")
-            errorMessage = "Couldn't save changes. Please try again."
+            errorMessage = String(localized: "Couldn't save changes. Please try again.", comment: "Error shown when a reminder state change can't be persisted")
             return false
         }
     }
