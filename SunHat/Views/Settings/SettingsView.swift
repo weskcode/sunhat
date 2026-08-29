@@ -22,7 +22,6 @@ struct SettingsView: View {
         case manualLocationEntry
         case helpFAQ
         case dataPrivacy
-        case privacyPolicy
         case about
 
         var id: Self { self }
@@ -70,8 +69,6 @@ struct SettingsView: View {
                     HelpFAQView()
                 case .dataPrivacy:
                     DataPrivacyView()
-                case .privacyPolicy:
-                    PrivacyPolicyView()
                 case .about:
                     AboutView()
                 }
@@ -228,8 +225,8 @@ struct SettingsView: View {
             }
             .foregroundStyle(.primary)
 
-            Button("Privacy Policy") {
-                activeSheet = .privacyPolicy
+            NavigationLink("Privacy Policy") {
+                PrivacyPolicyView()
             }
             .foregroundStyle(.primary)
 
