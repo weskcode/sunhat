@@ -25,7 +25,7 @@ struct AppLifecyclePromptCoordinatorTests {
 
         await coordinator.recordForegroundOpenIfNeeded(hasPositiveEngagementSignal: false)
 
-        #expect(coordinator.showsNotificationPrompt)
+        #expect(coordinator.activePrompt == .notification)
     }
 
     @Test("Notification prompt is suppressed when system notifications are enabled")
@@ -41,7 +41,7 @@ struct AppLifecyclePromptCoordinatorTests {
 
         await coordinator.recordForegroundOpenIfNeeded(hasPositiveEngagementSignal: false)
 
-        #expect(coordinator.showsNotificationPrompt == false)
+        #expect(coordinator.activePrompt == nil)
     }
 
     @Test("A foreground session is counted once")
@@ -73,8 +73,7 @@ struct AppLifecyclePromptCoordinatorTests {
 
         await coordinator.recordForegroundOpenIfNeeded(hasPositiveEngagementSignal: false)
 
-        #expect(coordinator.showsEnjoymentPrompt)
-        #expect(coordinator.showsReviewPrompt == false)
+        #expect(coordinator.activePrompt == .enjoyment)
     }
 
     @Test("Positive engagement on seventh open routes directly to review prompt")
@@ -90,8 +89,7 @@ struct AppLifecyclePromptCoordinatorTests {
 
         await coordinator.recordForegroundOpenIfNeeded(hasPositiveEngagementSignal: true)
 
-        #expect(coordinator.showsReviewPrompt)
-        #expect(coordinator.showsEnjoymentPrompt == false)
+        #expect(coordinator.activePrompt == .review)
     }
 
     @Test("Negative enjoyment response opens feedback form")
@@ -101,13 +99,12 @@ struct AppLifecyclePromptCoordinatorTests {
             notificationPermissions: StubPromptNotificationPermissionProvider(status: .authorized),
             settingsOpener: RecordingPromptSettingsOpener()
         )
-        coordinator.showsEnjoymentPrompt = true
+        coordinator.activePrompt = .enjoyment
 
         coordinator.handleEnjoymentResponse(isEnjoying: false)
 
-        #expect(coordinator.showsEnjoymentPrompt == false)
+        #expect(coordinator.activePrompt == nil)
         #expect(coordinator.showsFeedbackForm)
-        #expect(coordinator.showsReviewPrompt == false)
     }
 
     @Test("Submitting feedback opens a mail URL")
@@ -141,7 +138,7 @@ struct AppLifecyclePromptCoordinatorTests {
 
         await coordinator.recordForegroundOpenIfNeeded(hasPositiveEngagementSignal: false)
 
-        #expect(coordinator.showsNotificationPrompt == false)
+        #expect(coordinator.activePrompt == nil)
     }
 
     @Test("Review flow is suppressed once it has already completed")
@@ -158,8 +155,7 @@ struct AppLifecyclePromptCoordinatorTests {
 
         await coordinator.recordForegroundOpenIfNeeded(hasPositiveEngagementSignal: true)
 
-        #expect(coordinator.showsEnjoymentPrompt == false)
-        #expect(coordinator.showsReviewPrompt == false)
+        #expect(coordinator.activePrompt == nil)
     }
 
     @Test("Requesting a review marks the review flow complete")
@@ -170,11 +166,11 @@ struct AppLifecyclePromptCoordinatorTests {
             notificationPermissions: StubPromptNotificationPermissionProvider(status: .authorized),
             settingsOpener: RecordingPromptSettingsOpener()
         )
-        coordinator.showsReviewPrompt = true
+        coordinator.activePrompt = .review
 
         coordinator.handleReviewRequest()
 
-        #expect(coordinator.showsReviewPrompt == false)
+        #expect(coordinator.activePrompt == nil)
         #expect(defaults.bool(forKey: "appLifecyclePrompt.didCompleteReviewFlow") == true)
     }
 
@@ -186,11 +182,11 @@ struct AppLifecyclePromptCoordinatorTests {
             notificationPermissions: StubPromptNotificationPermissionProvider(status: .authorized),
             settingsOpener: RecordingPromptSettingsOpener()
         )
-        coordinator.showsReviewPrompt = true
+        coordinator.activePrompt = .review
 
         coordinator.deferReviewRequest()
 
-        #expect(coordinator.showsReviewPrompt == false)
+        #expect(coordinator.activePrompt == nil)
         #expect(defaults.bool(forKey: "appLifecyclePrompt.didCompleteReviewFlow") == true)
     }
 
@@ -240,7 +236,7 @@ struct AppLifecyclePromptCoordinatorTests {
         coordinator.handleNotificationPromptChoice(shouldEnable: true)
 
         try await waitUntil { permissions.requestedOptions.isEmpty == false }
-        #expect(coordinator.showsNotificationPrompt == false)
+        #expect(coordinator.activePrompt == nil)
     }
 
     @Test("Enabling notifications when the system has denied them opens Settings instead of re-prompting")
@@ -273,7 +269,7 @@ struct AppLifecyclePromptCoordinatorTests {
 
         // Give any stray async work a chance to run before asserting nothing happened.
         try await Task.sleep(for: .milliseconds(50))
-        #expect(coordinator.showsNotificationPrompt == false)
+        #expect(coordinator.activePrompt == nil)
         #expect(permissions.requestedOptions.isEmpty)
         #expect(opener.openedURLs.isEmpty)
     }
