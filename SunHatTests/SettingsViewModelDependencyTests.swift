@@ -56,9 +56,12 @@ struct SettingsViewModelDependencyTests {
 
         viewModel.contactSupport()
 
-        try await waitUntil { viewModel.actionError != nil }
-        #expect(viewModel.isShowingActionError == true)
-        #expect(viewModel.actionError?.isEmpty == false)
+        try await waitUntil { viewModel.activeAlert != nil }
+        guard case .actionFailed(let message) = viewModel.activeAlert else {
+            Issue.record("Expected .actionFailed, got \(String(describing: viewModel.activeAlert))")
+            return
+        }
+        #expect(message.isEmpty == false)
     }
 
     @Test("A successful open does not surface an error")
@@ -71,8 +74,7 @@ struct SettingsViewModelDependencyTests {
         try await waitUntil { opener.openedURLs.count == 1 }
         // Give any error-setting continuation a chance to run.
         try await Task.sleep(for: .milliseconds(20))
-        #expect(viewModel.actionError == nil)
-        #expect(viewModel.isShowingActionError == false)
+        #expect(viewModel.activeAlert == nil)
     }
 
     private func waitUntil(

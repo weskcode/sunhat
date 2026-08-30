@@ -13,6 +13,31 @@ import CoreLocation
 import StoreKit
 import os
 
+enum SettingsAlert: Identifiable, Equatable {
+    case permissionDenied
+    case actionFailed(String)
+    case confirmReset
+
+    var id: String {
+        switch self {
+        case .permissionDenied: return "permissionDenied"
+        case .actionFailed: return "actionFailed"
+        case .confirmReset: return "confirmReset"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .permissionDenied:
+            return String(localized: "Notifications Are Off", comment: "Settings alert title")
+        case .actionFailed:
+            return String(localized: "Couldn't Open", comment: "Settings alert title")
+        case .confirmReset:
+            return String(localized: "Reset Settings", comment: "Settings alert title")
+        }
+    }
+}
+
 @MainActor @Observable
 final class SettingsViewModel {
     // Sync status (CloudKit disabled - prepared for future use)
@@ -22,9 +47,6 @@ final class SettingsViewModel {
     /// Whether the in-app master switch is on AND the system permission is
     /// granted, the single source of truth the toggle displays.
     var notificationsEnabled = false
-    /// True when the user has denied the system permission, so the toggle
-    /// can explain that enabling requires a trip to the Settings app.
-    var isShowingPermissionDeniedAlert = false
     var defaultNotificationTiming: NotificationTiming = .immediate
     var quietHoursEnabled = true
     var quietHoursStart = Calendar.current.date(from: DateComponents(hour: 22, minute: 0)) ?? Date()
@@ -41,9 +63,12 @@ final class SettingsViewModel {
     var selectedAppearance: AppearanceMode = .system
 
     // UI State
-    var showResetConfirmation = false
-    var actionError: String?
-    var isShowingActionError = false
+    /// The at-most-one currently visible alert on this screen. A single
+    /// optional instead of separate booleans makes "only one alert at a
+    /// time" structural: the permission-denied alert's "Open Settings"
+    /// action can itself fail and want to show the action-error alert, and
+    /// without a shared source of truth that's a real collision risk.
+    var activeAlert: SettingsAlert?
 
     // MARK: - Private Properties
 
@@ -199,12 +224,11 @@ final class SettingsViewModel {
                 } catch {
                     logger.error("Failed to request notification permission: \(error)")
                     notificationsEnabled = false
-                    actionError = "Couldn't request notification permission. Enable notifications for SunHat in the Settings app."
-                    isShowingActionError = true
+                    activeAlert = .actionFailed("Couldn't request notification permission. Enable notifications for SunHat in the Settings app.")
                 }
             case .denied:
                 notificationsEnabled = false
-                isShowingPermissionDeniedAlert = true
+                activeAlert = .permissionDenied
             default: // .authorized, .provisional, .ephemeral
                 notificationsEnabled = true
                 userPreferences?.notificationsEnabled = true
@@ -316,8 +340,7 @@ final class SettingsViewModel {
         Task {
             let opened = await settingsOpener.open(url)
             if opened == false {
-                actionError = failureMessage
-                isShowingActionError = true
+                activeAlert = .actionFailed(failureMessage)
             }
         }
     }

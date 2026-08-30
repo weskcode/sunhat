@@ -11,11 +11,32 @@ import StoreKit
 import SwiftUI
 @preconcurrency import UserNotifications
 
+enum LifecyclePrompt: Identifiable, Equatable {
+    case notification
+    case enjoyment
+    case review
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .notification:
+            return String(localized: "Turn On Weather Reminders?", comment: "Lifecycle prompt alert title")
+        case .enjoyment:
+            return String(localized: "Enjoying SunHat?", comment: "Lifecycle prompt alert title")
+        case .review:
+            return String(localized: "Review SunHat?", comment: "Lifecycle prompt alert title")
+        }
+    }
+}
+
 @MainActor
 final class AppLifecyclePromptCoordinator: ObservableObject {
-    @Published var showsNotificationPrompt = false
-    @Published var showsEnjoymentPrompt = false
-    @Published var showsReviewPrompt = false
+    /// The at-most-one currently visible lifecycle alert. A single optional
+    /// instead of separate booleans makes "only one prompt at a time" a
+    /// structural guarantee rather than something every method has to
+    /// remember to hand-enforce.
+    @Published var activePrompt: LifecyclePrompt?
     @Published var showsFeedbackForm = false
     @Published var feedbackText = ""
 
@@ -50,18 +71,14 @@ final class AppLifecyclePromptCoordinator: ObservableObject {
         defaults.set(openCount, forKey: DefaultsKey.appOpenCount)
 
         if await shouldPromptForNotifications(openCount: openCount) {
-            showsNotificationPrompt = true
+            activePrompt = .notification
             didPresentPromptThisSession = true
             defaults.set(openCount, forKey: DefaultsKey.lastNotificationPromptOpenCount)
             return
         }
 
         if shouldPromptForReviewFlow(openCount: openCount) {
-            if hasPositiveEngagementSignal {
-                showsReviewPrompt = true
-            } else {
-                showsEnjoymentPrompt = true
-            }
+            activePrompt = hasPositiveEngagementSignal ? .review : .enjoyment
             didPresentPromptThisSession = true
         }
     }
@@ -72,7 +89,7 @@ final class AppLifecyclePromptCoordinator: ObservableObject {
     }
 
     func handleNotificationPromptChoice(shouldEnable: Bool) {
-        showsNotificationPrompt = false
+        activePrompt = nil
         guard shouldEnable else { return }
 
         Task {
@@ -89,24 +106,24 @@ final class AppLifecyclePromptCoordinator: ObservableObject {
     }
 
     func handleEnjoymentResponse(isEnjoying: Bool) {
-        showsEnjoymentPrompt = false
         defaults.set(true, forKey: DefaultsKey.didCompleteReviewFlow)
 
         if isEnjoying {
-            showsReviewPrompt = true
+            activePrompt = .review
         } else {
+            activePrompt = nil
             showsFeedbackForm = true
         }
     }
 
     func handleReviewRequest() {
-        showsReviewPrompt = false
+        activePrompt = nil
         defaults.set(true, forKey: DefaultsKey.didCompleteReviewFlow)
         requestSystemReview()
     }
 
     func deferReviewRequest() {
-        showsReviewPrompt = false
+        activePrompt = nil
         defaults.set(true, forKey: DefaultsKey.didCompleteReviewFlow)
     }
 

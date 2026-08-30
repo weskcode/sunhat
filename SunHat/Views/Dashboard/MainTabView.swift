@@ -120,35 +120,46 @@ struct MainTabView: View {
         .onContinueUserActivity(CSSearchableItemActionType) { userActivity in
             routeSearchActivity(userActivity)
         }
-        .alert("Turn On Weather Reminders?", isPresented: $lifecyclePrompts.showsNotificationPrompt) {
-            Button("Not Now", role: .cancel) {
-                lifecyclePrompts.handleNotificationPromptChoice(shouldEnable: false)
+        .alert(
+            lifecyclePrompts.activePrompt?.title ?? "",
+            isPresented: Binding(
+                get: { lifecyclePrompts.activePrompt != nil },
+                set: { if !$0 { lifecyclePrompts.activePrompt = nil } }
+            ),
+            presenting: lifecyclePrompts.activePrompt
+        ) { prompt in
+            switch prompt {
+            case .notification:
+                Button("Not Now", role: .cancel) {
+                    lifecyclePrompts.handleNotificationPromptChoice(shouldEnable: false)
+                }
+                Button("Enable Notifications") {
+                    lifecyclePrompts.handleNotificationPromptChoice(shouldEnable: true)
+                }
+            case .enjoyment:
+                Button("Not Really") {
+                    lifecyclePrompts.handleEnjoymentResponse(isEnjoying: false)
+                }
+                Button("Yes") {
+                    lifecyclePrompts.handleEnjoymentResponse(isEnjoying: true)
+                }
+            case .review:
+                Button("Not Now", role: .cancel) {
+                    lifecyclePrompts.deferReviewRequest()
+                }
+                Button("Review SunHat") {
+                    lifecyclePrompts.handleReviewRequest()
+                }
             }
-            Button("Enable Notifications") {
-                lifecyclePrompts.handleNotificationPromptChoice(shouldEnable: true)
+        } message: { prompt in
+            switch prompt {
+            case .notification:
+                Text("SunHat can only alert you when weather matches your tasks if notifications are enabled.")
+            case .enjoyment:
+                Text("A quick answer helps us decide whether to ask for a review or collect feedback.")
+            case .review:
+                Text("Reviews help more people discover weather-triggered reminders.")
             }
-        } message: {
-            Text("SunHat can only alert you when weather matches your tasks if notifications are enabled.")
-        }
-        .alert("Enjoying SunHat?", isPresented: $lifecyclePrompts.showsEnjoymentPrompt) {
-            Button("Not Really") {
-                lifecyclePrompts.handleEnjoymentResponse(isEnjoying: false)
-            }
-            Button("Yes") {
-                lifecyclePrompts.handleEnjoymentResponse(isEnjoying: true)
-            }
-        } message: {
-            Text("A quick answer helps us decide whether to ask for a review or collect feedback.")
-        }
-        .alert("Review SunHat?", isPresented: $lifecyclePrompts.showsReviewPrompt) {
-            Button("Not Now", role: .cancel) {
-                lifecyclePrompts.deferReviewRequest()
-            }
-            Button("Review SunHat") {
-                lifecyclePrompts.handleReviewRequest()
-            }
-        } message: {
-            Text("Reviews help more people discover weather-triggered reminders.")
         }
         .sheet(isPresented: $lifecyclePrompts.showsFeedbackForm) {
             AppFeedbackFormView(

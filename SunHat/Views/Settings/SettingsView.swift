@@ -44,22 +44,37 @@ struct SettingsView: View {
                 viewModel.configure(modelContext: modelContext)
                 locationViewModel.configure(modelContext: modelContext)
             }
-            .alert("Notifications Are Off", isPresented: $viewModel.isShowingPermissionDeniedAlert) {
-                Button("Open Settings") {
-                    viewModel.openAppSettings()
-                }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("To get weather reminders, allow notifications for SunHat in Settings.")
-            }
             .alert(
-                "Couldn't Open",
-                isPresented: $viewModel.isShowingActionError,
-                presenting: viewModel.actionError
-            ) { _ in
-                Button("OK", role: .cancel) { }
-            } message: { message in
-                Text(message)
+                viewModel.activeAlert?.title ?? "",
+                isPresented: Binding(
+                    get: { viewModel.activeAlert != nil },
+                    set: { if !$0 { viewModel.activeAlert = nil } }
+                ),
+                presenting: viewModel.activeAlert
+            ) { alert in
+                switch alert {
+                case .permissionDenied:
+                    Button("Open Settings") {
+                        viewModel.openAppSettings()
+                    }
+                    Button("Cancel", role: .cancel) { }
+                case .actionFailed:
+                    Button("OK", role: .cancel) { }
+                case .confirmReset:
+                    Button("Reset", role: .destructive) {
+                        viewModel.resetAllSettings()
+                    }
+                    Button("Cancel", role: .cancel) { }
+                }
+            } message: { alert in
+                switch alert {
+                case .permissionDenied:
+                    Text("To get weather reminders, allow notifications for SunHat in Settings.")
+                case .actionFailed(let message):
+                    Text(message)
+                case .confirmReset:
+                    Text("This will reset all app settings to their defaults. Your reminders will not be affected.")
+                }
             }
             .sheet(item: $activeSheet) { sheet in
                 switch sheet {
@@ -255,15 +270,7 @@ struct SettingsView: View {
     private var resetSection: some View {
         Section {
             Button("Reset All Settings", role: .destructive) {
-                viewModel.showResetConfirmation = true
-            }
-            .alert("Reset Settings", isPresented: $viewModel.showResetConfirmation) {
-                Button("Reset", role: .destructive) {
-                    viewModel.resetAllSettings()
-                }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text("This will reset all app settings to their defaults. Your reminders will not be affected.")
+                viewModel.activeAlert = .confirmReset
             }
         } footer: {
             Text("© 2026 SunHat")
