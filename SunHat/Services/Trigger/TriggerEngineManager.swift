@@ -167,19 +167,14 @@ final class TriggerEngineManager: ObservableObject {
     private func handleBackgroundEvaluation(_ task: BGAppRefreshTask) async {
         logger.info("Starting background trigger evaluation")
 
-        guard let triggerEngine = triggerEngine else {
-            logger.error("TriggerEngine not configured for background evaluation")
-            task.setTaskCompleted(success: false)
-            return
-        }
-
-        let startTime = Date()
-
-        let workTask = Task { () -> [TriggerEvaluationResult] in
-            let results = await triggerEngine.evaluateAllActiveReminders()
-            guard !Task.isCancelled else { return [] }
-            await processEvaluationResults(results, isBackground: true)
-            return results
+        // Routed through the same guarded entry point as every other
+        // caller, so this can never run concurrently with a foreground or
+        // weather-refresh-triggered evaluation and double-count against
+        // the daily notification cap. evaluateAllReminders already does
+        // all the bookkeeping (isEvaluating, lastEvaluationTime,
+        // evaluationResults, performance metrics) this used to duplicate.
+        let workTask = Task {
+            await evaluateAllReminders(isBackground: true)
         }
 
         task.expirationHandler = {
@@ -187,14 +182,7 @@ final class TriggerEngineManager: ObservableObject {
             workTask.cancel()
         }
 
-        let results = await workTask.value
-        let duration = Date().timeIntervalSince(startTime)
-
-        lastEvaluationTime = Date()
-        evaluationResults = results
-        updatePerformanceMetrics(duration: duration)
-
-        logger.info("Background evaluation completed: \(results.count) reminders in \(duration)s")
+        await workTask.value
         scheduleBackgroundEvaluation()
         task.setTaskCompleted(success: !workTask.isCancelled)
     }

@@ -104,6 +104,61 @@ struct TriggerEngineManagerTests {
         #expect(persisted?.totalNotificationsSent == 1)
     }
 
+    @Test("The daily notification cap is enforced across different reminders in one evaluation cycle")
+    func dailyCapSuppressesLaterRemindersInSameCycle() async throws {
+        let container = try makeContainer()
+        let context = ModelContext(container)
+
+        let conditionA = TriggerCondition()
+        let reminderA = WeatherReminder(title: "Water plants", triggerCondition: conditionA)
+        let conditionB = TriggerCondition()
+        let reminderB = WeatherReminder(title: "Walk the dog", triggerCondition: conditionB)
+
+        let preferences = UserPreferences()
+        preferences.maximumDailyNotifications = 1
+        preferences.dailyNotificationCount = 0
+        // Avoid the test's outcome depending on the wall-clock time or day
+        // of week it happens to run on; only the daily cap is under test.
+        preferences.quietHoursEnabled = false
+        preferences.allowWeekendNotifications = true
+
+        context.insert(reminderA)
+        context.insert(reminderB)
+        context.insert(preferences)
+        try context.save()
+
+        let sender = RecordingTriggerNotificationSender()
+        let manager = TriggerEngineManager(
+            modelContainer: container,
+            registerBackgroundTask: false,
+            notificationManager: sender
+        )
+        let resultA = TriggerEvaluationResult(
+            reminderId: reminderA.id,
+            conditionData: ModelDataConverter.convertTriggerCondition(conditionA),
+            triggered: true,
+            triggerReason: "Condition met"
+        )
+        let resultB = TriggerEvaluationResult(
+            reminderId: reminderB.id,
+            conditionData: ModelDataConverter.convertTriggerCondition(conditionB),
+            triggered: true,
+            triggerReason: "Condition met"
+        )
+
+        // processEvaluationResults processes its results sequentially (a plain
+        // for loop, no concurrent dispatch), so within a single evaluation
+        // cycle the cap check for reminderB always sees reminderA's already-
+        // recorded delivery, regardless of the results' relative ordering.
+        await manager.processEvaluationResults([resultA, resultB])
+
+        #expect(await sender.deliveryCount == 1)
+        #expect(manager.triggeredReminders == [reminderA.id])
+
+        let refreshedPreferences = try Self.fetchPreferences(in: container)
+        #expect(refreshedPreferences?.dailyNotificationCount == 1)
+    }
+
     @Test("A failed delivery remains eligible for a later retry")
     func failedDeliveryCanRetry() async throws {
         let container = try makeContainer()
@@ -145,6 +200,13 @@ struct TriggerEngineManagerTests {
         return try context.fetch(descriptor).first
     }
 
+    /// Reads UserPreferences back through a fresh context, so assertions see
+    /// persisted state rather than the stale instance the test inserted.
+    private static func fetchPreferences(in container: ModelContainer) throws -> UserPreferences? {
+        let context = ModelContext(container)
+        return try context.fetch(FetchDescriptor<UserPreferences>()).first
+    }
+
     private func makeContainer() throws -> ModelContainer {
         let configuration = ModelConfiguration(
             schema: SunHatModelSchema.schema,
@@ -154,6 +216,19 @@ struct TriggerEngineManagerTests {
             for: SunHatModelSchema.schema,
             configurations: [configuration]
         )
+    }
+}
+
+private actor RecordingTriggerNotificationSender: TriggerNotificationSending {
+    private(set) var deliveryCount = 0
+
+    func configure(modelContainer: ModelContainer?) async {}
+
+    func sendTriggerNotification(
+        for result: TriggerEvaluationResult,
+        isBackground: Bool
+    ) async throws {
+        deliveryCount += 1
     }
 }
 
