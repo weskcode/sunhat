@@ -8,7 +8,6 @@
 import Foundation
 import SwiftData
 import CoreLocation
-import BackgroundTasks
 import Combine
 import os
 
@@ -74,16 +73,6 @@ final class WeatherService: ObservableObject {
         return await weatherActor.fetchHourlyForecast(for: location)
     }
 
-    func scheduleBackgroundRefresh() {
-        guard let weatherActor else {
-            logger.warning("scheduleBackgroundRefresh called before WeatherService was configured")
-            return
-        }
-        Task {
-            weatherActor.scheduleBackgroundRefresh()
-        }
-    }
-
     func handleBackgroundRefresh() async {
         guard let weatherActor else {
             logger.warning("handleBackgroundRefresh called before WeatherService was configured, skipping")
@@ -123,7 +112,6 @@ class WeatherServiceActor {
     /// and the UI must say so rather than synthesize values.
     private var hourlyCache: [String: (fetchedAt: Date, hours: [HourlyForecastDTO])] = [:]
     private let rateLimiter = RateLimiter()
-    private let backgroundTaskIdentifier = "org.wesley.sunhat.weather-refresh"
 
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "WeatherServiceActor")
 
@@ -371,26 +359,6 @@ class WeatherServiceActor {
     
     // MARK: - Background Refresh
 
-    func scheduleBackgroundRefresh() {
-        Task {
-            await scheduleBackgroundRefreshAsync()
-        }
-    }
-
-    private func scheduleBackgroundRefreshAsync() async {
-        // Use iOS 26+ background task scheduling
-        let request = BGAppRefreshTaskRequest(identifier: backgroundTaskIdentifier)
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60) // 15 minutes
-
-        do {
-            // Submit the task using the standard API
-            try BGTaskScheduler.shared.submit(request)
-            logger.info("Scheduled background weather refresh")
-        } catch {
-            logger.error("Failed to schedule background refresh: \(error)")
-        }
-    }
-    
     func performFetch(for location: CLLocation, forceRefresh: Bool) async throws {
         _ = try await fetchWeatherData(for: location, forceRefresh: forceRefresh)
     }
@@ -444,8 +412,10 @@ class WeatherServiceActor {
             }
         }
 
-        // Schedule next refresh
-        scheduleBackgroundRefresh()
+        // Rescheduling the next refresh is BackgroundWeatherManager's job (the
+        // sole caller of this method): it submits one BGAppRefreshTaskRequest
+        // per task-identifier after this returns. A second reschedule here
+        // used to race that one for the same identifier.
     }
 }
 
