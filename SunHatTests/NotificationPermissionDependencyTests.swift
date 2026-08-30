@@ -23,7 +23,7 @@ struct NotificationPermissionDependencyTests {
 
         try await waitUntil { viewModel.notificationsEnabled }
         #expect(permissions.requestedOptions.contains([.alert, .badge, .sound]))
-        #expect(viewModel.actionError == nil)
+        #expect(viewModel.activeAlert == nil)
     }
 
     @Test("A denied permission request leaves the toggle off without an error")
@@ -37,7 +37,7 @@ struct NotificationPermissionDependencyTests {
         try await waitUntil { permissions.requestedOptions.isEmpty == false }
         try await Task.sleep(for: .milliseconds(20))
         #expect(viewModel.notificationsEnabled == false)
-        #expect(viewModel.actionError == nil)
+        #expect(viewModel.activeAlert == nil)
     }
 
     @Test("A failed permission request surfaces a user-visible error")
@@ -48,8 +48,8 @@ struct NotificationPermissionDependencyTests {
 
         viewModel.setNotificationsEnabled(true)
 
-        try await waitUntil { viewModel.actionError != nil }
-        #expect(viewModel.isShowingActionError == true)
+        try await waitUntil { viewModel.activeAlert != nil }
+        #expect(viewModel.activeAlert == .actionFailed("Couldn't request notification permission. Enable notifications for SunHat in the Settings app."))
         #expect(viewModel.notificationsEnabled == false)
     }
 
@@ -61,7 +61,7 @@ struct NotificationPermissionDependencyTests {
 
         viewModel.setNotificationsEnabled(true)
 
-        try await waitUntil { viewModel.isShowingPermissionDeniedAlert }
+        try await waitUntil { viewModel.activeAlert == .permissionDenied }
         #expect(viewModel.notificationsEnabled == false)
         #expect(permissions.requestedOptions.isEmpty, "Should not re-request a denied permission")
     }
