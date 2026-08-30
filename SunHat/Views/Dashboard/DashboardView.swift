@@ -10,13 +10,13 @@ import SwiftData
 import CoreLocation
 
 struct DashboardView: View {
-    @StateObject private var viewModel = DashboardViewModel()
+    @StateObject var viewModel = DashboardViewModel()
     @Environment(\.modelContext) private var modelContext
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
 
     @State private var cardsVisible = false
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -65,181 +65,6 @@ struct DashboardView: View {
             }
         }
     }
-    
-    // MARK: - Current Temperature Widget
-
-    @ViewBuilder
-    private var currentTemperatureWidget: some View {
-        temperatureWidgetContent
-            .accessibilityHint(
-                viewModel.hasWeatherData
-                    ? ""
-                    : "Pull down to refresh when weather access is available."
-            )
-    }
-    
-    private var temperatureWidgetContent: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "location.fill")
-                            .font(AppFontStyle.caption.font)
-                            .foregroundStyle(Color.accentColor)
-                        
-                        Text(viewModel.currentLocationName)
-                            .font(AppFontStyle.subheadline.font)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-                    }
-                    
-                    if let lastUpdate = viewModel.lastUpdateTime {
-                        Text("Updated \(lastUpdate, style: .relative) ago")
-                            .font(AppFontStyle.caption2.font)
-                            .foregroundStyle(.secondary)
-                    } else if viewModel.isLoading {
-                        Text("Updating weather")
-                            .font(AppFontStyle.caption.font)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 8) {
-                    SunHatStatusPill(
-                        text: viewModel.hasWeatherData ? "Live" : "Standby",
-                        systemImage: viewModel.hasWeatherData ? "dot.radiowaves.left.and.right" : "clock",
-                        tint: viewModel.hasWeatherData ? .green : .secondary
-                    )
-
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    }
-                }
-            }
-            
-            weatherSummaryContent
-
-        }
-        .padding(18)
-        .sunHatSurface(tint: viewModel.weatherIconColor, cornerRadius: 26, prominence: 0.88)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(weatherAccessibilityLabel)
-        .accessibilityValue(weatherAccessibilityValue)
-    }
-
-    @ViewBuilder
-    private var weatherSummaryContent: some View {
-        if viewModel.hasWeatherData {
-            availableWeatherSummary
-        } else {
-            unavailableWeatherSummary
-        }
-    }
-
-    private var availableWeatherSummary: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .center, spacing: 16) {
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack(alignment: .top, spacing: 3) {
-                        Text(viewModel.currentTemperatureDisplay)
-                            .font(AppFont.system(size: dynamicTypeSize.isAccessibilitySize ? 58 : 82, weight: .thin))
-                            .foregroundStyle(.primary)
-                            .contentTransition(.numericText())
-                            .minimumScaleFactor(0.72)
-
-                        Text("°")
-                            .font(AppFont.system(size: dynamicTypeSize.isAccessibilitySize ? 22 : 28, weight: .light))
-                            .foregroundStyle(.primary)
-                            .offset(y: dynamicTypeSize.isAccessibilitySize ? 7 : 11)
-                    }
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(viewModel.weatherDescription)
-                            .font(AppFontStyle.headline.font)
-                            .foregroundStyle(.primary)
-                            .lineLimit(2)
-
-                        Text("Feels like \(viewModel.feelsLikeTemperatureDisplay)°")
-                            .font(AppFontStyle.callout.font)
-                            .foregroundStyle(.secondary)
-                            .contentTransition(.numericText())
-                    }
-                }
-
-                Spacer(minLength: 8)
-
-                SunHatWeatherDial(
-                    systemImage: viewModel.weatherIconName,
-                    tint: viewModel.weatherIconColor,
-                    reduceMotion: reduceMotion
-                )
-            }
-
-            SunHatForecastRibbon(
-                current: viewModel.currentTemperature,
-                high: viewModel.highTemperature,
-                low: viewModel.lowTemperature,
-                tint: viewModel.weatherIconColor
-            )
-            .frame(height: 54)
-            .accessibilityHidden(true)
-
-            HStack(spacing: 8) {
-                WeatherHeroMetricPill(
-                    title: "High",
-                    value: "\(viewModel.highTemperatureDisplay)°",
-                    systemImage: "arrow.up",
-                    tint: .orange
-                )
-
-                WeatherHeroMetricPill(
-                    title: "Low",
-                    value: "\(viewModel.lowTemperatureDisplay)°",
-                    systemImage: "arrow.down",
-                    tint: .cyan
-                )
-
-                WeatherHeroMetricPill(
-                    title: "Wind",
-                    value: viewModel.windSpeedDisplay,
-                    systemImage: "wind",
-                    tint: .mint
-                )
-            }
-        }
-    }
-
-    private var unavailableWeatherSummary: some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: "cloud.fill")
-                .font(AppFontStyle.title2.font)
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(.secondary)
-                .frame(width: 46, height: 46)
-                .background(.secondary.opacity(0.10), in: .circle)
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 5) {
-                Text("Weather unavailable")
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-
-                Text(viewModel.errorMessage ?? "Pull down to refresh once weather access is available.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(3)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer(minLength: 0)
-        }
-        .padding(.vertical, 2)
-    }
 
     // MARK: - Active Reminders Section
 
@@ -271,7 +96,7 @@ struct DashboardView: View {
             }
         }
     }
-    
+
     private var activeRemindersSection: some View {
         SunHatCardSection(
             title: String(localized: "Watching", comment: "Dashboard section title for the list of active weather tasks"),
@@ -308,25 +133,9 @@ struct DashboardView: View {
             }
         }
     }
-    
+
     private var detailsTransition: AnyTransition {
         SunHatMotion.transition(reduceMotion: reduceMotion)
-    }
-
-    private var weatherAccessibilityLabel: String {
-        guard viewModel.hasWeatherData else {
-            return String(localized: "Weather unavailable for \(viewModel.currentLocationName)", comment: "Accessibility label when weather data could not be loaded for the current location")
-        }
-
-        return String(localized: "Current weather for \(viewModel.currentLocationName): \(viewModel.currentTemperatureDisplay) degrees, feels like \(viewModel.feelsLikeTemperatureDisplay) degrees, \(viewModel.weatherDescription)", comment: "Accessibility label summarizing the current weather for the dashboard's weather card")
-    }
-
-    private var weatherAccessibilityValue: String {
-        guard viewModel.hasWeatherData else {
-            return String(localized: "Pull down to refresh when weather access is available", comment: "Accessibility value hint shown when weather data isn't available yet")
-        }
-
-        return String(localized: "High \(viewModel.highTemperatureDisplay) degrees, low \(viewModel.lowTemperatureDisplay) degrees, wind \(viewModel.windSpeedDisplay)", comment: "Accessibility value with high/low temperature and wind speed for the dashboard's weather card")
     }
 
 }
