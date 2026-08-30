@@ -162,6 +162,14 @@ final class DashboardViewModel: ObservableObject {
 
             logger.info("Weather data refresh completed successfully")
 
+            // Fresh weather may satisfy a reminder's condition. Evaluation
+            // fetches weather per reminder location (not just this
+            // dashboard's own location), so it runs as an independent task
+            // rather than blocking this refresh's own isLoading state.
+            Task {
+                await TriggerEngineManager.shared.evaluateAllReminders()
+            }
+
         } catch is CancellationError {
             // A superseded refresh is not an error; leave current state as-is.
             isLoading = false
