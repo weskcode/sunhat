@@ -1,0 +1,86 @@
+{
+  "identifier" : "FDFD818F-1B0F-4818-8178-F54144221F17",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : true,
+    "_developerTeamID" : "HD39MR492X",
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA"
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "A0B1E0B0-E228-4BD8-B4E4-EEF9FC150D77",
+      "localizations" : [
+        {
+          "description" : "Removes all ads from SunHat.",
+          "displayName" : "SunHat Ad-Free",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "SunHat Ad-Free",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "1.00",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "64420497-E937-44EC-A22A-785480ABDFDF",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Removes all ads from SunHat.",
+              "displayName" : "Ad-Free Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "org.wesley.sunhat.adfree.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Ad-Free Monthly",
+          "subscriptionGroupID" : "A0B1E0B0-E228-4BD8-B4E4-EEF9FC150D77",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "10.00",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "B7A93E52-4C11-4E8D-9F30-2D6E8C41A9D0",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Best value — two months free vs. monthly.",
+              "displayName" : "Ad-Free Annual",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "org.wesley.sunhat.adfree.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Ad-Free Annual",
+          "subscriptionGroupID" : "A0B1E0B0-E228-4BD8-B4E4-EEF9FC150D77",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 3,
+    "minor" : 0
+  }
+}

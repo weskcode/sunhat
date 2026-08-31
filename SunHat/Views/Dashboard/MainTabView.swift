@@ -246,6 +246,7 @@ private struct NotificationReminderDestination: View {
 #Preview {
     MainTabView()
         .environmentObject(OnboardingCoordinator())
+        .environment(StoreManager.shared)
         .modelContainer(for: [
             WeatherReminder.self,
             WeatherData.self,

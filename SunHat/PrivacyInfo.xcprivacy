@@ -2,8 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- True because the app requests App Tracking Transparency for AdMob
+	     advertising when the user is not Ad-Free. Ad-network tracking domains
+	     and ad-data collection are declared by the Google Mobile Ads SDK's own
+	     bundled privacy manifest; this file declares only app-level facts. -->
 	<key>NSPrivacyTracking</key>
-	<false/>
+	<true/>
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
 	<key>NSPrivacyCollectedDataTypes</key>

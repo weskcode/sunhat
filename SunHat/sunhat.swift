@@ -47,6 +47,7 @@ final class SunHatAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificati
 struct SunHatApp: App {
     @UIApplicationDelegateAdaptor(SunHatAppDelegate.self) private var appDelegate
     @StateObject private var storeRecoveryState = StoreRecoveryState.shared
+    @Environment(\.scenePhase) private var scenePhase
 
     var sharedModelContainer: ModelContainer = {
         Self.prepareSharedStoreDirectory()
@@ -87,6 +88,14 @@ struct SunHatApp: App {
             }
         }
     }()
+
+    /// True only when XCTest is loaded INTO this process (unit tests hosted
+    /// in the app). Deliberately not an environment-variable check: UI-test
+    /// runs also inject XCTest* env vars into the app under test, which must
+    /// behave like production.
+    private static var isHostingUnitTests: Bool {
+        NSClassFromString("XCTestCase") != nil
+    }
 
     private static func prepareSharedStoreDirectory() {
         guard let appGroupURL = FileManager.default.containerURL(
@@ -149,6 +158,18 @@ struct SunHatApp: App {
         let container = sharedModelContainer
         BackgroundWeatherManager.shared.configure(modelContainer: container)
 
+        // Unit tests replace the App Store with a local SKTestSession; starting
+        // the live Transaction.updates listener at launch would bind this
+        // process to the real App Store environment before a test session can
+        // take over, so the tests drive StoreManager instances directly instead.
+        if !Self.isHostingUnitTests {
+            StoreManager.shared.start()
+            // Ad SDK activation is entitlement-gated inside AdManager: it only
+            // starts Google Mobile Ads once StoreKit affirmatively resolves
+            // that the user is not Ad-Free, and re-evaluates on changes.
+            AdManager.shared.activate()
+        }
+
         Task {
             // Configure the weather service before any background refresh can run,
             // so BackgroundWeatherManager's refresh path never hits an unconfigured actor.
@@ -163,6 +184,29 @@ struct SunHatApp: App {
                 .safeAreaInset(edge: .top) {
                     if let message = storeRecoveryState.recoveryMessage {
                         StoreRecoveryBanner(message: message)
+                    }
+                }
+                .environment(StoreManager.shared)
+                .task {
+                    // onChange(of: scenePhase) never fires for the INITIAL
+                    // value, and the scene is usually already .active by the
+                    // first body evaluation — capture it here or ATT/consent
+                    // presentation would wait for a background/foreground
+                    // round-trip.
+                    guard !Self.isHostingUnitTests else { return }
+                    AdManager.shared.sceneDidChange(active: scenePhase == .active)
+                }
+                .onChange(of: scenePhase) { _, newPhase in
+                    guard !Self.isHostingUnitTests else { return }
+                    // AdManager tracks real scene activity: ATT may only be
+                    // requested while active.
+                    AdManager.shared.sceneDidChange(active: newPhase == .active)
+                    // Grace/billing/cancel transitions that land while the app
+                    // is suspended produce no Transaction.updates event, so
+                    // re-derive entitlement on each return to foreground; the
+                    // entitlement change re-triggers ad evaluation on its own.
+                    if newPhase == .active {
+                        Task { await StoreManager.shared.refreshEntitlement() }
                     }
                 }
         }
