@@ -63,6 +63,20 @@ final class StoreManager {
     /// resolution of a launch; never trusted to grant paid access.
     nonisolated static let cachedEntitlementStateKey = "entitlement.adFree.state"
 
+    /// Test-only entitlement override, so gate tests can pin a state without
+    /// driving the App Store. Never set in production.
+    private var entitlementOverrideForTesting: AdFreeEntitlementState?
+
+    func overrideEntitlementStateForTesting(_ state: AdFreeEntitlementState) {
+        entitlementOverrideForTesting = state
+        entitlementState = state
+    }
+
+    func clearEntitlementOverrideForTesting() {
+        entitlementOverrideForTesting = nil
+        entitlementState = .unknown
+    }
+
     private(set) var products: [Product] = []
     private(set) var productsLoadFailed = false
     private(set) var entitlementState: AdFreeEntitlementState = .unknown
@@ -168,6 +182,7 @@ final class StoreManager {
         guard !productsLoadInFlight else { return }
         productsLoadInFlight = true
         defer { productsLoadInFlight = false }
+        let hadProducts = !products.isEmpty
         do {
             let loaded = try await Product.products(for: ProductID.all)
             products = loaded.sorted { $0.price < $1.price }
@@ -176,12 +191,24 @@ final class StoreManager {
             productsLoadFailed = true
             logger.error("Failed to load Ad-Free products: \(error)")
         }
+
+        // Entitlement resolution refines its answer with subscription-group
+        // status, which needs a loaded product. currentEntitlements is served
+        // from the local cache while Product.products is a network round
+        // trip, so the first resolution of a launch almost always runs
+        // without status — re-resolve once the catalog lands, or grace-period
+        // and billing-retry states would be unreachable until the next
+        // foreground.
+        if !hadProducts, !products.isEmpty {
+            await refreshEntitlement()
+        }
     }
 
     /// Re-derives the entitlement state from StoreKit. Safe to call at any
     /// time; also invoked by the transaction and status listeners. Concurrent
     /// calls are safe: only the newest run commits its result.
-    func refreshEntitlement() async {
+    @discardableResult
+    func refreshEntitlement() async -> AdFreeEntitlementState {
         refreshGeneration += 1
         let generation = refreshGeneration
 
@@ -241,13 +268,17 @@ final class StoreManager {
             }
         }
 
-        // Overtaken while suspended above — a newer refresh has fresher data.
-        guard generation == refreshGeneration else { return }
+        let resolved = entitlementOverrideForTesting
+            ?? AdFreeEntitlementResolver.resolve(
+                hasVerifiedEntitlement: hasVerifiedEntitlement,
+                renewalStates: renewalStates
+            )
 
-        let resolved = AdFreeEntitlementResolver.resolve(
-            hasVerifiedEntitlement: hasVerifiedEntitlement,
-            renewalStates: renewalStates
-        )
+        // Overtaken while suspended above — a newer refresh has fresher data,
+        // so don't commit. The value is still returned: this run did read
+        // post-await entitlements, so it's a correct answer for its own
+        // caller (restorePurchases relies on that read-after-write).
+        guard generation == refreshGeneration else { return resolved }
 
         logger.info("Ad-Free entitlement resolved: \(resolved.rawValue, privacy: .public)")
         entitlementState = resolved
@@ -255,6 +286,7 @@ final class StoreManager {
         expirationDate = resolved.isAdFree ? (entitledExpiration ?? statusExpiration) : nil
         willAutoRenew = resolved.isAdFree ? autoRenews : nil
         userDefaults.set(resolved.rawValue, forKey: Self.cachedEntitlementStateKey)
+        return resolved
     }
 
     @discardableResult
@@ -287,9 +319,15 @@ final class StoreManager {
     /// Apple-required restore path. AppStore.sync forces a sync with the App
     /// Store (prompts for credentials on a fresh install), then entitlements
     /// are re-derived.
-    func restorePurchases() async throws {
+    /// Returns the entitlement this restore itself resolved. Callers must use
+    /// the returned value rather than re-reading `entitlementState`: the
+    /// sync can make the Transaction.updates listener fire its own refresh,
+    /// which would overtake this one and leave the shared property momentarily
+    /// behind what the user just restored.
+    @discardableResult
+    func restorePurchases() async throws -> AdFreeEntitlementState {
         try await AppStore.sync()
-        await refreshEntitlement()
+        return await refreshEntitlement()
     }
 
     /// Unwraps a StoreKit verification result according to the trust policy.

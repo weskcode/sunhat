@@ -105,11 +105,14 @@ final class AdManager {
         )
     }
 
-    /// Set from the concurrent consent gather: true only when the consent
-    /// framework answered AND says ads may not be requested (EEA user who
-    /// hasn't consented). Unreachable UMP leaves it false — Google enforces
-    /// EEA rules server-side too, and the gate applies whenever UMP answers.
-    private(set) var consentBlocksAds = false
+    /// Gates every ad slot on Google's consent framework, and **fails
+    /// closed**: it is seeded from UMP's persisted verdict (readable
+    /// synchronously, no network) so a fresh install or a non-consenting EEA
+    /// user blocks ad requests from the very first layout. `false` only ever
+    /// means UMP affirmatively says ads may be requested. Google's EU User
+    /// Consent Policy forbids requesting *any* ad before consent, so this
+    /// must never default open.
+    private(set) var consentBlocksAds = !ConsentInformation.shared.canRequestAds
 
     /// Single source of truth for every banner slot. Reactive through both
     /// this manager's and StoreManager's observation.
@@ -119,8 +122,18 @@ final class AdManager {
 
     /// True when Google's consent framework requires a reachable
     /// privacy-options entry point (EEA/UK users); Settings shows a row.
-    var privacyOptionsRequired: Bool {
+    /// Stored rather than computed so SwiftUI actually observes it — the
+    /// underlying UMP property carries no Observation instrumentation, so a
+    /// computed passthrough would never trigger a view update.
+    private(set) var privacyOptionsRequired =
         ConsentInformation.shared.privacyOptionsRequirementStatus == .required
+
+    /// Re-reads UMP's persisted verdicts. Cheap and synchronous; call when a
+    /// surface that shows consent state appears (e.g. Settings).
+    func refreshConsentState() {
+        privacyOptionsRequired =
+            ConsentInformation.shared.privacyOptionsRequirementStatus == .required
+        consentBlocksAds = !ConsentInformation.shared.canRequestAds
     }
 
     /// Idempotent launch hook: applies the current entitlement and re-arms
@@ -188,10 +201,12 @@ final class AdManager {
     /// in regions where it's required.
     func presentPrivacyOptions() {
         guard let rootViewController = Self.rootViewController() else { return }
-        ConsentForm.presentPrivacyOptionsForm(from: rootViewController) { [logger] error in
+        ConsentForm.presentPrivacyOptionsForm(from: rootViewController) { [weak self] error in
             if let error {
-                logger.error("Privacy options form failed: \(error.localizedDescription)")
+                self?.logger.error("Privacy options form failed: \(error.localizedDescription)")
             }
+            // The user may have just revoked consent — re-gate the ad slots.
+            self?.refreshConsentState()
         }
     }
 
@@ -216,11 +231,15 @@ final class AdManager {
         do {
             try await ConsentInformation.shared.requestConsentInfoUpdate(with: parameters)
         } catch {
-            logger.error("Consent info update failed: \(error.localizedDescription); slots stay gated by entitlement only")
+            // Fail closed on UMP's stored verdict rather than leaving the gate
+            // wherever it happened to be: an EEA user on a flaky connection
+            // must not be served ads with no consent record.
+            refreshConsentState()
+            logger.error("Consent info update failed: \(error.localizedDescription); ad slots gated by last known consent")
             return
         }
 
-        consentBlocksAds = !ConsentInformation.shared.canRequestAds
+        refreshConsentState()
         logger.info("Ad consent resolved: canRequestAds=\(ConsentInformation.shared.canRequestAds)")
 
         // Only attempt presentation when a form is actually required and the
@@ -234,7 +253,7 @@ final class AdManager {
             guard let rootViewController = Self.rootViewController() else { return }
             do {
                 try await ConsentForm.loadAndPresentIfRequired(from: rootViewController)
-                consentBlocksAds = !ConsentInformation.shared.canRequestAds
+                refreshConsentState()
                 logger.info("Consent form flow finished: canRequestAds=\(ConsentInformation.shared.canRequestAds)")
                 return
             } catch {

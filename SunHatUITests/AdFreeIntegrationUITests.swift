@@ -74,21 +74,11 @@ final class AdFreeIntegrationUITests: XCTestCase {
         let subscribeButton = app.buttons["Subscribe"].firstMatch
         if !subscribeButton.waitForExistence(timeout: 120) {
             save(app.screenshot(), name: "diagnostic-paywall-state")
-            // Known iOS 27 beta limitation: once the Google Mobile Ads SDK is
-            // linked, the scheme-attached StoreKit-Testing storefront often
-            // never attaches for app launches — the sheet sits on "Loading
-            // Subscription" or reports "Subscription Unavailable". The same
-            // configuration works from SKTestSession, so the purchase and
-            // entitlement pipeline stays fully covered by
-            // StoreManagerStoreKitTests (buy monthly/annual, purchase() path,
-            // expiry, cache mirroring). Skip instead of failing; this test
-            // self-activates when the toolchain serves the storefront again.
-            let stalled = app.staticTexts["Subscription Unavailable"].exists
-                || app.staticTexts["Loading Subscription"].exists
-            if stalled {
-                throw XCTSkip("StoreKit-Testing storefront did not attach for this app launch (iOS 27 beta + Google Mobile Ads linkage). Purchase pipeline is covered by StoreManagerStoreKitTests.")
-            }
-            XCTFail("Paywall should finish loading and offer a Subscribe button")
+            // A stalled store here means the scheme's TestAction is missing
+            // its StoreKitConfigurationFileReference — fail loudly rather
+            // than skipping, which would mask a real store misconfiguration
+            // (and previously did).
+            XCTFail("Paywall never finished loading. If it shows 'Subscription Unavailable' or 'Loading Subscription', the scheme's TestAction is missing its StoreKit configuration.")
         }
         save(app.screenshot(), name: "paywall-open")
 
@@ -116,7 +106,11 @@ final class AdFreeIntegrationUITests: XCTestCase {
             _ = currentPlan.waitForExistence(timeout: 3)
         }
         XCTAssertTrue(currentPlan.exists, "Ad-Free must persist across a cold relaunch")
-        XCTAssertFalse(app.buttons["Remove Ads"].exists, "No ad slot may exist for a subscriber after relaunch")
+        // Deliberately NOT asserting the absence of an ad slot here: this
+        // launch disables the ad SDK, so such an assertion could never fail
+        // and would be a false signal. The real gate (shouldShowAdSlots) is
+        // covered by AdManagerGateTests, and the visible-ad case by
+        // testBannerSlotAppearsForNonSubscriber.
     }
 
     // MARK: - Helpers

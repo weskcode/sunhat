@@ -3,9 +3,19 @@
 <plist version="1.0">
 <dict>
 	<!-- True because the app requests App Tracking Transparency for AdMob
-	     advertising when the user is not Ad-Free. Ad-network tracking domains
-	     and ad-data collection are declared by the Google Mobile Ads SDK's own
-	     bundled privacy manifest; this file declares only app-level facts. -->
+	     advertising when the user is not Ad-Free.
+
+	     GO-LIVE BLOCKER — NSPrivacyTrackingDomains is deliberately empty and
+	     must be filled before submission. Verified against the shipped
+	     GoogleMobileAds 12.14.0 and UserMessagingPlatform 3.1.0 xcframeworks:
+	     neither declares NSPrivacyTracking nor NSPrivacyTrackingDomains (they
+	     declare only collected data types and accessed-API reasons), so this
+	     file is the app's ONLY tracking declaration. Apple expects a
+	     non-empty domain list whenever NSPrivacyTracking is true, and an
+	     empty one alongside `true` is a known review-rejection trigger.
+	     Populate from Google's current published ad-serving domain list
+	     (https://developers.google.com/admob/ios/privacy) at go-live — do not
+	     guess the values; they change. See docs/MONETIZATION_GOLIVE.md. -->
 	<key>NSPrivacyTracking</key>
 	<true/>
 	<key>NSPrivacyTrackingDomains</key>

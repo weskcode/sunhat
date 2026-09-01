@@ -746,6 +746,24 @@
         }
       }
     },
+    "A renewal payment failed. Ads stay off while Apple retries — update your billing details to keep Ad-Free.": {
+      "comment": "Settings footer during the billing grace period",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A renewal payment failed. Ads stay off while Apple retries — update your billing details to keep Ad-Free."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Falló un pago de renovación. Los anuncios seguirán desactivados mientras Apple lo reintenta; actualiza tus datos de pago para conservar la versión sin anuncios."
+          }
+        }
+      }
+    },
     "A timely heads-up": {
       "localizations": {
         "es": {
@@ -851,6 +869,42 @@
         }
       }
     },
+    "Ad Privacy Options": {
+      "comment": "Settings row that opens Google's ad consent privacy options form",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ad Privacy Options"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Opciones de privacidad de anuncios"
+          }
+        }
+      }
+    },
+    "Ad-Free": {
+      "comment": "Fallback plan name when the specific Ad-Free plan is unknown",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ad-Free"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin anuncios"
+          }
+        }
+      }
+    },
     "Add Location": {
       "localizations": {
         "es": {
@@ -877,6 +931,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Agregar a favoritos"
+          }
+        }
+      }
+    },
+    "Ads are off. Cancel anytime — you keep Ad-Free until the end of the period you already paid for.": {
+      "comment": "Settings footer while the Ad-Free subscription is active",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ads are off. Cancel anytime — you keep Ad-Free until the end of the period you already paid for."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los anuncios están desactivados. Cancela cuando quieras: conservarás la versión sin anuncios hasta el final del periodo que ya pagaste."
           }
         }
       }
@@ -1052,6 +1124,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Análisis"
+          }
+        }
+      }
+    },
+    "Annual": {
+      "comment": "Name of the annual Ad-Free plan shown in Settings",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Annual"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anual"
           }
         }
       }
@@ -1294,6 +1384,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Paseos en bicicleta y aventuras de ciclismo"
+          }
+        }
+      }
+    },
+    "Billing Issue Found": {
+      "comment": "Alert title after a restore that found a subscription paused by a failed payment",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Billing Issue Found"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Problema de pago detectado"
           }
         }
       }
@@ -1881,6 +1989,24 @@
         }
       }
     },
+    "Could not reach the App Store. Check your connection and try again.": {
+      "comment": "Alert message when restore fails",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not reach the App Store. Check your connection and try again."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo conectar con App Store. Comprueba tu conexión e inténtalo de nuevo."
+          }
+        }
+      }
+    },
     "Couldn't Complete Request": {
       "localizations": {
         "es": {
@@ -2107,6 +2233,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ubicación actual"
+          }
+        }
+      }
+    },
+    "Current Plan": {
+      "comment": "Settings row showing which Ad-Free plan is active",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current Plan"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plan actual"
           }
         }
       }
@@ -2965,6 +3109,24 @@
         }
       }
     },
+    "Expires": {
+      "comment": "Settings row label when the Ad-Free subscription will not auto-renew",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expires"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vence"
+          }
+        }
+      }
+    },
     "Export Data": {
       "localizations": {
         "es": {
@@ -3345,6 +3507,24 @@
         }
       }
     },
+    "Fix Billing Issue": {
+      "comment": "Settings row that opens subscription management when a renewal payment failed",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fix Billing Issue"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resolver problema de pago"
+          }
+        }
+      }
+    },
     "Flag": {
       "comment": "Reminder icon activity name",
       "localizations": {
@@ -3598,6 +3778,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Suave"
+          }
+        }
+      }
+    },
+    "Get Ad-Free": {
+      "comment": "Settings row that opens the Ad-Free subscription paywall",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get Ad-Free"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Obtener sin anuncios"
           }
         }
       }
@@ -4853,6 +5051,24 @@
         }
       }
     },
+    "Manage Subscription": {
+      "comment": "Settings row that opens Apple's subscription management sheet",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Manage Subscription"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gestionar suscripción"
+          }
+        }
+      }
+    },
     "Manual Entry": {
       "comment": "Location source name",
       "localizations": {
@@ -5020,6 +5236,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vigilando"
+          }
+        }
+      }
+    },
+    "Monthly": {
+      "comment": "Name of the monthly Ad-Free plan shown in Settings",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Monthly"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mensual"
           }
         }
       }
@@ -5281,6 +5515,24 @@
         }
       }
     },
+    "No Purchases Found": {
+      "comment": "Alert title after a restore that found no Ad-Free subscription",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Purchases Found"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontraron compras"
+          }
+        }
+      }
+    },
     "No Rain": {
       "comment": "Weather condition type option label",
       "localizations": {
@@ -5325,12 +5577,48 @@
         }
       }
     },
+    "No active Ad-Free subscription is associated with your App Store account.": {
+      "comment": "Alert message when restore finds nothing",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No active Ad-Free subscription is associated with your App Store account."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay ninguna suscripción sin anuncios activa asociada a tu cuenta de App Store."
+          }
+        }
+      }
+    },
     "No active reminders": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Sin recordatorios activos"
+          }
+        }
+      }
+    },
+    "No banner ads, anywhere in the app": {
+      "comment": "Paywall benefit row",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No banner ads, anywhere in the app"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin anuncios de banner en ninguna parte de la app"
           }
         }
       }
@@ -6362,6 +6650,24 @@
         }
       }
     },
+    "Purchases Restored": {
+      "comment": "Alert title after a successful restore that found an Ad-Free subscription",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Purchases Restored"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compras restauradas"
+          }
+        }
+      }
+    },
     "Purple": {
       "comment": "Reminder color swatch name",
       "localizations": {
@@ -6703,6 +7009,42 @@
         }
       }
     },
+    "Remove Ads": {
+      "comment": "Quiet link above the banner ad that opens the Ad-Free paywall",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Ads"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar anuncios"
+          }
+        }
+      }
+    },
+    "Remove every ad from SunHat with a monthly or annual plan. Already subscribed on another device or a previous install? Restore Purchases brings Ad-Free back.": {
+      "comment": "Settings footer shown to non-subscribers",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove every ad from SunHat with a monthly or annual plan. Already subscribed on another device or a previous install? Restore Purchases brings Ad-Free back."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elimina todos los anuncios de SunHat con un plan mensual o anual. ¿Ya te suscribiste en otro dispositivo o en una instalación anterior? Restaurar compras recupera la versión sin anuncios."
+          }
+        }
+      }
+    },
     "Remove from Favorites": {
       "localizations": {
         "es": {
@@ -6713,12 +7055,48 @@
         }
       }
     },
+    "Removes all ads from SunHat.": {
+      "comment": "Paywall subtitle",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removes all ads from SunHat."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elimina todos los anuncios de SunHat."
+          }
+        }
+      }
+    },
     "Rename": {
       "localizations": {
         "es": {
           "stringUnit": {
             "state": "translated",
             "value": "Cambiar nombre"
+          }
+        }
+      }
+    },
+    "Renews": {
+      "comment": "Settings row label for the next Ad-Free renewal date",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Renews"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se renueva"
           }
         }
       }
@@ -6833,6 +7211,42 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tiempo de respuesta"
+          }
+        }
+      }
+    },
+    "Restore Failed": {
+      "comment": "Alert title when restoring purchases fails",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore Failed"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error al restaurar"
+          }
+        }
+      }
+    },
+    "Restore Purchases": {
+      "comment": "Settings row that restores a previous Ad-Free purchase",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore Purchases"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurar compras"
           }
         }
       }
@@ -6993,6 +7407,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Navegar"
+          }
+        }
+      }
+    },
+    "Same forecasts, reminders & alerts": {
+      "comment": "Paywall benefit row",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Same forecasts, reminders & alerts"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los mismos pronósticos, recordatorios y alertas"
           }
         }
       }
@@ -7817,6 +8249,24 @@
         }
       }
     },
+    "SunHat Ad-Free": {
+      "comment": "Name of the ad-free subscription, used as the Settings section header and paywall title",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SunHat Ad-Free"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SunHat sin anuncios"
+          }
+        }
+      }
+    },
     "SunHat Advisories": {
       "localizations": {
         "es": {
@@ -8071,6 +8521,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Soporte"
+          }
+        }
+      }
+    },
+    "Supports an independent weather app": {
+      "comment": "Paywall benefit row",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supports an independent weather app"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apoya a una app del tiempo independiente"
           }
         }
       }
@@ -8510,6 +8978,24 @@
           "stringUnit": {
             "state": "translated",
             "value": "Notificación de prueba"
+          }
+        }
+      }
+    },
+    "The App Store could not verify this purchase.": {
+      "comment": "Error shown when a StoreKit transaction fails local verification",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The App Store could not verify this purchase."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App Store no pudo verificar esta compra."
           }
         }
       }
@@ -10126,6 +10612,42 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yoga"
+          }
+        }
+      }
+    },
+    "Your Ad-Free subscription is back. Ads are now off.": {
+      "comment": "Alert message after a successful restore",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Ad-Free subscription is back. Ads are now off."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu suscripción sin anuncios está activa de nuevo. Los anuncios están desactivados."
+          }
+        }
+      }
+    },
+    "Your Ad-Free subscription is paused because a renewal payment failed. Update your billing details to restore it.": {
+      "comment": "Alert message when restore finds a subscription in billing retry",
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Ad-Free subscription is paused because a renewal payment failed. Update your billing details to restore it."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tu suscripción sin anuncios está en pausa porque falló un pago de renovación. Actualiza tus datos de pago para restaurarla."
           }
         }
       }

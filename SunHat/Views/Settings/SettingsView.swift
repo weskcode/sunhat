@@ -45,6 +45,10 @@ struct SettingsView: View {
             .onAppear {
                 viewModel.configure(modelContext: modelContext)
                 locationViewModel.configure(modelContext: modelContext)
+                // UMP state isn't observable, so re-read it when Settings
+                // appears; Google requires the privacy-options entry point to
+                // be reachable whenever the framework says it's required.
+                adManager.refreshConsentState()
             }
             .alert(
                 viewModel.activeAlert?.title ?? "",

@@ -168,10 +168,12 @@ struct AdFreeSettingsSection: View {
         Task {
             defer { isRestoring = false }
             do {
-                try await storeManager.restorePurchases()
-                if storeManager.isAdFree {
+                // Use the state this restore resolved, not the shared
+                // property — a concurrent listener refresh can overtake ours.
+                let restored = try await storeManager.restorePurchases()
+                if restored.isAdFree {
                     restoreResult = .restored
-                } else if storeManager.entitlementState == .billingRetry {
+                } else if restored == .billingRetry {
                     restoreResult = .billingIssue
                 } else {
                     restoreResult = .nothingToRestore
