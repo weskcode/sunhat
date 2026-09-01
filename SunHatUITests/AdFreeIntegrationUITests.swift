@@ -2,11 +2,10 @@
 //  AdFreeIntegrationUITests.swift
 //  SunHatUITests
 //
-//  End-to-end monetization coverage, split around an iOS 27 beta simulator
-//  limitation: with the Google Mobile Ads SDK started, storekitd's
-//  StoreKit-Testing storefront can wedge ("Subscription Unavailable"), so the
-//  ad-slot test runs with the SDK live while the purchase test launches with
-//  -sunhatDisableAdSDK for a deterministic storefront.
+//  End-to-end monetization coverage, split in two: the ad-slot test runs with
+//  the Google Mobile Ads SDK live, while the purchase test launches with
+//  -sunhatDisableAdSDK so the StoreKit-Testing storefront is not competing
+//  with ad-SDK traffic on an already-loaded simulator.
 //
 //  Tests run alphabetically: testBannerSlot… (needs a non-subscriber) runs
 //  before testPurchase… (which subscribes). Purchases persist in the local
@@ -71,14 +70,34 @@ final class AdFreeIntegrationUITests: XCTestCase {
         // 2. Wait for the store to actually finish loading. The Subscribe
         // button (not the tier text, which can match a not-yet-visible
         // element) is the reliable "store is ready" signal.
-        let subscribeButton = app.buttons["Subscribe"].firstMatch
-        if !subscribeButton.waitForExistence(timeout: 120) {
-            save(app.screenshot(), name: "diagnostic-paywall-state")
-            // A stalled store here means the scheme's TestAction is missing
-            // its StoreKitConfigurationFileReference — fail loudly rather
-            // than skipping, which would mask a real store misconfiguration
-            // (and previously did).
-            XCTFail("Paywall never finished loading. If it shows 'Subscription Unavailable' or 'Loading Subscription', the scheme's TestAction is missing its StoreKit configuration.")
+        // Match on LABEL, not identifier: SubscriptionStoreView's buy button
+        // carries the renewal disclosure in its label ("Subscribe\nPlan
+        // auto-renews for $1.00/month until canceled."), so an exact
+        // identifier lookup for "Subscribe" never matches it.
+        let subscribeButton = app.buttons
+            .matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Subscribe"))
+            .firstMatch
+        if !subscribeButton.waitForExistence(timeout: 90) {
+            // The simulator's StoreKit-Testing storefront sometimes isn't
+            // attached yet on the first launch of a run ("Subscription
+            // Unavailable"); a relaunch reliably picks it up. Retry once for
+            // that transient, then fail loudly — never skip, which would mask
+            // a genuine store misconfiguration (and previously did).
+            save(app.screenshot(), name: "diagnostic-paywall-first-try")
+            app.terminate()
+            app.launch()
+            app.tabBars.buttons["Settings"].tap()
+            var retrySwipes = 0
+            while !(getAdFree.exists && getAdFree.isHittable) && retrySwipes < 8 {
+                app.swipeUp()
+                retrySwipes += 1
+                _ = getAdFree.waitForExistence(timeout: 2)
+            }
+            if getAdFree.exists { getAdFree.tap() }
+            if !subscribeButton.waitForExistence(timeout: 120) {
+                save(app.screenshot(), name: "diagnostic-paywall-state")
+                XCTFail("Paywall never finished loading after a retry. If it shows 'Subscription Unavailable', the StoreKit-Testing storefront never attached; verify the scheme's TestAction still carries its StoreKitConfigurationFileReference.")
+            }
         }
         save(app.screenshot(), name: "paywall-open")
 
