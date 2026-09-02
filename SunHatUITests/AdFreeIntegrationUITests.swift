@@ -109,7 +109,13 @@ final class AdFreeIntegrationUITests: XCTestCase {
         // and the Get Ad-Free row is gone (entitlement flipped mid-session,
         // the same signal that removes every ad slot).
         let currentPlan = app.staticTexts["Current Plan"]
-        XCTAssertTrue(currentPlan.waitForExistence(timeout: 60), "Settings should show the active Ad-Free plan after purchase")
+        if !currentPlan.waitForExistence(timeout: 60) {
+            // Capture the screen: the usual cause is the StoreKit purchase
+            // sheet still being up (its confirm control's label varies by OS),
+            // which is invisible in a bare assertion failure.
+            save(app.screenshot(), name: "diagnostic-after-purchase")
+            XCTFail("Settings should show the active Ad-Free plan after purchase")
+        }
         XCTAssertFalse(getAdFree.exists, "Get Ad-Free row must disappear once subscribed")
         save(app.screenshot(), name: "settings-subscribed")
 

@@ -201,12 +201,16 @@ final class AdManager {
     /// in regions where it's required.
     func presentPrivacyOptions() {
         guard let rootViewController = Self.rootViewController() else { return }
-        ConsentForm.presentPrivacyOptionsForm(from: rootViewController) { [weak self] error in
-            if let error {
-                self?.logger.error("Privacy options form failed: \(error.localizedDescription)")
+        // UMP invokes this completion on a nonisolated context, so hop back to
+        // the main actor rather than touching @Observable state from it.
+        ConsentForm.presentPrivacyOptionsForm(from: rootViewController) { error in
+            Task { @MainActor in
+                if let error {
+                    AdManager.shared.logger.error("Privacy options form failed: \(error.localizedDescription)")
+                }
+                // The user may have just revoked consent — re-gate the ad slots.
+                AdManager.shared.refreshConsentState()
             }
-            // The user may have just revoked consent — re-gate the ad slots.
-            self?.refreshConsentState()
         }
     }
 
@@ -225,7 +229,8 @@ final class AdManager {
         // makes dev behave like a production non-EEA user; Release builds
         // use real geography against the real AdMob app's consent message.
         let debugSettings = DebugSettings()
-        debugSettings.geography = .notEEA
+        // `.other` is UMP 3.x's replacement for the deprecated `.notEEA`.
+        debugSettings.geography = .other
         parameters.debugSettings = debugSettings
         #endif
         do {
