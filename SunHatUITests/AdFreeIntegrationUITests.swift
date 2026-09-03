@@ -33,9 +33,14 @@ final class AdFreeIntegrationUITests: XCTestCase {
 
         // First-run gauntlet: location alert, Google's GDPR consent form, the
         // ATT explainer + system alert all chain in front of the ad slot.
-        let removeAds = app.buttons["Remove Ads"]
-        clearFirstRunPrompts(app: app, until: removeAds, timeout: 240)
-        if !removeAds.exists {
+        // The banner exposes itself as a single accessibility element with
+        // identifier "ad-banner" (see BannerAdView), so it is present as soon
+        // as the slot exists, even before a creative fills it.
+        let adBanner = app.descendants(matching: .any)
+            .matching(identifier: "ad-banner")
+            .firstMatch
+        clearFirstRunPrompts(app: app, until: adBanner, timeout: 240)
+        if !adBanner.exists {
             save(app.screenshot(), name: "diagnostic-no-ad-slot")
             XCTFail("Banner slot should appear for a non-subscriber")
         }

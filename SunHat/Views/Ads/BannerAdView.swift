@@ -2,14 +2,20 @@
 //  BannerAdView.swift
 //  SunHat
 //
-//  Reusable adaptive banner slot. Renders nothing at all (zero height, no ad
-//  request) unless AdManager.canServeAds is true. When active it reserves the
-//  exact adaptive-banner height for the current width up front, so content
-//  never shifts when an ad loads or fails — a Google banner-policy
-//  requirement. On load failure the reserved space stays blank.
+//  Reusable banner slot using Google's smallest standard unit — the fixed
+//  320x50 banner — centered on its own reserved row. Renders nothing at all
+//  (zero height, no ad request) unless AdManager.shouldShowAdSlots is true.
+//  The 50pt height is reserved up front, so content never shifts when an ad
+//  loads or fails — a Google banner-policy requirement. On load failure the
+//  reserved space stays blank.
+//
+//  Presentation mirrors QuoteReaper's AdBannerView: a bare transparent
+//  banner (no painted chrome), explicit root view controller, and a static
+//  "Advertisement" accessibility element.
 //
 
 import SwiftUI
+import UIKit
 import GoogleMobileAds
 
 /// Ad unit IDs, one constant per placement — Google's public iOS TEST units.
@@ -24,7 +30,6 @@ enum AdConfig {
 struct BannerAdView: View {
     let adUnitID: String
 
-    @State private var width: CGFloat = 0
     @State private var adManager = AdManager.shared
 
     var body: some View {
@@ -32,56 +37,48 @@ struct BannerAdView: View {
         // StoreManager observation: a purchase mid-session removes the banner
         // immediately.
         if adManager.shouldShowAdSlots {
-            // The 1pt probe (with the banner overlaid on its top edge) must be
-            // pinned to the TOP of the reserved frame; the default .center
-            // alignment would push the banner half outside the slot.
-            Color.clear
-                .frame(height: 1)
-                .onGeometryChange(for: CGFloat.self) { proxy in
-                    proxy.size.width
-                } action: { newWidth in
-                    width = newWidth
-                }
-                .overlay(alignment: .top) {
-                    if width > 0 {
-                        let size = currentOrientationAnchoredAdaptiveBanner(width: width)
-                        AdaptiveBannerRepresentable(adUnitID: adUnitID, adSize: size)
-                            .frame(width: size.size.width, height: size.size.height)
-                    }
-                }
-                .frame(
-                    height: width > 0 ? currentOrientationAnchoredAdaptiveBanner(width: width).size.height : 1,
-                    alignment: .top
-                )
-                // Google's test creatives can render larger than the returned
-                // AdSize; never let ad content bleed over app UI or the tab bar.
-                .clipped()
+            SmallBannerRepresentable(adUnitID: adUnitID)
+                .frame(width: 320, height: 50)
+                .frame(maxWidth: .infinity)
         }
     }
 }
 
-private struct AdaptiveBannerRepresentable: UIViewRepresentable {
+private struct SmallBannerRepresentable: UIViewRepresentable {
     let adUnitID: String
-    let adSize: AdSize
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
     }
 
     func makeUIView(context: Context) -> BannerView {
-        let banner = BannerView(adSize: adSize)
+        let banner = BannerView(adSize: AdSizeBanner)
         banner.adUnitID = adUnitID
+        // QuoteReaper-style presentation: transparent banner on the slot's own
+        // background, no painted chrome of its own.
+        banner.backgroundColor = .clear
+        banner.rootViewController = Self.rootViewController
+        banner.isAccessibilityElement = true
+        banner.accessibilityLabel = String(
+            localized: "Advertisement",
+            comment: "Accessibility label for the banner advertisement"
+        )
+        banner.accessibilityIdentifier = "ad-banner"
         banner.delegate = context.coordinator
         banner.load(Request())
         return banner
     }
 
     func updateUIView(_ banner: BannerView, context: Context) {
-        // Reload only when the adaptive size actually changed (rotation).
-        if banner.adSize.size != adSize.size {
-            banner.adSize = adSize
-            banner.load(Request())
-        }
+        // The 320x50 size never changes; nothing to update.
+    }
+
+    private static var rootViewController: UIViewController? {
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+            .first(where: \.isKeyWindow)?
+            .rootViewController
     }
 
     final class Coordinator: NSObject, BannerViewDelegate {

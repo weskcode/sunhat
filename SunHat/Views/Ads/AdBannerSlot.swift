@@ -2,11 +2,12 @@
 //  AdBannerSlot.swift
 //  SunHat
 //
-//  The complete bottom banner slot for a screen: hairline separator, a quiet
-//  "Remove Ads" affordance opening the paywall, and the adaptive banner, on an
-//  opaque background so scrolling content reads as clearly distinct from the
-//  ad (Google banner policy: visual separation, fixed reserved space, never
-//  adjacent to interactive controls without clear spacing).
+//  The complete bottom banner slot for a screen: just the compact 320x50
+//  banner with a small breathing gap, matching QuoteReaper's minimal
+//  presentation — no divider, no "Remove Ads" affordance (the Ad-Free paywall
+//  lives in Settings' "SunHat Ad-Free" section). The opaque background keeps
+//  scrolling content visually separated from the ad while it scrolls past
+//  (Google banner policy).
 //
 //  Renders nothing at all for Ad-Free users or before entitlement resolves.
 //
@@ -17,46 +18,20 @@ struct AdBannerSlot: View {
     let adUnitID: String
 
     @State private var adManager = AdManager.shared
-    @State private var showingPaywall = false
 
     var body: some View {
-        // The sheet is attached OUTSIDE the entitlement branch on purpose:
-        // completing a purchase flips shouldShowAdSlots to false, and a sheet
-        // hosted inside that branch would tear down its own presenter
-        // mid-flow. A zero-height Color is a stable host and, under
-        // safeAreaInset(edge:.bottom), contributes no inset.
+        // Gated here as well as inside BannerAdView so the slot collapses to
+        // a zero-height inset instead of reserving padding for a hidden
+        // banner.
         Group {
             if adManager.shouldShowAdSlots {
-                VStack(spacing: 0) {
-                    Divider()
-
-                    HStack {
-                        Spacer()
-                        Button {
-                            showingPaywall = true
-                        } label: {
-                            Text("Remove Ads", comment: "Quiet link above the banner ad that opens the Ad-Free paywall")
-                                .font(.caption2.weight(.medium))
-                                .foregroundStyle(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 5)
-
-                    // Generous gap between the tappable link and the ad itself —
-                    // accidental-click adjacency is the top AdMob policy trap.
-                    BannerAdView(adUnitID: adUnitID)
-                        .padding(.top, 14)
-                        .padding(.bottom, 6)
-                }
-                .background(Color(.systemBackground))
+                BannerAdView(adUnitID: adUnitID)
+                    .padding(.top, 6)
+                    .padding(.bottom, 2)
+                    .background(Color(.systemBackground))
             } else {
                 Color.clear.frame(height: 0)
             }
-        }
-        .sheet(isPresented: $showingPaywall) {
-            AdFreePaywallView()
         }
     }
 }
