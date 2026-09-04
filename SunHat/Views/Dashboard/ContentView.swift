@@ -28,5 +28,6 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environment(StoreManager.shared)
         .modelContainer(for: WeatherReminder.self, inMemory: true)
 }

@@ -16,6 +16,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var activeSheet: ActiveSheet?
+    @State private var adManager = AdManager.shared
     @StateObject private var locationViewModel = LocationManagementViewModel()
 
     private enum ActiveSheet: Identifiable {
@@ -33,6 +34,7 @@ struct SettingsView: View {
                 notificationsSection
                 locationSection
                 generalSection
+                AdFreeSettingsSection()
                 supportSection
                 privacySection
                 aboutSection
@@ -43,6 +45,10 @@ struct SettingsView: View {
             .onAppear {
                 viewModel.configure(modelContext: modelContext)
                 locationViewModel.configure(modelContext: modelContext)
+                // UMP state isn't observable, so re-read it when Settings
+                // appears; Google requires the privacy-options entry point to
+                // be reachable whenever the framework says it's required.
+                adManager.refreshConsentState()
             }
             .alert(
                 viewModel.activeAlert?.title ?? "",
@@ -249,6 +255,15 @@ struct SettingsView: View {
                 viewModel.openTermsOfService()
             }
             .foregroundStyle(.primary)
+
+            // Google-required consent revocation entry point; only appears
+            // for users in regions where the consent framework mandates it.
+            if adManager.privacyOptionsRequired {
+                Button("Ad Privacy Options") {
+                    adManager.presentPrivacyOptions()
+                }
+                .foregroundStyle(.primary)
+            }
         }
     }
 
@@ -304,6 +319,7 @@ enum AppearanceMode: String, CaseIterable {
 
 #Preview {
     SettingsView()
+        .environment(StoreManager.shared)
         .modelContainer(for: [
             UserPreferences.self,
             WeatherReminder.self,

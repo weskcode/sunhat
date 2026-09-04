@@ -20,7 +20,8 @@
 
 <p align="center">
   Built for iOS with SwiftUI, SwiftData, and WeatherKit.<br/>
-  No accounts. No tracking. No third-party dependencies.
+  No accounts. The free version shows banner ads; the optional SunHat Ad-Free
+  subscription removes them.
 </p>
 
 ---
@@ -52,7 +53,7 @@ You describe the conditions you care about. SunHat checks the forecast in the ba
 | **Spotlight indexing** | Find reminders from iOS search |
 | **Data export and deletion** | Full GDPR-style export and deletion, covered by schema-parity tests |
 | **Liquid Glass UI** | Native iOS 26 design with `.glassEffect()` surfaces |
-| **Zero tracking** | No accounts, no analytics, no third-party SDKs |
+| **Ad-free option** | The free version shows banner ads (Google AdMob); the SunHat Ad-Free subscription removes them. No accounts, and SunHat collects no analytics of its own |
 
 ## Screenshots
 
@@ -79,9 +80,11 @@ Captured on iOS 26 (iPhone). SunHat is iPhone-first. iPad, widget, and watch sur
 | Xcode | 26+ |
 | Swift | 6.2 |
 | Minimum iOS | 26.0 |
-| Dependencies | None. Apple frameworks only. |
+| Dependencies | Google Mobile Ads + User Messaging Platform (SPM), for the ad-supported free tier. Everything else is Apple frameworks. |
 
-No CocoaPods, no SPM packages, no Carthage. Every import is an Apple framework, and that's intentional.
+No CocoaPods, no Carthage. The only SPM packages are Google Mobile Ads and its
+User Messaging Platform dependency, which exist to support the ad-funded free
+tier; every other import is an Apple framework, and that's intentional.
 
 ## Getting started
 
