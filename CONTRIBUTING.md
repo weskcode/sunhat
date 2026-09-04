@@ -83,6 +83,6 @@ Include the iOS version, device or simulator, and steps to reproduce. For weathe
 
 - Migrate one `ObservableObject` view model to `@Observable`
 - Replace `UIImpactFeedbackGenerator` / `UINotificationFeedbackGenerator` call sites with `.sensoryFeedback`
-- Extract user-facing strings into a String Catalog (none exists yet, all copy is inline English)
+- Add a new locale to the String Catalog (English and Spanish ship today)
 - Split one of the remaining 600+ line views into focused subviews
 - VoiceOver labels for weather cards, forecast charts, and trigger indicators

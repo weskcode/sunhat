@@ -2,7 +2,7 @@
 //  LocationManaging.swift
 //  SunHat
 //
-//  Created by Codex on 6/2/26.
+//  Created by Wesley Keetch on 6/2/26.
 //
 
 import CoreLocation

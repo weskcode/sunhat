@@ -2,7 +2,7 @@
 //  AppLifecyclePromptCoordinatorTests.swift
 //  SunHatTests
 //
-//  Created by Codex on 7/3/26.
+//  Created by Wesley Keetch on 7/3/26.
 //
 
 import Foundation

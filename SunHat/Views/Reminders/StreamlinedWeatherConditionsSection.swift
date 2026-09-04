@@ -2,7 +2,7 @@
 //  StreamlinedWeatherConditionsSection.swift
 //  SunHat
 //
-//  Created by Claude on 6/12/26.
+//  Created by Wesley Keetch on 6/12/26.
 //
 
 import SwiftUI
