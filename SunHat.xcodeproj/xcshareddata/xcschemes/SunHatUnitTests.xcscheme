@@ -52,6 +52,9 @@
             ReferencedContainer = "container:SunHat.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
+      <StoreKitConfigurationFileReference
+         identifier = "../SunHat.storekit">
+      </StoreKitConfigurationFileReference>
       <Testables>
          <TestableReference
             skipped = "NO"
