@@ -2,7 +2,7 @@
 //  FilterChip.swift
 //  SunHat
 //
-//  Created by Codex on 7/3/26.
+//  Created by Wesley Keetch on 7/3/26.
 //
 
 import SwiftUI
