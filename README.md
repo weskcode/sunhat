@@ -161,7 +161,7 @@ Version 1.0, iPhone-first, preparing for App Store submission.
 
 ### Toolchain note
 
-The project builds with Xcode 26 and Swift 6.2. It also compiles against the Xcode 27 beta, which is stricter about actor isolation for protocol conformances and introduced a `LinearGradient` `.opacity` ambiguity; both are handled in-tree with comments.
+The project builds with Xcode 26 and Swift 6.2. App Store submission requires a release Xcode, not a beta.
 
 CI runs on `macos-latest` via GitHub Actions. The build-for-testing step uses the `SunHatUnitTests` scheme.
 
