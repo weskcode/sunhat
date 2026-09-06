@@ -82,6 +82,9 @@ struct WeatherView: View {
                     .padding(.bottom, 20)
                 }
             }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                AdBannerSlot(adUnitID: AdConfig.weatherBannerUnitID)
+            }
             .navigationTitle("Weather")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {

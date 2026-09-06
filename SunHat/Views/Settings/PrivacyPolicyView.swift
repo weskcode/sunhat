@@ -48,12 +48,17 @@ struct PrivacyPolicyView: View {
 
             privacySection(
                 title: "Analytics",
-                content: "We do not collect any personal analytics or tracking data. The app works entirely on your device."
+                content: "SunHat itself does not collect personal analytics. Your reminders, preferences, and weather history stay on your device."
+            )
+
+            privacySection(
+                title: "Advertising",
+                content: "The free version of SunHat shows banner ads provided by Google AdMob. Google may collect device data (such as an advertising identifier) to serve and measure ads; iOS asks for your permission before any cross-app tracking, and you can decline. The SunHat Ad-Free subscription removes all ads, and no ad requests are made for subscribers. See Google's privacy policy for details on how Google handles ad data."
             )
 
             privacySection(
                 title: "Third-Party Services",
-                content: "Weather data is provided by Apple WeatherKit. Please review Apple's privacy policy for information on how it handles data."
+                content: "Weather data is provided by Apple WeatherKit and advertising by Google AdMob. Please review Apple's and Google's privacy policies for information on how they handle data."
             )
 
             Text("Contact Us")
@@ -64,7 +69,7 @@ struct PrivacyPolicyView: View {
             Text("If you have any questions about this privacy policy, please contact us at \(AppSupportLinks.privacyEmail)")
                 .font(.body)
 
-            Text("Last updated: August 28, 2026")
+            Text("Last updated: August 31, 2026")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.top, 20)
