@@ -2,7 +2,7 @@
 //  SunHatProductComponents.swift
 //  SunHat
 //
-//  Created by Codex on 6/28/26.
+//  Created by Wesley Keetch on 6/28/26.
 //
 
 import SwiftUI

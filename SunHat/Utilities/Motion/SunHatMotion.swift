@@ -2,7 +2,7 @@
 //  SunHatMotion.swift
 //  SunHat
 //
-//  Created by Codex on 6/27/26.
+//  Created by Wesley Keetch on 6/27/26.
 //
 
 import SwiftUI

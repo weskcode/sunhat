@@ -2,7 +2,7 @@
 //  LocationDisplayFormatter.swift
 //  SunHat
 //
-//  Created by Codex on 6/3/26.
+//  Created by Wesley Keetch on 6/3/26.
 //
 
 import CoreLocation
