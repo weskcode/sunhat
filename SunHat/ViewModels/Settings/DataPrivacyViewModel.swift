@@ -426,6 +426,11 @@ final class DataPrivacyViewModel {
         UserDefaults.standard.removeObject(forKey: "hasCreatedFirstReminder")
         UserDefaults.standard.removeObject(forKey: "lastLaunchVersion")
 
+        // The mirrored Ad-Free entitlement is only a launch-time ad gate; it
+        // re-resolves from StoreKit, and while cleared ("unknown") no ads are
+        // requested, so a subscriber is never shown ads by this reset.
+        UserDefaults.standard.removeObject(forKey: StoreManager.cachedEntitlementStateKey)
+
         // Manual coordinates are persisted outside SwiftData by the location
         // service, so they need an explicit privacy-deletion boundary.
         locationPermissionManager.clearStoredLocationData()

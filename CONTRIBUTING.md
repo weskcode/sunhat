@@ -61,7 +61,7 @@ Match the surrounding code. It's consistent, and consistency beats personal pref
 - **Design:** iOS 26 Liquid Glass. `.glassEffect()` on card surfaces, `Color(.systemBackground)` for page backgrounds. Don't nest glass in glass.
 - **Motion:** Every animation respects `accessibilityReduceMotion`.
 - **Comments:** Explain *why*, not *what*. The non-obvious constraint, the bug this guards against, the reason it isn't the simpler thing.
-- **No third-party dependencies.** Apple frameworks only. This is intentional.
+- **Almost no third-party dependencies.** Google Mobile Ads and its User Messaging Platform dependency support the ad-funded free tier; everything else is Apple frameworks. Adding a new third-party package needs a strong justification and an explicit decision.
 
 ## Commit messages
 

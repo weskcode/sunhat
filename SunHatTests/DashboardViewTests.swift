@@ -44,12 +44,17 @@ struct DashboardViewModelTests {
 
     @Test("ViewModel initializes with expected defaults")
     func viewModelInitialState() {
-        #expect(viewModel.currentTemperature == 0.0)
-        #expect(viewModel.humidity == 0)
-        #expect(viewModel.weatherDescription == String(localized: "Loading...", comment: "Placeholder shown before weather data has loaded"))
-        #expect(viewModel.errorMessage == nil)
-        #expect(viewModel.activeReminders.isEmpty)
-        #expect(viewModel.forecastData.isEmpty)
+        // Assert on a freshly constructed VM: the suite-level `viewModel` has
+        // already been configure()d, which starts an async weather refresh
+        // whose location/network outcome is environment-dependent and can set
+        // errorMessage before this test runs (an intermittent CI flake).
+        let fresh = DashboardViewModel()
+        #expect(fresh.currentTemperature == 0.0)
+        #expect(fresh.humidity == 0)
+        #expect(fresh.weatherDescription == String(localized: "Loading...", comment: "Placeholder shown before weather data has loaded"))
+        #expect(fresh.errorMessage == nil)
+        #expect(fresh.activeReminders.isEmpty)
+        #expect(fresh.forecastData.isEmpty)
     }
 
     @Test("Loading completes after weather refresh")

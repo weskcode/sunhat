@@ -57,6 +57,9 @@ struct DashboardView: View {
                     .padding(.bottom, 132)
                 }
             }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                AdBannerSlot(adUnitID: AdConfig.dashboardBannerUnitID)
+            }
             .navigationTitle("SunHat")
             .navigationBarTitleDisplayMode(.large)
             .onAppear {
