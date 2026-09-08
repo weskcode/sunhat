@@ -17,7 +17,12 @@ import Testing
 @testable import SunHat
 
 @MainActor
-@Suite(.serialized)
+// .timeLimit caps the damage when SKTestSession wedges. It has done that
+// on this machine: the suite hung and burned a 40-minute run budget while
+// every other suite sat waiting behind .serialized. A hang now fails this
+// suite in two minutes and lets the rest of the run finish, which is the
+// difference between one red suite and no results at all.
+@Suite(.serialized, .timeLimit(.minutes(2)))
 struct StoreManagerStoreKitTests {
 
     private static let defaultsSuiteName = "StoreManagerStoreKitTests"
@@ -39,6 +44,17 @@ struct StoreManagerStoreKitTests {
         session.resetToDefaultState()
         session.disableDialogs = true
         session.clearTransactions()
+        // SunHat.storekit sets _billingGracePeriodEnabled, and
+        // resetToDefaultState() restores it. That makes expireSubscription
+        // ambiguous: the subscription may enter a grace period instead of
+        // lapsing, and grace keeps the transaction in currentEntitlements with
+        // its ORIGINAL expiration date — so the manager correctly stays
+        // ad-free and the lapse assertions fail nondeterministically. These
+        // tests cover clean purchase/lapse transitions; grace-period and
+        // billing-retry mapping is covered directly against the resolver in
+        // AdFreeEntitlementResolverTests.
+        session.billingGracePeriodIsEnabled = false
+        session.shouldEnterBillingRetryOnRenewal = false
         return session
     }
 
@@ -58,13 +74,14 @@ struct StoreManagerStoreKitTests {
     private func refreshUntil(
         _ manager: StoreManager,
         reaches expected: AdFreeEntitlementState,
-        maxAttempts: Int = 50
+        within timeout: Duration = .seconds(20)
     ) async {
-        for _ in 0..<maxAttempts {
+        let deadline = ContinuousClock.now.advanced(by: timeout)
+        repeat {
             await manager.refreshEntitlement()
             if manager.entitlementState == expected { return }
             try? await Task.sleep(for: .milliseconds(100))
-        }
+        } while ContinuousClock.now < deadline
     }
 
     @Test("The .storekit configuration parses and exposes both Ad-Free products")
