@@ -17,7 +17,12 @@ import Testing
 @testable import SunHat
 
 @MainActor
-@Suite(.serialized)
+// .timeLimit caps the damage when SKTestSession wedges. It has done that
+// on this machine: the suite hung and burned a 40-minute run budget while
+// every other suite sat waiting behind .serialized. A hang now fails this
+// suite in two minutes and lets the rest of the run finish, which is the
+// difference between one red suite and no results at all.
+@Suite(.serialized, .timeLimit(.minutes(2)))
 struct StoreManagerStoreKitTests {
 
     private static let defaultsSuiteName = "StoreManagerStoreKitTests"
