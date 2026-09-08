@@ -43,7 +43,12 @@ final class AccessibilityAuditUITests: XCTestCase {
     @MainActor
     private func audit(_ app: XCUIApplication, screen: String) throws {
         try app.performAccessibilityAudit { issue in
-            XCTFail("[\(screen)] \(issue.auditType): \(issue.compactDescription)")
+            // element carries the specific control the issue was raised
+            // against, which the audit type and compactDescription alone
+            // don't name — without it a contrast or clipping failure can't
+            // be traced back to the view that needs fixing.
+            let element = issue.element?.debugDescription ?? "no element"
+            XCTFail("[\(screen)] \(issue.compactDescription)\n    element: \(element)")
             // Already reported above; returning true stops XCTest from
             // double-reporting the same issue.
             return true
