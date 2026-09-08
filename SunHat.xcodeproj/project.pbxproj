@@ -90,7 +90,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		62688EDB10354F069788083D /* Set Build Number from Git */ = {
+		62688EDB10354F069788083D /* Set Build Number */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -100,14 +100,14 @@
 			);
 			inputPaths = (
 			);
-			name = "Set Build Number from Git";
+			name = "Set Build Number";
 			outputFileListPaths = (
 			);
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Build-number policy:\n# - Xcode Cloud (CI_BUILD_NUMBER set): CFBundleVersion = CI_BUILD_NUMBER.\n#   Xcode Cloud numbers are per-workflow and strictly increasing, and this\n#   workflow is the only one that archives, so App Store Connect uploads\n#   never collide. The CI checkout is never modified: buildnumber.txt is a\n#   local-only file (gitignored).\n# - Local Release archives: read buildnumber.txt, increment by 1, write the\n#   new number back to the file AND into the built product's Info.plist.\n#   Local numbers are throwaway; Xcode Cloud is authoritative for uploads.\nif [ \"$CONFIGURATION\" != \"Release\" ]; then\n  exit 0\nfi\n\nPLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n\nif [ -n \"$CI_BUILD_NUMBER\" ]; then\n  echo \"[SunHat] Xcode Cloud build: CFBundleVersion = $CI_BUILD_NUMBER\"\n  /usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $CI_BUILD_NUMBER\" \"$PLIST\"\n  exit 0\nfi\n\nBUILD_NUMBER_FILE=\"$SRCROOT/buildnumber.txt\"\nif [ ! -f \"$BUILD_NUMBER_FILE\" ]; then\n  echo \"1\" > \"$BUILD_NUMBER_FILE\"\nfi\n\nCURRENT=$(cat \"$BUILD_NUMBER_FILE\")\nBUILD_NUMBER=$((CURRENT + 1))\necho \"$BUILD_NUMBER\" > \"$BUILD_NUMBER_FILE\"\n\necho \"[SunHat] Build number: $CURRENT -> $BUILD_NUMBER\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUILD_NUMBER\" \"$PLIST\"\n";
+			shellScript = "# Release archives read buildnumber.txt, increment it, and write the new\n# number into the built product's Info.plist. buildnumber.txt is gitignored\n# and local to this machine. Every App Store Connect upload needs a unique\n# build number for a given MARKETING_VERSION, so if an upload is rejected as\n# a duplicate, bump the file and archive again.\nif [ \"$CONFIGURATION\" != \"Release\" ]; then\n  exit 0\nfi\n\nPLIST=\"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\nBUILD_NUMBER_FILE=\"$SRCROOT/buildnumber.txt\"\n\nif [ ! -f \"$BUILD_NUMBER_FILE\" ]; then\n  echo \"1\" > \"$BUILD_NUMBER_FILE\"\nfi\n\nCURRENT=$(cat \"$BUILD_NUMBER_FILE\")\nBUILD_NUMBER=$((CURRENT + 1))\necho \"$BUILD_NUMBER\" > \"$BUILD_NUMBER_FILE\"\n\necho \"[SunHat] Build number: $CURRENT -> $BUILD_NUMBER\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $BUILD_NUMBER\" \"$PLIST\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -142,7 +142,7 @@
 				64120D182E2D64CB0034CB20 /* Sources */,
 				64120D192E2D64CB0034CB20 /* Frameworks */,
 				64120D1A2E2D64CB0034CB20 /* Resources */,
-				62688EDB10354F069788083D /* Set Build Number from Git */,
+				62688EDB10354F069788083D /* Set Build Number */,
 			);
 			buildRules = (
 			);
