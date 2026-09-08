@@ -275,7 +275,7 @@ struct AllRemindersView: View {
                     .padding(.horizontal, 20)
                     .padding(.vertical, 10)
                 }
-                .buttonStyle(.glass)
+                .buttonStyle(.glassProminent)
                 .padding(.bottom, 20)
             }
             .sunHatSurface(tint: .accentColor, cornerRadius: 24, prominence: 0.70)

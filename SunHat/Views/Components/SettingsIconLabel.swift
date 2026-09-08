@@ -14,14 +14,21 @@ struct SettingsIconLabel: View {
     let systemImage: String
     let color: Color
 
+    // A fixed-point icon frame stops scaling once the row's text grows with
+    // Dynamic Type, which the accessibility audit flags as "Dynamic Type
+    // font sizes are partially unsupported". @ScaledMetric ties the icon
+    // frame to the same text-size setting so it grows with the row.
+    @ScaledMetric(relativeTo: .body) private var iconDimension: CGFloat = 29
+    @ScaledMetric(relativeTo: .body) private var symbolSize: CGFloat = 14
+
     var body: some View {
         Label {
             Text(title)
         } icon: {
             Image(systemName: systemImage)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: symbolSize, weight: .semibold))
                 .foregroundStyle(.white)
-                .frame(width: 29, height: 29)
+                .frame(width: iconDimension, height: iconDimension)
                 .background(color.gradient, in: RoundedRectangle(cornerRadius: 6.5, style: .continuous))
         }
     }
