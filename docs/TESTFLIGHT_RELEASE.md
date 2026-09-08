@@ -140,6 +140,12 @@ they cannot be automated from this repo without your credentials.
 
 ### Per build
 
+The Archive and Distribute Xcode Cloud workflow uploads to TestFlight
+automatically on every archive; see
+[`XCODE_CLOUD_SETUP.md`](XCODE_CLOUD_SETUP.md) for the one-time setup.
+
+For a manual local archive instead:
+
 ```bash
 xcodebuild -scheme SunHat -configuration Release \
   -destination 'generic/platform=iOS' \
