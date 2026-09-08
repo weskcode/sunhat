@@ -153,9 +153,9 @@ struct AdFreeSettingsSection: View {
     private var footerText: String {
         switch storeManager.entitlementState {
         case .active:
-            String(localized: "Ads are off. Cancel anytime — you keep Ad-Free until the end of the period you already paid for.", comment: "Settings footer while the Ad-Free subscription is active")
+            String(localized: "Ads are off. Cancel anytime and you keep Ad-Free until the end of the period you already paid for.", comment: "Settings footer while the Ad-Free subscription is active")
         case .gracePeriod:
-            String(localized: "A renewal payment failed. Ads stay off while Apple retries — update your billing details to keep Ad-Free.", comment: "Settings footer during the billing grace period")
+            String(localized: "A renewal payment failed. Ads stay off while Apple retries. Update your billing details to keep Ad-Free.", comment: "Settings footer during the billing grace period")
         case .billingRetry:
             String(localized: "Your Ad-Free subscription is paused because a renewal payment failed. Update your billing details to restore it.", comment: "Settings footer during billing retry after the grace period lapsed")
         case .notEntitled, .unknown:
