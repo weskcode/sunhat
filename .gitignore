@@ -74,4 +74,5 @@ CLAUDE.md
 AppStore/
 
 ## Internal audit/process docs (not needed in public repo)
-docs/
+docs/open-source-readiness-audit.md
+docs/open-source-release-report.md

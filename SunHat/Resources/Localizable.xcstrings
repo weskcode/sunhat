@@ -813,14 +813,14 @@
         }
       }
     },
-    "A renewal payment failed. Ads stay off while Apple retries — update your billing details to keep Ad-Free." : {
+    "A renewal payment failed. Ads stay off while Apple retries. Update your billing details to keep Ad-Free." : {
       "comment" : "Settings footer during the billing grace period",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A renewal payment failed. Ads stay off while Apple retries — update your billing details to keep Ad-Free."
+            "value" : "A renewal payment failed. Ads stay off while Apple retries. Update your billing details to keep Ad-Free."
           }
         },
         "es" : {
@@ -993,14 +993,14 @@
         }
       }
     },
-    "Ads are off. Cancel anytime — you keep Ad-Free until the end of the period you already paid for." : {
+    "Ads are off. Cancel anytime and you keep Ad-Free until the end of the period you already paid for." : {
       "comment" : "Settings footer while the Ad-Free subscription is active",
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ads are off. Cancel anytime — you keep Ad-Free until the end of the period you already paid for."
+            "value" : "Ads are off. Cancel anytime and you keep Ad-Free until the end of the period you already paid for."
           }
         },
         "es" : {

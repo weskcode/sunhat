@@ -79,7 +79,7 @@ Captured on iOS 26 (iPhone). SunHat is iPhone-first. iPad, widget, and watch sur
 |---|---|
 | Xcode | 26+ |
 | Swift | 6.2 |
-| Minimum iOS | 26.5 |
+| Minimum iOS | 26.0 |
 | Dependencies | Google Mobile Ads + User Messaging Platform (SPM), for the ad-supported free tier. Everything else is Apple frameworks. |
 
 No CocoaPods, no Carthage. The only SPM packages are Google Mobile Ads and its
