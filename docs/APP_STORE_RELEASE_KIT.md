@@ -11,6 +11,8 @@ Written for the 1.0 submission. Bundle ID `org.wesley.sunhat`.
   press release, objection handling
 - [`TESTFLIGHT_RELEASE.md`](TESTFLIGHT_RELEASE.md): beta metadata, the What
   to Test message, archive and upload steps
+- [`XCODE_CLOUD_SETUP.md`](XCODE_CLOUD_SETUP.md): CI and TestFlight
+  distribution setup, replacing the old GitHub Actions workflow
 - [`MONETIZATION_GOLIVE.md`](MONETIZATION_GOLIVE.md): every test value that
   must be swapped for a live one, and where it lives
 - [`PRIVACY_POLICY.md`](PRIVACY_POLICY.md) and [`TERMS_OF_USE.md`](TERMS_OF_USE.md):

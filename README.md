@@ -5,7 +5,6 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/weskcode/sunhat/actions/workflows/ios-build.yml"><img src="https://github.com/weskcode/sunhat/actions/workflows/ios-build.yml/badge.svg" alt="iOS Build"></a>
   <img src="https://img.shields.io/badge/Platform-iOS%2026+-blue" alt="Platform">
   <img src="https://img.shields.io/badge/Swift-6.2-orange" alt="Swift">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
@@ -163,7 +162,7 @@ Version 1.0, iPhone-first, preparing for App Store submission.
 
 The project builds with Xcode 26 and Swift 6.2. App Store submission requires a release Xcode, not a beta.
 
-CI runs on `macos-latest` via GitHub Actions. The build-for-testing step uses the `SunHatUnitTests` scheme.
+CI runs on Xcode Cloud, pinned to a release Xcode version rather than a beta. The build-for-testing step uses the `SunHatUnitTests` scheme; Release archives run through the same workflow for TestFlight distribution.
 
 ## Principles
 
