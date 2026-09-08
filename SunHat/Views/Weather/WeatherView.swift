@@ -126,7 +126,7 @@ struct WeatherView: View {
             } label: {
                 Text("Try Again", comment: "Retry button in the weather tab's unavailable state")
             }
-            .buttonStyle(.glass)
+            .buttonStyle(.glassProminent)
         }
         .padding(.top, 60)
     }
