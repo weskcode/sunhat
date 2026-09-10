@@ -11,8 +11,17 @@ import StoreKit
 import SwiftUI
 @preconcurrency import UserNotifications
 
-enum LifecyclePrompt: Identifiable, Equatable {
-    case notification
+/// What the notification lifecycle alert should offer. An undetermined system
+/// status must get neutral wording ("Continue"), since the button leads into
+/// the system permission dialog and a command-style label would pre-answer it
+/// (App Store Guideline 5.1.1(iv)). A denied status hands off to Settings.
+enum NotificationPromptStage: Hashable {
+    case requestPermission
+    case openSettings
+}
+
+enum LifecyclePrompt: Identifiable, Equatable, Hashable {
+    case notification(NotificationPromptStage)
     case enjoyment
     case review
 
@@ -70,8 +79,8 @@ final class AppLifecyclePromptCoordinator: ObservableObject {
         let openCount = defaults.integer(forKey: DefaultsKey.appOpenCount) + 1
         defaults.set(openCount, forKey: DefaultsKey.appOpenCount)
 
-        if await shouldPromptForNotifications(openCount: openCount) {
-            activePrompt = .notification
+        if let stage = await notificationPromptStage(openCount: openCount) {
+            activePrompt = .notification(stage)
             didPresentPromptThisSession = true
             defaults.set(openCount, forKey: DefaultsKey.lastNotificationPromptOpenCount)
             return
@@ -154,13 +163,20 @@ final class AppLifecyclePromptCoordinator: ObservableObject {
         defaults.set(true, forKey: DefaultsKey.didCompleteReviewFlow)
     }
 
-    private func shouldPromptForNotifications(openCount: Int) async -> Bool {
-        guard didPresentPromptThisSession == false else { return false }
-        guard openCount > 0, openCount.isMultiple(of: 5) else { return false }
-        guard defaults.integer(forKey: DefaultsKey.lastNotificationPromptOpenCount) != openCount else { return false }
+    private func notificationPromptStage(openCount: Int) async -> NotificationPromptStage? {
+        guard didPresentPromptThisSession == false else { return nil }
+        guard openCount > 0, openCount.isMultiple(of: 5) else { return nil }
+        guard defaults.integer(forKey: DefaultsKey.lastNotificationPromptOpenCount) != openCount else { return nil }
 
         let status = await notificationPermissions.authorizationStatus()
-        return status.isNotificationDeliveryDisabled
+        switch status {
+        case .notDetermined:
+            return .requestPermission
+        case .denied:
+            return .openSettings
+        default:
+            return nil
+        }
     }
 
     private func shouldPromptForReviewFlow(openCount: Int) -> Bool {
@@ -183,19 +199,6 @@ final class AppLifecyclePromptCoordinator: ObservableObject {
             AppStore.requestReview(in: scene)
         } else {
             SKStoreReviewController.requestReview()
-        }
-    }
-}
-
-private extension UNAuthorizationStatus {
-    var isNotificationDeliveryDisabled: Bool {
-        switch self {
-        case .authorized, .provisional, .ephemeral:
-            return false
-        case .notDetermined, .denied:
-            return true
-        @unknown default:
-            return true
         }
     }
 }

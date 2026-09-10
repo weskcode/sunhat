@@ -120,7 +120,7 @@ struct NotificationPermissionView: View {
                         ProgressView()
                             .controlSize(.small)
                     }
-                    Text(isRequestingPermission ? "Requesting Permission" : "Enable Notifications")
+                    Text(isRequestingPermission ? String(localized: "Requesting Permission") : primaryButtonTitle)
                         .font(.headline)
                 }
                 .frame(maxWidth: .infinity)
@@ -137,8 +137,26 @@ struct NotificationPermissionView: View {
         }
     }
 
+    private var primaryButtonTitle: String {
+        switch notificationManager.notificationStatus {
+        case .denied:
+            String(localized: "Open Settings")
+        default:
+            // Neutral wording: for an undetermined status this button leads
+            // into the system permission dialog, it must not pre-answer it.
+            // "Continue" is the compliant pattern for pre-permission priming.
+            String(localized: "Continue")
+        }
+    }
+
     private func requestNotificationPermission() {
         guard !isRequestingPermission else { return }
+
+        if notificationManager.notificationStatus == .denied {
+            notificationManager.openAppSettings()
+            return
+        }
+
         isRequestingPermission = true
 
         notificationManager.requestNotificationPermission { granted in
