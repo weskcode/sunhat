@@ -1022,7 +1022,8 @@
         }
       }
     },
-    "Advertising" : {      "localizations" : {
+    "Advertising" : {
+      "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1030,8 +1031,6 @@
           }
         }
       }
-
-
     },
     "Advisory" : {
       "comment" : "Weather alert severity level",
@@ -4897,7 +4896,8 @@
         }
       }
     },
-    "Last updated: August 31, 2026" : {      "localizations" : {
+    "Last updated: August 31, 2026" : {
+      "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -4905,8 +4905,6 @@
           }
         }
       }
-
-
     },
     "Last updated: January 30, 2026" : {
       "extractionState" : "stale",
@@ -6955,7 +6953,8 @@
         }
       }
     },
-    "Preferred Delivery Time" : {      "localizations" : {
+    "Preferred Delivery Time" : {
+      "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6963,8 +6962,6 @@
           }
         }
       }
-
-
     },
     "Preparing export" : {
       "localizations" : {
@@ -7201,7 +7198,8 @@
         }
       }
     },
-    "Quiet hours respected" : {      "localizations" : {
+    "Quiet hours respected" : {
+      "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7209,8 +7207,6 @@
           }
         }
       }
-
-
     },
     "Rain" : {
       "comment" : "Precipitation description\nWeather condition name",
@@ -7543,7 +7539,7 @@
         }
       }
     },
-"Remove every ad from SunHat with a monthly or annual plan. Already subscribed on another device or a previous install? Restore Purchases brings Ad-Free back." : {
+    "Remove every ad from SunHat with a monthly or annual plan. Already subscribed on another device or a previous install? Restore Purchases brings Ad-Free back." : {
       "comment" : "Settings footer shown to non-subscribers",
       "extractionState" : "manual",
       "localizations" : {
@@ -8915,17 +8911,6 @@
         }
       }
     },
-    "SunHat couldn't load your data and is running in temporary recovery mode. Creating and editing reminders is disabled until this is fixed. Restart SunHat to try again, or contact support@sunhat.app for help." : {
-      "comment" : "Banner shown when the app is running on a temporary in-memory database",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SunHat no pudo cargar tus datos y está en modo de recuperación temporal. La creación y edición de recordatorios están desactivadas hasta que esto se solucione. Reinicia SunHat para intentarlo de nuevo, o escribe a support@sunhat.app para obtener ayuda."
-          }
-        }
-      }
-    },
     "SunHat Feedback" : {
       "comment" : "Pre-filled subject line of the feedback email the app composes; 'SunHat' is the app name",
       "localizations" : {
@@ -8968,17 +8953,6 @@
         }
       }
     },
-    "SunHat is running in temporary recovery mode, changes made now will NOT be saved after you close the app. Contact support@sunhat.app for help recovering your data." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SunHat está en modo de recuperación temporal; los cambios realizados ahora NO se guardarán al cerrar la app. Escribe a support@sunhat.app para recuperar tus datos."
-          }
-        }
-      }
-    },
     "SunHat is still watching your active tasks and will notify you when the weather matches." : {
       "comment" : "Empty state message when no active tasks currently match the weather",
       "localizations" : {
@@ -9001,7 +8975,8 @@
         }
       }
     },
-    "SunHat itself does not collect personal analytics. Your reminders, preferences, and weather history stay on your device." : {      "localizations" : {
+    "SunHat itself does not collect personal analytics. Your reminders, preferences, and weather history stay on your device." : {
+      "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9009,8 +8984,6 @@
           }
         }
       }
-
-
     },
     "SunHat monitors weather conditions and sends you notifications when the temperature, humidity, or other conditions match your preferences. For example, you can set a reminder to water your garden when it hasn't rained and the temperature is above 70°F." : {
       "comment" : "FAQ answer",
@@ -9770,7 +9743,8 @@
         }
       }
     },
-    "The free version of SunHat shows banner ads provided by Google AdMob. Google may collect device data (such as an advertising identifier) to serve and measure ads; iOS asks for your permission before any cross-app tracking, and you can decline. The SunHat Ad-Free subscription removes all ads, and no ad requests are made for subscribers. See Google's privacy policy for details on how Google handles ad data." : {      "localizations" : {
+    "The free version of SunHat shows banner ads provided by Google AdMob. Google may collect device data (such as an advertising identifier) to serve and measure ads; iOS asks for your permission before any cross-app tracking, and you can decline. The SunHat Ad-Free subscription removes all ads, and no ad requests are made for subscribers. See Google's privacy policy for details on how Google handles ad data." : {
+      "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9778,8 +9752,6 @@
           }
         }
       }
-
-
     },
     "The GPS signal is too weak for accurate positioning" : {
       "comment" : "Location error failure reason",
@@ -10952,7 +10924,8 @@
         }
       }
     },
-    "Weather data is provided by Apple WeatherKit and advertising by Google AdMob. Please review Apple's and Google's privacy policies for information on how they handle data." : {      "localizations" : {
+    "Weather data is provided by Apple WeatherKit and advertising by Google AdMob. Please review Apple's and Google's privacy policies for information on how they handle data." : {
+      "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -10960,8 +10933,6 @@
           }
         }
       }
-
-
     },
     "Weather data is provided by Apple WeatherKit. Please review Apple's privacy policy for information on how it handles data." : {
       "extractionState" : "stale",
@@ -11604,6 +11575,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "¡Se cumplió tu condición del clima!"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuar"
+          }
+        }
+      }
+    },
+    "SunHat couldn't load your data and is running in temporary recovery mode. Creating and editing reminders is disabled until this is fixed. Restart SunHat to try again, or contact weskcode@duck.com for help." : {
+      "comment" : "Recovery-mode banner shown to all users",
+      "localizations" : {
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SunHat no pudo cargar tus datos y está en modo de recuperación temporal. La creación y edición de recordatorios están desactivadas hasta que esto se solucione. Reinicia SunHat para intentarlo de nuevo, o escribe a weskcode@duck.com para obtener ayuda."
           }
         }
       }
