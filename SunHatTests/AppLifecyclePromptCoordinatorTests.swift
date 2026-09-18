@@ -140,6 +140,25 @@ struct AppLifecyclePromptCoordinatorTests {
         #expect(opener.openedURLs.first?.absoluteString.contains(AppSupportLinks.feedbackEmail) == true)
     }
 
+    @Test("Submitted feedback includes device and version metadata")
+    func submittingFeedbackIncludesDiagnosticMetadata() async throws {
+        let opener = RecordingPromptSettingsOpener()
+        let coordinator = AppLifecyclePromptCoordinator(
+            defaults: makeDefaults(),
+            notificationPermissions: StubPromptNotificationPermissionProvider(status: .authorized),
+            settingsOpener: opener
+        )
+        coordinator.feedbackText = "I need better forecast controls."
+
+        coordinator.submitFeedback()
+
+        try await waitUntil { opener.openedURLs.count == 1 }
+        let body = opener.openedURLs.first?.absoluteString ?? ""
+        #expect(body.contains("App%20Version"))
+        #expect(body.contains("Device"))
+        #expect(body.contains("iOS%20Version"))
+    }
+
     @Test("Notification prompt is not repeated for an open count already prompted")
     func notificationPromptDoesNotRepeatForSameOpenCount() async {
         let defaults = makeDefaults()

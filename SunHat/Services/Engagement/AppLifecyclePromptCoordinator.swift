@@ -141,7 +141,18 @@ final class AppLifecyclePromptCoordinator: ObservableObject {
         showsFeedbackForm = false
         feedbackText = ""
 
-        let body = message.isEmpty ? String(localized: "I have feedback about SunHat.", comment: "Default body of the feedback email when the user submits without typing anything") : message
+        let typedMessage = message.isEmpty ? String(localized: "I have feedback about SunHat.", comment: "Default body of the feedback email when the user submits without typing anything") : message
+        let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? String(localized: "Unknown", comment: "Fallback app version when it cannot be read from the bundle")
+        let buildNumber = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "Unknown"
+        let body = typedMessage + String(localized: """
+
+
+        ---
+        App Version: \(appVersion)
+        Build: \(buildNumber)
+        Device: \(UIDevice.current.model)
+        iOS Version: \(UIDevice.current.systemVersion)
+        """, comment: "Diagnostic info appended after the user's own feedback message")
         let subject = String(localized: "SunHat Feedback", comment: "Pre-filled subject line of the feedback email the app composes; 'SunHat' is the app name")
 
         guard let url = AppSupportLinks.mailURL(
