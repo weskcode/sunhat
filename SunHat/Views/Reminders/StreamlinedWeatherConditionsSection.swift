@@ -130,7 +130,7 @@ struct StreamlinedWeatherConditionsSection: View {
                 Spacer()
 
                 let unit = viewModel.temperatureUnit
-                Text("\(Int(unit.fromFahrenheit(viewModel.customReminder.minTemperature)))° - \(Int(unit.fromFahrenheit(viewModel.customReminder.maxTemperature)))\(unit.symbol)")
+                Text("\(unit.roundedFromFahrenheit(viewModel.customReminder.minTemperature))° - \(unit.roundedFromFahrenheit(viewModel.customReminder.maxTemperature))\(unit.symbol)")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(viewModel.customReminder.selectedColor)
@@ -154,7 +154,7 @@ struct StreamlinedWeatherConditionsSection: View {
                 Spacer()
 
                 let unit = viewModel.temperatureUnit
-                Text("\(Int(unit.fromFahrenheit(viewModel.customReminder.minTemperature)))\(unit.symbol)")
+                Text("\(unit.roundedFromFahrenheit(viewModel.customReminder.minTemperature))\(unit.symbol)")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(viewModel.customReminder.selectedColor)

@@ -63,7 +63,7 @@ struct TemperatureRangeSlider: View {
     ) -> some View {
         VStack(spacing: 8) {
             LabeledContent(title) {
-                Text("\(Int(value.wrappedValue))\(temperatureUnit.symbol)")
+                Text("\(Int(value.wrappedValue.rounded()))\(temperatureUnit.symbol)")
                     .font(.subheadline.bold())
                     .foregroundStyle(Color.accentColor)
                     .accessibilityHidden(true)
@@ -72,7 +72,7 @@ struct TemperatureRangeSlider: View {
             Slider(value: value, in: range, step: 1)
                 .tint(Color.accentColor)
                 .accessibilityLabel("\(title) temperature")
-                .accessibilityValue("\(Int(value.wrappedValue)) degrees \(temperatureUnit.shortName)")
+                .accessibilityValue("\(Int(value.wrappedValue.rounded())) degrees \(temperatureUnit.shortName)")
         }
     }
 }
@@ -102,7 +102,7 @@ struct SingleTemperatureSlider: View {
 
                 Spacer()
 
-                Text("\(Int(temperatureInUnit.wrappedValue))\(temperatureUnit.symbol)")
+                Text("\(Int(temperatureInUnit.wrappedValue.rounded()))\(temperatureUnit.symbol)")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(.blue)

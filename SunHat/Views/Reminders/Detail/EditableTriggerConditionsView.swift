@@ -39,7 +39,7 @@ struct EditableTriggerConditionsView: View {
 
                         Spacer()
 
-                        Text("\(Int(displayTemperature))°\(temperatureUnit.symbol.dropFirst())")
+                        Text("\(displayTemperature)°\(temperatureUnit.symbol.dropFirst())")
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundStyle(.blue)
@@ -66,8 +66,8 @@ struct EditableTriggerConditionsView: View {
         }
     }
 
-    private var displayTemperature: Double {
-        temperatureUnit.fromFahrenheit(condition.targetTemperature)
+    private var displayTemperature: Int {
+        temperatureUnit.roundedFromFahrenheit(condition.targetTemperature)
     }
 
     /// The slider range below is the same physical range (0-110°F) expressed

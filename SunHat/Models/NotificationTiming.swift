@@ -143,4 +143,21 @@ enum TemperatureUnit: String, CaseIterable, Codable {
         case .celsius: return delta * 5 / 9
         }
     }
+
+    /// `fromFahrenheit`, rounded to the nearest whole degree — use this for
+    /// display instead of truncating with `Int(fromFahrenheit(_:))`, which
+    /// can read 1° low: converting a whole Celsius degree to Fahrenheit and
+    /// back doesn't always land back on an exact integer in floating point
+    /// (e.g. 22°C stored as 71.6°F converts back to 21.999999999999996, and
+    /// `Int(_:)` truncates that to 21).
+    func roundedFromFahrenheit(_ fahrenheit: Double) -> Int {
+        Int(fromFahrenheit(fahrenheit).rounded())
+    }
+
+    /// `fromFahrenheitDelta`, rounded to the nearest whole degree — same
+    /// truncation hazard as `roundedFromFahrenheit`, for tolerance/delta
+    /// values.
+    func roundedFromFahrenheitDelta(_ delta: Double) -> Int {
+        Int(fromFahrenheitDelta(delta).rounded())
+    }
 }

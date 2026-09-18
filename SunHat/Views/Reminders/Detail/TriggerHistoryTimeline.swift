@@ -89,7 +89,7 @@ private struct TriggerHistoryRow: View {
                 }
 
                 if let temperature = entry.temperatureAtTime {
-                    Text("Temperature: \(Int(temperatureUnit.fromFahrenheit(temperature)))\(temperatureUnit.symbol)")
+                    Text("Temperature: \(temperatureUnit.roundedFromFahrenheit(temperature))\(temperatureUnit.symbol)")
                         .font(.caption2)
                         .foregroundStyle(.orange)
                 }

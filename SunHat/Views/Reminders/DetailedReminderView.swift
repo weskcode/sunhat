@@ -188,11 +188,11 @@ struct DetailedReminderView: View {
                             .foregroundStyle(.primary)
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("\(Int(viewModel.temperatureUnit.fromFahrenheit(currentWeather.temperature)))°")
+                            Text("\(viewModel.temperatureUnit.roundedFromFahrenheit(currentWeather.temperature))°")
                                 .font(.system(size: 48, weight: .thin, design: .rounded))
                                 .foregroundStyle(.primary)
 
-                            Text("Feels like \(Int(viewModel.temperatureUnit.fromFahrenheit(currentWeather.feelsLike)))°")
+                            Text("Feels like \(viewModel.temperatureUnit.roundedFromFahrenheit(currentWeather.feelsLike))°")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
