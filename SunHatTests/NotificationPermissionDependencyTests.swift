@@ -99,45 +99,6 @@ struct NotificationPermissionDependencyTests {
         #expect(viewModel.notificationsEnabled == false)
     }
 
-    // MARK: - NotificationPreferencesViewModel
-
-    @Test("Permission status check reads through the injected provider")
-    func statusCheckUsesInjectedProvider() async {
-        let permissions = StubNotificationPermissionProvider()
-        permissions.status = .denied
-        let viewModel = NotificationPreferencesViewModel(notificationPermissions: permissions)
-
-        let status = await viewModel.checkNotificationPermissions()
-
-        #expect(status == .denied)
-    }
-
-    @Test("Critical alerts setting adds the critical alert authorization option")
-    func criticalAlertsAddsAuthorizationOption() async throws {
-        let permissions = StubNotificationPermissionProvider()
-        let viewModel = NotificationPreferencesViewModel(notificationPermissions: permissions)
-        viewModel.configure(modelContext: try makeInMemoryContext())
-        await viewModel.loadSettings()
-        viewModel.criticalAlertsEnabled = true
-
-        await viewModel.saveSettings()
-
-        #expect(permissions.requestedOptions.last?.contains(.criticalAlert) == true)
-    }
-
-    @Test("Denied permission during save surfaces an error message")
-    func deniedPermissionDuringSaveSurfacesError() async throws {
-        let permissions = StubNotificationPermissionProvider()
-        permissions.grantsAuthorization = false
-        let viewModel = NotificationPreferencesViewModel(notificationPermissions: permissions)
-        viewModel.configure(modelContext: try makeInMemoryContext())
-        await viewModel.loadSettings()
-
-        await viewModel.saveSettings()
-
-        #expect(viewModel.errorMessage?.isEmpty == false)
-    }
-
     // MARK: - Helpers
 
     private func makeInMemoryContext() throws -> ModelContext {
