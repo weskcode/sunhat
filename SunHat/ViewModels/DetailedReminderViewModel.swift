@@ -340,7 +340,8 @@ final class DetailedReminderViewModel: ObservableObject {
         }
         
         // Calculate confidence based on matching days
-        confidence = Double(matchingDays) / Double(min(sortedForecast.count, 7))
+        let dayCount = min(sortedForecast.count, 7)
+        confidence = dayCount > 0 ? Double(matchingDays) / Double(dayCount) : 0.0
         
         return LivePrediction(
             nextTriggerDate: nextTriggerDate,

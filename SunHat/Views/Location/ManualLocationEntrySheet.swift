@@ -224,6 +224,14 @@ struct ManualLocationEntrySheet: View {
         )
 
         viewModel.addSavedLocation(savedLocation)
+
+        // Saving to the list alone doesn't change the app's active location;
+        // Dashboard/Weather resolve their location from this manager.
+        LocationPermissionManager.shared.manualLocation = ManualLocationData(
+            name: trimmedName,
+            coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        )
+
         dismiss()
     }
 }

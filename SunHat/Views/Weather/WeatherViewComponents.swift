@@ -176,38 +176,45 @@ struct WeeklyForecastRow: View {
 // MARK: - Air Quality Card
 
 struct AirQualityCard: View {
-    let aqi: Int
+    let aqi: Int?
     let pm25: Double?
-    let description: String
-    
+    let description: String?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: "leaf.fill")
                     .font(AppFontStyle.title3.font)
                     .foregroundStyle(aqiColor)
-                
+
                 Spacer()
-                
+
                 Text("AQI")
                     .font(AppFontStyle.caption.font)
                     .foregroundStyle(.secondary)
             }
-            
+
             VStack(alignment: .leading, spacing: 4) {
-                Text("\(aqi)")
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.primary)
-                
-                Text(description)
-                    .font(AppFontStyle.caption.font)
-                    .fontWeight(.medium)
-                    .foregroundStyle(aqiColor)
-                
-                if let pm25 = pm25 {
-                    Text("PM2.5: \(pm25, specifier: "%.1f") μg/m³")
-                        .font(.caption2)
+                if let aqi, let description {
+                    Text("\(aqi)")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.primary)
+
+                    Text(description)
+                        .font(AppFontStyle.caption.font)
+                        .fontWeight(.medium)
+                        .foregroundStyle(aqiColor)
+
+                    if let pm25 = pm25 {
+                        Text("PM2.5: \(pm25, specifier: "%.1f") μg/m³")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Text("Unavailable")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -219,10 +226,15 @@ struct AirQualityCard: View {
                 .fill(.thickMaterial)
         )
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Air quality index: \(aqi), \(description)")
+        .accessibilityLabel(
+            aqi != nil && description != nil
+                ? "Air quality index: \(aqi!), \(description!)"
+                : "Air quality index unavailable"
+        )
     }
-    
+
     private var aqiColor: Color {
+        guard let aqi else { return .secondary }
         switch aqi {
         case 0...50: return .green
         case 51...100: return .yellow

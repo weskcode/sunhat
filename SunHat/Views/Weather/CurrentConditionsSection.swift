@@ -363,8 +363,9 @@ extension WeatherView {
         }
     }
 
-    private var airQualityDescription: String {
-        switch viewModel.airQualityIndex {
+    private var airQualityDescription: String? {
+        guard let aqi = viewModel.airQualityIndex else { return nil }
+        switch aqi {
         case 0...50: return String(localized: "Good", comment: "Air quality index level description")
         case 51...100: return String(localized: "Moderate", comment: "Air quality index level description")
         case 101...150: return String(localized: "Unhealthy for sensitive", comment: "Air quality index level description, short for 'unhealthy for sensitive groups'")

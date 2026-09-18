@@ -18,16 +18,8 @@ struct DetailedReminderView: View {
     @State private var isEditMode = false
     @State private var showingDeleteConfirmation = false
     @State private var showingLocationEditor = false
-    @State private var activeSheet: ActiveSheet?
     @State private var editedReminder: EditableReminder
 
-    private enum ActiveSheet: Identifiable {
-        case share
-        case duplicate
-
-        var id: Self { self }
-    }
-    
     init(reminder: WeatherReminder) {
         self.reminder = reminder
         self._viewModel = StateObject(wrappedValue: DetailedReminderViewModel(reminder: reminder))
@@ -144,14 +136,6 @@ struct DetailedReminderView: View {
             deleteConfirmationDialogButtons()
         } message: {
             Text("This action cannot be undone. The reminder and all its history will be permanently deleted.")
-        }
-        .sheet(item: $activeSheet) { sheet in
-            switch sheet {
-            case .share:
-                ShareReminderView(reminder: reminder)
-            case .duplicate:
-                DuplicateReminderView(reminder: reminder)
-            }
         }
         .sheet(isPresented: $showingLocationEditor) {
             ManualLocationEntryView(
@@ -402,20 +386,6 @@ struct DetailedReminderView: View {
     
     private var moreOptionsMenu: some View {
         Group {
-            Button(action: {
-                activeSheet = .duplicate
-            }) {
-                Label("Duplicate", systemImage: "plus.square.on.square")
-            }
-            
-            Button(action: {
-                activeSheet = .share
-            }) {
-                Label("Share", systemImage: "square.and.arrow.up")
-            }
-            
-            Divider()
-            
             if reminder.isActive {
                 Button(action: {
                     viewModel.pauseReminder()

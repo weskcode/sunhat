@@ -39,8 +39,10 @@ final class WeatherViewModel: ObservableObject {
     @Published var uvIndex: Double = 0
     @Published var dewPoint: Double = 0
 
-    @Published var airQualityIndex: Int = 0
-    @Published var pm25: Double = 0
+    /// `nil` means the current provider didn't return air quality data.
+    /// The UI shows an explicit unavailable state instead of a fabricated 0.
+    @Published var airQualityIndex: Int?
+    @Published var pm25: Double?
     @Published var sunrise: Date?
     @Published var sunset: Date?
     @Published var dayLength: TimeInterval?
@@ -209,8 +211,8 @@ final class WeatherViewModel: ObservableObject {
         pressure = data.pressure
         uvIndex = data.uvIndex
         dewPoint = data.dewPoint
-        airQualityIndex = data.airQualityIndex ?? 0
-        pm25 = data.pm25 ?? 0
+        airQualityIndex = data.airQualityIndex
+        pm25 = data.pm25
         sunrise = data.sunrise
         sunset = data.sunset
         if let today = data.forecastDays.first {
