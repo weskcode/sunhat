@@ -23,45 +23,19 @@ extension DashboardView {
 
     private var temperatureWidgetContent: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top, spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "location.fill")
-                            .font(AppFontStyle.caption.font)
-                            .foregroundStyle(Color.accentColor)
-
-                        Text(viewModel.currentLocationName)
-                            .font(AppFontStyle.subheadline.font)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-                    }
-
-                    if let lastUpdate = viewModel.lastUpdateTime {
-                        Text("Updated \(lastUpdate, style: .relative) ago")
-                            .font(AppFontStyle.caption2.font)
-                            .foregroundStyle(.secondary)
-                    } else if viewModel.isLoading {
-                        Text("Updating weather")
-                            .font(AppFontStyle.caption.font)
-                            .foregroundStyle(.secondary)
-                    }
+            // A single row runs out of width at accessibility Dynamic Type
+            // sizes: the location name would truncate to a couple of
+            // characters, squeezed by the status pill sharing the row.
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 10) {
+                    locationSummary
+                    statusIndicator
                 }
-
-                Spacer()
-
-                VStack(alignment: .trailing, spacing: 8) {
-                    SunHatStatusPill(
-                        text: viewModel.hasWeatherData ? "Live" : "Standby",
-                        systemImage: viewModel.hasWeatherData ? "dot.radiowaves.left.and.right" : "clock",
-                        tint: viewModel.hasWeatherData ? .green : .secondary
-                    )
-
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    }
+            } else {
+                HStack(alignment: .top, spacing: 12) {
+                    locationSummary
+                    Spacer()
+                    statusIndicator
                 }
             }
 
@@ -73,6 +47,49 @@ extension DashboardView {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(weatherAccessibilityLabel)
         .accessibilityValue(weatherAccessibilityValue)
+    }
+
+    private var locationSummary: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                Image(systemName: "location.fill")
+                    .font(AppFontStyle.caption.font)
+                    .foregroundStyle(Color.accentColor)
+
+                Text(viewModel.currentLocationName)
+                    .font(AppFontStyle.subheadline.font)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+            }
+
+            if let lastUpdate = viewModel.lastUpdateTime {
+                Text("Updated \(lastUpdate, style: .relative) ago")
+                    .font(AppFontStyle.caption2.font)
+                    .foregroundStyle(.secondary)
+            } else if viewModel.isLoading {
+                Text("Updating weather")
+                    .font(AppFontStyle.caption.font)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var statusIndicator: some View {
+        VStack(alignment: .trailing, spacing: 8) {
+            SunHatStatusPill(
+                text: viewModel.hasWeatherData
+                    ? String(localized: "Live", comment: "Dashboard status pill shown while weather data is current")
+                    : String(localized: "Standby", comment: "Dashboard status pill shown while weather data hasn't loaded yet"),
+                systemImage: viewModel.hasWeatherData ? "dot.radiowaves.left.and.right" : "clock",
+                tint: viewModel.hasWeatherData ? .green : .secondary
+            )
+
+            if viewModel.isLoading {
+                ProgressView()
+                    .scaleEffect(0.8)
+            }
+        }
     }
 
     @ViewBuilder
@@ -134,21 +151,21 @@ extension DashboardView {
 
             HStack(spacing: 8) {
                 WeatherHeroMetricPill(
-                    title: "High",
+                    title: String(localized: "High", comment: "Dashboard hero pill label for the day's high temperature"),
                     value: "\(viewModel.highTemperatureDisplay)°",
                     systemImage: "arrow.up",
                     tint: .orange
                 )
 
                 WeatherHeroMetricPill(
-                    title: "Low",
+                    title: String(localized: "Low", comment: "Dashboard hero pill label for the day's low temperature"),
                     value: "\(viewModel.lowTemperatureDisplay)°",
                     systemImage: "arrow.down",
                     tint: .cyan
                 )
 
                 WeatherHeroMetricPill(
-                    title: "Wind",
+                    title: String(localized: "Wind", comment: "Dashboard hero pill label for wind speed"),
                     value: viewModel.windSpeedDisplay,
                     systemImage: "wind",
                     tint: .mint

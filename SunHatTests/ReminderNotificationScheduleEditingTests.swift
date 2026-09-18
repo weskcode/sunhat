@@ -143,6 +143,24 @@ struct DetailedReminderScheduleEditingTests {
         #expect(config.preferredTimeRange == .evening)
     }
 
+    @Test("Saving changes persists the badge and sound toggles")
+    func saveChangesPersistsBadgeAndSoundToggles() async throws {
+        let reminder = makeReminder(withConfig: true)
+        let viewModel = DetailedReminderViewModel(reminder: reminder)
+        viewModel.configure(modelContext: modelContext)
+
+        var edited = EditableReminder(from: reminder)
+        edited.notificationConfig.enableBadge = false
+        edited.notificationConfig.enableSound = false
+
+        let success = await viewModel.saveChanges(edited)
+        #expect(success == true)
+
+        let config = try #require(reminder.notificationConfig)
+        #expect(config.enableBadge == false)
+        #expect(config.enableSound == false)
+    }
+
     @Test("Selecting allDay clears the quiet-hours delivery window restriction")
     func saveChangesAllDayClearsWindow() async throws {
         let reminder = makeReminder(withConfig: true)

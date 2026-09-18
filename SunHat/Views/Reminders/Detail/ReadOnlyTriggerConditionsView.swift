@@ -66,7 +66,7 @@ struct ReadOnlyTriggerConditionsView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
 
-                        Text("±\(Int(condition.temperatureTolerance))°")
+                        Text("±\(Int(temperatureUnit.fromFahrenheitDelta(condition.temperatureTolerance)))°")
                             .font(.caption)
                             .fontWeight(.medium)
                             .foregroundStyle(.primary)
@@ -83,11 +83,6 @@ struct ReadOnlyTriggerConditionsView: View {
     }
 
     private func displayTemperature(_ fahrenheit: Double) -> Double {
-        switch temperatureUnit {
-        case .fahrenheit:
-            return fahrenheit
-        case .celsius:
-            return (fahrenheit - 32) * 5 / 9
-        }
+        temperatureUnit.fromFahrenheit(fahrenheit)
     }
 }

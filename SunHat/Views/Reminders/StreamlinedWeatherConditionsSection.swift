@@ -129,7 +129,8 @@ struct StreamlinedWeatherConditionsSection: View {
 
                 Spacer()
 
-                Text("\(Int(viewModel.customReminder.minTemperature))° - \(Int(viewModel.customReminder.maxTemperature))°F")
+                let unit = viewModel.temperatureUnit
+                Text("\(Int(unit.fromFahrenheit(viewModel.customReminder.minTemperature)))° - \(Int(unit.fromFahrenheit(viewModel.customReminder.maxTemperature)))\(unit.symbol)")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(viewModel.customReminder.selectedColor)
@@ -137,7 +138,8 @@ struct StreamlinedWeatherConditionsSection: View {
 
             TemperatureRangeSlider(
                 minTemp: $viewModel.customReminder.minTemperature,
-                maxTemp: $viewModel.customReminder.maxTemperature
+                maxTemp: $viewModel.customReminder.maxTemperature,
+                temperatureUnit: viewModel.temperatureUnit
             )
         }
     }
@@ -151,13 +153,17 @@ struct StreamlinedWeatherConditionsSection: View {
 
                 Spacer()
 
-                Text("\(Int(viewModel.customReminder.minTemperature))°F")
+                let unit = viewModel.temperatureUnit
+                Text("\(Int(unit.fromFahrenheit(viewModel.customReminder.minTemperature)))\(unit.symbol)")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(viewModel.customReminder.selectedColor)
             }
 
-            SingleTemperatureSlider(temperature: $viewModel.customReminder.minTemperature)
+            SingleTemperatureSlider(
+                temperature: $viewModel.customReminder.minTemperature,
+                temperatureUnit: viewModel.temperatureUnit
+            )
         }
     }
 

@@ -171,7 +171,7 @@ struct WeeklyForecastRow: View {
     }
 }
 
-// Note: WeatherAlertDetailCard is defined in WeatherAlertsView.swift to avoid duplication
+// Note: WeatherAlertDetailCard is defined in WeatherAlertDetailCard.swift to avoid duplication
 
 // MARK: - Air Quality Card
 
@@ -328,9 +328,10 @@ struct HistoricalComparisonRow: View {
     }
     
     private var differenceText: String {
-        let absValue = abs(difference)
-        let direction = difference > 0 ? "warmer" : "cooler"
-        return "\(String(format: "%.1f", absValue))° \(direction)"
+        let absValue = String(format: "%.1f", abs(difference))
+        return difference > 0
+            ? String(localized: "\(absValue)° warmer", comment: "Historical temperature comparison, e.g. '3.0° warmer'")
+            : String(localized: "\(absValue)° cooler", comment: "Historical temperature comparison, e.g. '3.0° cooler'")
     }
     
     var body: some View {

@@ -195,6 +195,10 @@ struct SunHatApp: App {
                     // round-trip.
                     guard !Self.isHostingUnitTests else { return }
                     AdManager.shared.sceneDidChange(active: scenePhase == .active)
+                    // Saving the appearance choice alone never re-applied it to a
+                    // freshly created window, so a relaunch always came back in
+                    // System appearance regardless of what was saved.
+                    AppearanceMode.stored.apply()
                 }
                 .onChange(of: scenePhase) { _, newPhase in
                     guard !Self.isHostingUnitTests else { return }

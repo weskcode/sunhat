@@ -188,11 +188,11 @@ struct DetailedReminderView: View {
                             .foregroundStyle(.primary)
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("\(Int(currentWeather.temperature))°")
+                            Text("\(Int(viewModel.temperatureUnit.fromFahrenheit(currentWeather.temperature)))°")
                                 .font(.system(size: 48, weight: .thin, design: .rounded))
                                 .foregroundStyle(.primary)
-                            
-                            Text("Feels like \(Int(currentWeather.feelsLike))°")
+
+                            Text("Feels like \(Int(viewModel.temperatureUnit.fromFahrenheit(currentWeather.feelsLike)))°")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
@@ -376,7 +376,8 @@ struct DetailedReminderView: View {
             
             TriggerHistoryTimeline(
                 history: viewModel.triggerHistory,
-                isCompact: false
+                isCompact: false,
+                temperatureUnit: viewModel.temperatureUnit
             )
         }
         .cardStyle()

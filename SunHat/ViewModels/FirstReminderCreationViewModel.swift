@@ -34,7 +34,7 @@ final class FirstReminderCreationViewModel: ObservableObject {
     private let weatherService = WeatherService.shared
     private let locationPermissionManager = LocationPermissionManager.shared
     private var modelContext: ModelContext?
-    private var temperatureUnit: TemperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
+    var temperatureUnit: TemperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
     private var weatherTask: Task<Void, Never>?
 
     func configure(modelContext: ModelContext) {

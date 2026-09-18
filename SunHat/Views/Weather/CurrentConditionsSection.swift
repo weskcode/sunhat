@@ -154,7 +154,7 @@ extension WeatherView {
         ], spacing: 12) {
             DetailedMetricCard(
                 icon: "humidity.fill",
-                title: "Humidity",
+                title: String(localized: "Humidity", comment: "Weather metric card title"),
                 value: "\(viewModel.humidity)%",
                 description: humidityDescription,
                 color: .cyan
@@ -162,7 +162,7 @@ extension WeatherView {
 
             DetailedMetricCard(
                 icon: "wind",
-                title: "Wind",
+                title: String(localized: "Wind", comment: "Weather metric card title"),
                 value: viewModel.windSpeedDisplay,
                 description: viewModel.windDetailDisplay,
                 color: .green
@@ -170,7 +170,7 @@ extension WeatherView {
 
             DetailedMetricCard(
                 icon: "eye.fill",
-                title: "Visibility",
+                title: String(localized: "Visibility", comment: "Weather metric card title"),
                 value: viewModel.visibilityDisplay,
                 description: visibilityDescription,
                 color: .purple
@@ -178,7 +178,7 @@ extension WeatherView {
 
             DetailedMetricCard(
                 icon: "barometer",
-                title: "Pressure",
+                title: String(localized: "Pressure", comment: "Weather metric card title"),
                 value: viewModel.pressureDisplay,
                 description: pressureDescription,
                 color: .indigo
@@ -186,7 +186,7 @@ extension WeatherView {
 
             DetailedMetricCard(
                 icon: "sun.max.fill",
-                title: "UV Index",
+                title: String(localized: "UV Index", comment: "Weather metric card title"),
                 value: String(format: "%.0f", viewModel.uvIndex),
                 description: uvIndexDescription,
                 color: uvIndexColor
@@ -194,7 +194,7 @@ extension WeatherView {
 
             DetailedMetricCard(
                 icon: "thermometer.snowflake",
-                title: "Dew Point",
+                title: String(localized: "Dew Point", comment: "Weather metric card title"),
                 value: "\(viewModel.displayTemperature(viewModel.dewPoint))°",
                 description: dewPointDescription,
                 color: .mint
@@ -251,28 +251,28 @@ extension WeatherView {
                 } else {
                     if let yesterdayTemp = viewModel.yesterdayTemp {
                         HistoricalComparisonRow(
-                            title: "vs. Yesterday",
+                            title: String(localized: "vs. Yesterday", comment: "Historical temperature comparison row title"),
                             currentTemp: viewModel.convertedTemperature(viewModel.currentTemperature),
                             historicalTemp: viewModel.convertedTemperature(yesterdayTemp),
-                            timeframe: "24h ago"
+                            timeframe: String(localized: "24h ago", comment: "Historical temperature comparison row timeframe")
                         )
                     }
 
                     if let lastWeekTemp = viewModel.lastWeekTemp {
                         HistoricalComparisonRow(
-                            title: "vs. Last Week",
+                            title: String(localized: "vs. Last Week", comment: "Historical temperature comparison row title"),
                             currentTemp: viewModel.convertedTemperature(viewModel.currentTemperature),
                             historicalTemp: viewModel.convertedTemperature(lastWeekTemp),
-                            timeframe: "7 days ago"
+                            timeframe: String(localized: "7 days ago", comment: "Historical temperature comparison row timeframe")
                         )
                     }
 
                     if let historicalAvgTemp = viewModel.historicalAvgTemp {
                         HistoricalComparisonRow(
-                            title: "vs. Monthly Average",
+                            title: String(localized: "vs. Monthly Average", comment: "Historical temperature comparison row title"),
                             currentTemp: viewModel.convertedTemperature(viewModel.currentTemperature),
                             historicalTemp: viewModel.convertedTemperature(historicalAvgTemp),
-                            timeframe: "Stored average for this month"
+                            timeframe: String(localized: "Stored average for this month", comment: "Historical temperature comparison row timeframe")
                         )
                     }
                 }

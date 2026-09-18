@@ -111,11 +111,7 @@ final class SettingsViewModel {
 
     private func setupInitialValues() {
         temperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
-
-        if let savedAppearance = UserDefaults.standard.object(forKey: "AppAppearance") as? String,
-           let appearance = AppearanceMode(rawValue: savedAppearance) {
-            selectedAppearance = appearance
-        }
+        selectedAppearance = .stored
     }
 
     // MARK: - Data Loading
@@ -197,7 +193,11 @@ final class SettingsViewModel {
         set { setNotificationsEnabled(newValue) }
     }
 
-    private func checkNotificationStatus() {
+    /// Re-derives `notificationsEnabled` from the live system permission.
+    /// Unlike location, there's no delegate callback for a permission change
+    /// made in the iOS Settings app, so callers must invoke this explicitly
+    /// on return to foreground.
+    func checkNotificationStatus() {
         Task {
             let status = await notificationPermissions.authorizationStatus()
             let masterSwitchOn = userPreferences?.notificationsEnabled ?? true
@@ -257,27 +257,14 @@ final class SettingsViewModel {
     }
 
     private func updateCurrentLocation() {
-        currentLocationName = "Current Location"
+        currentLocationName = LocationPermissionManager.shared.getDisplayLocation()
     }
 
     // MARK: - Appearance Methods
 
     func applyAppearance() {
-        UserDefaults.standard.set(selectedAppearance.rawValue, forKey: "AppAppearance")
-
-        Task { @MainActor in
-            guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                  let window = windowScene.windows.first else { return }
-
-            switch selectedAppearance {
-            case .system:
-                window.overrideUserInterfaceStyle = .unspecified
-            case .light:
-                window.overrideUserInterfaceStyle = .light
-            case .dark:
-                window.overrideUserInterfaceStyle = .dark
-            }
-        }
+        UserDefaults.standard.set(selectedAppearance.rawValue, forKey: AppearanceMode.defaultsKey)
+        selectedAppearance.apply()
     }
 
     // MARK: - Reset Methods
@@ -296,7 +283,7 @@ final class SettingsViewModel {
         preferences.selectedActivityInterests = []
 
         selectedAppearance = .system
-        UserDefaults.standard.removeObject(forKey: "AppAppearance")
+        UserDefaults.standard.removeObject(forKey: AppearanceMode.defaultsKey)
 
         applyPreferences(preferences)
         savePreferences()

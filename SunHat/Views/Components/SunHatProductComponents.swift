@@ -100,6 +100,7 @@ struct SunHatStatusPill: View {
         Label(text, systemImage: systemImage)
             .font(AppFontStyle.caption.font.weight(.semibold))
             .foregroundStyle(tint)
+            .lineLimit(1)
             .padding(.horizontal, 11)
             .padding(.vertical, 7)
             .background(

@@ -59,6 +59,7 @@ struct WeatherAlertCard: View {
 struct ActiveReminderCard: View {
     let reminder: WeatherReminderDisplay
     let weatherData: WeatherDataTransfer?
+    let temperatureUnit: TemperatureUnit
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -88,7 +89,7 @@ struct ActiveReminderCard: View {
                     .lineLimit(1)
 
                 if let condition = reminder.triggerCondition {
-                    Text("Trigger: When temperature is \(condition.comparisonType.displayName) \(condition.targetTemperature, specifier: "%.1f")°")
+                    Text("Trigger: When temperature is \(condition.comparisonType.displayName) \(temperatureUnit.fromFahrenheit(condition.targetTemperature), specifier: "%.1f")°")
                         .font(AppFontStyle.caption.font)
                         .foregroundStyle(.secondary)
                 } else {
@@ -107,12 +108,13 @@ struct ActiveReminderCard: View {
             Spacer()
 
             if let weatherData {
-                Text("\(weatherData.temperature, specifier: "%.0f")°")
+                let displayTemperature = temperatureUnit.fromFahrenheit(weatherData.temperature)
+                Text("\(displayTemperature, specifier: "%.0f")°")
                     .font(AppFontStyle.title3.font)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
-                    .accessibilityLabel("\(weatherData.temperature, specifier: "%.0f") degrees")
+                    .accessibilityLabel("\(displayTemperature, specifier: "%.0f") degrees")
             }
         }
         .padding(14)

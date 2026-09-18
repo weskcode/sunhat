@@ -113,4 +113,34 @@ enum TemperatureUnit: String, CaseIterable, Codable {
             return String(localized: "Celsius", comment: "Temperature unit name")
         }
     }
+
+    /// Converts a canonical Fahrenheit-stored temperature into this unit for
+    /// display/editing. Weather data and `TriggerCondition` values are always
+    /// stored in Fahrenheit (matching the raw WeatherKit/OpenWeatherMap unit),
+    /// so this is the single conversion every display site should use.
+    func fromFahrenheit(_ fahrenheit: Double) -> Double {
+        switch self {
+        case .fahrenheit: return fahrenheit
+        case .celsius: return (fahrenheit - 32) * 5 / 9
+        }
+    }
+
+    /// Inverse of `fromFahrenheit`: converts a value edited in this unit back
+    /// to canonical Fahrenheit for storage.
+    func toFahrenheit(_ value: Double) -> Double {
+        switch self {
+        case .fahrenheit: return value
+        case .celsius: return value * 9 / 5 + 32
+        }
+    }
+
+    /// Converts a temperature *difference* (e.g. a ± tolerance), scale only,
+    /// no zero-point offset — unlike `fromFahrenheit`, which converts an
+    /// absolute reading.
+    func fromFahrenheitDelta(_ delta: Double) -> Double {
+        switch self {
+        case .fahrenheit: return delta
+        case .celsius: return delta * 5 / 9
+        }
+    }
 }

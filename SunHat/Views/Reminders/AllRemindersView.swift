@@ -14,8 +14,13 @@ struct AllRemindersView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query(sort: \WeatherReminder.createdDate, order: .reverse) private var reminders: [WeatherReminder]
+    @Query private var userPreferences: [UserPreferences]
 
     @EnvironmentObject private var onboardingCoordinator: OnboardingCoordinator
+
+    private var temperatureUnit: TemperatureUnit {
+        userPreferences.first?.temperatureUnit ?? (Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit)
+    }
 
     @State private var searchText = ""
     @State private var selectedFilter: ReminderFilter = .all
@@ -239,7 +244,7 @@ struct AllRemindersView: View {
 
             LazyVStack(spacing: 12) {
                 ForEach(reminders) { reminder in
-                    ReminderGlassCard(reminder: reminder)
+                    ReminderGlassCard(reminder: reminder, temperatureUnit: temperatureUnit)
                         .contextMenu {
                             Button(role: .destructive) {
                                 Task { await deleteReminder(reminder) }
@@ -253,34 +258,43 @@ struct AllRemindersView: View {
     }
 
     private var emptyStateView: some View {
-        VStack {
-            Spacer(minLength: 0)
+        // A GeometryReader-sized ScrollView keeps the centered look when
+        // content fits, but lets it scroll instead of overflowing past the
+        // safe area into the nav bar at accessibility Dynamic Type sizes,
+        // where the empty state block can grow taller than the screen.
+        GeometryReader { geometry in
+            ScrollView {
+                VStack {
+                    Spacer(minLength: 0)
 
-            VStack(spacing: 16) {
-                SunHatEmptyState(
-                    title: String(localized: "No Tasks Yet", comment: "Empty state title when the user has no weather tasks"),
-                    message: String(localized: "Create your first weather-triggered task to start watching the weather.", comment: "Empty state message when the user has no weather tasks"),
-                    systemImage: "list.bullet.clipboard"
-                )
+                    VStack(spacing: 16) {
+                        SunHatEmptyState(
+                            title: String(localized: "No Tasks Yet", comment: "Empty state title when the user has no weather tasks"),
+                            message: String(localized: "Create your first weather-triggered task to start watching the weather.", comment: "Empty state message when the user has no weather tasks"),
+                            systemImage: "list.bullet.clipboard"
+                        )
 
-                Button {
-                    showingCreateSheet = true
-                } label: {
-                    Label {
-                        Text("Create a Task", comment: "Button on the empty reminders list that opens the creation screen")
-                    } icon: {
-                        Image(systemName: "plus")
+                        Button {
+                            showingCreateSheet = true
+                        } label: {
+                            Label {
+                                Text("Create a Task", comment: "Button on the empty reminders list that opens the creation screen")
+                            } icon: {
+                                Image(systemName: "plus")
+                            }
+                            .font(.headline)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 10)
+                        }
+                        .buttonStyle(.glassProminent)
+                        .padding(.bottom, 20)
                     }
-                    .font(.headline)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                }
-                .buttonStyle(.glassProminent)
-                .padding(.bottom, 20)
-            }
-            .sunHatSurface(tint: .accentColor, cornerRadius: 24, prominence: 0.70)
+                    .sunHatSurface(tint: .accentColor, cornerRadius: 24, prominence: 0.70)
 
-            Spacer(minLength: 120)
+                    Spacer(minLength: 120)
+                }
+                .frame(minHeight: geometry.size.height)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.horizontal, 16)
