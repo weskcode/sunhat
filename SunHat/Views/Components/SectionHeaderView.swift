@@ -10,10 +10,10 @@ import SwiftUI
 
 struct SectionHeaderView: View {
     let icon: String
-    let title: String
-    let subtitle: String?
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey?
 
-    init(icon: String, title: String, subtitle: String? = nil) {
+    init(icon: String, title: LocalizedStringKey, subtitle: LocalizedStringKey? = nil) {
         self.icon = icon
         self.title = title
         self.subtitle = subtitle

@@ -129,12 +129,21 @@ struct MainTabView: View {
             presenting: lifecyclePrompts.activePrompt
         ) { prompt in
             switch prompt {
-            case .notification:
+            case let .notification(stage):
                 Button("Not Now", role: .cancel) {
                     lifecyclePrompts.handleNotificationPromptChoice(shouldEnable: false)
                 }
-                Button("Enable Notifications") {
-                    lifecyclePrompts.handleNotificationPromptChoice(shouldEnable: true)
+                switch stage {
+                case .requestPermission:
+                    // Neutral wording: this button leads into the system
+                    // permission dialog, it must not pre-answer it.
+                    Button("Continue") {
+                        lifecyclePrompts.handleNotificationPromptChoice(shouldEnable: true)
+                    }
+                case .openSettings:
+                    Button("Open Settings") {
+                        lifecyclePrompts.handleNotificationPromptChoice(shouldEnable: true)
+                    }
                 }
             case .enjoyment:
                 Button("Not Really") {

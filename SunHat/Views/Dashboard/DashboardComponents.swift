@@ -59,6 +59,7 @@ struct WeatherAlertCard: View {
 struct ActiveReminderCard: View {
     let reminder: WeatherReminderDisplay
     let weatherData: WeatherDataTransfer?
+    let temperatureUnit: TemperatureUnit
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -88,7 +89,7 @@ struct ActiveReminderCard: View {
                     .lineLimit(1)
 
                 if let condition = reminder.triggerCondition {
-                    Text("Trigger: When temperature is \(condition.comparisonType.displayName) \(condition.targetTemperature, specifier: "%.1f")°")
+                    Text("Trigger: When temperature is \(condition.comparisonType.displayName) \(temperatureUnit.fromFahrenheit(condition.targetTemperature), specifier: "%.1f")°")
                         .font(AppFontStyle.caption.font)
                         .foregroundStyle(.secondary)
                 } else {
@@ -107,12 +108,13 @@ struct ActiveReminderCard: View {
             Spacer()
 
             if let weatherData {
-                Text("\(weatherData.temperature, specifier: "%.0f")°")
+                let displayTemperature = temperatureUnit.fromFahrenheit(weatherData.temperature)
+                Text("\(displayTemperature, specifier: "%.0f")°")
                     .font(AppFontStyle.title3.font)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
-                    .accessibilityLabel("\(weatherData.temperature, specifier: "%.0f") degrees")
+                    .accessibilityLabel("\(displayTemperature, specifier: "%.0f") degrees")
             }
         }
         .padding(14)
@@ -146,14 +148,14 @@ struct ActiveReminderCard: View {
         var parts = [reminder.title, statusText]
 
         if let condition = reminder.triggerCondition {
-            let temperature = String(format: "%.1f", condition.targetTemperature)
+            let temperature = String(format: "%.1f", temperatureUnit.fromFahrenheit(condition.targetTemperature))
             parts.append(String(localized: "Trigger when temperature is \(condition.comparisonType.displayName) \(temperature) degrees", comment: "Accessibility label clause describing a reminder's temperature trigger condition"))
         } else {
             parts.append(String(localized: "No trigger condition set", comment: "Accessibility label clause when a reminder has no trigger condition configured"))
         }
 
         if let weatherData {
-            let temperature = String(format: "%.0f", weatherData.temperature)
+            let temperature = String(format: "%.0f", temperatureUnit.fromFahrenheit(weatherData.temperature))
             parts.append(String(localized: "Current temperature \(temperature) degrees", comment: "Accessibility label clause stating the current temperature"))
         }
 

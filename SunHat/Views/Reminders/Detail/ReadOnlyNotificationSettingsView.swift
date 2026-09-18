@@ -44,11 +44,13 @@ struct ReadOnlyNotificationSettingsView: View {
                     }
 
                     HStack {
-                        Label("Badge", systemImage: "app.badge")
-                            .font(.caption2)
-                            .foregroundStyle(.blue)
+                        if config.enableBadge {
+                            Label("Badge", systemImage: "app.badge")
+                                .font(.caption2)
+                                .foregroundStyle(.blue)
+                        }
 
-                        if config.customSound != nil {
+                        if config.enableSound {
                             Label("Sound", systemImage: "speaker.wave.2")
                                 .font(.caption2)
                                 .foregroundStyle(.blue)

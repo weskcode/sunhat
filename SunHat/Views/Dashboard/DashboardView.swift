@@ -117,7 +117,7 @@ struct DashboardView: View {
             } else {
                 LazyVStack(spacing: 12) {
                     SwiftUI.ForEach(Array(viewModel.activeReminders.prefix(3)), id: \.id) { reminder in
-                        ActiveReminderCard(reminder: reminder, weatherData: viewModel.currentWeatherData)
+                        ActiveReminderCard(reminder: reminder, weatherData: viewModel.currentWeatherData, temperatureUnit: viewModel.temperatureUnit)
                     }
 
                     if viewModel.activeReminders.count > 3 {

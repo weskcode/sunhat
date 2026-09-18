@@ -34,8 +34,8 @@ struct QuietHoursWindowPicker: View {
             Divider()
 
             QuietHoursTimeRow(
-                title: "Pause at",
-                detail: "Start quiet hours",
+                title: String(localized: "Pause at", comment: "Quiet hours start time row label"),
+                detail: String(localized: "Start quiet hours", comment: "Quiet hours start time row detail"),
                 systemImage: "moon.fill",
                 tint: .indigo,
                 selection: $start
@@ -44,8 +44,8 @@ struct QuietHoursWindowPicker: View {
             Divider()
 
             QuietHoursTimeRow(
-                title: "Resume at",
-                detail: "Allow reminders again",
+                title: String(localized: "Resume at", comment: "Quiet hours end time row label"),
+                detail: String(localized: "Allow reminders again", comment: "Quiet hours end time row detail"),
                 systemImage: "sun.max.fill",
                 tint: .orange,
                 selection: $end

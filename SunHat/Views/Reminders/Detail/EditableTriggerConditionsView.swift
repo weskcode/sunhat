@@ -39,15 +39,15 @@ struct EditableTriggerConditionsView: View {
 
                         Spacer()
 
-                        Text("\(Int(displayTemperature))°\(temperatureUnit.symbol.dropFirst())")
+                        Text("\(displayTemperature)°\(temperatureUnit.symbol.dropFirst())")
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundStyle(.blue)
                     }
 
                     Slider(
-                        value: $condition.targetTemperature,
-                        in: 0...110,
+                        value: targetTemperatureInUnit,
+                        in: sliderRange,
                         step: 1
                     )
                     .tint(temperatureColor(for: condition.targetTemperature))
@@ -66,13 +66,21 @@ struct EditableTriggerConditionsView: View {
         }
     }
 
-    private var displayTemperature: Double {
-        switch temperatureUnit {
-        case .fahrenheit:
-            return condition.targetTemperature
-        case .celsius:
-            return (condition.targetTemperature - 32) * 5 / 9
-        }
+    private var displayTemperature: Int {
+        temperatureUnit.roundedFromFahrenheit(condition.targetTemperature)
+    }
+
+    /// The slider range below is the same physical range (0-110°F) expressed
+    /// in each unit, so switching units never changes what's reachable.
+    private var sliderRange: ClosedRange<Double> {
+        temperatureUnit == .fahrenheit ? 0...110 : -18...44
+    }
+
+    private var targetTemperatureInUnit: Binding<Double> {
+        Binding(
+            get: { temperatureUnit.fromFahrenheit(condition.targetTemperature) },
+            set: { condition.targetTemperature = temperatureUnit.toFahrenheit($0) }
+        )
     }
 
     private func temperatureColor(for temp: Double) -> Color {

@@ -405,6 +405,8 @@ actor TriggerNotificationManager: TriggerNotificationSending {
         var body = result.triggerReason
         var includeWeatherSummary = true
         var temperatureUnit = TemperatureUnit.fahrenheit
+        var enableBadge = true
+        var enableSound = true
 
         if let modelContainer {
             let context = ModelContext(modelContainer)
@@ -425,6 +427,8 @@ actor TriggerNotificationManager: TriggerNotificationSending {
                         body = config.message
                     }
                     includeWeatherSummary = config.includeWeatherSummary
+                    enableBadge = config.enableBadge
+                    enableSound = config.enableSound
                 } else {
                     title = reminder.displayTitle
                 }
@@ -438,7 +442,7 @@ actor TriggerNotificationManager: TriggerNotificationSending {
         content.title = title
         content.body = body
         content.categoryIdentifier = SunHatNotificationCategoryIdentifier.weatherTrigger
-        content.sound = .default
+        content.sound = enableSound ? .default : nil
 
         // Add weather context in the user's preferred unit if available
         if includeWeatherSummary, let weatherData = result.weatherData {
@@ -454,7 +458,9 @@ actor TriggerNotificationManager: TriggerNotificationSending {
         }
         
         // Set badge
-        content.badge = NSNumber(value: await getActiveTriggerCount() + 1)
+        if enableBadge {
+            content.badge = NSNumber(value: await getActiveTriggerCount() + 1)
+        }
         
         // Add user info for handling actions
         content.userInfo = [

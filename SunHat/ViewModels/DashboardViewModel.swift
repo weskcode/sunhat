@@ -117,7 +117,11 @@ final class DashboardViewModel: ObservableObject {
     func configure(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.weatherModelActor = WeatherModelActor(modelContainer: modelContext.container)
-        
+        // init() already called loadTemperatureUnit(), but modelContext was
+        // still nil then, so it silently fell back to the locale default and
+        // never got a second chance to read the user's actual preference.
+        loadTemperatureUnit()
+
         Task {
             await weatherService.configure(modelContainer: modelContext.container)
             await loadInitialData()

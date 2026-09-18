@@ -18,6 +18,8 @@ final class NotificationConfig {
     var title: String = ""
     var message: String = ""
     var customSound: String?
+    var enableBadge: Bool = true
+    var enableSound: Bool = true
     
     // Timing configuration
     var deliveryTime: NotificationDeliveryTime = NotificationDeliveryTime.immediate

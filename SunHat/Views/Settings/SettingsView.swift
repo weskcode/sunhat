@@ -14,6 +14,7 @@ struct SettingsView: View {
     @State private var viewModel = SettingsViewModel()
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var activeSheet: ActiveSheet?
     @State private var adManager = AdManager.shared
@@ -49,6 +50,14 @@ struct SettingsView: View {
                 // appears; Google requires the privacy-options entry point to
                 // be reachable whenever the framework says it's required.
                 adManager.refreshConsentState()
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                // The system notification permission has no delegate callback,
+                // unlike location, so a user who flips it in the iOS Settings
+                // app and returns here would otherwise see a stale toggle.
+                if newPhase == .active {
+                    viewModel.checkNotificationStatus()
+                }
             }
             .alert(
                 viewModel.activeAlert?.title ?? "",
@@ -102,7 +111,7 @@ struct SettingsView: View {
     private var notificationsSection: some View {
         Section {
             Toggle(isOn: $viewModel.notificationsToggleIsOn) {
-                SettingsIconLabel(title: "Allow Notifications", systemImage: "bell.badge.fill", color: .red)
+                SettingsIconLabel(title: String(localized: "Allow Notifications", comment: "Settings row toggling the notification master switch"), systemImage: "bell.badge.fill", color: .red)
             }
 
             if viewModel.notificationsEnabled {
@@ -150,7 +159,7 @@ struct SettingsView: View {
     private var locationSection: some View {
         Section {
             HStack {
-                SettingsIconLabel(title: "Location Access", systemImage: "location.fill", color: .blue)
+                SettingsIconLabel(title: String(localized: "Location Access", comment: "Settings row showing location permission status"), systemImage: "location.fill", color: .blue)
                 Spacer()
                 Text(viewModel.locationEnabled ? String(localized: "While Using", comment: "Location access status") : String(localized: "Off", comment: "Location access status"))
                     .foregroundStyle(.secondary)
@@ -184,7 +193,7 @@ struct SettingsView: View {
                         .tag(unit)
                 }
             } label: {
-                SettingsIconLabel(title: "Temperature", systemImage: "thermometer.medium", color: .orange)
+                SettingsIconLabel(title: String(localized: "Temperature", comment: "Settings row for the temperature unit picker"), systemImage: "thermometer.medium", color: .orange)
             }
             .onChange(of: viewModel.temperatureUnit) {
                 viewModel.handleTemperatureUnitChange()
@@ -196,7 +205,7 @@ struct SettingsView: View {
                         .tag(mode)
                 }
             } label: {
-                SettingsIconLabel(title: "Appearance", systemImage: "circle.lefthalf.filled", color: .indigo)
+                SettingsIconLabel(title: String(localized: "Appearance", comment: "Settings row for the light/dark/system appearance picker"), systemImage: "circle.lefthalf.filled", color: .indigo)
             }
             .onChange(of: viewModel.selectedAppearance) {
                 viewModel.handleAppearanceChange()
@@ -211,25 +220,25 @@ struct SettingsView: View {
             Button {
                 activeSheet = .helpFAQ
             } label: {
-                SettingsIconLabel(title: "Help & FAQ", systemImage: "questionmark", color: .teal)
+                SettingsIconLabel(title: String(localized: "Help & FAQ", comment: "Settings row opening the Help & FAQ sheet"), systemImage: "questionmark", color: .teal)
             }
 
             Button {
                 viewModel.contactSupport()
             } label: {
-                SettingsIconLabel(title: "Contact Support", systemImage: "envelope.fill", color: .blue)
+                SettingsIconLabel(title: String(localized: "Contact Support", comment: "Settings row composing a support email"), systemImage: "envelope.fill", color: .blue)
             }
 
             Button {
                 viewModel.sendFeedback()
             } label: {
-                SettingsIconLabel(title: "Send Feedback", systemImage: "bubble.left.fill", color: .green)
+                SettingsIconLabel(title: String(localized: "Send Feedback", comment: "Settings row composing a feedback email"), systemImage: "bubble.left.fill", color: .green)
             }
 
             Button {
                 viewModel.rateApp()
             } label: {
-                SettingsIconLabel(title: "Rate SunHat", systemImage: "star.fill", color: .yellow)
+                SettingsIconLabel(title: String(localized: "Rate SunHat", comment: "Settings row requesting an App Store rating; 'SunHat' is the app name"), systemImage: "star.fill", color: .yellow)
             }
         }
         .foregroundStyle(.primary)
@@ -242,7 +251,7 @@ struct SettingsView: View {
             Button {
                 activeSheet = .dataPrivacy
             } label: {
-                SettingsIconLabel(title: "Data & Privacy", systemImage: "hand.raised.fill", color: .blue)
+                SettingsIconLabel(title: String(localized: "Data & Privacy", comment: "Settings row opening the Data & Privacy sheet"), systemImage: "hand.raised.fill", color: .blue)
             }
             .foregroundStyle(.primary)
 
@@ -303,6 +312,17 @@ enum AppearanceMode: String, CaseIterable {
     case light = "light"
     case dark = "dark"
 
+    static let defaultsKey = "AppAppearance"
+
+    /// The last-saved appearance choice, or `.system` if none was ever saved.
+    static var stored: AppearanceMode {
+        guard let saved = UserDefaults.standard.object(forKey: defaultsKey) as? String,
+              let appearance = AppearanceMode(rawValue: saved) else {
+            return .system
+        }
+        return appearance
+    }
+
     var displayName: String {
         switch self {
         case .system:
@@ -311,6 +331,25 @@ enum AppearanceMode: String, CaseIterable {
             return String(localized: "Light", comment: "Appearance mode option: always light")
         case .dark:
             return String(localized: "Dark", comment: "Appearance mode option: always dark")
+        }
+    }
+
+    /// Applies this appearance to the app's window. Called both when the
+    /// user changes the setting and once at launch, since setting the
+    /// UserDefaults value alone (what the app previously did) never
+    /// re-applied it to a freshly created window.
+    @MainActor
+    func apply() {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else { return }
+
+        switch self {
+        case .system:
+            window.overrideUserInterfaceStyle = .unspecified
+        case .light:
+            window.overrideUserInterfaceStyle = .light
+        case .dark:
+            window.overrideUserInterfaceStyle = .dark
         }
     }
 }

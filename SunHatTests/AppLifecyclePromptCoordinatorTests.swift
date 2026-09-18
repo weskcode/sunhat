@@ -25,7 +25,23 @@ struct AppLifecyclePromptCoordinatorTests {
 
         await coordinator.recordForegroundOpenIfNeeded(hasPositiveEngagementSignal: false)
 
-        #expect(coordinator.activePrompt == .notification)
+        #expect(coordinator.activePrompt == .notification(.openSettings))
+    }
+
+    @Test("An undetermined status uses the neutral request stage before the system dialog")
+    func notificationPromptUsesRequestStageWhenUndetermined() async {
+        let defaults = makeDefaults()
+        defaults.set(4, forKey: "appLifecyclePrompt.appOpenCount")
+        let permissions = StubPromptNotificationPermissionProvider(status: .notDetermined)
+        let coordinator = AppLifecyclePromptCoordinator(
+            defaults: defaults,
+            notificationPermissions: permissions,
+            settingsOpener: RecordingPromptSettingsOpener()
+        )
+
+        await coordinator.recordForegroundOpenIfNeeded(hasPositiveEngagementSignal: false)
+
+        #expect(coordinator.activePrompt == .notification(.requestPermission))
     }
 
     @Test("Notification prompt is suppressed when system notifications are enabled")

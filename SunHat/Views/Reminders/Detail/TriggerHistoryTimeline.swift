@@ -8,6 +8,7 @@ import SwiftUI
 struct TriggerHistoryTimeline: View {
     let history: [ReminderHistory]
     let isCompact: Bool
+    let temperatureUnit: TemperatureUnit
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -18,7 +19,8 @@ struct TriggerHistoryTimeline: View {
                     TriggerHistoryRow(
                         entry: entry,
                         isLast: index == history.count - 1,
-                        isCompact: isCompact
+                        isCompact: isCompact,
+                        temperatureUnit: temperatureUnit
                     )
                 }
             }
@@ -49,6 +51,7 @@ private struct TriggerHistoryRow: View {
     let entry: ReminderHistory
     let isLast: Bool
     let isCompact: Bool
+    let temperatureUnit: TemperatureUnit
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -86,7 +89,7 @@ private struct TriggerHistoryRow: View {
                 }
 
                 if let temperature = entry.temperatureAtTime {
-                    Text("Temperature: \(Int(temperature))°F")
+                    Text("Temperature: \(temperatureUnit.roundedFromFahrenheit(temperature))\(temperatureUnit.symbol)")
                         .font(.caption2)
                         .foregroundStyle(.orange)
                 }

@@ -176,6 +176,8 @@ final class DetailedReminderViewModel: ObservableObject {
             config.title = editedReminder.notificationConfig.title
             config.message = editedReminder.notificationConfig.message
             config.cooldownPeriodHours = editedReminder.notificationConfig.cooldownPeriodHours
+            config.enableBadge = editedReminder.notificationConfig.enableBadge
+            config.enableSound = editedReminder.notificationConfig.enableSound
             config.respectsQuietHours = editedReminder.notificationConfig.respectsQuietHours
             let timeRange = editedReminder.notificationConfig.preferredTimeRange
             config.avoidNighttime = timeRange != .allDay
@@ -340,7 +342,8 @@ final class DetailedReminderViewModel: ObservableObject {
         }
         
         // Calculate confidence based on matching days
-        confidence = Double(matchingDays) / Double(min(sortedForecast.count, 7))
+        let dayCount = min(sortedForecast.count, 7)
+        confidence = dayCount > 0 ? Double(matchingDays) / Double(dayCount) : 0.0
         
         return LivePrediction(
             nextTriggerDate: nextTriggerDate,
@@ -495,8 +498,8 @@ struct EditableNotificationConfig {
         self.title = config?.title ?? ""
         self.message = config?.message ?? ""
         self.cooldownPeriodHours = config?.cooldownPeriodHours ?? 2
-        self.enableBadge = true // Default value since NotificationConfig doesn't have this property
-        self.enableSound = config?.customSound != nil // Use presence of customSound to determine if sound is enabled
+        self.enableBadge = config?.enableBadge ?? true
+        self.enableSound = config?.enableSound ?? true
         self.respectsQuietHours = config?.respectsQuietHours ?? true
         self.preferredTimeRange = config?.preferredTimeRange ?? .allDay
     }
