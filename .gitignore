@@ -76,3 +76,7 @@ AppStore/
 ## Internal audit/process docs (not needed in public repo)
 docs/open-source-readiness-audit.md
 docs/open-source-release-report.md
+
+## Internal assets/tooling (not needed in public repo)
+Design Assets/
+scripts/
