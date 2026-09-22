@@ -1,8 +1,11 @@
-# iOS version strategy: shipping on 26, preparing for 27
+# iOS version strategy: shipping on 26, building with Xcode 27
 
-**Status as of September 1, 2026.** iOS 26.6.1 is the current public release;
-iOS 27 is in developer beta with a public release expected within weeks.
-SunHat ships on iOS 26 and treats iOS 27 as forward-compatibility work.
+**Status as of September 22, 2026.** Xcode 27 (build 27A266a) is now Apple's
+public release, not beta — confirmed via `xcodebuild -version` on this
+machine. Per Wesley's direction, this machine builds exclusively with Xcode
+27 from here on; there is no more chasing a separate Xcode 26.x install.
+SunHat's deployment target stays **iOS 26.0**, unchanged — Xcode 27 builds
+and submits against that minimum normally via standard backward deployment.
 
 ---
 
@@ -11,7 +14,7 @@ SunHat ships on iOS 26 and treats iOS 27 as forward-compatibility work.
 | Decision | Choice | Why |
 |---|---|---|
 | Minimum iOS (deployment target) | **26.0** | Lowered from 26.5 on Sept 7, 2026 for the App Store 1.0 submission. Nothing in the codebase requires a 26.x point release, the only version gates are `@available(iOS 26, *)` and two `#available(iOS 18.0, *)` checks, and all 25 Liquid Glass call sites are valid from 26.0. Holding at 26.5 excluded every 26.0-26.4 install for no compile-time reason. |
-| Build SDK / toolchain | **Release Xcode 26.x (iOS 26 SDK)** | What the App Store actually cares about. Beta Xcode builds are rejected at submission. |
+| Build SDK / toolchain | **Xcode 27 (release, iOS 27 SDK), exclusively** | Xcode 27 is GA as of Sept 22, 2026 — no longer beta, so no submission risk. Deployment target (26.0) is independent of the SDK a build is made with. |
 | Branching | **Single `main` line + short-lived `feature/ios27-*` branches** | Avoids the long-lived-divergence failure mode; iOS 27 work here is additive, not a port. |
 
 ### Why not a long-lived iOS 27 branch
@@ -37,13 +40,16 @@ line, after iOS 27 is public, and with a dated note in this file.
 
 > **Apple rejects App Store builds made with a beta Xcode or beta SDK.**
 
-**RESOLVED Sept 1, 2026.** Release **Xcode 26.6 (17F113)** is installed at
-`/Applications/Xcode-26.6.0.app` and selected. Xcode 27 beta remains at
-`/Applications/Xcode-beta.app` for iOS 27 work only. Verify with
-`xcodebuild -version`; switch with `sudo xcodes select 26.6`.
+**RESOLVED Sept 22, 2026 — superseding the Sept 1 approach.** The Sept 1 fix
+(installing a separate release Xcode 26.6 alongside the Xcode 27 beta) is no
+longer the plan: Xcode 27 itself went GA, so the whole problem this file was
+tracking (having no non-beta toolchain) is moot. `/Applications/Xcode-26.6.0.app`
+is gone from this machine; `/Applications/Xcode.app` is Xcode 27.0 (build
+27A266a) and is selected (`xcode-select -p`). Verify with `xcodebuild -version`.
 
-Release build for a generic iOS device against the iOS 26 SDK is verified
-(`BUILD SUCCEEDED`), so the toolchain half of submission readiness is done.
+A **release build for a generic iOS device against the iOS 26.0 deployment
+target still needs re-verification on Xcode 27** before the next submission
+attempt (last verified `BUILD SUCCEEDED` was on the now-removed Xcode 26.6).
 
 ### Toolchain issues and their real causes (updated Sept 1, 2026)
 
@@ -90,7 +96,12 @@ iOS 27 beta; both had different real causes.
   `~/Library/Caches/org.swift.swiftpm/artifacts` poison every later extract
   until the cache is purged.
 
-### Xcode 26.6 migration notes (Sept 1, 2026)
+### Xcode 26.6 migration notes (Sept 1, 2026) — HISTORICAL, this install no longer exists
+
+Superseded Sept 22, 2026: `/Applications/Xcode-26.6.0.app` was removed from
+this machine and the project now builds exclusively with Xcode 27 (GA).
+Left below for the runtime/simulator gotchas, which may still apply if a
+26.x-family Xcode is ever reinstalled for some other reason.
 
 Installed with `xcodes install 26.6` → `/Applications/Xcode-26.6.0.app`,
 selected via `sudo xcodes select 26.6`. Steps that were not obvious:
@@ -120,10 +131,10 @@ Work in short-lived `feature/ios27-*` branches off `main`, merged back when
 each item is verified. Nothing here should raise the deployment target or
 require the iOS 27 SDK.
 
-### Phase A: Compatibility verification (can start now, on the beta)
+### Phase A: Compatibility verification
 
-Run the app on an iOS 27 simulator built with the **iOS 26 SDK**, this is
-exactly what a user on iOS 27 will run after installing from the App Store.
+Run the app on an iOS 27 simulator; confirm behavior for a user who installs
+from the App Store and is already running iOS 27.
 
 - [ ] Full unit + UI suite green on an iOS 27 simulator.
 - [ ] Visual pass on every screen: Liquid Glass rendering, tab bar
