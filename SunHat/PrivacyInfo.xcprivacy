@@ -5,21 +5,26 @@
 	<!-- True because the app requests App Tracking Transparency for AdMob
 	     advertising when the user is not Ad-Free.
 
-	     GO-LIVE BLOCKER — NSPrivacyTrackingDomains is deliberately empty and
-	     must be filled before submission. Verified against the shipped
-	     GoogleMobileAds 12.14.0 and UserMessagingPlatform 3.1.0 xcframeworks:
-	     neither declares NSPrivacyTracking nor NSPrivacyTrackingDomains (they
-	     declare only collected data types and accessed-API reasons), so this
-	     file is the app's ONLY tracking declaration. Apple expects a
-	     non-empty domain list whenever NSPrivacyTracking is true, and an
-	     empty one alongside `true` is a known review-rejection trigger.
-	     Populate from Google's current published ad-serving domain list
-	     (https://developers.google.com/admob/ios/privacy) at go-live — do not
-	     guess the values; they change. See docs/MONETIZATION_GOLIVE.md. -->
+	     Google does not publish an official NSPrivacyTrackingDomains list for
+	     AdMob (confirmed 2026-09-21: the Google Mobile Ads SDK team said as
+	     much on their own developer forum, and the shipped GoogleMobileAds
+	     12.14.0 / UserMessagingPlatform 3.1.0 xcframeworks declare neither
+	     NSPrivacyTracking nor NSPrivacyTrackingDomains themselves — this file
+	     is the app's only tracking declaration). The domains below are
+	     Google's own documented ad-serving/ad-cookie domains
+	     (business.safety.google/adscookies), narrowed to the ones AdMob
+	     banner ads actually use — SunHat has no Firebase/Analytics/YouTube
+	     SDKs, so those Google properties are excluded. Revisit if the ad
+	     stack changes. See docs/MONETIZATION_GOLIVE.md. -->
 	<key>NSPrivacyTracking</key>
 	<true/>
 	<key>NSPrivacyTrackingDomains</key>
-	<array/>
+	<array>
+		<string>googlesyndication.com</string>
+		<string>googleadservices.com</string>
+		<string>doubleclick.net</string>
+		<string>google.com</string>
+	</array>
 	<key>NSPrivacyCollectedDataTypes</key>
 	<array>
 		<dict>
