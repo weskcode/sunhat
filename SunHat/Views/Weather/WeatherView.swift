@@ -70,6 +70,8 @@ struct WeatherView: View {
                                     triggerPredictionsSection
                                 }
                             }
+
+                            weatherAttributionFooter
                         } else if viewModel.isLoading {
                             ProgressView(String(localized: "Loading weather...", comment: "Progress label while the weather tab loads"))
                                 .frame(maxWidth: .infinity)
@@ -141,6 +143,17 @@ struct WeatherView: View {
         }
         .pickerStyle(.segmented)
         .padding(.horizontal, 4)
+    }
+
+    // MARK: - Attribution
+
+    private var weatherAttributionFooter: some View {
+        HStack {
+            Spacer()
+            WeatherAttributionView()
+            Spacer()
+        }
+        .padding(.top, 4)
     }
 
     // MARK: - Helper Views
