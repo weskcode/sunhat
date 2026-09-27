@@ -11,7 +11,7 @@ enum AppSupportLinks {
     static let privacyEmail = "weskcode@duck.com"
 
     static let privacyPolicyURL = URL(string: "https://sunhat.apphq.online/privacy")!
-    static let termsOfServiceURL = URL(string: "https://sunhat.apphq.online/terms")!
+    static let termsOfServiceURL = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
 
     static func mailURL(to email: String, subject: String, body: String? = nil) -> URL? {
         var components = URLComponents()
