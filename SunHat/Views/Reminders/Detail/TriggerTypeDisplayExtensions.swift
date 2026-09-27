@@ -16,6 +16,15 @@ extension ComparisonType {
     }
 }
 
+extension TriggerCondition {
+    /// Whether a reminder's read-only detail screen should show the actual
+    /// min-max range as its large primary value instead of the single target
+    /// temperature: true only for a `.between` condition with both bounds set.
+    var hasDisplayableRange: Bool {
+        comparisonType == .between && minTemperature != nil && maxTemperature != nil
+    }
+}
+
 extension TriggerType {
     var displayName: String {
         switch self {

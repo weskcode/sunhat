@@ -65,6 +65,30 @@ struct WeatherReminderTests {
         #expect(reminder.shortDescription == String(localized: "When temperature is between 70°", comment: "Short description of a reminder's temperature trigger"))
     }
 
+    @Test("A between condition with both bounds set has a displayable range")
+    func hasDisplayableRangeTrueForCompleteBetweenCondition() {
+        let condition = TriggerCondition(triggerType: .temperatureRange, comparisonType: .between)
+        condition.minTemperature = 65.0
+        condition.maxTemperature = 75.0
+        #expect(condition.hasDisplayableRange)
+    }
+
+    @Test("A between condition missing a bound has no displayable range")
+    func hasDisplayableRangeFalseWhenBoundMissing() {
+        let condition = TriggerCondition(triggerType: .temperatureRange, comparisonType: .between)
+        condition.minTemperature = 65.0
+        // maxTemperature intentionally left nil.
+        #expect(!condition.hasDisplayableRange)
+    }
+
+    @Test("Non-between comparison types never have a displayable range, even with stray bounds set")
+    func hasDisplayableRangeFalseForNonBetweenComparison() {
+        let condition = TriggerCondition(triggerType: .exactTemperature, targetTemperature: 70.0, comparisonType: .above)
+        condition.minTemperature = 65.0
+        condition.maxTemperature = 75.0
+        #expect(!condition.hasDisplayableRange)
+    }
+
     // MARK: - Status text state machine
 
     @Test("Inactive reminders report Inactive regardless of other flags")

@@ -575,6 +575,23 @@
         }
       }
     },
+    "%lld° - %lld°%@" : {
+      "comment" : "Large temperature range display on a reminder's read-only detail screen, e.g. '65° - 75°F'",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld° - %2$lld°%3$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld° - %lld°%@"
+          }
+        }
+      }
+    },
     "%lld° - %lld°F" : {
       "comment" : "Temperature range shown for a reminder, e.g. '65° - 75°F'",
       "localizations" : {
