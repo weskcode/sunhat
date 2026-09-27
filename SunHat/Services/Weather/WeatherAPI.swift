@@ -74,7 +74,7 @@ final class AppleWeatherKitAPI: WeatherAPI {
             feelsLike: current.apparentTemperature.fahrenheitValue,
             humidity: Int(current.humidity * 100),
             dewPoint: current.dewPoint.fahrenheitValue,
-            pressure: current.pressure.value,
+            pressure: current.pressure.inchesOfMercuryValue,
             visibility: current.visibility.milesValue,
             uvIndex: Double(current.uvIndex.value),
             cloudCover: Int(current.cloudCover * 100),
@@ -166,7 +166,7 @@ final class AppleWeatherKitAPI: WeatherAPI {
             feelsLike: current.apparentTemperature.fahrenheitValue,
             humidity: Int(current.humidity * 100),
             dewPoint: current.dewPoint.fahrenheitValue,
-            pressure: current.pressure.value,
+            pressure: current.pressure.inchesOfMercuryValue,
             visibility: current.visibility.milesValue,
             uvIndex: Double(current.uvIndex.value),
             cloudCover: Int(current.cloudCover * 100),
@@ -418,7 +418,7 @@ final class OpenWeatherMapAPI: WeatherAPI {
             feelsLike: response.main.feelsLike,
             humidity: response.main.humidity,
             dewPoint: 0.0, // Not available
-            pressure: response.main.pressure,
+            pressure: Measurement(value: response.main.pressure, unit: UnitPressure.hectopascals).inchesOfMercuryValue,
             visibility: response.visibility / 1000.0,
             uvIndex: 0.0, // Not available
             cloudCover: response.clouds?.all ?? 0,
@@ -588,6 +588,12 @@ nonisolated private extension Measurement where UnitType == UnitLength {
 nonisolated private extension Measurement where UnitType == UnitSpeed {
     var milesPerHourValue: Double {
         converted(to: .milesPerHour).value
+    }
+}
+
+nonisolated private extension Measurement where UnitType == UnitPressure {
+    var inchesOfMercuryValue: Double {
+        converted(to: .inchesOfMercury).value
     }
 }
 
