@@ -58,7 +58,7 @@ Result: **4+**.
 | Support URL | `https://sunhat.apphq.online` | Required |
 | Marketing URL | `https://sunhat.apphq.online` | Optional |
 | Privacy Policy URL | `https://sunhat.apphq.online/privacy` | Required |
-| Terms of Use (EULA) | `https://sunhat.apphq.online/terms` | **Required, auto-renewable subscription** |
+| Terms of Use (EULA) | `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/` | **Required, auto-renewable subscription** |
 
 There is no dedicated `/support` page on the site, so the Support URL field
 uses the homepage, which lists a contact email in its footer. That satisfies
@@ -70,9 +70,8 @@ support page with an FAQ is worth adding later.
 
 **Two things to fix on the live site before submitting, neither of them
 code changes:**
-1. `/privacy` is live and correct. `/terms` does not exist yet.
-   [`TERMS_OF_USE.md`](TERMS_OF_USE.md) in this repo is ready to publish
-   there as-is.
+1. `/privacy` is live and correct. Terms of Use uses Apple's standard EULA
+   (`https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`), so the site doesn't need a `/terms` page.
 2. The homepage footer still shows an old contact address. It should read
    `weskcode@duck.com` to match the privacy policy, the terms, and the app
    itself.
@@ -135,7 +134,7 @@ An optional auto-renewable subscription that removes all ads. $1.00/month or $10
 
 Payment is charged to your Apple Account at confirmation of purchase. The subscription renews automatically unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in your Apple Account settings.
 
-Terms of Use: https://sunhat.apphq.online/terms
+Terms of Use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 Privacy Policy: https://sunhat.apphq.online/privacy
 
 Requires iOS 26 and a device with WeatherKit support. Weather data provided by Apple Weather.
@@ -225,7 +224,7 @@ Suscripción opcional de renovación automática que elimina todos los anuncios.
 
 El pago se carga a tu cuenta de Apple al confirmar la compra. La suscripción se renueva automáticamente salvo que la canceles al menos 24 horas antes de que termine el periodo en curso. Puedes gestionarla o cancelarla en los ajustes de tu cuenta de Apple.
 
-Términos de uso: https://sunhat.apphq.online/terms
+Términos de uso: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 Política de privacidad: https://sunhat.apphq.online/privacy
 
 Requiere iOS 26 y un dispositivo compatible con WeatherKit. Datos meteorológicos proporcionados por Apple Weather.
@@ -440,7 +439,7 @@ on any screen displaying weather data.
 - [ ] Populate `NSPrivacyTrackingDomains`
 - [ ] Create both subscription products with full `en` + `es` metadata and
       paywall review screenshots
-- [ ] Bring `sunhat.apphq.online/privacy` and `/terms` in line with the in-app policy
+- [ ] Bring `sunhat.apphq.online/privacy` in line with the in-app policy
       (advertising section, subscription terms)
 - [ ] WeatherKit entitlement provisioning on the real App ID
 - [ ] Verify `weskcode@duck.com` receives mail (App Review uses it)
