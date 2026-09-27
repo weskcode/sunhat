@@ -18,13 +18,12 @@ import SwiftUI
 import UIKit
 import GoogleMobileAds
 
-/// Ad unit IDs, one constant per placement — Google's public iOS TEST units.
-/// Phase 8 (go-live) replaces each with a real per-placement unit ID from the
-/// AdMob console; the only other Google ID in the codebase is the sample
-/// GADApplicationIdentifier in Info.plist, which is swapped at the same time.
+/// Ad unit IDs, one constant per placement — real per-placement units from
+/// the AdMob console. The GADApplicationIdentifier in Info.plist is the
+/// matching real app ID for the same AdMob app.
 enum AdConfig {
-    static let dashboardBannerUnitID = "ca-app-pub-3940256099942544/2435281174"
-    static let weatherBannerUnitID = "ca-app-pub-3940256099942544/2435281174"
+    static let dashboardBannerUnitID = "ca-app-pub-7854205542092260/7253633978"
+    static let weatherBannerUnitID = "ca-app-pub-7854205542092260/8901582559"
 }
 
 struct BannerAdView: View {
