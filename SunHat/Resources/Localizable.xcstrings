@@ -11233,6 +11233,40 @@
         }
       }
     },
+    "When temperature is between %lld and %lld degrees" : {
+      "comment" : "Accessibility label clause describing a reminder's between-range temperature trigger condition",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When temperature is between %1$lld and %2$lld degrees"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando la temperatura está entre %lld y %lld grados"
+          }
+        }
+      }
+    },
+    "When temperature is between %lld° and %lld°" : {
+      "comment" : "Reminder card temperature trigger description for a between-range condition, e.g. 'When temperature is between 65° and 97°'\nShort description of a reminder's between-range temperature trigger",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When temperature is between %1$lld° and %2$lld°"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando la temperatura está entre %lld° y %lld°"
+          }
+        }
+      }
+    },
     "While Using" : {
       "comment" : "Location access status",
       "localizations" : {

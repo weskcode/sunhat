@@ -44,9 +44,7 @@ struct WeatherReminderTests {
     func shortDescriptionNonRangeCondition() {
         let condition = TriggerCondition(triggerType: .exactTemperature, targetTemperature: 70.0, comparisonType: .above)
         let reminder = WeatherReminder(title: "Run", triggerCondition: condition)
-        // `String(localized:)` formats an interpolated Double via a printf-style
-        // %lf specifier (6 decimal places), not Swift's default description.
-        #expect(reminder.shortDescription == String(localized: "When temperature is above 70.000000°", comment: "Short description of a reminder's temperature trigger"))
+        #expect(reminder.shortDescription == String(localized: "When temperature is above 70°", comment: "Short description of a reminder's temperature trigger"))
     }
 
     @Test("Short description for a between condition states the real range, not the exact-temperature default")
@@ -55,7 +53,7 @@ struct WeatherReminderTests {
         condition.minTemperature = 65.0
         condition.maxTemperature = 97.0
         let reminder = WeatherReminder(title: "Run", triggerCondition: condition)
-        #expect(reminder.shortDescription == String(localized: "When temperature is between 65.000000° and 97.000000°", comment: "Short description of a reminder's between-range temperature trigger"))
+        #expect(reminder.shortDescription == String(localized: "When temperature is between 65° and 97°", comment: "Short description of a reminder's between-range temperature trigger"))
     }
 
     @Test("Short description for a between condition missing a bound falls back to the single-value phrasing")
@@ -64,7 +62,7 @@ struct WeatherReminderTests {
         condition.minTemperature = 65.0
         // maxTemperature intentionally left nil.
         let reminder = WeatherReminder(title: "Run", triggerCondition: condition)
-        #expect(reminder.shortDescription == String(localized: "When temperature is between 70.000000°", comment: "Short description of a reminder's temperature trigger"))
+        #expect(reminder.shortDescription == String(localized: "When temperature is between 70°", comment: "Short description of a reminder's temperature trigger"))
     }
 
     // MARK: - Status text state machine

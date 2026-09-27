@@ -6,7 +6,7 @@
 import SwiftUI
 
 extension ComparisonType {
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
         case .above: return String(localized: "above", comment: "Temperature comparison word, e.g. 'temperature is above 70°'")
         case .below: return String(localized: "below", comment: "Temperature comparison word, e.g. 'temperature is below 70°'")
