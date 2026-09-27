@@ -16,7 +16,14 @@ struct StreamlinedCurrentWeatherSection: View {
     var body: some View {
         Group {
             if viewModel.hasCurrentWeather {
-                currentWeatherRow
+                VStack(spacing: 4) {
+                    currentWeatherRow
+
+                    HStack {
+                        Spacer()
+                        WeatherAttributionView()
+                    }
+                }
             } else if viewModel.isLoadingCurrentWeather {
                 HStack(spacing: 12) {
                     ProgressView()

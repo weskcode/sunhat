@@ -204,6 +204,8 @@ struct DetailedReminderView: View {
                         currentWeather: currentWeather,
                         isEditMode: isEditMode
                     )
+
+                    WeatherAttributionView()
                 }
                 .padding(.vertical, 30)
                 .padding(.horizontal, 20)
