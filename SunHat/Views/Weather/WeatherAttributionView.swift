@@ -10,13 +10,22 @@
 
 import SwiftUI
 import WeatherKit
+import OSLog
 
 struct WeatherAttributionView: View {
+    private static let logger = Logger(subsystem: "org.wesley.sunhat", category: "WeatherAttributionView")
+
     @Environment(\.colorScheme) private var colorScheme
     @State private var attribution: WeatherKit.WeatherAttribution?
 
     var body: some View {
-        Group {
+        // The task is attached to this ZStack, not to the conditional Link
+        // below, because a container whose only content is an `if` with no
+        // `else` has no children while the condition is false — SwiftUI never
+        // mounts it, so a `.task` there never runs. Color.clear keeps the
+        // container real (and the 20pt height reserved) while the attribution
+        // is still loading or unavailable.
+        ZStack {
             if let attribution {
                 Link(destination: attribution.legalPageURL) {
                     AsyncImage(url: markURL(for: attribution)) { image in
@@ -26,13 +35,19 @@ struct WeatherAttributionView: View {
                     } placeholder: {
                         EmptyView()
                     }
-                    .frame(height: 20)
                 }
                 .accessibilityLabel(Text("Weather data attribution", comment: "Accessibility label for the Apple Weather attribution link"))
+            } else {
+                Color.clear
             }
         }
+        .frame(height: 20)
         .task {
-            attribution = try? await WeatherKit.WeatherService.shared.attribution
+            do {
+                attribution = try await WeatherKit.WeatherService.shared.attribution
+            } catch {
+                Self.logger.error("Failed to load WeatherKit attribution: \(error.localizedDescription)")
+            }
         }
     }
 
