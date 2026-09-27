@@ -214,6 +214,11 @@ final class WeatherReminder {
         if !reminderDescription.isEmpty {
             return String(reminderDescription.prefix(100))
         } else if let condition = triggerCondition {
+            if condition.comparisonType == .between,
+               let minTemperature = condition.minTemperature,
+               let maxTemperature = condition.maxTemperature {
+                return String(localized: "When temperature is between \(minTemperature)° and \(maxTemperature)°", comment: "Short description of a reminder's between-range temperature trigger")
+            }
             return String(localized: "When temperature is \(condition.comparisonType.rawValue) \(condition.targetTemperature)°", comment: "Short description of a reminder's temperature trigger")
         } else {
             return String(localized: "Weather reminder", comment: "Fallback short description for a reminder")

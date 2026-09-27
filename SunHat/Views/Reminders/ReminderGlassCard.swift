@@ -47,7 +47,7 @@ struct ReminderGlassCard: View {
 
                 if let condition = reminder.triggerCondition {
                     HStack(spacing: 8) {
-                        Text("When temperature is \(condition.comparisonType.displayName) \(temperatureUnit.roundedFromFahrenheit(condition.targetTemperature))°")
+                        temperatureConditionText(condition)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
 
@@ -67,6 +67,17 @@ struct ReminderGlassCard: View {
         .accessibilityHint("Opens task details.")
     }
 
+    @ViewBuilder
+    private func temperatureConditionText(_ condition: TriggerCondition) -> some View {
+        if condition.comparisonType == .between,
+           let minTemperature = condition.minTemperature,
+           let maxTemperature = condition.maxTemperature {
+            Text("When temperature is between \(temperatureUnit.roundedFromFahrenheit(minTemperature))° and \(temperatureUnit.roundedFromFahrenheit(maxTemperature))°", comment: "Reminder card temperature trigger description for a between-range condition, e.g. 'When temperature is between 65° and 97°'")
+        } else {
+            Text("When temperature is \(condition.comparisonType.displayName) \(temperatureUnit.roundedFromFahrenheit(condition.targetTemperature))°")
+        }
+    }
+
     private var accessibilityLabel: String {
         var parts = [
             reminder.displayTitle,
@@ -80,7 +91,13 @@ struct ReminderGlassCard: View {
         }
 
         if let condition = reminder.triggerCondition {
-            parts.append(String(localized: "When temperature is \(condition.comparisonType.rawValue) \(temperatureUnit.roundedFromFahrenheit(condition.targetTemperature)) degrees", comment: "Accessibility label clause describing a reminder's temperature trigger condition"))
+            if condition.comparisonType == .between,
+               let minTemperature = condition.minTemperature,
+               let maxTemperature = condition.maxTemperature {
+                parts.append(String(localized: "When temperature is between \(temperatureUnit.roundedFromFahrenheit(minTemperature)) and \(temperatureUnit.roundedFromFahrenheit(maxTemperature)) degrees", comment: "Accessibility label clause describing a reminder's between-range temperature trigger condition"))
+            } else {
+                parts.append(String(localized: "When temperature is \(condition.comparisonType.displayName) \(temperatureUnit.roundedFromFahrenheit(condition.targetTemperature)) degrees", comment: "Accessibility label clause describing a reminder's temperature trigger condition"))
+            }
         }
 
         return parts.joined(separator: ", ")
