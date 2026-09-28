@@ -23,10 +23,19 @@ struct ReadOnlyTriggerConditionsView: View {
                             .fontWeight(.medium)
                             .foregroundStyle(.primary)
 
-                        Text("\(displayTemperature(condition.targetTemperature))°\(temperatureUnit.symbol.dropFirst())")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.orange)
+                        if condition.hasDisplayableRange,
+                           let min = condition.minTemperature,
+                           let max = condition.maxTemperature {
+                            Text("\(displayTemperature(min))° - \(displayTemperature(max))°\(temperatureUnit.symbol.dropFirst())")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.orange)
+                        } else {
+                            Text("\(displayTemperature(condition.targetTemperature))°\(temperatureUnit.symbol.dropFirst())")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.orange)
+                        }
                     }
 
                     Spacer()
@@ -41,22 +50,6 @@ struct ReadOnlyTriggerConditionsView: View {
                                 .font(.caption2)
                                 .foregroundStyle(.blue)
                         }
-                    }
-                }
-
-                if condition.triggerType == .temperatureRange,
-                   let min = condition.minTemperature,
-                   let max = condition.maxTemperature {
-
-                    HStack {
-                        Text("Range:")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        Text("\(displayTemperature(min))° - \(displayTemperature(max))°")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.primary)
                     }
                 }
 

@@ -575,6 +575,23 @@
         }
       }
     },
+    "%lld° - %lld°%@" : {
+      "comment" : "Large temperature range display on a reminder's read-only detail screen, e.g. '65° - 75°F'",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld° - %2$lld°%3$@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld° - %lld°%@"
+          }
+        }
+      }
+    },
     "%lld° - %lld°F" : {
       "comment" : "Temperature range shown for a reminder, e.g. '65° - 75°F'",
       "localizations" : {
@@ -11229,6 +11246,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Cuando la temperatura está %@ %lld°"
+          }
+        }
+      }
+    },
+    "When temperature is between %lld and %lld degrees" : {
+      "comment" : "Accessibility label clause describing a reminder's between-range temperature trigger condition",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When temperature is between %1$lld and %2$lld degrees"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando la temperatura está entre %lld y %lld grados"
+          }
+        }
+      }
+    },
+    "When temperature is between %lld° and %lld°" : {
+      "comment" : "Reminder card temperature trigger description for a between-range condition, e.g. 'When temperature is between 65° and 97°'\nShort description of a reminder's between-range temperature trigger",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "When temperature is between %1$lld° and %2$lld°"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuando la temperatura está entre %lld° y %lld°"
           }
         }
       }

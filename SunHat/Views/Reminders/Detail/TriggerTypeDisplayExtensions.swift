@@ -6,13 +6,22 @@
 import SwiftUI
 
 extension ComparisonType {
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
         case .above: return String(localized: "above", comment: "Temperature comparison word, e.g. 'temperature is above 70°'")
         case .below: return String(localized: "below", comment: "Temperature comparison word, e.g. 'temperature is below 70°'")
         case .equals: return String(localized: "exactly", comment: "Temperature comparison word, e.g. 'temperature is exactly 70°'")
         case .between: return String(localized: "between", comment: "Temperature comparison word, e.g. 'temperature is between 60° and 70°'")
         }
+    }
+}
+
+extension TriggerCondition {
+    /// Whether a reminder's read-only detail screen should show the actual
+    /// min-max range as its large primary value instead of the single target
+    /// temperature: true only for a `.between` condition with both bounds set.
+    var hasDisplayableRange: Bool {
+        comparisonType == .between && minTemperature != nil && maxTemperature != nil
     }
 }
 

@@ -171,6 +171,11 @@ extension DashboardView {
                     tint: .mint
                 )
             }
+
+            HStack {
+                Spacer()
+                WeatherAttributionView()
+            }
         }
     }
 

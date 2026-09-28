@@ -79,22 +79,38 @@ final class AdManager {
     private let userDefaults: UserDefaults
     private let tracking: TrackingAuthorizing
     private let startSDK: () -> Void
+    private let requestConsentInfoUpdate: (RequestParameters) async throws -> Void
     private var isEvaluating = false
+    /// Guards the consent-fetch-then-SDK-start sequence started by
+    /// `startSDKAfterConsent()`. Separate from `isEvaluating` on purpose: that
+    /// flag gates `evaluateActivation`'s own Task, which must stay
+    /// network-await-free (see its comment), while this one spans the actual
+    /// UMP network call so overlapping activation passes can't race it.
+    private var isStartingSDK = false
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "AdManager")
 
     convenience init() {
         self.init(
             userDefaults: .standard,
             tracking: SystemTrackingAuthorizer(),
-            startSDK: { MobileAds.shared.start() }
+            startSDK: { MobileAds.shared.start() },
+            requestConsentInfoUpdate: { try await ConsentInformation.shared.requestConsentInfoUpdate(with: $0) }
         )
     }
 
     /// Test seam; production uses `.shared`.
-    init(userDefaults: UserDefaults, tracking: TrackingAuthorizing, startSDK: @escaping () -> Void) {
+    init(
+        userDefaults: UserDefaults,
+        tracking: TrackingAuthorizing,
+        startSDK: @escaping () -> Void,
+        requestConsentInfoUpdate: @escaping (RequestParameters) async throws -> Void = {
+            try await ConsentInformation.shared.requestConsentInfoUpdate(with: $0)
+        }
+    ) {
         self.userDefaults = userDefaults
         self.tracking = tracking
         self.startSDK = startSDK
+        self.requestConsentInfoUpdate = requestConsentInfoUpdate
     }
 
     /// Live entitlement when resolved; last-known mirror while it's pending.
@@ -178,8 +194,8 @@ final class AdManager {
 
         // This Task must contain NO network awaits: a hung endpoint would
         // wedge isEvaluating for the whole session. ATT is a local system
-        // prompt; consent gathering runs concurrently and gates the ad SLOTS
-        // via consentBlocksAds when it answers.
+        // prompt; the UMP consent fetch itself runs in startSDKAfterConsent's
+        // own Task, decoupled from this flag for the same reason.
         Task {
             defer { isEvaluating = false }
 
@@ -189,11 +205,31 @@ final class AdManager {
             // Re-check entitlement after the prompt: the user may have become
             // Ad-Free while it was up.
             if decision.shouldStartSDK, effectiveAllowsAdRequests {
-                startSDK()
-                isStarted = true
-                logger.info("Google Mobile Ads SDK started (user is not Ad-Free)")
-                Task { await self.gatherConsentConcurrently() }
+                startSDKAfterConsent()
             }
+        }
+    }
+
+    /// Fetches a fresh UMP consent verdict and only starts the SDK once that
+    /// completes, per Google's documented order (UMP consent → SDK start) and
+    /// this file's own header comment. Runs as its own re-entrancy-guarded
+    /// Task, outside `isEvaluating`, so a slow or hung UMP endpoint delays the
+    /// SDK start (never harmful — shouldShowAdSlots already requires
+    /// !consentBlocksAds) without wedging the activation pipeline itself.
+    private func startSDKAfterConsent() {
+        guard !isStartingSDK, !isStarted else { return }
+        isStartingSDK = true
+        Task {
+            defer { isStartingSDK = false }
+            await fetchConsentUpdate()
+            // Re-check: the user may have become Ad-Free, or another
+            // activation pass may already have started the SDK, while this
+            // awaited.
+            guard !isStarted, effectiveAllowsAdRequests else { return }
+            startSDK()
+            isStarted = true
+            logger.info("Google Mobile Ads SDK started (user is not Ad-Free)")
+            await presentConsentFormIfRequired()
         }
     }
 
@@ -214,13 +250,11 @@ final class AdManager {
         }
     }
 
-    /// Google EU User Consent Policy: a certified CMP must gather consent
-    /// before ads serve to EEA/UK users. Elsewhere this resolves quickly with
-    /// canRequestAds == true and no form.
-    /// Runs concurrently with (never blocking) the activation pipeline.
-    /// When Google's consent framework answers, its verdict gates the ad
-    /// slots via consentBlocksAds and presents the EEA form when required.
-    private func gatherConsentConcurrently() async {
+    /// Fetches UMP's live consent verdict and updates `consentBlocksAds` /
+    /// `privacyOptionsRequired` from it, failing closed on error. This is the
+    /// network await that `evaluateActivation`'s own Task must never hold —
+    /// see `startSDKAfterConsent`.
+    private func fetchConsentUpdate() async {
         let parameters = RequestParameters()
         #if DEBUG
         // Simulator/dev runs use Google's sample app ID, which has no
@@ -234,7 +268,7 @@ final class AdManager {
         parameters.debugSettings = debugSettings
         #endif
         do {
-            try await ConsentInformation.shared.requestConsentInfoUpdate(with: parameters)
+            try await requestConsentInfoUpdate(parameters)
         } catch {
             // Fail closed on UMP's stored verdict rather than leaving the gate
             // wherever it happened to be: an EEA user on a flaky connection
@@ -246,14 +280,17 @@ final class AdManager {
 
         refreshConsentState()
         logger.info("Ad consent resolved: canRequestAds=\(ConsentInformation.shared.canRequestAds)")
+    }
 
+    /// Presents Google's EEA/UK consent form when UMP requires it. Retries a
+    /// few times: at launch a system permission alert (location,
+    /// notifications) is often mid-presentation and UIKit refuses a second
+    /// presented controller.
+    private func presentConsentFormIfRequired() async {
         // Only attempt presentation when a form is actually required and the
         // UI can host it — loadAndPresentIfRequired can otherwise throw
         // spurious presentation errors at cold launch.
         guard ConsentInformation.shared.consentStatus == .required, isSceneActive else { return }
-        // Retry a few times: at launch a system permission alert (location,
-        // notifications) is often mid-presentation and UIKit refuses a second
-        // presented controller.
         for attempt in 1...3 {
             guard let rootViewController = Self.rootViewController() else { return }
             do {
@@ -266,6 +303,16 @@ final class AdManager {
                 try? await Task.sleep(for: .seconds(4))
             }
         }
+    }
+
+    /// Google EU User Consent Policy: a certified CMP must gather consent
+    /// before ads serve to EEA/UK users. Elsewhere this resolves quickly with
+    /// canRequestAds == true and no form. Called on each foreground while the
+    /// SDK is already started but consent still blocks ads, giving a form
+    /// that couldn't present earlier another chance.
+    private func gatherConsentConcurrently() async {
+        await fetchConsentUpdate()
+        await presentConsentFormIfRequired()
     }
 
     private static func rootViewController() -> UIViewController? {

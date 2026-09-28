@@ -369,6 +369,36 @@ struct WeatherViewModelDependencyTests {
         #expect(WeatherBackdropPalette.palette(for: rain) == .stormBlue)
     }
 
+    @Test("Pressure displays in inHg and hPa from a correctly-converted stored value")
+    func pressureDisplayUsesInchesOfMercury() async throws {
+        // Mirrors the hPa -> inHg conversion WeatherAPI applies at ingestion, so this
+        // exercises the same physics the production mapping code relies on: 1013.25 hPa
+        // (a standard sea-level reading) converts to 29.92 inHg.
+        let convertedPressure = Measurement(value: 1013.25, unit: UnitPressure.hectopascals)
+            .converted(to: .inchesOfMercury)
+            .value
+
+        let weatherData = WeatherData(temperature: 72, feelsLike: 74, humidity: 55)
+        weatherData.pressure = convertedPressure
+
+        let provider = FakeWeatherProvider(weatherData: weatherData)
+        let viewModel = WeatherViewModel(
+            modelContainer: try makeModelContainer(),
+            weatherService: provider,
+            locationManager: FakeLocationManager()
+        )
+
+        try await waitUntil {
+            provider.fetchCount == 1
+        }
+
+        viewModel.temperatureUnit = .fahrenheit
+        #expect(viewModel.pressureDisplay == "29.92 inHg")
+
+        viewModel.temperatureUnit = .celsius
+        #expect(viewModel.pressureDisplay == "1,013 hPa")
+    }
+
     private func makeModelContainer() throws -> ModelContainer {
         let schema = Schema([
             WeatherReminder.self,

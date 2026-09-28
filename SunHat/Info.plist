@@ -8,7 +8,7 @@
 		<string>org.wesley.sunhat.trigger-evaluation</string>
 	</array>
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-7854205542092260~9915281321</string>
 	<key>GADDelayAppMeasurementInit</key>
 	<true/>
 	<key>NSUserTrackingUsageDescription</key>
@@ -220,8 +220,6 @@
 	<false/>
 	<key>NSLocationAccuracyAuthorizationDescription</key>
 	<string>SunHat requires precise location to provide accurate weather-based reminders for your exact location.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>SunHat needs location access to provide weather-based reminders and background updates for your locations.</string>
 	<key>NSLocationDefaultAccuracyReduction</key>
 	<dict>
 		<key>NSLocationDefaultAccuracyReductionEnabled</key>

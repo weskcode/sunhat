@@ -11,6 +11,7 @@
 
 import Foundation
 import Testing
+import UserMessagingPlatform
 @testable import SunHat
 
 @MainActor
@@ -36,7 +37,8 @@ struct AdManagerGateTests {
 
     private func makeManager(
         appOpenCount: Int,
-        trackingStatus: TrackingStatusKind = .denied
+        trackingStatus: TrackingStatusKind = .denied,
+        consentUpdateDelayMilliseconds: UInt64 = 0
     ) -> (AdManager, StubTrackingAuthorizer, Box) {
         let defaults = UserDefaults(suiteName: Self.suiteName)!
         defaults.removePersistentDomain(forName: Self.suiteName)
@@ -47,13 +49,25 @@ struct AdManagerGateTests {
         let manager = AdManager(
             userDefaults: defaults,
             tracking: tracking,
-            startSDK: { box.startCount += 1 }
+            startSDK: {
+                box.events.append("sdkStart")
+                box.startCount += 1
+            },
+            requestConsentInfoUpdate: { _ in
+                // A small delay proves the SDK start genuinely awaits this
+                // rather than the two happening to record in call order.
+                if consentUpdateDelayMilliseconds > 0 {
+                    try? await Task.sleep(for: .milliseconds(consentUpdateDelayMilliseconds))
+                }
+                box.events.append("consentUpdate")
+            }
         )
         return (manager, tracking, box)
     }
 
     final class Box {
         var startCount = 0
+        var events: [String] = []
     }
 
     /// Polls instead of assuming one yield: evaluateActivation commits its
@@ -149,5 +163,21 @@ struct AdManagerGateTests {
         await settle { tracking.requestCount > 0 }
 
         #expect(tracking.requestCount == 1)
+    }
+
+    /// Pins Google's documented order (UMP consent fetched before the SDK
+    /// starts) against the bug where `startSDK()` ran, then only
+    /// concurrently kicked off the UMP fetch — the SDK never actually waited
+    /// on a fresh consent verdict.
+    @Test("UMP's consent fetch completes before the ad SDK starts")
+    func consentUpdateHappensBeforeSDKStart() async {
+        let (manager, _, box) = makeManager(appOpenCount: 5, consentUpdateDelayMilliseconds: 50)
+        StoreManager.shared.overrideEntitlementStateForTesting(.notEntitled)
+        defer { StoreManager.shared.clearEntitlementOverrideForTesting() }
+
+        manager.sceneDidChange(active: true)
+        await settle { manager.isStarted }
+
+        #expect(box.events == ["consentUpdate", "sdkStart"])
     }
 }

@@ -37,23 +37,6 @@
         }
       }
     },
-    "NSLocationAlwaysAndWhenInUseUsageDescription": {
-      "comment": "Privacy - Location Always and When In Use Usage Description",
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SunHat needs location access to provide weather-based reminders and background updates for your locations."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "SunHat necesita acceso a la ubicación para ofrecer recordatorios del clima y actualizaciones en segundo plano para tus ubicaciones."
-          }
-        }
-      }
-    },
     "NSLocationTemporaryUsageDescriptionDictionary.WeatherReminderAccuracy": {
       "comment": "Privacy - Location Temporary Usage Description Dictionary - WeatherReminderAccuracy purpose key",
       "extractionState": "manual",

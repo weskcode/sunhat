@@ -56,21 +56,11 @@ You describe the conditions you care about. SunHat checks the forecast in the ba
 
 ## Screenshots
 
-Captured on iOS 26 (iPhone). SunHat is iPhone-first. iPad, widget, and watch surfaces are planned (see [Project status](#project-status)).
-
-**Dark**
+Captured from SunHat on an iPhone 18 Pro Max simulator with iOS 27.0. The framed images are the current en-US App Store set. SunHat is iPhone-first. iPad, widget, and watch surfaces are planned (see [Project status](#project-status)).
 
 | | | |
 |---|---|---|
-| ![Welcome](Screenshots/01_hero_welcome.png) | ![Dashboard](Screenshots/02_dashboard_ready_now.png) | ![Weather](Screenshots/03_weather_predictions.png) |
-| ![Create a reminder](Screenshots/04_creation_range.png) | ![Reminders](Screenshots/08_reminders_list.png) | ![Settings](Screenshots/10_settings.png) |
-
-**Light**
-
-| | | |
-|---|---|---|
-| ![Welcome](Screenshots/Light/01_hero_welcome.png) | ![Dashboard](Screenshots/Light/02_dashboard_ready_now.png) | ![Weather](Screenshots/Light/03_weather_predictions.png) |
-| ![Create a reminder](Screenshots/Light/04_creation_range.png) | ![Reminders](Screenshots/Light/08_reminders_list.png) | ![Settings](Screenshots/Light/10_settings.png) |
+| ![Weather reminders](Screenshots/01_weather_reminders.png) | ![Custom conditions](Screenshots/02_custom_conditions.png) | ![Quiet hours and daily limits](Screenshots/03_quiet_hours.png) |
 
 ## Requirements
 
