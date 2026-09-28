@@ -235,58 +235,30 @@ Requiere iOS 26 y un dispositivo compatible con WeatherKit. Datos meteorológico
 
 ## 4. Screenshots
 
-Required sizes for an iPhone-only app. App Store Connect accepts one set and
-scales down, but supplying both avoids letterboxing complaints.
+The current en-US iPhone set is in `Screenshots/`. The three framed PNGs are
+1320 × 2868, use a warm cream and orange presentation, and show app screens
+captured on an iPhone 18 Pro Max simulator with iOS 27.0.
 
-| Display | Resolution | Device to capture on | Required |
-|---|---|---|---|
-| 6.9" | 1320 × 2868 | iPhone 17 Pro Max | **Yes** |
-| 6.5" | 1242 × 2688 | iPhone 11 Pro Max sim | Recommended |
+| Order | Feature shown |
+|---|---|
+| 1 | Current weather beside a reminder |
+| 2 | Temperature, sky, time, and quiet-hours conditions |
+| 3 | Notification controls, quiet hours, and daily limit |
 
-Up to 10 per size. Suggested order, the first two are what most people
-actually see, so they carry the whole pitch:
-
-1. **Dashboard, a reminder ready now**: caption "Know the moment conditions match"
-2. **Reminder creation, temperature range**: "Describe the day you're waiting for"
-3. **Weather tab with predictions**: "See what's coming, with confidence"
-4. **Reminders list**: "Seven ways to describe a day"
-5. **Settings / quiet hours**: "It never nags"
-6. **Paywall**: "Optional. Everything else is free"
-
-### Capture procedure
-
-`Screenshots/` and `Screenshots/Light/` hold README captures taken on an
-iPhone 17 Pro (6.3"). **Those cannot be used for the App Store**, Connect's
-required slot is 6.9", and no Pro Max simulator exists on this machine yet.
+On the release workstation, `AppStore/SubmissionScreenshots/raw/` holds the
+original captures and `AppStore/SubmissionScreenshots/build.py` rebuilds the
+framed PNGs and contact sheet. These internal files are ignored by Git; the
+public repository contains the finished images in `Screenshots/`. Run
+`python3 AppStore/SubmissionScreenshots/build.py` from the repository root
+after installing Pillow 12.0.0. Validate the exports with:
 
 ```bash
-xcrun simctl create "iPhone 17 Pro Max" \
-  com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max \
-  com.apple.CoreSimulator.SimRuntime.iOS-26-5
+/opt/homebrew/bin/asc screenshots validate --path Screenshots --device-type IPHONE_69
 ```
 
-Then capture, with the app in a known state (a reminder that reads as ready,
-a couple in the list) so every shot shows real content rather than empty
-states:
-
-```bash
-SIM=$(xcrun simctl list devices | grep "iPhone 17 Pro Max" | grep -oE '[0-9A-F-]{36}' | head -1)
-xcrun simctl boot "$SIM"
-xcrun simctl io "$SIM" screenshot ~/Desktop/sunhat-appstore/01-dashboard.png
-```
-
-Uninstall the app between light and dark passes, appearance is read at first
-launch and a warm relaunch keeps the old one.
-
-`VisualQAScreenshotTests` writes light, dark, AX-XXXL and Spanish captures to
-`/tmp/sunhat-shots` on whichever simulator it runs on. Those are for design
-review, not the store: they're 6.3" and they include the four-variant matrix
-rather than a curated marketing sequence.
-
-> **Do not** add device frames, drop shadows, or marketing chrome that
-> misrepresents the UI. Apple rejects screenshots showing UI the app
-> doesn't have. Captions rendered *above* the device shot are fine and
-> standard; painted-on fake status bars and invented UI are not.
+The en-US set passed with zero errors and zero warnings on September 28, 2026.
+It has not been uploaded to App Store Connect. Spanish-captioned screenshots
+have not been generated.
 
 ---
 
