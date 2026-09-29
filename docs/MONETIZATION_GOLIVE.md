@@ -66,8 +66,10 @@ subscription go to review until each of these exists:
   (`/tmp/sunhat-shots/paywall-*.png`).
 - **Terms of Use (EULA) and Privacy Policy URLs** on the app record. Apple
   requires functional links for auto-renewable subscriptions; the app already
-  points at `https://sunhat.apphq.online/terms` and `/privacy`, and both pages must
-  describe the subscription (see §4).
+  points at Apple's standard EULA
+  (`https://www.apple.com/legal/internet-services/itunes/dev/stdeula/`) and
+  `https://sunhat.apphq.online/privacy`, and the privacy page must describe the
+  subscription (see §4).
 
 ## 3. Privacy nutrition labels (App Store Connect)
 
@@ -95,12 +97,13 @@ With AdMob + ATT, the previous "no tracking" posture changes. Declare:
 ## 4. Hosted legal pages
 
 The in-app Privacy Policy (`PrivacyPolicyView`) now discloses AdMob ads, ATT,
-and the Ad-Free subscription. The hosted pages must be brought in line before
+and the Ad-Free subscription. The hosted page must be brought in line before
 submission:
 
 - https://sunhat.apphq.online/privacy: add the same Advertising section.
-- https://sunhat.apphq.online/terms: add auto-renewable subscription terms (price,
-  period, renewal, cancellation via Apple Account settings).
+
+There is no hosted Terms page. SunHat uses Apple's standard EULA, which
+already covers auto-renewable subscription terms.
 
 ## 5. Switching the app itself to live values
 
