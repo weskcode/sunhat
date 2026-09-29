@@ -41,7 +41,7 @@ Thanks for testing SunHat. This is the 1.0 candidate, feature-complete, and I'm 
 WHAT SUNHAT DOES
 Set a reminder that waits for weather instead of a clock. "Water the garden when it's been dry 48 hours." "Run when it's 55-70°F and clear." SunHat watches the forecast and notifies you when reality matches.
 
-═══ THE 5-MINUTE PASS ═══
+=== THE 5-MINUTE PASS ===
 
 1. ONBOARDING
    Go through the first-run flow. Allow location and notifications when asked.
@@ -62,7 +62,7 @@ Set a reminder that waits for weather instead of a clock. "Water the garden when
    history charts.
    → Any number that looks made up or obviously wrong?
 
-═══ WHAT I MOST NEED EYES ON ═══
+=== WHAT I MOST NEED EYES ON ===
 
 • NOTIFICATIONS ACTUALLY ARRIVING. This is the whole product. Leave a
   reminder set overnight and tell me if it fired when it should have, or
@@ -94,7 +94,7 @@ Set a reminder that waits for weather instead of a clock. "Water the garden when
 • BATTERY. Check Settings > Battery after a day. SunHat does background
   weather checks and shouldn't be near the top of that list.
 
-═══ ALSO WORTH POKING ═══
+=== ALSO WORTH POKING ===
 
 • Siri: "Hey Siri, create a SunHat reminder"
 • Spotlight: swipe down, search for a reminder you made
@@ -103,7 +103,7 @@ Set a reminder that waits for weather instead of a clock. "Water the garden when
 • Airplane mode: does it degrade gracefully or show a confusing error?
 • Settings > Privacy > Export My Data, and Delete All Data
 
-═══ KNOWN AND EXPECTED ═══
+=== KNOWN AND EXPECTED ===
 
 • Ads are Google's TEST ads, placeholder creative, not real inventory.
 • Purchases are sandbox. Nothing is charged. Sandbox subscriptions renew
@@ -113,7 +113,7 @@ Set a reminder that waits for weather instead of a clock. "Water the garden when
 • Spanish is supported. If your device is in Spanish and something reads
   awkwardly, tell me.
 
-═══ HOW TO REPORT ═══
+=== HOW TO REPORT ===
 
 Screenshot the problem, then use TestFlight's built-in feedback (shake the
 device, or the Send Beta Feedback button). Tell me what you expected and
