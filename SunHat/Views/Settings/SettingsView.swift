@@ -91,7 +91,12 @@ struct SettingsView: View {
                     Text("This will reset all app settings to their defaults. Your reminders will not be affected.")
                 }
             }
-            .sheet(item: $activeSheet) { sheet in
+            .sheet(item: $activeSheet, onDismiss: {
+                // A sheet closing doesn't re-run onAppear, so the Current
+                // Location row would keep showing the city it had before a
+                // manual location was saved.
+                viewModel.checkLocationStatus()
+            }) { sheet in
                 switch sheet {
                 case .manualLocationEntry:
                     ManualLocationEntrySheet(viewModel: locationViewModel)
