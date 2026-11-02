@@ -164,8 +164,8 @@ struct ManualLocationEntrySheet: View {
             return false
         }
 
-        guard let lat = Double(latitudeText),
-              let lon = Double(longitudeText),
+        guard let lat = Self.parseCoordinate(latitudeText),
+              let lon = Self.parseCoordinate(longitudeText),
               lat >= -90 && lat <= 90,
               lon >= -180 && lon <= 180 else {
             return false
@@ -191,9 +191,20 @@ struct ManualLocationEntrySheet: View {
         longitudeText = lon
     }
 
+    /// Parses a typed coordinate. Users in decimal-comma locales type
+    /// "-33,8688", which `Double(_:)` rejects, leaving Save disabled with no
+    /// explanation. A text containing both "," and "." is ambiguous and is
+    /// rejected rather than guessed.
+    nonisolated static func parseCoordinate(_ text: String) -> Double? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\u{2212}", with: "-")
+        guard !(trimmed.contains(",") && trimmed.contains(".")) else { return nil }
+        return Double(trimmed.replacingOccurrences(of: ",", with: "."))
+    }
+
     private func saveLocation() {
-        guard let lat = Double(latitudeText),
-              let lon = Double(longitudeText) else {
+        guard let lat = Self.parseCoordinate(latitudeText),
+              let lon = Self.parseCoordinate(longitudeText) else {
             errorMessage = String(localized: "Please enter valid numeric coordinates.", comment: "Validation error in the manual location entry form")
             showingError = true
             return

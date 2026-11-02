@@ -21,8 +21,8 @@ Create at https://apps.admob.com:
 | Banner ad unit "Weather Banner" | `ca-app-pub-3940256099942544/2435281174` | `SunHat/Views/Ads/BannerAdView.swift` → `AdConfig.weatherBannerUnitID` |
 
 Those were the only three Google test IDs in the codebase. All three were
-replaced on September 27, 2026, and a grep for `3940256099942544` now finds
-nothing.
+replaced on September 27, 2026, and a grep for `3940256099942544` under
+`SunHat/` now finds nothing.
 
 Also in AdMob → **Privacy & messaging**: publish a **GDPR (European
 regulations) message** and an **ATT message is optional**. The app already
