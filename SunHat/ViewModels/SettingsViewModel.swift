@@ -239,7 +239,7 @@ final class SettingsViewModel {
 
     // MARK: - Location Methods
 
-    private func checkLocationStatus() {
+    func checkLocationStatus() {
         let status = locationDelegate.authorizationStatus
         updateLocationStatus(status)
 

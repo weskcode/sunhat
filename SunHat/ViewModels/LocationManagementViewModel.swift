@@ -281,6 +281,33 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         }
     }
     
+    /// Makes a manually entered location the app's active location. Dashboard
+    /// reads `UserPreferences` before `LocationPermissionManager`, so both have
+    /// to change together or Dashboard keeps an older manual location while
+    /// Weather shows the new one.
+    func activateManualLocation(
+        _ location: ManualLocationData,
+        permissionManager: LocationPermissionManager = .shared
+    ) {
+        permissionManager.manualLocation = location
+
+        guard let modelContext else { return }
+
+        do {
+            guard let preferences = try modelContext.fetch(FetchDescriptor<UserPreferences>()).first else {
+                return
+            }
+            preferences.locationMode = "manual"
+            preferences.manualLocationLatitude = location.coordinate.latitude
+            preferences.manualLocationLongitude = location.coordinate.longitude
+            preferences.manualLocationName = location.displayName
+            preferences.updateTimestamp()
+            try modelContext.save()
+        } catch {
+            logger.error("Failed to update manual location preference: \(error.localizedDescription)")
+        }
+    }
+
     func addSavedLocation(_ location: SavedLocation) {
         guard let modelContext = modelContext else { return }
         

@@ -101,7 +101,9 @@ struct ManualLocationEntrySheet: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 TextField("e.g., 37.7749", text: $latitudeText)
-                    .keyboardType(.decimalPad)
+                    // Not .decimalPad: it has no minus key, which would make
+                    // every southern-hemisphere latitude impossible to type.
+                    .keyboardType(.numbersAndPunctuation)
                     .multilineTextAlignment(.trailing)
                     .focused($focusedField, equals: .latitude)
             }
@@ -225,12 +227,11 @@ struct ManualLocationEntrySheet: View {
 
         viewModel.addSavedLocation(savedLocation)
 
-        // Saving to the list alone doesn't change the app's active location;
-        // Dashboard/Weather resolve their location from this manager.
-        LocationPermissionManager.shared.manualLocation = ManualLocationData(
+        // Saving to the list alone doesn't change the app's active location.
+        viewModel.activateManualLocation(ManualLocationData(
             name: trimmedName,
             coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)
-        )
+        ))
 
         dismiss()
     }
