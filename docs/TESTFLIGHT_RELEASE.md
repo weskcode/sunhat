@@ -22,7 +22,7 @@ testers, and the sequence for getting a build up.
 ---8<---
 SunHat is a weather-triggered reminder app. Instead of "remind me at 5pm," you set "remind me when it's above 68°F and clear," and SunHat watches the forecast and tells you when conditions match.
 
-This build is feature-complete for 1.0. The free tier shows banner ads; an optional subscription removes them. Ads and purchases run against test servers in TestFlight, so nothing is charged and no real ad revenue is involved.
+This build is feature-complete for 1.0. The free tier shows banner ads; an optional subscription removes them. Purchases use Apple's sandbox in TestFlight, so nothing is charged. Banners are live AdMob ads, so please don't tap them.
 
 No account or sign-up. Location and notifications are both optional, though the app is much more useful with them on.
 ---8<---
@@ -105,7 +105,8 @@ Set a reminder that waits for weather instead of a clock. "Water the garden when
 
 === KNOWN AND EXPECTED ===
 
-• Ads are Google's TEST ads, placeholder creative, not real inventory.
+• Ads are live AdMob banners. Please don't tap them: clicks on your own
+  app's ads count as invalid activity against the AdMob account.
 • Purchases are sandbox. Nothing is charged. Sandbox subscriptions renew
   on an accelerated clock, so a "monthly" plan may renew every few minutes.
 • iPad works but is not optimized, it's an iPhone layout scaled up.
@@ -185,9 +186,9 @@ and no placeholder content.
 
 ## 5. Before promoting a TestFlight build to the App Store
 
-- [ ] Swap the 3 AdMob test IDs for real ones
-      (`docs/MONETIZATION_GOLIVE.md` §1)
-- [ ] Populate `NSPrivacyTrackingDomains`
+- [x] Swap the 3 AdMob test IDs for real ones
+      (`docs/MONETIZATION_GOLIVE.md` §1; done September 27, 2026)
+- [x] Populate `NSPrivacyTrackingDomains` (done September 21, 2026, PR #21)
 - [ ] Create both subscription products in App Store Connect with `en` + `es`
       metadata and paywall review screenshots
 - [ ] Verify the purchase loop against the real sandbox once: ads visible →

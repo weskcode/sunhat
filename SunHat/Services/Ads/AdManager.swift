@@ -257,11 +257,10 @@ final class AdManager {
     private func fetchConsentUpdate() async {
         let parameters = RequestParameters()
         #if DEBUG
-        // Simulator/dev runs use Google's sample app ID, which has no
-        // published consent message — UMP then reports consent "required"
-        // with no form to satisfy it, blocking every ad. Debug geography
-        // makes dev behave like a production non-EEA user; Release builds
-        // use real geography against the real AdMob app's consent message.
+        // Debug geography makes dev runs behave like a production non-EEA
+        // user, so banner layout can be checked without first satisfying an
+        // EEA consent form. Release builds use real geography against the
+        // AdMob app's published consent message.
         let debugSettings = DebugSettings()
         // `.other` is UMP 3.x's replacement for the deprecated `.notEEA`.
         debugSettings.geography = .other

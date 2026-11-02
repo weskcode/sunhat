@@ -1,11 +1,14 @@
 # Monetization go-live handoff
 
-Everything in the app currently runs on **test/sandbox values**, Google's public
-test ad IDs and a local StoreKit configuration, so the whole pipeline (ads
-show → purchase → ads gone → restore) is verifiable without any live accounts.
-This document lists exactly what to create and where each real value goes.
 Written 2026-08-31 at the end of the ads + Ad-Free subscription build
-(branch `feature/ads-and-iap`).
+(branch `feature/ads-and-iap`), when the app ran entirely on test values:
+Google's public test ad IDs and a local StoreKit configuration. This document
+lists exactly what to create and where each real value goes.
+
+Status, November 2, 2026: the ID swap in §1 is done. The real AdMob app ID
+and both banner unit IDs replaced the test IDs on September 27, 2026, in
+every build configuration, so Debug and TestFlight builds request live ads
+too.
 
 ## 1. AdMob console: create, then paste
 
@@ -17,8 +20,9 @@ Create at https://apps.admob.com:
 | Banner ad unit "Dashboard Banner" | `ca-app-pub-3940256099942544/2435281174` | `SunHat/Views/Ads/BannerAdView.swift` → `AdConfig.dashboardBannerUnitID` |
 | Banner ad unit "Weather Banner" | `ca-app-pub-3940256099942544/2435281174` | `SunHat/Views/Ads/BannerAdView.swift` → `AdConfig.weatherBannerUnitID` |
 
-Those are the only three Google IDs in the codebase (grep `3940256099942544`
-to verify nothing is missed).
+Those were the only three Google test IDs in the codebase. All three were
+replaced on September 27, 2026, and a grep for `3940256099942544` now finds
+nothing.
 
 Also in AdMob → **Privacy & messaging**: publish a **GDPR (European
 regulations) message** and an **ATT message is optional**. The app already
@@ -107,7 +111,7 @@ already covers auto-renewable subscription terms.
 
 ## 5. Switching the app itself to live values
 
-1. Paste the three AdMob IDs (table above).
+1. ~~Paste the three AdMob IDs (table above).~~ Done September 27, 2026.
 2. Nothing else changes: the entitlement pipeline, paywall, and consent flow
    are identical against live App Store / live AdMob.
 3. Run the integration checks once against TestFlight/sandbox: ads visible →
