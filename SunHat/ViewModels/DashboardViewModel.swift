@@ -43,7 +43,7 @@ final class DashboardViewModel: ObservableObject {
         activeReminders.filter { reminder in
             reminderEvaluations.contains { result in
                 result.reminderId == reminder.id && result.triggered &&
-                    now().timeIntervalSince(result.evaluationTime) <= 300 &&
+                    now().timeIntervalSince(result.evaluationTime) <= 15 * 60 &&
                     result.conditionData == reminder.triggerCondition &&
                     result.weatherData?.locationLatitude == reminder.location?.latitude &&
                     result.weatherData?.locationLongitude == reminder.location?.longitude
