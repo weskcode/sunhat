@@ -28,7 +28,7 @@ struct StoreManagerStoreKitTests {
     private static let defaultsSuiteName = "StoreManagerStoreKitTests"
 
     private func makeSession() throws -> SKTestSession {
-        let session = try SKTestSession(contentsOf: TestResources.url(named: "SunHatStoreKit"))
+        let session = try SKTestSession(contentsOf: TestResources.url(named: "SunHatStoreKit", withExtension: "storekit"))
         session.resetToDefaultState()
         session.disableDialogs = true
         session.clearTransactions()
