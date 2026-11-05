@@ -4913,12 +4913,12 @@
         }
       }
     },
-    "Last updated: August 31, 2026" : {
+    "Last updated: November 3, 2026" : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Última actualización: 31 de agosto de 2026"
+            "value" : "Última actualización: 3 de noviembre de 2026"
           }
         }
       }
@@ -10984,12 +10984,12 @@
         }
       }
     },
-    "Weather information is fetched from reliable sources and cached locally on your device for better performance. This data is not transmitted to our servers." : {
+    "Weather samples stay on your device for week and month history. New samples use coordinates rounded to about 1 km; reminder locations keep their selected precision. Weather refreshes remove samples older than 35 days. Samples can remain longer if weather is not refreshed. Older weather-location data may retain precise coordinates until you use Delete All Data in Settings. This history can reveal places where you requested weather and may be included in device backups. It is not sent to us." : {
       "localizations" : {
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "La información del clima se obtiene de fuentes fiables y se guarda en caché localmente en tu dispositivo para mejorar el rendimiento. Estos datos no se transmiten a nuestros servidores."
+            "value" : "Las muestras meteorológicas se guardan en tu dispositivo para el historial semanal y mensual. Las nuevas muestras usan coordenadas redondeadas a aproximadamente 1 km; las ubicaciones de los recordatorios conservan la precisión seleccionada. Al actualizar el clima se eliminan las muestras de más de 35 días. Las muestras pueden conservarse durante más tiempo si no se actualiza el clima. Los datos de ubicaciones meteorológicas anteriores pueden conservar coordenadas precisas hasta que uses Eliminar todos los datos en Ajustes. Este historial puede revelar lugares para los que solicitaste el clima y puede incluirse en las copias de seguridad del dispositivo. No se nos envía."
           }
         }
       }

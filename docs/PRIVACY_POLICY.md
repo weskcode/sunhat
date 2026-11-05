@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Effective date: September 8, 2026**
+**Effective date: November 3, 2026**
 
 SunHat is a weather-triggered reminder app for iPhone. This policy explains
 what data the app handles, what leaves your device, and what you can do
@@ -35,8 +35,12 @@ framework, and never sent to us:
 - **Reminders you create**: titles, notes, icons, colors, and the weather
   conditions you chose
 - **App preferences**: units, quiet hours, notification limits, appearance
-- **Cached weather data**: recent forecasts, so the app works offline and
-  makes fewer network requests
+- **Cached weather data and history**: forecasts and weather samples with
+  location coordinates, for offline use and week/month comparisons. New samples
+  use coordinates rounded to two decimal places, roughly 1 km. Weather refreshes
+  remove samples older than 35 days; samples can remain longer if the app does
+  not refresh. Older weather-location data may retain precise coordinates until
+  you remove local app data with Delete All Data in Settings.
 - **Saved locations**: any city you pick manually
 
 This data is included in your device backup if you back up your iPhone to
@@ -50,8 +54,11 @@ weather forecast for where you are.
 
 - Your coordinate is sent **to the weather provider only** (Apple WeatherKit),
   for the sole purpose of retrieving a forecast.
-- It is not sent to us, not stored on any server we control, and not used to
-  build a profile of your movements.
+- It is not sent to us or stored on any server we control.
+- New weather-history samples store approximate coordinates locally. This
+  history can reveal places where you requested weather, even after rounding.
+  Saved reminder locations keep their selected precision. Rounding stored
+  weather samples does not change the coordinates sent to WeatherKit.
 - Location permission is **optional**. You can decline it and pick a city
   manually instead; the app works either way.
 - You can grant reduced (approximate) accuracy in iOS Settings. SunHat will

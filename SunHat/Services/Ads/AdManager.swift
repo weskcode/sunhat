@@ -4,9 +4,8 @@
 //
 //  Entitlement-gated wrapper around the Google Mobile Ads SDK. The SDK is
 //  never started — no network activity, no ad requests — unless entitlement
-//  allows ads: affirmatively non-entitled, or (only while live resolution is
-//  still pending at launch) the UserDefaults-mirrored last-known state says
-//  non-entitled. Info.plist sets GADDelayAppMeasurementInit so nothing runs
+//  currently allows ads. An unresolved entitlement never uses a cached free-tier
+//  state to start ads. Info.plist sets GADDelayAppMeasurementInit so nothing runs
 //  before start() either.
 //
 //  Consent & tracking order per Google's guidance: UMP consent (EEA/UK form
@@ -113,7 +112,7 @@ final class AdManager {
         self.requestConsentInfoUpdate = requestConsentInfoUpdate
     }
 
-    /// Live entitlement when resolved; last-known mirror while it's pending.
+    /// Unresolved live entitlement blocks ads even when a cached free-tier state exists.
     private var effectiveAllowsAdRequests: Bool {
         AdActivationPolicy.effectiveAllowsAdRequests(
             live: StoreManager.shared.entitlementState,
@@ -168,7 +167,7 @@ final class AdManager {
             evaluateActivation()
             // A consent form that couldn't present earlier (e.g. a system
             // permission alert was up) gets another chance each foreground.
-            if isStarted && consentBlocksAds {
+            if isStarted && effectiveAllowsAdRequests && consentBlocksAds {
                 Task { await gatherConsentConcurrently() }
             }
         }
@@ -199,7 +198,7 @@ final class AdManager {
         Task {
             defer { isEvaluating = false }
 
-            if decision.shouldRequestTracking {
+            if decision.shouldRequestTracking, effectiveAllowsAdRequests {
                 await tracking.requestAuthorization()
             }
             // Re-check entitlement after the prompt: the user may have become
@@ -217,7 +216,7 @@ final class AdManager {
     /// SDK start (never harmful — shouldShowAdSlots already requires
     /// !consentBlocksAds) without wedging the activation pipeline itself.
     private func startSDKAfterConsent() {
-        guard !isStartingSDK, !isStarted else { return }
+        guard effectiveAllowsAdRequests, !isStartingSDK, !isStarted else { return }
         isStartingSDK = true
         Task {
             defer { isStartingSDK = false }
@@ -255,6 +254,7 @@ final class AdManager {
     /// network await that `evaluateActivation`'s own Task must never hold —
     /// see `startSDKAfterConsent`.
     private func fetchConsentUpdate() async {
+        guard effectiveAllowsAdRequests else { return }
         let parameters = RequestParameters()
         #if DEBUG
         // Debug geography makes dev runs behave like a production non-EEA
@@ -289,8 +289,9 @@ final class AdManager {
         // Only attempt presentation when a form is actually required and the
         // UI can host it — loadAndPresentIfRequired can otherwise throw
         // spurious presentation errors at cold launch.
-        guard ConsentInformation.shared.consentStatus == .required, isSceneActive else { return }
+        guard effectiveAllowsAdRequests, ConsentInformation.shared.consentStatus == .required, isSceneActive else { return }
         for attempt in 1...3 {
+            guard effectiveAllowsAdRequests, isSceneActive else { return }
             guard let rootViewController = Self.rootViewController() else { return }
             do {
                 try await ConsentForm.loadAndPresentIfRequired(from: rootViewController)

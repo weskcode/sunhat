@@ -42,6 +42,35 @@ struct DashboardViewModelTests {
         viewModel.configure(modelContext: modelContext)
     }
 
+    @Test("Saved reminders load before weather is available")
+    func remindersLoadWithoutWeather() async throws {
+        let reminder = WeatherReminder(title: "Offline task")
+        modelContext.insert(reminder)
+        try modelContext.save()
+        let fresh = DashboardViewModel()
+        fresh.configure(modelContext: modelContext)
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(2)
+        while fresh.activeReminders.isEmpty && clock.now < deadline {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        #expect(fresh.activeReminders.contains { $0.id == reminder.id })
+    }
+
+    @Test("Reminder cards use nearby weather but reject another city and missing locations")
+    func reminderWeatherMatchesLocation() {
+        let data = WeatherData(temperature: 72, feelsLike: 74, humidity: 55)
+        data.locationLatitude = 40.7128
+        data.locationLongitude = -74.0060
+        viewModel.currentWeatherData = ModelDataConverter.convertWeatherData(data)
+        func reminder(at location: LocationData?) -> WeatherReminderDisplay {
+            WeatherReminderDisplay(id: UUID(), title: "Walk", reminderDescription: "", category: .general, isActive: true, isCompleted: false, isPaused: false, priority: .normal, createdDate: Date(), lastTriggered: nil, triggerCondition: nil, location: location.map(ModelDataConverter.convertLocationData))
+        }
+        #expect(viewModel.weatherData(for: reminder(at: LocationData(latitude: 40.7130, longitude: -74.0062))) != nil)
+        #expect(viewModel.weatherData(for: reminder(at: LocationData(latitude: 34.0522, longitude: -118.2437))) == nil)
+        #expect(viewModel.weatherData(for: reminder(at: nil)) == nil)
+    }
+
     @Test("ViewModel initializes with expected defaults")
     func viewModelInitialState() {
         // Assert on a freshly constructed VM: the suite-level `viewModel` has

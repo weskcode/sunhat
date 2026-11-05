@@ -189,8 +189,10 @@ final class LocationManagementViewModel: NSObject, ObservableObject {
         locationError = .timeout
         
         // Use last known location if available
-        if let lastLocation = locationManager.location {
-            logger.info("Using last known location due to timeout")
+        if let lastLocation = locationManager.location,
+           lastLocation.horizontalAccuracy >= 0,
+           abs(lastLocation.timestamp.timeIntervalSinceNow) <= 300 {
+            logger.info("Using recent location after timeout")
             processLocationUpdate(lastLocation)
         } else {
             currentLocationName = "Location unavailable"
@@ -529,6 +531,11 @@ extension LocationManagementViewModel: CLLocationManagerDelegate {
                 self.getCurrentLocation()
 
             case .denied, .restricted:
+                self.currentLocation = nil
+                self.locationManager.stopUpdatingLocation()
+                self.timer?.invalidate()
+                self.timer = nil
+                self.isLoadingCurrentLocation = false
                 self.locationError = .permissionDenied
                 self.currentLocationName = "Location access denied"
                 self.currentLocationAccuracy = "Unknown"
@@ -565,12 +572,7 @@ extension LocationManagementViewModel: CLLocationManagerDelegate {
         Task { @MainActor in
             guard let location = locations.last else { return }
             
-            self.logger.info("Location updated: \(String(describing: location.coordinate))")
-            
-            // Stop location updates and timer
-            self.locationManager.stopUpdatingLocation()
-            self.timer?.invalidate() // Corrected from locationUpdateTimer
-            self.isLoadingCurrentLocation = false
+            self.logger.info("Location updated: \(String(describing: location.coordinate), privacy: .private)")
             
             // Validate location accuracy
             if location.horizontalAccuracy < 0 {
@@ -586,6 +588,12 @@ extension LocationManagementViewModel: CLLocationManagerDelegate {
                 return
             }
             
+            // Stop location updates and timer
+            self.locationManager.stopUpdatingLocation()
+            self.timer?.invalidate() // Corrected from locationUpdateTimer
+            self.isLoadingCurrentLocation = false
+
+            self.timer = nil
             self.processLocationUpdate(location)
             self.locationError = nil
             

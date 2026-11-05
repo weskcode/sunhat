@@ -399,6 +399,63 @@ struct WeatherViewModelDependencyTests {
         #expect(viewModel.pressureDisplay == "1,013 hPa")
     }
 
+    @Test("Changing cities hides previous weather while the new request loads")
+    func changingCityHidesPreviousWeather() async throws {
+        let provider = FakeWeatherProvider(weatherData: WeatherData(temperature: 72, feelsLike: 74, humidity: 55))
+        let viewModel = WeatherViewModel(modelContainer: try makeModelContainer(), weatherService: provider, locationManager: FakeLocationManager())
+        try await waitUntil { viewModel.hasWeatherData && !viewModel.isLoading }
+        provider.shouldSuspendFetch = true
+        defer { provider.finishFetch() }
+        let selection = ReminderLocation(coordinate: CLLocationCoordinate2D(latitude: 40.7128, longitude: -74.0060), displayName: "New York", fullAddress: "New York, NY", isCurrentLocation: false)
+        let request = Task { await viewModel.updateSelectedLocation(selection) }
+        try await waitUntil { provider.fetchCount == 2 }
+        #expect(!viewModel.hasWeatherData)
+        provider.finishFetch()
+        await request.value
+        #expect(viewModel.hasWeatherData)
+    }
+
+    @Test("Missing sun times clear a previously computed day length")
+    func missingSunTimesClearDayLength() async throws {
+        let data = WeatherData(temperature: 72, feelsLike: 74, humidity: 55)
+        data.sunrise = Date()
+        data.sunset = Date().addingTimeInterval(36000)
+        let provider = FakeWeatherProvider(weatherData: data)
+        let viewModel = WeatherViewModel(modelContainer: try makeModelContainer(), weatherService: provider, locationManager: FakeLocationManager())
+        try await waitUntil { viewModel.dayLength != nil && !viewModel.isLoading }
+        data.sunrise = nil
+        data.sunset = nil
+        await viewModel.refresh()
+        #expect(viewModel.dayLength == nil)
+    }
+
+    @Test("Today's high and low do not use the first unsorted forecast day")
+    func currentBoundsUseToday() async throws {
+        let data = WeatherData(temperature: 72, feelsLike: 74, humidity: 55)
+        let today = Calendar.current.startOfDay(for: Date())
+        let tomorrow = try #require(Calendar.current.date(byAdding: .day, value: 1, to: today))
+        data.forecastDays = [ForecastDay(date: tomorrow, highTemperature: 90, lowTemperature: 80), ForecastDay(date: today, highTemperature: 76, lowTemperature: 58)]
+        let provider = FakeWeatherProvider(weatherData: data)
+        let viewModel = WeatherViewModel(modelContainer: try makeModelContainer(), weatherService: provider, locationManager: FakeLocationManager())
+        try await waitUntil { viewModel.hasWeatherData && !viewModel.isLoading }
+        #expect(viewModel.highTemperature == 76)
+        #expect(viewModel.lowTemperature == 58)
+    }
+
+    @Test("Missing daily forecasts clear old high and low values")
+    func missingDailyForecastClearsBounds() async throws {
+        let data = WeatherData(temperature: 72, feelsLike: 74, humidity: 55)
+        data.forecastDays = [ForecastDay(date: Date(), highTemperature: 76, lowTemperature: 58)]
+        let provider = FakeWeatherProvider(weatherData: data)
+        let viewModel = WeatherViewModel(modelContainer: try makeModelContainer(), weatherService: provider, locationManager: FakeLocationManager())
+        try await waitUntil { viewModel.hasWeatherData && !viewModel.isLoading }
+        data.forecastDays = []
+        await viewModel.refresh()
+        #expect(viewModel.highTemperature == nil)
+        #expect(viewModel.lowTemperature == nil)
+        #expect(viewModel.displayTemperature(viewModel.highTemperature) == "--")
+    }
+
     private func makeModelContainer() throws -> ModelContainer {
         let schema = Schema([
             WeatherReminder.self,
@@ -463,6 +520,8 @@ private final class FakeWeatherProvider: WeatherProviding {
 
     private let weatherData: WeatherData
     var errorToThrow: (any Error)?
+    var shouldSuspendFetch = false
+    private var fetchContinuation: CheckedContinuation<Void, Never>?
     private(set) var fetchCount = 0
     private(set) var lastCoordinate: CLLocationCoordinate2D?
 
@@ -480,12 +539,20 @@ private final class FakeWeatherProvider: WeatherProviding {
 
     func fetchCurrentWeather(for location: CLLocation, forceRefresh: Bool) async throws -> WeatherData {
         fetchCount += 1
+        if shouldSuspendFetch {
+            await withCheckedContinuation { fetchContinuation = $0 }
+        }
         lastCoordinate = location.coordinate
         if let errorToThrow {
             throw errorToThrow
         }
         lastUpdateTime = Date()
         return weatherData
+    }
+
+    func finishFetch() {
+        fetchContinuation?.resume()
+        fetchContinuation = nil
     }
 
     var hourlyToReturn: [HourlyForecastDTO] = []

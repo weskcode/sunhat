@@ -228,7 +228,7 @@ extension Notification.Name {
     static let sunHatShowRemindersTab = Notification.Name("SunHat.showRemindersTab")
 }
 
-private struct NotificationReminderDestination: View {
+struct NotificationReminderDestination: View {
     @Query private var reminders: [WeatherReminder]
 
     init(reminderID: UUID) {

@@ -140,16 +140,22 @@ extension DashboardView {
                 )
             }
 
-            SunHatForecastRibbon(
-                current: viewModel.currentTemperature,
-                high: viewModel.highTemperature,
-                low: viewModel.lowTemperature,
-                tint: viewModel.weatherIconColor
-            )
-            .frame(height: 54)
-            .accessibilityHidden(true)
+            if viewModel.hasDailyForecast {
+                SunHatForecastRibbon(
+                    current: viewModel.currentTemperature,
+                    high: viewModel.highTemperature,
+                    low: viewModel.lowTemperature,
+                    tint: viewModel.weatherIconColor
+                )
+                .frame(height: 54)
+                .accessibilityHidden(true)
+            }
 
-            HStack(spacing: 8) {
+            let metricLayout = dynamicTypeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+                : AnyLayout(HStackLayout(spacing: 8))
+
+            metricLayout {
                 WeatherHeroMetricPill(
                     title: String(localized: "High", comment: "Dashboard hero pill label for the day's high temperature"),
                     value: "\(viewModel.highTemperatureDisplay)°",

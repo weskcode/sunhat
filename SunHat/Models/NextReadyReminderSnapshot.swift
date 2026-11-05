@@ -25,9 +25,9 @@ struct NextReadyReminderSnapshot: Equatable, Sendable, Codable {
 }
 
 enum NextReadyReminderSelector {
-    static func snapshot(from reminders: [WeatherReminderDisplay]) -> NextReadyReminderSnapshot {
+    static func snapshot(from reminders: [WeatherReminderDisplay], matchingReminderIDs: Set<UUID> = [], temperatureUnit: TemperatureUnit = .fahrenheit) -> NextReadyReminderSnapshot {
         guard let reminder = reminders
-            .filter(\.isReadyForCompactSurfaces)
+            .filter({ $0.isReadyForCompactSurfaces && matchingReminderIDs.contains($0.id) })
             .sorted(by: compactReminderSort)
             .first else {
             return .unavailable
@@ -36,7 +36,7 @@ enum NextReadyReminderSelector {
         return NextReadyReminderSnapshot(
             id: reminder.id,
             title: reminder.displayTitle,
-            subtitle: reminder.compactTriggerSummary,
+            subtitle: reminder.compactTriggerSummary(unit: temperatureUnit),
             systemImageName: reminder.category.iconName,
             isReady: true
         )
@@ -63,16 +63,11 @@ private extension WeatherReminderDisplay {
         title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? String(localized: "Untitled Reminder", comment: "Fallback title for a reminder with no title, shown on compact surfaces") : title
     }
 
-    var compactTriggerSummary: String {
+    func compactTriggerSummary(unit: TemperatureUnit) -> String {
         guard let triggerCondition else {
             return String(localized: "Ready when the weather matches.", comment: "Compact surface summary when a reminder has no specific trigger condition")
         }
 
-        if let minTemperature = triggerCondition.minTemperature,
-           let maxTemperature = triggerCondition.maxTemperature {
-            return "\(Int(minTemperature))-\(Int(maxTemperature))°"
-        }
-
-        return "\(Int(triggerCondition.targetTemperature))° \(triggerCondition.comparisonType.rawValue)"
+        return triggerCondition.temperatureSummary(unit: unit)
     }
 }

@@ -92,17 +92,12 @@ struct DetailedReminderView: View {
             }
         }
         .animation(.smooth(duration: 0.3), value: isEditMode)
+        .navigationBarBackButtonHidden(isEditMode)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 if isEditMode {
                     Button("Cancel") {
                         cancelEditing()
-                    }
-                } else {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Label("Back", systemImage: "chevron.left")
                     }
                 }
             }
@@ -258,7 +253,7 @@ struct DetailedReminderView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
-        .glassEffect(in: .rect(cornerRadius: 20))
+        .background(.regularMaterial, in: .rect(cornerRadius: 20))
         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
         .padding(.horizontal, 20)
         .padding(.top, 12)
@@ -269,7 +264,7 @@ struct DetailedReminderView: View {
     private var livePredictionSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             SectionHeaderView(
-                icon: "crystal.ball",
+                icon: "chart.line.uptrend.xyaxis",
                 title: "Live Prediction",
                 subtitle: "Next trigger forecast"
             )
@@ -526,7 +521,7 @@ extension View {
     func cardStyle() -> some View {
         self
             .padding(20)
-            .glassEffect(in: .rect(cornerRadius: 16))
+            .background(.regularMaterial, in: .rect(cornerRadius: 16))
             .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
 }

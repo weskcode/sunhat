@@ -130,7 +130,10 @@ final class AppleWeatherKitAPI: WeatherAPI {
                 dataSource: current.dataSource,
                 accuracy: current.accuracy,
                 forecast: forecast,
-                hourly: hourly
+                hourly: hourly,
+                sunrise: weather.dailyForecast.forecast.first?.sun.sunrise,
+                sunset: weather.dailyForecast.forecast.first?.sun.sunset,
+                windGust: weather.currentWeather.wind.gust?.milesPerHourValue
             )
         } catch is CancellationError {
             throw CancellationError()
@@ -218,12 +221,9 @@ final class AppleWeatherKitAPI: WeatherAPI {
             precipitationType: precipType,
             windSpeed: daily.wind.speed.milesPerHourValue,
             windDirection: Int(daily.wind.direction.value),
-            // Averaged from real hourly data; hourly coverage (~10 days) can end
-            // before the daily forecast does, so distant days fall back to neutral
-            // values. Optional fields are tracked in IMPROVEMENT_PLAN.md §4.
-            humidity: aggregates?.humidity ?? 50,
+            humidity: aggregates?.humidity ?? Int((daily.minimumHumidity + daily.maximumHumidity) * 50),
             uvIndex: Double(daily.uvIndex.value),
-            cloudCover: aggregates?.cloudCover ?? 20
+            cloudCover: aggregates?.cloudCover ?? Int(daily.daytimeForecast.cloudCover * 100)
         )
     }
     
@@ -263,20 +263,27 @@ final class AppleWeatherKitAPI: WeatherAPI {
     /// NSErrors that the coarse mapping below can't distinguish from a real network
     /// failure. Pulling device logs (Console.app, subsystem "org.wesley.sunhat",
     /// category "AppleWeatherKitAPI") after a failed fetch shows the actual cause.
-    private func mapWeatherKitError(_ error: Error) -> WeatherError {
+    func mapWeatherKitError(_ error: Error) -> WeatherError {
         if let weatherError = error as? WeatherError {
             return weatherError
         }
 
         let nsError = error as NSError
-        logger.error("WeatherKit request failed, domain: \(nsError.domain, privacy: .public), code: \(nsError.code, privacy: .public), description: \(nsError.localizedDescription, privacy: .public), userInfo: \(nsError.userInfo, privacy: .public)")
+        logger.error("WeatherKit request failed, domain: \(nsError.domain, privacy: .public), code: \(nsError.code, privacy: .public), description: \(nsError.localizedDescription, privacy: .private), userInfo: \(nsError.userInfo, privacy: .private)")
 
-        switch nsError.code {
-        case 1: return .locationPermissionDenied
-        case 2: return .networkUnavailable
-        case 3: return .serviceUnavailable(provider: .appleWeatherKit)
-        default: return .unknown(error)
+        if nsError.domain == NSURLErrorDomain {
+            switch URLError.Code(rawValue: nsError.code) {
+            case .notConnectedToInternet, .networkConnectionLost, .cannotFindHost,
+                 .cannotConnectToHost, .dnsLookupFailed, .timedOut:
+                return .networkUnavailable
+            default:
+                return .unknown(error)
+            }
         }
+        if nsError.domain == kCLErrorDomain, nsError.code == CLError.Code.denied.rawValue {
+            return .locationPermissionDenied
+        }
+        return .unknown(error)
     }
     
     func mapPrecipitationType(_ condition: WeatherKit.WeatherCondition) -> PrecipitationType {
@@ -621,6 +628,9 @@ nonisolated struct WeatherDataDTO: Sendable {
     /// Empty when the provider has no hourly data; the UI must show an
     /// unavailable state instead of synthesizing values.
     var hourly: [HourlyForecastDTO] = []
+    var sunrise: Date? = nil
+    var sunset: Date? = nil
+    var windGust: Double? = nil
 
     func toWeatherData() -> WeatherData {
         let weather = WeatherData(
@@ -628,6 +638,9 @@ nonisolated struct WeatherDataDTO: Sendable {
             feelsLike: feelsLike,
             humidity: humidity
         )
+        weather.sunrise = sunrise
+        weather.sunset = sunset
+        weather.windGust = windGust
         weather.dewPoint = dewPoint
         weather.pressure = pressure
         weather.visibility = visibility

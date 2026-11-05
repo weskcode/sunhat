@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct WeatherHeroMetricPill: View {
+    @ScaledMetric(relativeTo: .caption) private var iconSize = 22
+
     let title: String
     let value: String
     let systemImage: String
@@ -29,7 +31,7 @@ struct WeatherHeroMetricPill: View {
             Image(systemName: systemImage)
                 .font(AppFontStyle.caption.font.weight(.semibold))
                 .foregroundStyle(tint)
-                .frame(width: 22, height: 22)
+                .frame(width: iconSize, height: iconSize)
                 .background(tint.opacity(0.13), in: .circle)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

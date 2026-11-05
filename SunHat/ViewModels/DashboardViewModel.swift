@@ -36,6 +36,20 @@ final class DashboardViewModel: ObservableObject {
     @Published var activeReminders: [WeatherReminderDisplay] = []
     @Published var activeAlerts: [WeatherAlertDisplay] = []
     @Published var hasWeatherData = false
+    @Published private(set) var hasDailyForecast = false
+    @Published private var reminderEvaluations: [TriggerEvaluationResult] = []
+
+    var readyReminders: [WeatherReminderDisplay] {
+        activeReminders.filter { reminder in
+            reminderEvaluations.contains { result in
+                result.reminderId == reminder.id && result.triggered &&
+                    Date().timeIntervalSince(result.evaluationTime) <= 300 &&
+                    result.conditionData == reminder.triggerCondition &&
+                    result.weatherData?.locationLatitude == reminder.location?.latitude &&
+                    result.weatherData?.locationLongitude == reminder.location?.longitude
+            }
+        }
+    }
     
     @Published var isLoading: Bool = false
     @Published var lastUpdateTime: Date?
@@ -53,11 +67,11 @@ final class DashboardViewModel: ObservableObject {
     }
 
     var highTemperatureDisplay: String {
-        formattedTemperature(highTemperature)
+        hasDailyForecast ? formattedTemperature(highTemperature) : "--"
     }
 
     var lowTemperatureDisplay: String {
-        formattedTemperature(lowTemperature)
+        hasDailyForecast ? formattedTemperature(lowTemperature) : "--"
     }
 
     var windSpeedDisplay: String {
@@ -117,6 +131,7 @@ final class DashboardViewModel: ObservableObject {
     func configure(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.weatherModelActor = WeatherModelActor(modelContainer: modelContext.container)
+        loadActiveReminders()
         // init() already called loadTemperatureUnit(), but modelContext was
         // still nil then, so it silently fell back to the locale default and
         // never got a second chance to read the user's actual preference.
@@ -151,7 +166,7 @@ final class DashboardViewModel: ObservableObject {
                 return
             }
 
-            logger.info("Fetching weather for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+            logger.info("Fetching weather for location: \(location.coordinate.latitude, privacy: .private), \(location.coordinate.longitude, privacy: .private)")
 
             // Fetch weather data
             let weatherData = try await weatherService.fetchCurrentWeather(for: location, forceRefresh: true)
@@ -161,8 +176,8 @@ final class DashboardViewModel: ObservableObject {
             updateWeatherData(weatherData)
             loadActiveReminders()
             loadWeatherAlerts()
-            lastUpdateTime = Date()
-            connectionStatus = .connected
+            lastUpdateTime = weatherData.timestamp
+            connectionStatus = Date().timeIntervalSince(weatherData.timestamp) < 15 * 60 ? .connected : .disconnected
 
             logger.info("Weather data refresh completed successfully")
 
@@ -192,24 +207,32 @@ final class DashboardViewModel: ObservableObject {
         isLoading = false
     }
     
+    func weatherData(for reminder: WeatherReminderDisplay) -> WeatherDataTransfer? {
+        guard let weather = currentWeatherData, let location = reminder.location else { return nil }
+        let reminderLocation = CLLocation(latitude: location.latitude, longitude: location.longitude)
+        let weatherLocation = CLLocation(latitude: weather.locationLatitude, longitude: weather.locationLongitude)
+        guard reminderLocation.distance(from: weatherLocation) <= 1_000 else { return nil }
+        return weather
+    }
+
     // MARK: - Private Methods
     
     private func setupBindings() {
         // Weather service bindings, use RunLoop.main as the Combine scheduler
         // so Swift 6 can verify we're delivering on the @MainActor thread.
-        weatherService.$isLoading
-            .receive(on: RunLoop.main)
-            .assign(to: \.isLoading, on: self)
-            .store(in: &cancellables)
-
         weatherService.$lastUpdateTime
             .receive(on: RunLoop.main)
-            .assign(to: \.lastUpdateTime, on: self)
+            .sink { [weak self] in self?.lastUpdateTime = $0 }
             .store(in: &cancellables)
 
         weatherService.$connectionStatus
             .receive(on: RunLoop.main)
-            .assign(to: \.connectionStatus, on: self)
+            .sink { [weak self] in self?.connectionStatus = $0 }
+            .store(in: &cancellables)
+
+        TriggerEngineManager.shared.$evaluationResults
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in self?.reminderEvaluations = $0 }
             .store(in: &cancellables)
 
         // Reactive updates when SwiftData model context saves.
@@ -239,9 +262,10 @@ final class DashboardViewModel: ObservableObject {
     }
     
     private func refreshWeatherDataIfNeeded() async {
-        // Only refresh if data is older than 10 minutes
-        guard let lastUpdate = lastUpdateTime,
-              Date().timeIntervalSince(lastUpdate) > 600 else {
+        // Retry an initial failure as well as weather older than 10 minutes.
+        guard !isLoading else { return }
+        if let lastUpdate = lastUpdateTime,
+           Date().timeIntervalSince(lastUpdate) <= 600 {
             return
         }
         
@@ -274,62 +298,14 @@ final class DashboardViewModel: ObservableObject {
             return loc
         }
 
-        // 3) Check if we already have a GPS location
-        if let loc = locationPermissionManager.currentLocation {
-            await updateLocationName(for: loc)
-            return loc
+        if let location = await locationPermissionManager.resolveCurrentLocation() {
+            await updateLocationName(for: location)
+            return location
         }
-
-        // 4) Request GPS location and wait with timeout
-        if locationPermissionManager.authorizationStatus == .authorizedWhenInUse ||
-           locationPermissionManager.authorizationStatus == .authorizedAlways {
-            locationPermissionManager.getCurrentLocation()
-
-            if let loc = await waitForCurrentLocation() {
-                await updateLocationName(for: loc)
-                return loc
-            }
-        }
-
-        // 5) Last resort: request permission and wait briefly for a resulting location.
-        // The system permission callback is not guaranteed in tests or edge cases, so
-        // avoid waiting on an unbounded continuation here.
-        if locationPermissionManager.authorizationStatus == .notDetermined {
-            locationPermissionManager.requestLocationPermission { _ in }
-
-            if let loc = await waitForCurrentLocation() {
-                await updateLocationName(for: loc)
-                return loc
-            }
-        }
-
-        // 6) No usable location; the caller shows an explicit error state.
-        logger.warning("Could not obtain location")
         currentLocationName = String(localized: "Location Unavailable", comment: "Dashboard location label when no location can be determined")
         return nil
     }
 
-    private func waitForCurrentLocation(maxAttempts: Int = 20) async -> CLLocation? {
-        for _ in 0..<maxAttempts {
-            do {
-                try await Task.sleep(for: .milliseconds(500))
-            } catch {
-                return nil
-            }
-
-            if let loc = locationPermissionManager.currentLocation {
-                return loc
-            }
-
-            if locationPermissionManager.authorizationStatus == .denied ||
-                locationPermissionManager.authorizationStatus == .restricted {
-                return nil
-            }
-        }
-
-        return nil
-    }
-    
     private func updateLocationName(for location: CLLocation) async {
         currentLocationName = await LocationDisplayFormatter.reverseGeocodedName(for: location)
     }
@@ -344,7 +320,9 @@ final class DashboardViewModel: ObservableObject {
         windSpeed = weatherData.windSpeed
         visibility = weatherData.visibility
         uvIndex = weatherData.uvIndex
-        weatherDescription = weatherData.weatherDescription
+        weatherDescription = weatherData.weatherDescription.isEmpty
+            ? weatherData.weatherCondition.displayName
+            : weatherData.weatherDescription
         
         updateWeatherIcon(for: weatherData.weatherCondition)
         loadForecastData(from: weatherData)
@@ -390,17 +368,15 @@ final class DashboardViewModel: ObservableObject {
     }
     
     private func updateHighLowTemperatures() {
-        guard let todayForecast = forecastData.first else {
-            // Use current temperature as fallback
-            highTemperature = currentTemperature
-            lowTemperature = currentTemperature
+        guard let todayForecast = forecastData.first(where: { Calendar.current.isDateInToday($0.date) }) else {
+            hasDailyForecast = false
             return
         }
-        
+        hasDailyForecast = true
         highTemperature = convertTemperature(todayForecast.highTemperature)
         lowTemperature = convertTemperature(todayForecast.lowTemperature)
     }
-    
+
     private func loadActiveReminders() {
         guard let weatherModelActor = weatherModelActor else { 
             logger.error("WeatherModelActor not available")

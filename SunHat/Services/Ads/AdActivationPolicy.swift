@@ -34,17 +34,13 @@ nonisolated struct AdActivationDecision: Sendable, Equatable {
 }
 
 nonisolated enum AdActivationPolicy {
-    /// The entitlement input for ad decisions. While the live state is still
-    /// `.unknown` (StoreKit hasn't answered this launch), fall back to the
-    /// UserDefaults-mirrored last-known state so a known non-subscriber's ad
-    /// slot exists from first layout instead of popping in mid-session
-    /// (Google policy: content must not shift around ads). Both unknown →
-    /// no ads: fail closed.
+    /// A cached free-tier state can predate a purchase on another device.
+    /// Wait for this launch's StoreKit resolution before allowing ad requests.
     static func effectiveAllowsAdRequests(
         live: AdFreeEntitlementState,
-        cached: AdFreeEntitlementState
+        cached _: AdFreeEntitlementState
     ) -> Bool {
-        live == .unknown ? cached.allowsAdRequests : live.allowsAdRequests
+        live.allowsAdRequests
     }
 
     static func decide(

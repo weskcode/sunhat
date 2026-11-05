@@ -89,7 +89,7 @@ struct ActiveReminderCard: View {
                     .lineLimit(1)
 
                 if let condition = reminder.triggerCondition {
-                    Text("Trigger: When temperature is \(condition.comparisonType.displayName) \(temperatureUnit.fromFahrenheit(condition.targetTemperature), specifier: "%.1f")°")
+                    Text(condition.temperatureSummary(unit: temperatureUnit))
                         .font(AppFontStyle.caption.font)
                         .foregroundStyle(.secondary)
                 } else {
@@ -148,8 +148,7 @@ struct ActiveReminderCard: View {
         var parts = [reminder.title, statusText]
 
         if let condition = reminder.triggerCondition {
-            let temperature = String(format: "%.1f", temperatureUnit.fromFahrenheit(condition.targetTemperature))
-            parts.append(String(localized: "Trigger when temperature is \(condition.comparisonType.displayName) \(temperature) degrees", comment: "Accessibility label clause describing a reminder's temperature trigger condition"))
+            parts.append(condition.temperatureSummary(unit: temperatureUnit))
         } else {
             parts.append(String(localized: "No trigger condition set", comment: "Accessibility label clause when a reminder has no trigger condition configured"))
         }

@@ -58,9 +58,8 @@ final class StoreManager {
         case acceptTestSignatures
     }
 
-    /// Last-known entitlement, mirrored to UserDefaults. Consulted only to
-    /// decide whether ad-SDK startup may proceed before the first StoreKit
-    /// resolution of a launch; never trusted to grant paid access.
+    /// Last-known entitlement mirrored to UserDefaults. This snapshot must
+    /// never authorize ad-SDK startup or grant paid access.
     nonisolated static let cachedEntitlementStateKey = "entitlement.adFree.state"
 
     /// Test-only entitlement override, so gate tests can pin a state without
@@ -118,10 +117,9 @@ final class StoreManager {
         self.trustPolicy = trustPolicy
     }
 
-    /// Reads the mirrored entitlement without touching StoreKit, for launch-time
-    /// gating before the first resolution completes. Missing/invalid → `.unknown`,
-    /// which fails closed (no ad requests). UserDefaults is thread-safe, so this
-    /// is callable from any context.
+    /// Reads the mirrored entitlement without touching StoreKit. This snapshot
+    /// cannot authorize ads before live resolution. Missing/invalid values are
+    /// `.unknown`; UserDefaults is thread-safe, so this is callable from any context.
     nonisolated static func cachedEntitlementState(userDefaults: UserDefaults = .standard) -> AdFreeEntitlementState {
         guard let raw = userDefaults.string(forKey: cachedEntitlementStateKey),
               let state = AdFreeEntitlementState(rawValue: raw) else {

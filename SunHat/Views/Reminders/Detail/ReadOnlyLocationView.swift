@@ -42,6 +42,6 @@ struct ReadOnlyLocationView: View {
             Spacer()
         }
         .padding(12)
-        .glassEffect(.regular.tint(.blue.opacity(0.05)), in: .rect(cornerRadius: 10))
+        .background(.regularMaterial, in: .rect(cornerRadius: 10))
     }
 }

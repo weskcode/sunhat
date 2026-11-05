@@ -33,12 +33,20 @@ final class FirstReminderCreationViewModel: ObservableObject {
 
     private let weatherService = WeatherService.shared
     private let locationPermissionManager = LocationPermissionManager.shared
+    private let locationResolver: any LocationManaging
     private var modelContext: ModelContext?
+    // Async loads can outlive the view; keep their SwiftData backing store alive.
+    private var modelContainer: ModelContainer?
     var temperatureUnit: TemperatureUnit = Locale.current.measurementSystem == .metric ? .celsius : .fahrenheit
     private var weatherTask: Task<Void, Never>?
 
+    init(locationResolver: any LocationManaging = DefaultLocationManager.shared) {
+        self.locationResolver = locationResolver
+    }
+
     func configure(modelContext: ModelContext) {
         self.modelContext = modelContext
+        self.modelContainer = modelContext.container
         loadTemperatureUnit()
     }
 
@@ -157,13 +165,16 @@ final class FirstReminderCreationViewModel: ObservableObject {
         weatherTask = Task { [weak self] in
             guard let self else { return }
 
-            guard let location = self.resolveSelectedLocation() else {
+            self.isLoadingCurrentWeather = true
+            defer {
+                if !Task.isCancelled { self.isLoadingCurrentWeather = false }
+            }
+            let location = await self.resolveSelectedLocation()
+            guard !Task.isCancelled else { return }
+            guard let location else {
                 self.clearWeather()
                 return
             }
-
-            self.isLoadingCurrentWeather = true
-            defer { self.isLoadingCurrentWeather = false }
 
             do {
                 let data = try await self.weatherService.fetchWeatherData(for: location)
@@ -221,10 +232,10 @@ final class FirstReminderCreationViewModel: ObservableObject {
         hasCurrentWeather = true
     }
 
-    private func resolveSelectedLocation() -> CLLocation? {
+    private func resolveSelectedLocation() async -> CLLocation? {
         switch customReminder.selectedLocation {
         case .currentLocation:
-            return locationPermissionManager.currentLocation
+            return await locationResolver.currentLocation()?.location
         case .manual(let data):
             return CLLocation(latitude: data.coordinate.latitude, longitude: data.coordinate.longitude)
         }
@@ -297,21 +308,27 @@ final class FirstReminderCreationViewModel: ObservableObject {
     /// Saves the reminder. Returns whether the save succeeded; on failure
     /// `creationErrorMessage` is set for the view to surface.
     @discardableResult
-    func createReminder() -> Bool {
-        guard isReminderValid, let modelContext else { return false }
+    func createReminder() async -> Bool {
+        guard isReminderValid, !isCreatingReminder, let modelContext else { return false }
 
         guard !isWriteBlocked else {
             creationErrorMessage = String(localized: "SunHat can't save new reminders right now because your data couldn't be loaded. Restart SunHat to try again.", comment: "Error shown when trying to create a reminder while the app is in temporary in-memory recovery mode")
             return false
         }
 
+        isCreatingReminder = true
+        defer { isCreatingReminder = false }
+        let draft = customReminder
+
         // Resolve the location before creating anything. A reminder without a
         // usable location can never be evaluated, so saving one would silently
         // do nothing; fail with a clear message instead.
         let locationData: LocationData
-        switch customReminder.selectedLocation {
+        switch draft.selectedLocation {
         case .currentLocation:
-            guard let clLocation = locationPermissionManager.currentLocation else {
+            let resolvedLocation = await locationResolver.currentLocation()?.location
+            guard !Task.isCancelled else { return false }
+            guard let clLocation = resolvedLocation else {
                 creationErrorMessage = String(localized: "SunHat couldn't determine your current location. Pick a location for this reminder, or try again once location is available.", comment: "Error shown when saving a reminder set to current location while no location fix is available")
                 return false
             }
@@ -333,33 +350,32 @@ final class FirstReminderCreationViewModel: ObservableObject {
             locationData.displayName = manualData.displayName
         }
 
-        isCreatingReminder = true
-
-        let reminder = WeatherReminder(title: customReminder.displayTitle)
-        reminder.reminderDescription = customReminder.notes
-        reminder.userNotes = customReminder.notes
+        guard !Task.isCancelled else { return false }
+        let reminder = WeatherReminder(title: draft.displayTitle)
+        reminder.reminderDescription = draft.notes
+        reminder.userNotes = draft.notes
         reminder.category = .general
         reminder.isActive = true
-        reminder.customIconName = customReminder.selectedIcon
-        reminder.customTintName = ReminderTint.name(for: customReminder.selectedColor)
+        reminder.customIconName = draft.selectedIcon
+        reminder.customTintName = ReminderTint.name(for: draft.selectedColor)
 
         // Build trigger condition from the custom reminder settings
         let trigger = TriggerCondition()
-        switch customReminder.temperatureType {
+        switch draft.temperatureType {
         case .temperatureRange:
             trigger.triggerType = .temperatureRange
-            trigger.minTemperature = customReminder.minTemperature
-            trigger.maxTemperature = customReminder.maxTemperature
+            trigger.minTemperature = draft.minTemperature
+            trigger.maxTemperature = draft.maxTemperature
             trigger.comparisonType = .between
         case .exactTemperature:
             trigger.triggerType = .exactTemperature
-            trigger.targetTemperature = customReminder.minTemperature
+            trigger.targetTemperature = draft.minTemperature
             trigger.comparisonType = .equals
         }
 
-        if !customReminder.selectedSkyConditions.isEmpty {
-            trigger.selectedSkyConditions = customReminder.selectedSkyConditions
-            trigger.conditionMode = customReminder.conditionMode
+        if !draft.selectedSkyConditions.isEmpty {
+            trigger.selectedSkyConditions = draft.selectedSkyConditions
+            trigger.conditionMode = draft.conditionMode
         }
 
         reminder.triggerCondition = trigger
@@ -369,8 +385,8 @@ final class FirstReminderCreationViewModel: ObservableObject {
         // title/message stay empty so notifications keep the specific trigger
         // reason until the user customizes them in the reminder's settings.
         let notificationConfig = NotificationConfig(title: "", message: "")
-        notificationConfig.respectsQuietHours = customReminder.respectQuietHours
-        let timeRange = customReminder.preferredTimeRange
+        notificationConfig.respectsQuietHours = draft.respectQuietHours
+        let timeRange = draft.preferredTimeRange
         notificationConfig.avoidNighttime = timeRange != .allDay
         notificationConfig.preferredStartHour = timeRange.hours.lowerBound
         notificationConfig.preferredEndHour = timeRange.hours.upperBound
@@ -384,11 +400,9 @@ final class FirstReminderCreationViewModel: ObservableObject {
         } catch {
             modelContext.delete(reminder)
             creationErrorMessage = String(localized: "Couldn't save your reminder. Please try again.", comment: "Error shown when creating a reminder fails to persist")
-            isCreatingReminder = false
             return false
         }
 
-        isCreatingReminder = false
         return true
     }
     

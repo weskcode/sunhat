@@ -123,6 +123,58 @@ struct AdManagerGateTests {
         #expect(manager.isStarted)
     }
 
+    @Test("A stale free-tier cache cannot start ads or tracking before StoreKit resolves")
+    func staleFreeCacheDoesNotStartAds() async throws {
+        let (manager, tracking, box) = makeManager(appOpenCount: 5, trackingStatus: .notDetermined)
+        let defaults = try #require(UserDefaults(suiteName: Self.suiteName))
+        defaults.set(AdFreeEntitlementState.notEntitled.rawValue, forKey: StoreManager.cachedEntitlementStateKey)
+        StoreManager.shared.overrideEntitlementStateForTesting(.unknown)
+        defer { StoreManager.shared.clearEntitlementOverrideForTesting() }
+
+        manager.sceneDidChange(active: true)
+        await settle { !box.events.isEmpty || tracking.requestCount > 0 }
+
+        #expect(box.events.isEmpty)
+        #expect(tracking.requestCount == 0)
+        #expect(!manager.shouldShowAdSlots)
+    }
+
+    @Test("Queued tracking requests stop when entitlement changes before execution",
+          arguments: [AdFreeEntitlementState.active, .unknown])
+    func queuedTrackingRespectsCurrentEntitlement(_ entitlement: AdFreeEntitlementState) async {
+        let (manager, tracking, box) = makeManager(appOpenCount: 5, trackingStatus: .notDetermined)
+        StoreManager.shared.overrideEntitlementStateForTesting(.notEntitled)
+        defer { StoreManager.shared.clearEntitlementOverrideForTesting() }
+
+        manager.sceneDidChange(active: true)
+        StoreManager.shared.overrideEntitlementStateForTesting(entitlement)
+        await settle { tracking.requestCount > 0 || !box.events.isEmpty }
+
+        #expect(tracking.requestCount == 0)
+        #expect(box.events.isEmpty)
+        #expect(!manager.shouldShowAdSlots)
+    }
+
+    @Test("Subscribing suppresses slots and foreground consent work after SDK startup")
+    func subscribingStopsAdWork() async {
+        let (manager, _, box) = makeManager(appOpenCount: 5)
+        StoreManager.shared.overrideEntitlementStateForTesting(.notEntitled)
+        defer { StoreManager.shared.clearEntitlementOverrideForTesting() }
+        manager.sceneDidChange(active: true)
+        await settle { manager.isStarted }
+        #expect(manager.isStarted)
+
+        StoreManager.shared.overrideEntitlementStateForTesting(.active)
+        let before = box.events.count
+        manager.sceneDidChange(active: false)
+        manager.sceneDidChange(active: true)
+        await settle { box.events.count > before }
+
+        #expect(!manager.shouldShowAdSlots)
+        #expect(box.events.count == before)
+        #expect(box.startCount == 1)
+    }
+
     @Test("A started SDK still shows no slots while consent blocks ads")
     func consentGateSuppressesSlots() async {
         let (manager, _, _) = makeManager(appOpenCount: 5)

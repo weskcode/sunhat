@@ -342,11 +342,24 @@ extension WeatherData {
     }
     
     func evaluateCondition(_ triggerCondition: TriggerCondition) -> Bool {
+        if triggerCondition.hasSkyConditionFilter {
+            let selected = triggerCondition.selectedSkyConditions
+            if !selected.isEmpty {
+                let sky: SkyCondition
+                switch weatherCondition {
+                case .clear, .windy, .unknown: sky = .sunny
+                case .partlyCloudy: sky = .partlyCloudy
+                case .cloudy, .overcast, .fog: sky = .cloudy
+                case .rain, .drizzle, .thunderstorm: sky = .rainy
+                case .snow, .sleet, .hail: sky = .snowy
+                }
+                let matches = selected.contains(sky)
+                if triggerCondition.conditionMode == .include ? !matches : matches { return false }
+            }
+        }
         switch triggerCondition.triggerType {
         case .exactTemperature:
-            let targetTemp = triggerCondition.useFeelsLike ? feelsLike : temperature
-            let tolerance = triggerCondition.temperatureTolerance
-            return abs(targetTemp - triggerCondition.targetTemperature) <= tolerance
+            return evaluateTemperatureCondition(triggerCondition)
             
         case .temperatureRange:
             let checkTemp = triggerCondition.useFeelsLike ? feelsLike : temperature

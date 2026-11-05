@@ -139,7 +139,7 @@ extension WeatherView {
             }
         }
         .padding(20)
-        .glassEffect(in: .rect(cornerRadius: 20))
+        .background(.regularMaterial, in: .rect(cornerRadius: 20))
         .shadow(color: .black.opacity(0.1), radius: 12, x: 0, y: 6)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
@@ -227,7 +227,7 @@ extension WeatherView {
             .padding(.horizontal, 20)
         }
         .padding(.vertical, 16)
-        .glassEffect(in: .rect(cornerRadius: 20))
+        .background(.regularMaterial, in: .rect(cornerRadius: 20))
     }
 
     // MARK: - Historical Comparison Section
@@ -280,7 +280,7 @@ extension WeatherView {
             .padding(.horizontal, 20)
         }
         .padding(.vertical, 16)
-        .glassEffect(in: .rect(cornerRadius: 20))
+        .background(.regularMaterial, in: .rect(cornerRadius: 20))
     }
 
     // MARK: - Trigger Predictions Section
@@ -301,7 +301,7 @@ extension WeatherView {
             }
         }
         .padding(.vertical, 16)
-        .glassEffect(in: .rect(cornerRadius: 20))
+        .background(.regularMaterial, in: .rect(cornerRadius: 20))
     }
 
     // MARK: - Description Helpers

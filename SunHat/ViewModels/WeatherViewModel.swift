@@ -27,8 +27,8 @@ final class WeatherViewModel: ObservableObject {
     @Published var weatherIconColor: Color = .orange
     @Published var backdropPalette: WeatherBackdropPalette = .calmBlue
     @Published var hasWeatherData = false
-    @Published var highTemperature: Double = 0
-    @Published var lowTemperature: Double = 0
+    @Published var highTemperature: Double?
+    @Published var lowTemperature: Double?
 
     @Published var humidity: Int = 0
     @Published var windSpeed: Double = 0
@@ -142,6 +142,17 @@ final class WeatherViewModel: ObservableObject {
 
     func updateSelectedLocation(_ location: ReminderLocation) async {
         selectedLocation = location
+        hasWeatherData = false
+        highTemperature = nil
+        lowTemperature = nil
+        hourlyForecast = []
+        weeklyForecast = []
+        weatherAlerts = []
+        triggerPredictions = []
+        yesterdayTemp = nil
+        lastWeekTemp = nil
+        historicalAvgTemp = nil
+        dayLength = nil
         await loadAllData(forceRefresh: true)
     }
 
@@ -199,7 +210,7 @@ final class WeatherViewModel: ObservableObject {
         backdropPalette = WeatherBackdropPalette.palette(for: data)
         hasWeatherData = true
         weatherDescription = data.weatherDescription.isEmpty
-            ? data.weatherCondition.rawValue.capitalized
+            ? data.weatherCondition.displayName
             : data.weatherDescription
         weatherIconName = data.weatherCondition.iconName
         weatherIconColor = data.weatherCondition.iconColor
@@ -215,10 +226,9 @@ final class WeatherViewModel: ObservableObject {
         pm25 = data.pm25
         sunrise = data.sunrise
         sunset = data.sunset
-        if let today = data.forecastDays.first {
-            highTemperature = today.highTemperature
-            lowTemperature = today.lowTemperature
-        }
+        let today = data.forecastDays.first { Self.calendar.isDateInToday($0.date) }
+        highTemperature = today?.highTemperature
+        lowTemperature = today?.lowTemperature
     }
 
     private func resolveSelectedLocation(
@@ -235,10 +245,17 @@ final class WeatherViewModel: ObservableObject {
         )
     }
 
+    func displayTemperature(_ fahrenheit: Double?) -> String {
+        guard let fahrenheit else { return "--" }
+        return String(displayTemperature(fahrenheit))
+    }
+
     private func computeDayLength() {
-        if let rise = sunrise, let set = sunset {
-            dayLength = set.timeIntervalSince(rise)
+        guard let rise = sunrise, let set = sunset else {
+            dayLength = nil
+            return
         }
+        dayLength = set.timeIntervalSince(rise)
     }
 
     private func loadForecasts(

@@ -145,7 +145,7 @@ private struct ExampleReminderCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .glassEffect(in: .rect(cornerRadius: 20))
+        .background(.regularMaterial, in: .rect(cornerRadius: 20))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Example reminder: Perfect gardening weather. It’s 72 degrees and sunny. A good time to get outside.")
     }

@@ -32,7 +32,7 @@ final class LocationPermissionManager: NSObject, ObservableObject {
 
     private let locationManager = CLLocationManager()
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "LocationPermissionManager")
-    private var permissionCompletionHandler: ((Bool) -> Void)?
+    private var permissionCompletionHandlers: [(Bool) -> Void] = []
     private let defaults: UserDefaults
     private static let manualLocationDefaultsKey = "LocationPermissionManager.manualLocation"
 
@@ -113,14 +113,14 @@ final class LocationPermissionManager: NSObject, ObservableObject {
     // MARK: - Permission Request
 
     func requestLocationPermission(completion: @escaping (Bool) -> Void) {
+        permissionCompletionHandlers.append(completion)
         guard isLocationServicesEnabled else {
             locationError = .locationServicesDisabled
             showPermissionDeniedAlert = true
-            completion(false)
+            completePermissionRequest(false)
             return
         }
 
-        permissionCompletionHandler = completion
 
         switch authorizationStatus {
         case .notDetermined:
@@ -131,19 +131,25 @@ final class LocationPermissionManager: NSObject, ObservableObject {
             logger.warning("Location permission denied or restricted")
             locationError = .permissionDenied
             showPermissionDeniedAlert = true
-            completion(false)
+            completePermissionRequest(false)
 
         case .authorizedWhenInUse, .authorizedAlways:
             logger.info("Location permission already granted")
             requestFullAccuracyIfNeeded()
             getCurrentLocation()
-            completion(true)
+            completePermissionRequest(true)
 
         @unknown default:
             logger.error("Unknown location authorization status")
             locationError = .unknown
-            completion(false)
+            completePermissionRequest(false)
         }
+    }
+
+    private func completePermissionRequest(_ granted: Bool) {
+        let completions = permissionCompletionHandlers
+        permissionCompletionHandlers.removeAll()
+        for completion in completions { completion(granted) }
     }
 
     // MARK: - iOS 26+ Temporary Location Permission
@@ -153,14 +159,14 @@ final class LocationPermissionManager: NSObject, ObservableObject {
         purposeKey: String,
         completion: @escaping (Bool) -> Void
     ) {
+        permissionCompletionHandlers.append(completion)
         guard isLocationServicesEnabled else {
             locationError = .locationServicesDisabled
             showPermissionDeniedAlert = true
-            completion(false)
+            completePermissionRequest(false)
             return
         }
 
-        permissionCompletionHandler = completion
 
         switch authorizationStatus {
         case .notDetermined, .authorizedWhenInUse, .authorizedAlways:
@@ -173,12 +179,12 @@ final class LocationPermissionManager: NSObject, ObservableObject {
             logger.warning("Location permission denied or restricted")
             locationError = .permissionDenied
             showPermissionDeniedAlert = true
-            completion(false)
+            completePermissionRequest(false)
 
         @unknown default:
             logger.error("Unknown location authorization status")
             locationError = .unknown
-            completion(false)
+            completePermissionRequest(false)
         }
     }
     
@@ -195,6 +201,8 @@ final class LocationPermissionManager: NSObject, ObservableObject {
             return
         }
         
+        guard locationTimer == nil else { return }
+        locationError = nil
         logger.info("Starting location update")
         locationManager.startUpdatingLocation()
         
@@ -206,16 +214,51 @@ final class LocationPermissionManager: NSObject, ObservableObject {
         }
     }
     
+    var freshCurrentLocation: CLLocation? {
+        guard isLocationServicesEnabled,
+              authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways,
+              let location = currentLocation,
+              location.horizontalAccuracy >= 0,
+              CLLocationCoordinate2DIsValid(location.coordinate),
+              abs(location.timestamp.timeIntervalSinceNow) <= 300 else { return nil }
+        return location
+    }
+
+    func resolveCurrentLocation(maxAttempts: Int = 60) async -> CLLocation? {
+        guard !Task.isCancelled, isLocationServicesEnabled else { return nil }
+        if let location = freshCurrentLocation { return location }
+        if authorizationStatus == .notDetermined {
+            requestLocationPermission { _ in }
+            // The system prompt belongs to the user; only GPS acquisition times out.
+            for await status in $authorizationStatus.values {
+                guard !Task.isCancelled else { return nil }
+                if status != .notDetermined { break }
+            }
+        }
+        guard !Task.isCancelled,
+              authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways else { return nil }
+        getCurrentLocation()
+        for _ in 0..<maxAttempts {
+            guard !Task.isCancelled else { return nil }
+            if let location = freshCurrentLocation { return location }
+            if authorizationStatus == .denied || authorizationStatus == .restricted || !isLocationServicesEnabled {
+                return nil
+            }
+            if locationError == .timeout { return nil }
+            do { try await Task.sleep(for: .milliseconds(500)) }
+            catch { return nil }
+        }
+        return nil
+    }
+
     private func handleLocationTimeout() {
+        guard locationTimer != nil else { return }
         logger.warning("Location request timed out")
         locationManager.stopUpdatingLocation()
         locationError = .timeout
         
-        // If we have a stale location, use it
-        if let lastLocation = locationManager.location {
-            logger.info("Using last known location due to timeout")
-            currentLocation = lastLocation
-        }
+        locationTimer?.invalidate()
+        locationTimer = nil
     }
     
     // MARK: - Manual Location
@@ -245,7 +288,7 @@ final class LocationPermissionManager: NSObject, ObservableObject {
     }
     
     func hasValidLocation() -> Bool {
-        return currentLocation != nil || manualLocation != nil
+        return freshCurrentLocation != nil || manualLocation != nil
     }
 
     private func requestFullAccuracyIfNeeded() {
@@ -263,7 +306,7 @@ final class LocationPermissionManager: NSObject, ObservableObject {
         if let manual = manualLocation {
             return LocationDisplayFormatter.privacyPreservingName(from: manual.displayName)
         } else if let current = currentLocation {
-            logger.debug("Current location available for broad display: \(current.coordinate.latitude), \(current.coordinate.longitude)")
+            logger.debug("Current location available for broad display: \(current.coordinate.latitude, privacy: .private), \(current.coordinate.longitude, privacy: .private)")
             return String(localized: "Current Location", comment: "Displayed in place of an exact location when using GPS")
         } else {
             return String(localized: "No Location Set", comment: "Displayed when the user has neither GPS nor a manual location configured")
@@ -310,12 +353,16 @@ extension LocationPermissionManager: CLLocationManagerDelegate {
                 locationError = nil
                 requestFullAccuracyIfNeeded()
                 getCurrentLocation()
-                permissionCompletionHandler?(true)
+                completePermissionRequest(true)
                 
             case .denied, .restricted:
+                currentLocation = nil
+                locationManager.stopUpdatingLocation()
+                locationTimer?.invalidate()
+                locationTimer = nil
                 locationError = .permissionDenied
                 showPermissionDeniedAlert = true
-                permissionCompletionHandler?(false)
+                completePermissionRequest(false)
                 
             case .notDetermined:
                 // Still waiting for user decision
@@ -323,23 +370,18 @@ extension LocationPermissionManager: CLLocationManagerDelegate {
                 
             @unknown default:
                 locationError = .unknown
-                permissionCompletionHandler?(false)
+                completePermissionRequest(false)
             }
             
-            permissionCompletionHandler = nil
         }
     }
     
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         Task { @MainActor in
-            guard let location = locations.last else { return }
+            guard let location = locations.last,
+                  authorizationStatus == .authorizedWhenInUse || authorizationStatus == .authorizedAlways else { return }
             
-            logger.info("Location updated: \(location.coordinate.latitude), \(location.coordinate.longitude)")
-            
-            // Stop location updates and timer
-            locationManager.stopUpdatingLocation()
-            locationTimer?.invalidate()
-            locationTimer = nil
+            logger.info("Location updated: \(location.coordinate.latitude, privacy: .private), \(location.coordinate.longitude, privacy: .private)")
             
             // Validate location accuracy
             if location.horizontalAccuracy < 0 {
@@ -354,6 +396,11 @@ extension LocationPermissionManager: CLLocationManagerDelegate {
                 locationError = .staleLocation
                 return
             }
+
+            // Stop location updates and timer
+            locationManager.stopUpdatingLocation()
+            locationTimer?.invalidate()
+            locationTimer = nil
             
             currentLocation = location
             locationError = nil

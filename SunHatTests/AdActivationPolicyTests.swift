@@ -94,12 +94,12 @@ struct AdActivationPolicyTests {
         #expect(!decision.shouldStartSDK)
     }
 
-    @Test("While live entitlement is unknown, the cached mirror decides ad eligibility",
+    @Test("Cached entitlement never enables ads before live entitlement resolves",
           arguments: [
-            (AdFreeEntitlementState.unknown, AdFreeEntitlementState.notEntitled, true),
+            (AdFreeEntitlementState.unknown, AdFreeEntitlementState.notEntitled, false),
             (.unknown, .active, false),
             (.unknown, .unknown, false),
-            (.unknown, .billingRetry, true),
+            (.unknown, .billingRetry, false),
             (.active, .notEntitled, false),
             (.notEntitled, .active, true),
             (.gracePeriod, .notEntitled, false)

@@ -22,10 +22,6 @@ final class LocationPermissionManagerAdapter: LocationManaging {
     }
 
     func currentLocation() async -> (location: CLLocation, name: String)? {
-        if locationPermissionManager.authorizationStatus == .notDetermined {
-            locationPermissionManager.requestLocationPermission { _ in }
-        }
-
         if let manualLocation = locationPermissionManager.manualLocation {
             let location = CLLocation(
                 latitude: manualLocation.coordinate.latitude,
@@ -34,60 +30,26 @@ final class LocationPermissionManagerAdapter: LocationManaging {
             return (location, LocationDisplayFormatter.privacyPreservingName(from: manualLocation.displayName))
         }
 
-        if let currentLocation = locationPermissionManager.currentLocation {
-            let locationName = await LocationDisplayFormatter.reverseGeocodedName(for: currentLocation)
-            return (currentLocation, locationName)
-        }
-
-        if locationPermissionManager.authorizationStatus == .authorizedWhenInUse ||
-            locationPermissionManager.authorizationStatus == .authorizedAlways {
-            locationPermissionManager.getCurrentLocation()
-
-            if let location = await waitForCurrentLocation() {
-                let locationName = await LocationDisplayFormatter.reverseGeocodedName(for: location)
-                return (location, locationName)
-            }
+        if let location = await locationPermissionManager.resolveCurrentLocation() {
+            let name = await LocationDisplayFormatter.reverseGeocodedName(for: location)
+            return (location, name)
         }
 
         logger.warning("Could not obtain user location - no fallback used")
-        return nil
-    }
-
-    private func waitForCurrentLocation(maxAttempts: Int = 20) async -> CLLocation? {
-        for _ in 0..<maxAttempts {
-            try? await Task.sleep(for: .milliseconds(500))
-
-            if let location = locationPermissionManager.currentLocation {
-                return location
-            }
-
-            if locationPermissionManager.authorizationStatus == .denied ||
-                locationPermissionManager.authorizationStatus == .restricted {
-                return nil
-            }
-        }
-
         return nil
     }
 }
 
 final class DefaultLocationManager: LocationManaging {
     static let shared = DefaultLocationManager()
+    private let manager: LocationPermissionManager
 
-    private var cached: (CLLocation, String)?
+    init(manager: LocationPermissionManager = .shared) {
+        self.manager = manager
+    }
 
     func currentLocation() async -> (location: CLLocation, name: String)? {
-        if let cached {
-            return cached
-        }
-
-        let manager = LocationPermissionManager.shared
-        guard let currentLocation = manager.currentLocation else {
-            return nil
-        }
-
-        let name = await LocationDisplayFormatter.reverseGeocodedName(for: currentLocation)
-        cached = (currentLocation, name)
-        return cached
+        guard let location = await manager.resolveCurrentLocation() else { return nil }
+        return (location, String(localized: "Current Location", comment: "The device's GPS location"))
     }
 }

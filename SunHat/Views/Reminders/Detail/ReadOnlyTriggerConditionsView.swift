@@ -29,12 +29,12 @@ struct ReadOnlyTriggerConditionsView: View {
                             Text("\(displayTemperature(min))° - \(displayTemperature(max))°\(temperatureUnit.symbol.dropFirst())")
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(.primary)
                         } else {
                             Text("\(displayTemperature(condition.targetTemperature))°\(temperatureUnit.symbol.dropFirst())")
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(.primary)
                         }
                     }
 
@@ -72,7 +72,7 @@ struct ReadOnlyTriggerConditionsView: View {
             }
         }
         .padding(12)
-        .glassEffect(.regular.tint(.orange.opacity(0.05)), in: .rect(cornerRadius: 10))
+        .background(.regularMaterial, in: .rect(cornerRadius: 10))
     }
 
     private func displayTemperature(_ fahrenheit: Double) -> Int {
