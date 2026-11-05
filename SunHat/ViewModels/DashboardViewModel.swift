@@ -43,7 +43,7 @@ final class DashboardViewModel: ObservableObject {
         activeReminders.filter { reminder in
             reminderEvaluations.contains { result in
                 result.reminderId == reminder.id && result.triggered &&
-                    Date().timeIntervalSince(result.evaluationTime) <= 300 &&
+                    now().timeIntervalSince(result.evaluationTime) <= 300 &&
                     result.conditionData == reminder.triggerCondition &&
                     result.weatherData?.locationLatitude == reminder.location?.latitude &&
                     result.weatherData?.locationLongitude == reminder.location?.longitude
@@ -106,6 +106,8 @@ final class DashboardViewModel: ObservableObject {
     private var weatherModelActor: WeatherModelActor?
     private var locationPermissionManager = LocationPermissionManager.shared
     private var weatherService = WeatherService.shared
+    private let triggerEngineManager: TriggerEngineManager
+    private let now: () -> Date
     private var cancellables = Set<AnyCancellable>()
     
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "DashboardViewModel")
@@ -117,7 +119,12 @@ final class DashboardViewModel: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    init(
+        triggerEngineManager: TriggerEngineManager = .shared,
+        now: @escaping () -> Date = Date.init
+    ) {
+        self.triggerEngineManager = triggerEngineManager
+        self.now = now
         setupBindings()
         loadTemperatureUnit()
     }
@@ -186,7 +193,7 @@ final class DashboardViewModel: ObservableObject {
             // dashboard's own location), so it runs as an independent task
             // rather than blocking this refresh's own isLoading state.
             Task {
-                await TriggerEngineManager.shared.evaluateAllReminders()
+                await self.triggerEngineManager.evaluateAllReminders()
             }
 
         } catch is CancellationError {
@@ -230,7 +237,7 @@ final class DashboardViewModel: ObservableObject {
             .sink { [weak self] in self?.connectionStatus = $0 }
             .store(in: &cancellables)
 
-        TriggerEngineManager.shared.$evaluationResults
+        triggerEngineManager.$evaluationResults
             .receive(on: RunLoop.main)
             .sink { [weak self] in self?.reminderEvaluations = $0 }
             .store(in: &cancellables)

@@ -93,6 +93,46 @@ struct DashboardViewModelTests {
     }
 }
 
+@MainActor
+struct DashboardReadinessTests {
+    @Test("Ready tasks remain visible between evaluations and expire with current weather")
+    func readyRemindersPersistBetweenEvaluations() async throws {
+        let condition = ModelDataConverter.convertTriggerCondition(TriggerCondition())
+        let location = LocationData(latitude: 40.7128, longitude: -74.0060)
+        let reminder = WeatherReminderDisplay(
+            id: UUID(), title: "Walk", reminderDescription: "", category: .general,
+            isActive: true, isCompleted: false, isPaused: false, priority: .normal,
+            createdDate: Date(), lastTriggered: nil, triggerCondition: condition,
+            location: ModelDataConverter.convertLocationData(location)
+        )
+        let weather = WeatherData(temperature: 72, feelsLike: 72, humidity: 50)
+        weather.locationLatitude = location.latitude
+        weather.locationLongitude = location.longitude
+        let result = TriggerEvaluationResult(
+            reminderId: reminder.id, conditionData: condition, triggered: true,
+            weatherData: ModelDataConverter.convertWeatherData(weather)
+        )
+        let manager = TriggerEngineManager(registerBackgroundTask: false)
+        manager.evaluationResults = [result]
+        var currentTime = result.evaluationTime
+        let viewModel = DashboardViewModel(triggerEngineManager: manager, now: { currentTime })
+        viewModel.activeReminders = [reminder]
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(2)
+        while viewModel.readyReminders.isEmpty && clock.now < deadline {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        try #require(viewModel.readyReminders.map(\.id) == [reminder.id])
+
+        for minutes in [6, 10, 14] {
+            currentTime = result.evaluationTime.addingTimeInterval(Double(minutes * 60))
+            #expect(viewModel.readyReminders.map(\.id) == [reminder.id])
+        }
+        currentTime = result.evaluationTime.addingTimeInterval(16 * 60)
+        #expect(viewModel.readyReminders.isEmpty)
+    }
+}
+
 // MARK: - Weather Data Persistence Tests
 
 @MainActor

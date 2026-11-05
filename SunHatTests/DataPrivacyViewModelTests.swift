@@ -76,6 +76,32 @@ struct DataPrivacyViewModelTests {
         #expect(runtimeCleaner.clearCount == 1)
     }
 
+    @Test("Notification cleanup failure still clears private runtime data and reports the error")
+    func notificationCleanupFailureStillClearsRuntimeData() async throws {
+        let context = try makeInMemoryContext()
+        context.insert(WeatherData(temperature: 72, feelsLike: 72, humidity: 50))
+        try context.save()
+        let notificationCleaner = RecordingNotificationDataCleaner()
+        notificationCleaner.failure = .notificationCleanup
+        let runtimeCleaner = RecordingPrivacyRuntimeDataCleaner()
+        let viewModel = DataPrivacyViewModel(
+            locationPermissionManager: LocationPermissionManager(userDefaults: makeDefaults()),
+            notificationDataCleaner: notificationCleaner,
+            runtimeDataCleaner: runtimeCleaner
+        )
+        viewModel.configure(modelContext: context)
+        viewModel.deleteConfirmationText = "DELETE"
+
+        await viewModel.deleteAllUserData()
+
+        #expect(runtimeCleaner.clearCount == 1)
+        #expect(notificationCleaner.clearCount == 1)
+        #expect(viewModel.errorMessage?.isEmpty == false)
+        #expect(viewModel.statusMessage.isEmpty)
+        #expect(!viewModel.isDeleting)
+        #expect(try context.fetch(FetchDescriptor<WeatherData>()).isEmpty)
+    }
+
     @Test("Delete all is a no-op without typed confirmation")
     func deleteAllRequiresConfirmation() async throws {
         let context = try makeInMemoryContext()
@@ -124,10 +150,16 @@ struct DataPrivacyViewModelTests {
 
 @MainActor
 private final class RecordingNotificationDataCleaner: NotificationDataClearing {
+    enum Failure: Error {
+        case notificationCleanup
+    }
+
     private(set) var clearCount = 0
+    var failure: Failure?
 
     func clearAllNotificationData() async throws {
         clearCount += 1
+        if let failure { throw failure }
     }
 }
 
