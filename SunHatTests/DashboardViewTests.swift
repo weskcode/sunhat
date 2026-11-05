@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreLocation
 import SwiftUI
 import SwiftData
 import Testing
@@ -38,7 +39,7 @@ struct DashboardViewModelTests {
 
         modelContainer = try ModelContainer(for: schema, configurations: [configuration])
         modelContext = ModelContext(modelContainer)
-        viewModel = DashboardViewModel()
+        viewModel = DashboardViewModel(locationManager: UnavailableDashboardLocation())
         viewModel.configure(modelContext: modelContext)
     }
 
@@ -47,7 +48,7 @@ struct DashboardViewModelTests {
         let reminder = WeatherReminder(title: "Offline task")
         modelContext.insert(reminder)
         try modelContext.save()
-        let fresh = DashboardViewModel()
+        let fresh = DashboardViewModel(locationManager: UnavailableDashboardLocation())
         fresh.configure(modelContext: modelContext)
         let clock = ContinuousClock()
         let deadline = clock.now + .seconds(2)
@@ -86,11 +87,17 @@ struct DashboardViewModelTests {
         #expect(fresh.forecastData.isEmpty)
     }
 
-    @Test("Loading completes after weather refresh")
+    @Test("Loading completes and reports an error when location is unavailable")
     func weatherDataRefresh() async {
         await viewModel.refreshWeatherData()
         #expect(viewModel.isLoading == false)
+        #expect(viewModel.errorMessage?.isEmpty == false)
+        #expect(viewModel.connectionStatus == .disconnected)
     }
+}
+
+private struct UnavailableDashboardLocation: LocationManaging {
+    func currentLocation() async -> (location: CLLocation, name: String)? { nil }
 }
 
 @MainActor

@@ -27,20 +27,8 @@ struct StoreManagerStoreKitTests {
 
     private static let defaultsSuiteName = "StoreManagerStoreKitTests"
 
-    // #filePath bakes the builder's checkout path into the binary, so this
-    // only resolves when tests run on the machine that built them — true for
-    // this project's local xcodebuild flow. If a build/test split or path
-    // remapping is ever introduced, bundle the .storekit into SunHatTests
-    // and load it via Bundle instead.
-    private static var configurationURL: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()   // SunHatTests/
-            .deletingLastPathComponent()   // repo root
-            .appendingPathComponent("SunHat.storekit")
-    }
-
     private func makeSession() throws -> SKTestSession {
-        let session = try SKTestSession(contentsOf: Self.configurationURL)
+        let session = try SKTestSession(contentsOf: TestResources.url(named: "SunHatStoreKit"))
         session.resetToDefaultState()
         session.disableDialogs = true
         session.clearTransactions()

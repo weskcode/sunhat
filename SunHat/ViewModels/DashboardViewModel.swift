@@ -104,7 +104,7 @@ final class DashboardViewModel: ObservableObject {
     
     private var modelContext: ModelContext?
     private var weatherModelActor: WeatherModelActor?
-    private var locationPermissionManager = LocationPermissionManager.shared
+    private let locationManager: any LocationManaging
     private var weatherService = WeatherService.shared
     private let triggerEngineManager: TriggerEngineManager
     private let now: () -> Date
@@ -121,9 +121,11 @@ final class DashboardViewModel: ObservableObject {
 
     init(
         triggerEngineManager: TriggerEngineManager = .shared,
+        locationManager: any LocationManaging = LocationPermissionManagerAdapter(locationPermissionManager: .shared),
         now: @escaping () -> Date = Date.init
     ) {
         self.triggerEngineManager = triggerEngineManager
+        self.locationManager = locationManager
         self.now = now
         setupBindings()
         loadTemperatureUnit()
@@ -298,25 +300,14 @@ final class DashboardViewModel: ObservableObject {
             }
         }
 
-        // 2) Check if the shared manager already has a manual location
-        if let manual = locationPermissionManager.manualLocation {
-            let loc = CLLocation(latitude: manual.coordinate.latitude, longitude: manual.coordinate.longitude)
-            currentLocationName = LocationDisplayFormatter.privacyPreservingName(from: manual.displayName)
-            return loc
-        }
-
-        if let location = await locationPermissionManager.resolveCurrentLocation() {
-            await updateLocationName(for: location)
-            return location
+        if let resolved = await locationManager.currentLocation() {
+            currentLocationName = resolved.name
+            return resolved.location
         }
         currentLocationName = String(localized: "Location Unavailable", comment: "Dashboard location label when no location can be determined")
         return nil
     }
 
-    private func updateLocationName(for location: CLLocation) async {
-        currentLocationName = await LocationDisplayFormatter.reverseGeocodedName(for: location)
-    }
-    
     @MainActor
     private func updateWeatherData(_ weatherData: WeatherData) {
         currentWeatherData = ModelDataConverter.convertWeatherData(weatherData)
