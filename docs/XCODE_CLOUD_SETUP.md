@@ -73,8 +73,8 @@ in the Xcode GUI.
       workflow's Environment tab, not "Latest Release"
 - [ ] An Archive and Distribute run produces a build visible in App Store
       Connect → TestFlight
-- [ ] `CFBundleVersion` on that build matches Xcode Cloud's own build
-      number, not a local `buildnumber.txt` value
+- [ ] `CFBundleVersion` on that build equals Xcode Cloud's run number
+      plus 100, not a local `buildnumber.txt` value
 
 ## If a workflow needs to change
 
