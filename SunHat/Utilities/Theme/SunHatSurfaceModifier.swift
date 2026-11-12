@@ -14,8 +14,10 @@ struct SunHatSurfaceModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(.regularMaterial, in: .rect(cornerRadius: cornerRadius))
-            .background(tint.opacity(0.025 + 0.025 * prominence), in: .rect(cornerRadius: cornerRadius))
+            .glassEffect(
+                .regular.tint(tint.opacity(0.025 + 0.025 * prominence)),
+                in: .rect(cornerRadius: cornerRadius)
+            )
     }
 }
 

@@ -64,7 +64,7 @@ struct LivePredictionCard: View {
             }
         }
         .padding(16)
-        .background(.regularMaterial, in: .rect(cornerRadius: 12))
+        .glassEffect(.regular.tint(prediction.confidenceColor.opacity(0.08)), in: .rect(cornerRadius: 12))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Next trigger, \(prediction.description)")
         .accessibilityValue("\(prediction.confidenceText) confidence, \(prediction.matchingDays) of \(prediction.totalDays) days match")

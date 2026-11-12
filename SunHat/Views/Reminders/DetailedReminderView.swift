@@ -253,7 +253,7 @@ struct DetailedReminderView: View {
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
-        .background(.regularMaterial, in: .rect(cornerRadius: 20))
+        .glassEffect(in: .rect(cornerRadius: 20))
         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 4)
         .padding(.horizontal, 20)
         .padding(.top, 12)
@@ -521,7 +521,7 @@ extension View {
     func cardStyle() -> some View {
         self
             .padding(20)
-            .background(.regularMaterial, in: .rect(cornerRadius: 16))
+            .glassEffect(in: .rect(cornerRadius: 16))
             .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
 }

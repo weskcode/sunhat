@@ -34,7 +34,7 @@ extension WeatherView {
             }
         }
         .padding(.vertical, 16)
-        .background(.regularMaterial, in: .rect(cornerRadius: 20))
+        .glassEffect(in: .rect(cornerRadius: 20))
     }
 
     // MARK: - Weekly Forecast Section
@@ -51,7 +51,7 @@ extension WeatherView {
             .padding(.horizontal, 20)
         }
         .padding(.vertical, 16)
-        .background(.regularMaterial, in: .rect(cornerRadius: 20))
+        .glassEffect(in: .rect(cornerRadius: 20))
     }
 
     // MARK: - Weather Alerts Section
@@ -68,6 +68,6 @@ extension WeatherView {
             .padding(.horizontal, 20)
         }
         .padding(.vertical, 16)
-        .background(.regularMaterial, in: .rect(cornerRadius: 20))
+        .glassEffect(in: .rect(cornerRadius: 20))
     }
 }

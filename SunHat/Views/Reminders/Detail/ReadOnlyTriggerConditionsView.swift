@@ -72,7 +72,7 @@ struct ReadOnlyTriggerConditionsView: View {
             }
         }
         .padding(12)
-        .background(.regularMaterial, in: .rect(cornerRadius: 10))
+        .glassEffect(.regular.tint(.orange.opacity(0.05)), in: .rect(cornerRadius: 10))
     }
 
     private func displayTemperature(_ fahrenheit: Double) -> Int {

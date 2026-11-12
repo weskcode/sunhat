@@ -58,7 +58,7 @@ Match the surrounding code. It's consistent, and consistency beats personal pref
 - **Concurrency:** `async`/`await` only. No completion handlers in new code. `@MainActor` for UI-bound types.
 - **Observation:** `@Observable` for new view models. Some older ones are still `ObservableObject` + Combine. Migrating one is a welcome standalone PR.
 - **Dependencies:** Inject through the existing protocol seams (`WeatherProviding`, `LocationManaging`, `SettingsOpening`, `NotificationPermissionProviding`) rather than reaching for singletons. This is what makes the view models testable.
-- **Design:** Use system Liquid Glass for navigation and controls, standard materials for content cards, and `Color(.systemBackground)` for page backgrounds. Keep materials consistent with [Apple's HIG](https://developer.apple.com/design/human-interface-guidelines/materials).
+- **Design:** iOS 26 Liquid Glass. `.glassEffect()` on card surfaces, `Color(.systemBackground)` for page backgrounds. Don't nest glass in glass.
 - **Motion:** Every animation respects `accessibilityReduceMotion`.
 - **Comments:** Explain *why*, not *what*. The non-obvious constraint, the bug this guards against, the reason it isn't the simpler thing.
 - **Almost no third-party dependencies.** Google Mobile Ads and its User Messaging Platform dependency support the ad-funded free tier; everything else is Apple frameworks. Adding a new third-party package needs a strong justification and an explicit decision.
