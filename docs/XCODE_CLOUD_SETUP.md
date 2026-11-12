@@ -21,10 +21,13 @@ in the Xcode GUI.
 - Both `SunHat` and `SunHatUnitTests` schemes are shared
   (`xcshareddata/xcschemes/`), which Xcode Cloud requires to see them.
 - The Release build phase (`Set Build Number`) checks for `CI_BUILD_NUMBER`
-  first and uses `CI_BUILD_NUMBER + 100` as `CFBundleVersion` when set. Xcode
-  Cloud sets that variable automatically. The run number is per product and
-  was 5 when builds up to 18 already existed in App Store Connect, so the
-  offset keeps every cloud build above them.
+  first and uses it as `CFBundleVersion` when set. Xcode Cloud sets that
+  variable automatically and stamps the same run number again at export.
+  The run number is per product, not per workflow, and starts at 1. If an
+  upload fails with "The bundle version must be higher than the previously
+  uploaded version", raise Next Build Number for the product in App Store
+  Connect (Xcode Cloud, then the product's Settings). An offset in the
+  build phase does not help, because export overwrites it.
 - `.gitignore` excludes `buildnumber.txt` (the local-only fallback) and
   `ci_scripts/` isn't needed for this project: dependencies are a single
   SPM package (Google Mobile Ads) that Xcode Cloud resolves on its own, no
@@ -73,8 +76,8 @@ in the Xcode GUI.
       workflow's Environment tab, not "Latest Release"
 - [ ] An Archive and Distribute run produces a build visible in App Store
       Connect → TestFlight
-- [ ] `CFBundleVersion` on that build equals Xcode Cloud's run number
-      plus 100, not a local `buildnumber.txt` value
+- [ ] `CFBundleVersion` on that build matches Xcode Cloud's own build
+      number, not a local `buildnumber.txt` value
 
 ## If a workflow needs to change
 
