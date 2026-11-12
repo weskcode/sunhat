@@ -21,9 +21,10 @@ in the Xcode GUI.
 - Both `SunHat` and `SunHatUnitTests` schemes are shared
   (`xcshareddata/xcschemes/`), which Xcode Cloud requires to see them.
 - The Release build phase (`Set Build Number`) checks for `CI_BUILD_NUMBER`
-  first and uses it as `CFBundleVersion` when set. Xcode Cloud sets that
-  variable automatically, so no extra configuration is needed for build
-  numbering once a workflow exists.
+  first and uses `CI_BUILD_NUMBER + 100` as `CFBundleVersion` when set. Xcode
+  Cloud sets that variable automatically. The run number is per product and
+  was 5 when builds up to 18 already existed in App Store Connect, so the
+  offset keeps every cloud build above them.
 - `.gitignore` excludes `buildnumber.txt` (the local-only fallback) and
   `ci_scripts/` isn't needed for this project: dependencies are a single
   SPM package (Google Mobile Ads) that Xcode Cloud resolves on its own, no
