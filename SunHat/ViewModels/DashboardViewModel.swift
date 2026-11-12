@@ -34,7 +34,6 @@ final class DashboardViewModel: ObservableObject {
     @Published var currentWeatherData: WeatherDataTransfer?
     @Published var forecastData: [ForecastDay] = []
     @Published var activeReminders: [WeatherReminderDisplay] = []
-    @Published var activeAlerts: [WeatherAlertDisplay] = []
     @Published var hasWeatherData = false
     @Published private(set) var hasDailyForecast = false
     @Published private var reminderEvaluations: [TriggerEvaluationResult] = []
@@ -184,7 +183,6 @@ final class DashboardViewModel: ObservableObject {
             // so no MainActor.run hop is needed, these assignments are safe as-is.
             updateWeatherData(weatherData)
             loadActiveReminders()
-            loadWeatherAlerts()
             lastUpdateTime = weatherData.timestamp
             connectionStatus = Date().timeIntervalSince(weatherData.timestamp) < 15 * 60 ? .connected : .disconnected
 
@@ -207,7 +205,6 @@ final class DashboardViewModel: ObservableObject {
             connectionStatus = .disconnected
             if !hasWeatherData {
                 weatherDescription = String(localized: "Weather unavailable", comment: "Dashboard placeholder when no weather data could be loaded")
-                activeAlerts = []
                 forecastData = []
             }
             logger.error("Weather data refresh failed: \(error)")
@@ -406,80 +403,6 @@ final class DashboardViewModel: ObservableObject {
                 }
             }
         }
-    }
-    
-    /// SunHat's own threshold-based advisories derived from current conditions.
-    /// These are NOT official government or WeatherKit severe-weather alerts, so
-    /// titles are branded as SunHat advisories and each states its threshold.
-    private func loadWeatherAlerts() {
-        guard let weatherData = currentWeatherData else { return }
-
-        var alerts: [WeatherAlertDisplay] = []
-
-        // Temperature alerts
-        if weatherData.temperature < 32 {
-            alerts.append(WeatherAlertDisplay(
-                id: UUID(),
-                timestamp: Date(),
-                title: "SunHat Frost Advisory",
-                description: "Current temperature is below SunHat's 32°F advisory threshold.",
-                severity: WeatherAlertSeverity.moderate,
-                type: .frost,
-                area: "Local Area",
-                instructions: "Protect plants and pets from freezing temperatures",
-                expiresAt: Calendar.current.date(byAdding: .hour, value: 6, to: Date()),
-                isActive: true
-            ))
-        }
-
-        if weatherData.temperature > 95 {
-            alerts.append(WeatherAlertDisplay(
-                id: UUID(),
-                timestamp: Date(),
-                title: "SunHat Heat Advisory",
-                description: "Current temperature is above SunHat's 95°F advisory threshold.",
-                severity: WeatherAlertSeverity.moderate,
-                type: .heat,
-                area: "Local Area",
-                instructions: "Stay hydrated and avoid prolonged outdoor activities",
-                expiresAt: Calendar.current.date(byAdding: .hour, value: 8, to: Date()),
-                isActive: true
-            ))
-        }
-
-        // Wind alerts
-        if weatherData.windSpeed > 25 {
-            alerts.append(WeatherAlertDisplay(
-                id: UUID(),
-                timestamp: Date(),
-                title: "SunHat Wind Advisory",
-                description: "Sustained winds are above SunHat's 25 mph advisory threshold.",
-                severity: WeatherAlertSeverity.moderate,
-                type: .wind,
-                area: "Local Area",
-                instructions: "Secure outdoor objects and avoid driving high-profile vehicles",
-                expiresAt: Calendar.current.date(byAdding: .hour, value: 4, to: Date()),
-                isActive: true
-            ))
-        }
-
-        // UV alerts
-        if weatherData.uvIndex > 7 {
-            alerts.append(WeatherAlertDisplay(
-                id: UUID(),
-                timestamp: Date(),
-                title: "SunHat UV Advisory",
-                description: "Current UV index is above SunHat's advisory threshold of 7.",
-                severity: WeatherAlertSeverity.moderate,
-                type: .uv,
-                area: "Local Area",
-                instructions: "Use SPF 30+ sunscreen, wear protective clothing, and seek shade",
-                expiresAt: Calendar.current.date(byAdding: .hour, value: 6, to: Date()),
-                isActive: true
-            ))
-        }
-
-        activeAlerts = alerts
     }
     
     private func loadTemperatureUnit() {

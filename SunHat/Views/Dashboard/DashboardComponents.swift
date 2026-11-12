@@ -7,53 +7,6 @@
 
 import SwiftUI
 
-// MARK: - Weather Alert Card
-
-struct WeatherAlertCard: View {
-    let alert: WeatherAlertDisplay
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    var body: some View {
-        let shouldReduceMotion = reduceMotion
-
-        HStack(spacing: 12) {
-            Image(systemName: alert.iconName)
-                .font(AppFontStyle.title3.font)
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(alert.severityColor)
-                .frame(width: 34, height: 34)
-                .background {
-                    Circle()
-                        .fill(alert.severityColor.opacity(0.12))
-                }
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(alert.title)
-                    .font(AppFontStyle.subheadline.font)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.primary)
-
-                Text(alert.description)
-                    .font(AppFontStyle.caption.font)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
-
-            Spacer()
-        }
-        .padding(14)
-        .sunHatSurface(tint: alert.severityColor, cornerRadius: 16, prominence: 0.55)
-        .scrollTransition(.interactive, axis: .vertical) { content, phase in
-            content
-                .opacity(phase.isIdentity ? 1 : 0.82)
-                .scaleEffect(shouldReduceMotion || phase.isIdentity ? 1 : 0.98)
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(alert.title), \(alert.description)")
-    }
-}
-
 // MARK: - Active Reminder Card
 
 struct ActiveReminderCard: View {
