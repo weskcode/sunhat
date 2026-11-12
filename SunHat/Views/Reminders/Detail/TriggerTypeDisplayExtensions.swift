@@ -74,3 +74,15 @@ extension TriggerType {
         }
     }
 }
+
+extension TriggerConditionData {
+    func temperatureSummary(unit: TemperatureUnit) -> String {
+        if comparisonType == .between {
+            guard let minTemperature, let maxTemperature else {
+                return String(localized: "No trigger condition set", comment: "Reminder has incomplete range bounds")
+            }
+            return String(localized: "When temperature is between \(unit.roundedFromFahrenheit(minTemperature))° and \(unit.roundedFromFahrenheit(maxTemperature))°", comment: "Reminder temperature range in the selected unit")
+        }
+        return String(localized: "When temperature is \(comparisonType.displayName) \(unit.roundedFromFahrenheit(targetTemperature))°", comment: "Reminder temperature comparison in the selected unit")
+    }
+}

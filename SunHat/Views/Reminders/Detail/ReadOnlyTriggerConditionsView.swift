@@ -29,12 +29,12 @@ struct ReadOnlyTriggerConditionsView: View {
                             Text("\(displayTemperature(min))° - \(displayTemperature(max))°\(temperatureUnit.symbol.dropFirst())")
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(.primary)
                         } else {
                             Text("\(displayTemperature(condition.targetTemperature))°\(temperatureUnit.symbol.dropFirst())")
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(.primary)
                         }
                     }
 

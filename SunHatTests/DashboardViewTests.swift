@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreLocation
 import SwiftUI
 import SwiftData
 import Testing
@@ -38,8 +39,37 @@ struct DashboardViewModelTests {
 
         modelContainer = try ModelContainer(for: schema, configurations: [configuration])
         modelContext = ModelContext(modelContainer)
-        viewModel = DashboardViewModel()
+        viewModel = DashboardViewModel(locationManager: UnavailableDashboardLocation())
         viewModel.configure(modelContext: modelContext)
+    }
+
+    @Test("Saved reminders load before weather is available")
+    func remindersLoadWithoutWeather() async throws {
+        let reminder = WeatherReminder(title: "Offline task")
+        modelContext.insert(reminder)
+        try modelContext.save()
+        let fresh = DashboardViewModel(locationManager: UnavailableDashboardLocation())
+        fresh.configure(modelContext: modelContext)
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(2)
+        while fresh.activeReminders.isEmpty && clock.now < deadline {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        #expect(fresh.activeReminders.contains { $0.id == reminder.id })
+    }
+
+    @Test("Reminder cards use nearby weather but reject another city and missing locations")
+    func reminderWeatherMatchesLocation() {
+        let data = WeatherData(temperature: 72, feelsLike: 74, humidity: 55)
+        data.locationLatitude = 40.7128
+        data.locationLongitude = -74.0060
+        viewModel.currentWeatherData = ModelDataConverter.convertWeatherData(data)
+        func reminder(at location: LocationData?) -> WeatherReminderDisplay {
+            WeatherReminderDisplay(id: UUID(), title: "Walk", reminderDescription: "", category: .general, isActive: true, isCompleted: false, isPaused: false, priority: .normal, createdDate: Date(), lastTriggered: nil, triggerCondition: nil, location: location.map(ModelDataConverter.convertLocationData))
+        }
+        #expect(viewModel.weatherData(for: reminder(at: LocationData(latitude: 40.7130, longitude: -74.0062))) != nil)
+        #expect(viewModel.weatherData(for: reminder(at: LocationData(latitude: 34.0522, longitude: -118.2437))) == nil)
+        #expect(viewModel.weatherData(for: reminder(at: nil)) == nil)
     }
 
     @Test("ViewModel initializes with expected defaults")
@@ -57,10 +87,56 @@ struct DashboardViewModelTests {
         #expect(fresh.forecastData.isEmpty)
     }
 
-    @Test("Loading completes after weather refresh")
+    @Test("Loading completes and reports an error when location is unavailable")
     func weatherDataRefresh() async {
         await viewModel.refreshWeatherData()
         #expect(viewModel.isLoading == false)
+        #expect(viewModel.errorMessage?.isEmpty == false)
+        #expect(viewModel.connectionStatus == .disconnected)
+    }
+}
+
+private struct UnavailableDashboardLocation: LocationManaging {
+    func currentLocation() async -> (location: CLLocation, name: String)? { nil }
+}
+
+@MainActor
+struct DashboardReadinessTests {
+    @Test("Ready tasks remain visible between evaluations and expire with current weather")
+    func readyRemindersPersistBetweenEvaluations() async throws {
+        let condition = ModelDataConverter.convertTriggerCondition(TriggerCondition())
+        let location = LocationData(latitude: 40.7128, longitude: -74.0060)
+        let reminder = WeatherReminderDisplay(
+            id: UUID(), title: "Walk", reminderDescription: "", category: .general,
+            isActive: true, isCompleted: false, isPaused: false, priority: .normal,
+            createdDate: Date(), lastTriggered: nil, triggerCondition: condition,
+            location: ModelDataConverter.convertLocationData(location)
+        )
+        let weather = WeatherData(temperature: 72, feelsLike: 72, humidity: 50)
+        weather.locationLatitude = location.latitude
+        weather.locationLongitude = location.longitude
+        let result = TriggerEvaluationResult(
+            reminderId: reminder.id, conditionData: condition, triggered: true,
+            weatherData: ModelDataConverter.convertWeatherData(weather)
+        )
+        let manager = TriggerEngineManager(registerBackgroundTask: false)
+        manager.evaluationResults = [result]
+        var currentTime = result.evaluationTime
+        let viewModel = DashboardViewModel(triggerEngineManager: manager, now: { currentTime })
+        viewModel.activeReminders = [reminder]
+        let clock = ContinuousClock()
+        let deadline = clock.now + .seconds(2)
+        while viewModel.readyReminders.isEmpty && clock.now < deadline {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        try #require(viewModel.readyReminders.map(\.id) == [reminder.id])
+
+        for minutes in [6, 10, 14] {
+            currentTime = result.evaluationTime.addingTimeInterval(Double(minutes * 60))
+            #expect(viewModel.readyReminders.map(\.id) == [reminder.id])
+        }
+        currentTime = result.evaluationTime.addingTimeInterval(16 * 60)
+        #expect(viewModel.readyReminders.isEmpty)
     }
 }
 

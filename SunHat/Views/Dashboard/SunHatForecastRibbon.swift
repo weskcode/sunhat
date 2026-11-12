@@ -27,21 +27,14 @@ struct SunHatForecastRibbon: View {
                 RoundedRectangle(cornerRadius: 16)
                     .fill(.primary.opacity(0.045))
 
-                HStack(alignment: .bottom, spacing: 5) {
-                    ForEach(0..<18, id: \.self) { index in
-                        Capsule()
-                            .fill(index < Int(normalized * 18) ? tint.opacity(0.52) : .primary.opacity(0.10))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: CGFloat(14 + ((index * 11) % 26)))
-                    }
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
+                Capsule()
+                    .fill(.primary.opacity(0.10))
+                    .frame(height: 6)
+                    .padding(.horizontal, 14)
 
                 Capsule()
                     .fill(tint)
                     .frame(width: 4, height: 40)
-                    .shadow(color: tint.opacity(0.40), radius: 8, x: 0, y: 0)
                     .offset(x: min(max(markerX - 2, 14), width - 18))
             }
         }

@@ -653,7 +653,7 @@ struct ReminderCreationViewModelTests {
     // MARK: - Reminder Creation
 
     @Test("Creating a reminder with manual location persists correctly")
-    func createReminderWithManualLocation() throws {
+    func createReminderWithManualLocation() async throws {
         viewModel.customReminder.title = "Beach Day"
         viewModel.customReminder.temperatureType = .temperatureRange
         viewModel.customReminder.minTemperature = 75
@@ -669,7 +669,7 @@ struct ReminderCreationViewModelTests {
             administrativeArea: "FL"
         )
         viewModel.selectManualLocation(manualLocation)
-        viewModel.createReminder()
+        await viewModel.createReminder()
 
         let reminders = try modelContext.fetch(FetchDescriptor<WeatherReminder>())
 
@@ -694,7 +694,7 @@ struct ReminderCreationViewModelTests {
     }
 
     @Test("Exclude sky conditions are persisted")
-    func createReminderWithExcludeSkyConditions() throws {
+    func createReminderWithExcludeSkyConditions() async throws {
         viewModel.customReminder.title = "Dog Walk"
         viewModel.customReminder.selectedSkyConditions = [.rainy, .snowy]
         viewModel.customReminder.conditionMode = .exclude
@@ -704,7 +704,7 @@ struct ReminderCreationViewModelTests {
             coordinate: CLLocationCoordinate2D(latitude: 47.6062, longitude: -122.3321)
         )
         viewModel.selectManualLocation(location)
-        viewModel.createReminder()
+        await viewModel.createReminder()
 
         let reminders = try modelContext.fetch(FetchDescriptor<WeatherReminder>())
         let reminder = try #require(reminders.first)
@@ -715,16 +715,16 @@ struct ReminderCreationViewModelTests {
     }
 
     @Test("Invalid title prevents save")
-    func createReminderInvalidTitleDoesNotSave() throws {
+    func createReminderInvalidTitleDoesNotSave() async throws {
         viewModel.customReminder.title = ""
-        viewModel.createReminder()
+        await viewModel.createReminder()
 
         let reminders = try modelContext.fetch(FetchDescriptor<WeatherReminder>())
         #expect(reminders.count == 0)
     }
 
     @Test("Icon, color, time range, and quiet hours are persisted on save")
-    func createReminderPersistsAppearanceAndDeliveryPreferences() throws {
+    func createReminderPersistsAppearanceAndDeliveryPreferences() async throws {
         viewModel.customReminder.title = "Evening Run"
         viewModel.customReminder.selectedIcon = "figure.run"
         viewModel.customReminder.selectedColor = .orange
@@ -736,7 +736,7 @@ struct ReminderCreationViewModelTests {
             coordinate: CLLocationCoordinate2D(latitude: 42.3601, longitude: -71.0589)
         )
         viewModel.selectManualLocation(location)
-        #expect(viewModel.createReminder() == true)
+        #expect(await viewModel.createReminder() == true)
 
         let reminder = try #require(try modelContext.fetch(FetchDescriptor<WeatherReminder>()).first)
         #expect(reminder.customIconName == "figure.run")
@@ -754,7 +754,7 @@ struct ReminderCreationViewModelTests {
     }
 
     @Test("All Day time range does not restrict the delivery window")
-    func createReminderAllDayHasNoDeliveryWindow() throws {
+    func createReminderAllDayHasNoDeliveryWindow() async throws {
         viewModel.customReminder.title = "Anytime Walk"
         viewModel.customReminder.preferredTimeRange = .allDay
 
@@ -763,7 +763,7 @@ struct ReminderCreationViewModelTests {
             coordinate: CLLocationCoordinate2D(latitude: 33.4484, longitude: -112.0740)
         )
         viewModel.selectManualLocation(location)
-        #expect(viewModel.createReminder() == true)
+        #expect(await viewModel.createReminder() == true)
 
         let reminder = try #require(try modelContext.fetch(FetchDescriptor<WeatherReminder>()).first)
         let config = try #require(reminder.notificationConfig)
@@ -772,15 +772,14 @@ struct ReminderCreationViewModelTests {
     }
 
     @Test("Current location without a fix fails with a clear error instead of saving a dead reminder")
-    func createReminderWithoutResolvableLocationFails() throws {
-        // Deterministic only when the shared manager has no cached fix; in that
-        // environment this test asserts nothing rather than racing CoreLocation.
-        guard LocationPermissionManager.shared.currentLocation == nil else { return }
+    func createReminderWithoutResolvableLocationFails() async throws {
+        let viewModel = FirstReminderCreationViewModel(locationResolver: MissingCreationLocation())
+        viewModel.configure(modelContext: modelContext)
 
         viewModel.customReminder.title = "Garden Watering"
         viewModel.customReminder.selectedLocation = .currentLocation
 
-        #expect(viewModel.createReminder() == false)
+        #expect(await viewModel.createReminder() == false)
         #expect(viewModel.creationErrorMessage != nil)
 
         let reminders = try modelContext.fetch(FetchDescriptor<WeatherReminder>())
@@ -791,6 +790,8 @@ struct ReminderCreationViewModelTests {
 
     @Test("Loading weather without a location does not fabricate forecast data")
     func loadWeatherDoesNotFabricateForecast() async throws {
+        let viewModel = FirstReminderCreationViewModel(locationResolver: MissingCreationLocation())
+        viewModel.configure(modelContext: modelContext)
         viewModel.loadWeather()
 
         try await Task.sleep(for: .seconds(1))
@@ -893,4 +894,8 @@ struct ManualLocationDataTests {
         )
         #expect(loc1.id != loc2.id)
     }
+}
+
+private struct MissingCreationLocation: LocationManaging {
+    func currentLocation() async -> (location: CLLocation, name: String)? { nil }
 }

@@ -32,20 +32,9 @@ private enum LocalizationCatalog {
         let strings: [String: Entry]
     }
 
-    /// Locates a resource file by walking up from this test file's own path,
-    /// so the test works from a full checkout regardless of the current
-    /// working directory the test runner was launched from.
-    static func load(_ relativePath: String) throws -> File {
-        var dir = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
-        for _ in 0..<8 {
-            let candidate = dir.appendingPathComponent(relativePath)
-            if FileManager.default.fileExists(atPath: candidate.path) {
-                let data = try Data(contentsOf: candidate)
-                return try JSONDecoder().decode(File.self, from: data)
-            }
-            dir = dir.deletingLastPathComponent()
-        }
-        throw CocoaError(.fileNoSuchFile)
+    static func load(_ resourceName: String) throws -> File {
+        let data = try Data(contentsOf: TestResources.url(named: resourceName))
+        return try JSONDecoder().decode(File.self, from: data)
     }
 
     /// Every "%…" printf-style format specifier in a string, normalized so a
@@ -69,7 +58,7 @@ private enum LocalizationCatalog {
 struct LocalizableCatalogTests {
     @Test("Every source string has a non-empty Spanish translation")
     func everyKeyHasSpanish() throws {
-        let file = try LocalizationCatalog.load("SunHat/Resources/Localizable.xcstrings")
+        let file = try LocalizationCatalog.load("LocalizableCatalog")
         var missing: [String] = []
         for (key, entry) in file.strings {
             if entry.shouldTranslate == false { continue }
@@ -84,7 +73,7 @@ struct LocalizableCatalogTests {
 
     @Test("No Spanish translation is literally identical to a non-trivial English key")
     func noUntranslatedLeakage() throws {
-        let file = try LocalizationCatalog.load("SunHat/Resources/Localizable.xcstrings")
+        let file = try LocalizationCatalog.load("LocalizableCatalog")
         // Short strings, unit symbols, brand names, and pure-punctuation keys are
         // legitimately identical across languages (e.g. "SunHat", "°", "GPS").
         let allowedIdentical: Set<String> = [
@@ -109,7 +98,7 @@ struct LocalizableCatalogTests {
 
     @Test("Format specifiers match between English keys and Spanish values")
     func formatSpecifiersMatch() throws {
-        let file = try LocalizationCatalog.load("SunHat/Resources/Localizable.xcstrings")
+        let file = try LocalizationCatalog.load("LocalizableCatalog")
         var mismatches: [String] = []
         for (key, entry) in file.strings {
             guard let value = entry.localizations?["es"]?.stringUnit?.value else { continue }
@@ -124,7 +113,7 @@ struct LocalizableCatalogTests {
 
     @Test("Spanish values use proper UTF-8 accented characters, not mojibake")
     func validUTF8() throws {
-        let file = try LocalizationCatalog.load("SunHat/Resources/Localizable.xcstrings")
+        let file = try LocalizationCatalog.load("LocalizableCatalog")
         for (_, entry) in file.strings {
             guard let value = entry.localizations?["es"]?.stringUnit?.value else { continue }
             #expect(!value.contains("\u{FFFD}"), "Spanish value contains a replacement character (mojibake): \(value)")
@@ -136,7 +125,7 @@ struct LocalizableCatalogTests {
 struct InfoPlistCatalogTests {
     @Test("Every Info.plist usage-description key has a Spanish translation")
     func everyKeyHasSpanish() throws {
-        let file = try LocalizationCatalog.load("SunHat/Resources/InfoPlist.xcstrings")
+        let file = try LocalizationCatalog.load("InfoPlistCatalog")
         var missing: [String] = []
         for (key, entry) in file.strings {
             guard let value = entry.localizations?["es"]?.stringUnit?.value, !value.isEmpty else {

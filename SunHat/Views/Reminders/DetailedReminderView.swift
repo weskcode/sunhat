@@ -92,17 +92,12 @@ struct DetailedReminderView: View {
             }
         }
         .animation(.smooth(duration: 0.3), value: isEditMode)
+        .navigationBarBackButtonHidden(isEditMode)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 if isEditMode {
                     Button("Cancel") {
                         cancelEditing()
-                    }
-                } else {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Label("Back", systemImage: "chevron.left")
                     }
                 }
             }
@@ -269,7 +264,7 @@ struct DetailedReminderView: View {
     private var livePredictionSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             SectionHeaderView(
-                icon: "crystal.ball",
+                icon: "chart.line.uptrend.xyaxis",
                 title: "Live Prediction",
                 subtitle: "Next trigger forecast"
             )

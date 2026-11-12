@@ -38,7 +38,7 @@ struct PrivacyPolicyView: View {
 
             privacySection(
                 title: "Weather Data",
-                content: "Weather information is fetched from reliable sources and cached locally on your device for better performance. This data is not transmitted to our servers."
+                content: "Weather samples stay on your device for week and month history. New samples use coordinates rounded to about 1 km; reminder locations keep their selected precision. Weather refreshes remove samples older than 35 days. Samples can remain longer if weather is not refreshed. Older weather-location data may retain precise coordinates until you use Delete All Data in Settings. This history can reveal places where you requested weather and may be included in device backups. It is not sent to us."
             )
 
             privacySection(
@@ -69,7 +69,7 @@ struct PrivacyPolicyView: View {
             Text("If you have any questions about this privacy policy, please contact us at \(AppSupportLinks.privacyEmail)")
                 .font(.body)
 
-            Text("Last updated: August 31, 2026")
+            Text("Last updated: November 3, 2026")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.top, 20)

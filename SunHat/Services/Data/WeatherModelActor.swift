@@ -20,7 +20,7 @@ actor WeatherModelActor {
     /// Fetches weather data with caching and backup provider support
     func fetchWeatherData(for location: CLLocation, forceRefresh: Bool = false) async throws -> WeatherData {
         let coordinate = location.coordinate
-        logger.debug("Fetching weather data for location: \(coordinate.latitude), \(coordinate.longitude)")
+        logger.debug("Fetching weather data for location: \(coordinate.latitude, privacy: .private), \(coordinate.longitude, privacy: .private)")
         
 do {
             let weatherData = try await fetchFromPrimaryProvider(location)
@@ -61,8 +61,6 @@ do {
     func fetchForecastData(for location: CLLocation, days: Int = 7) async throws -> [ForecastDayDisplay] {
         logger.debug("Fetching forecast data for \(days) days")
 
-        let targetLatitude = location.coordinate.latitude
-        let targetLongitude = location.coordinate.longitude
         var descriptor = FetchDescriptor<WeatherData>(
             sortBy: [SortDescriptor(\.timestamp, order: .reverse)]
         )
@@ -70,8 +68,8 @@ do {
 
         let candidates = try modelContext.fetch(descriptor)
         guard let cachedWeatherData = candidates.first(where: { weatherData in
-            abs(weatherData.locationLatitude - targetLatitude) < 0.001 &&
-            abs(weatherData.locationLongitude - targetLongitude) < 0.001 &&
+            CLLocation(latitude: weatherData.locationLatitude, longitude: weatherData.locationLongitude)
+                .distance(from: location) <= 1_000 &&
             !weatherData.forecastDays.isEmpty
         }) else {
             logger.info("No cached forecast data found for requested location")
@@ -146,9 +144,6 @@ do {
             return []
         }
 
-        let targetLatitude = location.coordinate.latitude
-        let targetLongitude = location.coordinate.longitude
-
         let dateRangeDescriptor = FetchDescriptor<WeatherData>(
             predicate: #Predicate { weatherData in
                 weatherData.timestamp >= startDate && weatherData.timestamp <= endDate
@@ -161,8 +156,8 @@ do {
         // Filter location in memory to keep the SwiftData predicate simple and
         // avoid broad store scans across unrelated historical ranges.
         let filteredData = weatherDataInRange.filter { weatherData in
-            abs(weatherData.locationLatitude - targetLatitude) < 0.001 &&
-            abs(weatherData.locationLongitude - targetLongitude) < 0.001
+            CLLocation(latitude: weatherData.locationLatitude, longitude: weatherData.locationLongitude)
+                .distance(from: location) <= 1_000
         }
 
         // Convert to Sendable transfer objects
@@ -481,7 +476,7 @@ do {
 // MARK: - Data Transfer Objects
 
 /// Sendable version of TriggerCondition for cross-actor communication
-struct TriggerConditionData: Sendable {
+nonisolated struct TriggerConditionData: Sendable, Equatable {
     let id: UUID
     let triggerType: TriggerType
     let targetTemperature: Double

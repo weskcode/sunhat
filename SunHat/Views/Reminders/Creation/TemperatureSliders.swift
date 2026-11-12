@@ -5,10 +5,13 @@
 
 import SwiftUI
 
-/// The slider bounds below are the same physical range (freezing to 100°F)
-/// expressed in each unit, so switching units never changes what's reachable.
-private let fahrenheitBounds: ClosedRange<Double> = 32...100
-private let celsiusBounds: ClosedRange<Double> = 0...38
+enum TemperatureSliderBounds {
+    static func range(for unit: TemperatureUnit) -> ClosedRange<Double> {
+        // Keep Celsius steps on whole degrees inside the supported Fahrenheit bounds.
+        if unit == .celsius { return -45...65 }
+        return -50...150
+    }
+}
 
 struct TemperatureRangeSlider: View {
     /// Canonical Fahrenheit, matching `TriggerCondition`'s storage unit.
@@ -17,7 +20,7 @@ struct TemperatureRangeSlider: View {
     let temperatureUnit: TemperatureUnit
 
     private var range: ClosedRange<Double> {
-        temperatureUnit == .fahrenheit ? fahrenheitBounds : celsiusBounds
+        TemperatureSliderBounds.range(for: temperatureUnit)
     }
 
     private var minTempInUnit: Binding<Double> {
@@ -65,7 +68,7 @@ struct TemperatureRangeSlider: View {
             LabeledContent(title) {
                 Text("\(Int(value.wrappedValue.rounded()))\(temperatureUnit.symbol)")
                     .font(.subheadline.bold())
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(.primary)
                     .accessibilityHidden(true)
             }
 
@@ -83,7 +86,7 @@ struct SingleTemperatureSlider: View {
     let temperatureUnit: TemperatureUnit
 
     private var range: ClosedRange<Double> {
-        temperatureUnit == .fahrenheit ? fahrenheitBounds : celsiusBounds
+        TemperatureSliderBounds.range(for: temperatureUnit)
     }
 
     private var temperatureInUnit: Binding<Double> {

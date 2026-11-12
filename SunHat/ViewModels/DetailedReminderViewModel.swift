@@ -28,6 +28,8 @@ final class DetailedReminderViewModel: ObservableObject {
     
     private let reminder: WeatherReminder
     private var modelContext: ModelContext?
+    // Async loads can outlive the view; keep their SwiftData backing store alive.
+    private var modelContainer: ModelContainer?
     private var weatherService = WeatherService.shared
     private var locationManager = CLLocationManager()
     private var cancellables = Set<AnyCancellable>()
@@ -52,6 +54,7 @@ final class DetailedReminderViewModel: ObservableObject {
     
     func configure(modelContext: ModelContext) {
         self.modelContext = modelContext
+        self.modelContainer = modelContext.container
         loadUserPreferences()
         loadCurrentWeather()
     }
@@ -123,6 +126,8 @@ final class DetailedReminderViewModel: ObservableObject {
     func deleteReminder() async -> Bool {
         guard let modelContext = modelContext else { return false }
         let reminderId = reminder.id
+        stopWeatherRefresh()
+        stopLivePrediction()
 
         reminder.deleteOwnedData(from: modelContext)
         guard saveContext(reindexReminder: false) else {
@@ -140,49 +145,26 @@ final class DetailedReminderViewModel: ObservableObject {
         StoreRecoveryState.shared.isWriteUnsafe
     }
 
-    func saveChanges(_ editedReminder: EditableReminder) async -> Bool {
+    func saveChanges(_ editedReminder: EditableReminder, persist: (ModelContext) throws -> Void = { try $0.save() }) async -> Bool {
         guard let modelContext = modelContext else { return false }
+
+        guard editedReminder.isValid else { return false }
 
         guard !isWriteBlocked else {
             errorMessage = String(localized: "SunHat can't save changes right now because your data couldn't be loaded. Restart SunHat to try again.", comment: "Error shown when trying to edit a reminder while the app is in temporary in-memory recovery mode")
             return false
         }
 
+        let original = EditableReminder(from: reminder)
+        let originalModified = reminder.lastModified
+        let originalLocation = reminder.location
+        let originalCondition = reminder.triggerCondition
+        let originalConfig = reminder.notificationConfig
+        let originalHours = originalConfig.map { ($0.avoidNighttime, $0.preferredStartHour, $0.preferredEndHour) }
+        let originalHistory = reminder.history
+
         do {
-            // Update reminder properties
-            reminder.title = editedReminder.title
-            reminder.reminderDescription = editedReminder.description
-            reminder.category = editedReminder.category
-            reminder.lastModified = Date()
-            
-            // Update trigger condition
-            if let condition = reminder.triggerCondition {
-                condition.triggerType = editedReminder.triggerCondition.triggerType
-                condition.targetTemperature = editedReminder.triggerCondition.targetTemperature
-                condition.comparisonType = editedReminder.triggerCondition.comparisonType
-                condition.temperatureTolerance = editedReminder.triggerCondition.temperatureTolerance
-                condition.useFeelsLike = editedReminder.triggerCondition.useFeelsLike
-                condition.minTemperature = editedReminder.triggerCondition.minTemperature
-                condition.maxTemperature = editedReminder.triggerCondition.maxTemperature
-            }
-            
-            // Update notification config, creating one for reminders saved
-            // before configs were attached at creation time.
-            let config = reminder.notificationConfig ?? {
-                let newConfig = NotificationConfig(title: "", message: "")
-                reminder.notificationConfig = newConfig
-                return newConfig
-            }()
-            config.title = editedReminder.notificationConfig.title
-            config.message = editedReminder.notificationConfig.message
-            config.cooldownPeriodHours = editedReminder.notificationConfig.cooldownPeriodHours
-            config.enableBadge = editedReminder.notificationConfig.enableBadge
-            config.enableSound = editedReminder.notificationConfig.enableSound
-            config.respectsQuietHours = editedReminder.notificationConfig.respectsQuietHours
-            let timeRange = editedReminder.notificationConfig.preferredTimeRange
-            config.avoidNighttime = timeRange != .allDay
-            config.preferredStartHour = timeRange.hours.lowerBound
-            config.preferredEndHour = timeRange.hours.upperBound
+            applyEditableValues(editedReminder)
             
             // Update location if changed
             if editedReminder.location.hasChanged {
@@ -198,7 +180,7 @@ final class DetailedReminderViewModel: ObservableObject {
             // Record the history entry before saving so it persists with the edit
             reminder.addHistoryEntry(.modified, details: String(localized: "Reminder updated", comment: "Reminder history timeline entry"))
 
-            try modelContext.save()
+            try persist(modelContext)
             SunHatSearchIndexer.index(reminder: reminder)
 
             // Reload current weather if location changed
@@ -210,10 +192,67 @@ final class DetailedReminderViewModel: ObservableObject {
             return true
             
         } catch {
+            let addedHistory = reminder.history.filter { entry in !originalHistory.contains { $0 === entry } }
+            let addedLocation = editedReminder.location.hasChanged ? reminder.location : nil
+            let addedConfig = originalConfig == nil ? reminder.notificationConfig : nil
+            let addedCondition = originalCondition == nil ? reminder.triggerCondition : nil
+            applyEditableValues(original)
+            reminder.lastModified = originalModified
+            reminder.location = originalLocation
+            reminder.notificationConfig = originalConfig
+            reminder.triggerCondition = originalCondition
+            if let originalHours, let originalConfig {
+                originalConfig.avoidNighttime = originalHours.0
+                originalConfig.preferredStartHour = originalHours.1
+                originalConfig.preferredEndHour = originalHours.2
+            }
+            reminder.history = originalHistory
+            for entry in addedHistory { modelContext.delete(entry) }
+            if let addedLocation { modelContext.delete(addedLocation) }
+            if let addedConfig { modelContext.delete(addedConfig) }
+            if let addedCondition { modelContext.delete(addedCondition) }
             logger.error("Failed to save changes: \(error.localizedDescription)")
             errorMessage = String(localized: "Failed to save changes", comment: "Error shown when edits to a reminder can't be saved")
             return false
         }
+    }
+
+    private func applyEditableValues(_ editedReminder: EditableReminder) {
+        // Update reminder properties
+        reminder.title = editedReminder.title
+        reminder.reminderDescription = editedReminder.description
+        reminder.category = editedReminder.category
+        reminder.lastModified = Date()
+
+        // Update trigger condition
+        let condition = reminder.triggerCondition ?? TriggerCondition()
+        reminder.triggerCondition = condition
+        condition.triggerType = editedReminder.triggerCondition.triggerType
+        condition.targetTemperature = editedReminder.triggerCondition.targetTemperature
+        condition.comparisonType = editedReminder.triggerCondition.comparisonType
+        condition.temperatureTolerance = editedReminder.triggerCondition.temperatureTolerance
+        condition.useFeelsLike = editedReminder.triggerCondition.useFeelsLike
+        condition.minTemperature = editedReminder.triggerCondition.minTemperature
+        condition.maxTemperature = editedReminder.triggerCondition.maxTemperature
+
+        // Update notification config, creating one for reminders saved
+        // before configs were attached at creation time.
+        let config = reminder.notificationConfig ?? {
+            let newConfig = NotificationConfig(title: "", message: "")
+            reminder.notificationConfig = newConfig
+            return newConfig
+        }()
+        config.title = editedReminder.notificationConfig.title
+        config.message = editedReminder.notificationConfig.message
+        config.cooldownPeriodHours = editedReminder.notificationConfig.cooldownPeriodHours
+        config.enableBadge = editedReminder.notificationConfig.enableBadge
+        config.enableSound = editedReminder.notificationConfig.enableSound
+        config.respectsQuietHours = editedReminder.notificationConfig.respectsQuietHours
+        let timeRange = editedReminder.notificationConfig.preferredTimeRange
+        config.avoidNighttime = timeRange != .allDay
+        config.preferredStartHour = timeRange.hours.lowerBound
+        config.preferredEndHour = timeRange.hours.upperBound
+
     }
     
     // MARK: - Private Methods
@@ -249,7 +288,8 @@ final class DetailedReminderViewModel: ObservableObject {
         let generation = loadGeneration
 
         weatherLoadTask?.cancel()
-        weatherLoadTask = Task {
+        weatherLoadTask = Task { [weak self] in
+            guard let self, !Task.isCancelled else { return }
             do {
                 guard let location = getCurrentLocation() else {
                     guard generation == loadGeneration else { return }
@@ -293,7 +333,8 @@ final class DetailedReminderViewModel: ObservableObject {
 
         let generation = loadGeneration
         predictionUpdateTask?.cancel()
-        predictionUpdateTask = Task {
+        predictionUpdateTask = Task { [weak self] in
+            guard let self, !Task.isCancelled else { return }
             do {
                 // Fetch forecast data
                 guard let location = getCurrentLocation() else {
@@ -319,16 +360,18 @@ final class DetailedReminderViewModel: ObservableObject {
         }
     }
     
-    private func calculateNextTrigger(
+    func calculateNextTrigger(
         condition: TriggerCondition,
-        forecast: [ForecastDay]
+        forecast: [ForecastDay],
+        now: Date = Date()
     ) async -> LivePrediction {
         var nextTriggerDate: Date?
         var confidence: Double = 0.0
         var matchingDays = 0
         
         // Check next 7 days
-        let sortedForecast = forecast.sorted { $0.date < $1.date }.prefix(7)
+        let startOfToday = Calendar.current.startOfDay(for: now)
+        let sortedForecast = forecast.filter { $0.date >= startOfToday }.sorted { $0.date < $1.date }.prefix(7)
         
         for day in sortedForecast {
             let weatherData = createWeatherDataFromForecast(day)
@@ -352,7 +395,8 @@ final class DetailedReminderViewModel: ObservableObject {
             totalDays: min(sortedForecast.count, 7),
             description: generatePredictionDescription(
                 nextTriggerDate: nextTriggerDate,
-                confidence: confidence
+                confidence: confidence,
+                now: now
             )
         )
     }
@@ -369,13 +413,16 @@ final class DetailedReminderViewModel: ObservableObject {
     
     private func generatePredictionDescription(
         nextTriggerDate: Date?,
-        confidence: Double
+        confidence: Double,
+        now: Date
     ) -> String {
         if let nextDate = nextTriggerDate {
             let formatter = RelativeDateTimeFormatter()
             formatter.unitsStyle = .full
             
-            let relativeString = formatter.localizedString(for: nextDate, relativeTo: Date())
+            formatter.dateTimeStyle = .named
+            let days = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: now), to: Calendar.current.startOfDay(for: nextDate))
+            let relativeString = formatter.localizedString(from: days)
             
             let confidenceText = confidence > 0.7 ? String(localized: "Very likely", comment: "Prediction confidence level for when a reminder will next trigger") :
                                 confidence > 0.4 ? String(localized: "Likely", comment: "Prediction confidence level for when a reminder will next trigger") : String(localized: "Possibly", comment: "Prediction confidence level for when a reminder will next trigger")
@@ -471,7 +518,13 @@ struct EditableTriggerCondition {
     var maxTemperature: Double?
     
     var isValid: Bool {
-        targetTemperature >= -50 && targetTemperature <= 150
+        if triggerType == .temperatureRange || comparisonType == .between {
+            guard let minTemperature, let maxTemperature else { return false }
+            return minTemperature.isFinite && maxTemperature.isFinite &&
+                (-50...150).contains(minTemperature) && (-50...150).contains(maxTemperature) &&
+                minTemperature <= maxTemperature
+        }
+        return targetTemperature.isFinite && (-50...150).contains(targetTemperature)
     }
     
     init(from condition: TriggerCondition?) {

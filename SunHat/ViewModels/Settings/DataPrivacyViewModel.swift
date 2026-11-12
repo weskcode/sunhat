@@ -426,25 +426,21 @@ final class DataPrivacyViewModel {
         UserDefaults.standard.removeObject(forKey: "hasCreatedFirstReminder")
         UserDefaults.standard.removeObject(forKey: "lastLaunchVersion")
 
-        // The mirrored Ad-Free entitlement is only a launch-time ad gate; it
-        // re-resolves from StoreKit, and while cleared ("unknown") no ads are
-        // requested, so a subscriber is never shown ads by this reset.
+        // Drop the local snapshot. StoreKit still determines subscription
+        // status; deleting app data does not cancel an App Store subscription.
         UserDefaults.standard.removeObject(forKey: StoreManager.cachedEntitlementStateKey)
 
         // Manual coordinates are persisted outside SwiftData by the location
         // service, so they need an explicit privacy-deletion boundary.
         locationPermissionManager.clearStoredLocationData()
 
+        // Clear private runtime state before notification cleanup, which can fail.
+        await runtimeDataCleaner.clearPrivacyRuntimeData()
+        URLCache.shared.removeAllCachedResponses()
+
         // Notification Center is a separate data store that can retain deleted
         // reminder titles, identifiers, and actions until explicitly cleared.
         try await notificationDataCleaner.clearAllNotificationData()
-
-        // Clear non-persistent caches and one-shot routing/evaluation state that
-        // can still contain locations or deleted reminder identifiers.
-        await runtimeDataCleaner.clearPrivacyRuntimeData()
-        
-        // Clear any cached data
-        URLCache.shared.removeAllCachedResponses()
     }
     
     private func fetchUserPreferences() async throws -> UserPreferences? {

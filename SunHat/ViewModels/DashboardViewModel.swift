@@ -34,8 +34,21 @@ final class DashboardViewModel: ObservableObject {
     @Published var currentWeatherData: WeatherDataTransfer?
     @Published var forecastData: [ForecastDay] = []
     @Published var activeReminders: [WeatherReminderDisplay] = []
-    @Published var activeAlerts: [WeatherAlertDisplay] = []
     @Published var hasWeatherData = false
+    @Published private(set) var hasDailyForecast = false
+    @Published private var reminderEvaluations: [TriggerEvaluationResult] = []
+
+    var readyReminders: [WeatherReminderDisplay] {
+        activeReminders.filter { reminder in
+            reminderEvaluations.contains { result in
+                result.reminderId == reminder.id && result.triggered &&
+                    now().timeIntervalSince(result.evaluationTime) <= 15 * 60 &&
+                    result.conditionData == reminder.triggerCondition &&
+                    result.weatherData?.locationLatitude == reminder.location?.latitude &&
+                    result.weatherData?.locationLongitude == reminder.location?.longitude
+            }
+        }
+    }
     
     @Published var isLoading: Bool = false
     @Published var lastUpdateTime: Date?
@@ -53,11 +66,11 @@ final class DashboardViewModel: ObservableObject {
     }
 
     var highTemperatureDisplay: String {
-        formattedTemperature(highTemperature)
+        hasDailyForecast ? formattedTemperature(highTemperature) : "--"
     }
 
     var lowTemperatureDisplay: String {
-        formattedTemperature(lowTemperature)
+        hasDailyForecast ? formattedTemperature(lowTemperature) : "--"
     }
 
     var windSpeedDisplay: String {
@@ -90,8 +103,10 @@ final class DashboardViewModel: ObservableObject {
     
     private var modelContext: ModelContext?
     private var weatherModelActor: WeatherModelActor?
-    private var locationPermissionManager = LocationPermissionManager.shared
+    private let locationManager: any LocationManaging
     private var weatherService = WeatherService.shared
+    private let triggerEngineManager: TriggerEngineManager
+    private let now: () -> Date
     private var cancellables = Set<AnyCancellable>()
     
     private let logger = Logger(subsystem: "org.wesley.sunhat", category: "DashboardViewModel")
@@ -103,7 +118,14 @@ final class DashboardViewModel: ObservableObject {
 
     // MARK: - Initialization
 
-    init() {
+    init(
+        triggerEngineManager: TriggerEngineManager = .shared,
+        locationManager: any LocationManaging = LocationPermissionManagerAdapter(locationPermissionManager: .shared),
+        now: @escaping () -> Date = Date.init
+    ) {
+        self.triggerEngineManager = triggerEngineManager
+        self.locationManager = locationManager
+        self.now = now
         setupBindings()
         loadTemperatureUnit()
     }
@@ -117,6 +139,7 @@ final class DashboardViewModel: ObservableObject {
     func configure(modelContext: ModelContext) {
         self.modelContext = modelContext
         self.weatherModelActor = WeatherModelActor(modelContainer: modelContext.container)
+        loadActiveReminders()
         // init() already called loadTemperatureUnit(), but modelContext was
         // still nil then, so it silently fell back to the locale default and
         // never got a second chance to read the user's actual preference.
@@ -151,7 +174,7 @@ final class DashboardViewModel: ObservableObject {
                 return
             }
 
-            logger.info("Fetching weather for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+            logger.info("Fetching weather for location: \(location.coordinate.latitude, privacy: .private), \(location.coordinate.longitude, privacy: .private)")
 
             // Fetch weather data
             let weatherData = try await weatherService.fetchCurrentWeather(for: location, forceRefresh: true)
@@ -160,9 +183,8 @@ final class DashboardViewModel: ObservableObject {
             // so no MainActor.run hop is needed, these assignments are safe as-is.
             updateWeatherData(weatherData)
             loadActiveReminders()
-            loadWeatherAlerts()
-            lastUpdateTime = Date()
-            connectionStatus = .connected
+            lastUpdateTime = weatherData.timestamp
+            connectionStatus = Date().timeIntervalSince(weatherData.timestamp) < 15 * 60 ? .connected : .disconnected
 
             logger.info("Weather data refresh completed successfully")
 
@@ -171,7 +193,7 @@ final class DashboardViewModel: ObservableObject {
             // dashboard's own location), so it runs as an independent task
             // rather than blocking this refresh's own isLoading state.
             Task {
-                await TriggerEngineManager.shared.evaluateAllReminders()
+                await self.triggerEngineManager.evaluateAllReminders()
             }
 
         } catch is CancellationError {
@@ -183,7 +205,6 @@ final class DashboardViewModel: ObservableObject {
             connectionStatus = .disconnected
             if !hasWeatherData {
                 weatherDescription = String(localized: "Weather unavailable", comment: "Dashboard placeholder when no weather data could be loaded")
-                activeAlerts = []
                 forecastData = []
             }
             logger.error("Weather data refresh failed: \(error)")
@@ -192,24 +213,32 @@ final class DashboardViewModel: ObservableObject {
         isLoading = false
     }
     
+    func weatherData(for reminder: WeatherReminderDisplay) -> WeatherDataTransfer? {
+        guard let weather = currentWeatherData, let location = reminder.location else { return nil }
+        let reminderLocation = CLLocation(latitude: location.latitude, longitude: location.longitude)
+        let weatherLocation = CLLocation(latitude: weather.locationLatitude, longitude: weather.locationLongitude)
+        guard reminderLocation.distance(from: weatherLocation) <= 1_000 else { return nil }
+        return weather
+    }
+
     // MARK: - Private Methods
     
     private func setupBindings() {
         // Weather service bindings, use RunLoop.main as the Combine scheduler
         // so Swift 6 can verify we're delivering on the @MainActor thread.
-        weatherService.$isLoading
-            .receive(on: RunLoop.main)
-            .assign(to: \.isLoading, on: self)
-            .store(in: &cancellables)
-
         weatherService.$lastUpdateTime
             .receive(on: RunLoop.main)
-            .assign(to: \.lastUpdateTime, on: self)
+            .sink { [weak self] in self?.lastUpdateTime = $0 }
             .store(in: &cancellables)
 
         weatherService.$connectionStatus
             .receive(on: RunLoop.main)
-            .assign(to: \.connectionStatus, on: self)
+            .sink { [weak self] in self?.connectionStatus = $0 }
+            .store(in: &cancellables)
+
+        triggerEngineManager.$evaluationResults
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in self?.reminderEvaluations = $0 }
             .store(in: &cancellables)
 
         // Reactive updates when SwiftData model context saves.
@@ -239,9 +268,10 @@ final class DashboardViewModel: ObservableObject {
     }
     
     private func refreshWeatherDataIfNeeded() async {
-        // Only refresh if data is older than 10 minutes
-        guard let lastUpdate = lastUpdateTime,
-              Date().timeIntervalSince(lastUpdate) > 600 else {
+        // Retry an initial failure as well as weather older than 10 minutes.
+        guard !isLoading else { return }
+        if let lastUpdate = lastUpdateTime,
+           Date().timeIntervalSince(lastUpdate) <= 600 {
             return
         }
         
@@ -267,73 +297,14 @@ final class DashboardViewModel: ObservableObject {
             }
         }
 
-        // 2) Check if the shared manager already has a manual location
-        if let manual = locationPermissionManager.manualLocation {
-            let loc = CLLocation(latitude: manual.coordinate.latitude, longitude: manual.coordinate.longitude)
-            currentLocationName = LocationDisplayFormatter.privacyPreservingName(from: manual.displayName)
-            return loc
+        if let resolved = await locationManager.currentLocation() {
+            currentLocationName = resolved.name
+            return resolved.location
         }
-
-        // 3) Check if we already have a GPS location
-        if let loc = locationPermissionManager.currentLocation {
-            await updateLocationName(for: loc)
-            return loc
-        }
-
-        // 4) Request GPS location and wait with timeout
-        if locationPermissionManager.authorizationStatus == .authorizedWhenInUse ||
-           locationPermissionManager.authorizationStatus == .authorizedAlways {
-            locationPermissionManager.getCurrentLocation()
-
-            if let loc = await waitForCurrentLocation() {
-                await updateLocationName(for: loc)
-                return loc
-            }
-        }
-
-        // 5) Last resort: request permission and wait briefly for a resulting location.
-        // The system permission callback is not guaranteed in tests or edge cases, so
-        // avoid waiting on an unbounded continuation here.
-        if locationPermissionManager.authorizationStatus == .notDetermined {
-            locationPermissionManager.requestLocationPermission { _ in }
-
-            if let loc = await waitForCurrentLocation() {
-                await updateLocationName(for: loc)
-                return loc
-            }
-        }
-
-        // 6) No usable location; the caller shows an explicit error state.
-        logger.warning("Could not obtain location")
         currentLocationName = String(localized: "Location Unavailable", comment: "Dashboard location label when no location can be determined")
         return nil
     }
 
-    private func waitForCurrentLocation(maxAttempts: Int = 20) async -> CLLocation? {
-        for _ in 0..<maxAttempts {
-            do {
-                try await Task.sleep(for: .milliseconds(500))
-            } catch {
-                return nil
-            }
-
-            if let loc = locationPermissionManager.currentLocation {
-                return loc
-            }
-
-            if locationPermissionManager.authorizationStatus == .denied ||
-                locationPermissionManager.authorizationStatus == .restricted {
-                return nil
-            }
-        }
-
-        return nil
-    }
-    
-    private func updateLocationName(for location: CLLocation) async {
-        currentLocationName = await LocationDisplayFormatter.reverseGeocodedName(for: location)
-    }
-    
     @MainActor
     private func updateWeatherData(_ weatherData: WeatherData) {
         currentWeatherData = ModelDataConverter.convertWeatherData(weatherData)
@@ -344,7 +315,9 @@ final class DashboardViewModel: ObservableObject {
         windSpeed = weatherData.windSpeed
         visibility = weatherData.visibility
         uvIndex = weatherData.uvIndex
-        weatherDescription = weatherData.weatherDescription
+        weatherDescription = weatherData.weatherDescription.isEmpty
+            ? weatherData.weatherCondition.displayName
+            : weatherData.weatherDescription
         
         updateWeatherIcon(for: weatherData.weatherCondition)
         loadForecastData(from: weatherData)
@@ -390,17 +363,15 @@ final class DashboardViewModel: ObservableObject {
     }
     
     private func updateHighLowTemperatures() {
-        guard let todayForecast = forecastData.first else {
-            // Use current temperature as fallback
-            highTemperature = currentTemperature
-            lowTemperature = currentTemperature
+        guard let todayForecast = forecastData.first(where: { Calendar.current.isDateInToday($0.date) }) else {
+            hasDailyForecast = false
             return
         }
-        
+        hasDailyForecast = true
         highTemperature = convertTemperature(todayForecast.highTemperature)
         lowTemperature = convertTemperature(todayForecast.lowTemperature)
     }
-    
+
     private func loadActiveReminders() {
         guard let weatherModelActor = weatherModelActor else { 
             logger.error("WeatherModelActor not available")
@@ -432,80 +403,6 @@ final class DashboardViewModel: ObservableObject {
                 }
             }
         }
-    }
-    
-    /// SunHat's own threshold-based advisories derived from current conditions.
-    /// These are NOT official government or WeatherKit severe-weather alerts, so
-    /// titles are branded as SunHat advisories and each states its threshold.
-    private func loadWeatherAlerts() {
-        guard let weatherData = currentWeatherData else { return }
-
-        var alerts: [WeatherAlertDisplay] = []
-
-        // Temperature alerts
-        if weatherData.temperature < 32 {
-            alerts.append(WeatherAlertDisplay(
-                id: UUID(),
-                timestamp: Date(),
-                title: "SunHat Frost Advisory",
-                description: "Current temperature is below SunHat's 32°F advisory threshold.",
-                severity: WeatherAlertSeverity.moderate,
-                type: .frost,
-                area: "Local Area",
-                instructions: "Protect plants and pets from freezing temperatures",
-                expiresAt: Calendar.current.date(byAdding: .hour, value: 6, to: Date()),
-                isActive: true
-            ))
-        }
-
-        if weatherData.temperature > 95 {
-            alerts.append(WeatherAlertDisplay(
-                id: UUID(),
-                timestamp: Date(),
-                title: "SunHat Heat Advisory",
-                description: "Current temperature is above SunHat's 95°F advisory threshold.",
-                severity: WeatherAlertSeverity.moderate,
-                type: .heat,
-                area: "Local Area",
-                instructions: "Stay hydrated and avoid prolonged outdoor activities",
-                expiresAt: Calendar.current.date(byAdding: .hour, value: 8, to: Date()),
-                isActive: true
-            ))
-        }
-
-        // Wind alerts
-        if weatherData.windSpeed > 25 {
-            alerts.append(WeatherAlertDisplay(
-                id: UUID(),
-                timestamp: Date(),
-                title: "SunHat Wind Advisory",
-                description: "Sustained winds are above SunHat's 25 mph advisory threshold.",
-                severity: WeatherAlertSeverity.moderate,
-                type: .wind,
-                area: "Local Area",
-                instructions: "Secure outdoor objects and avoid driving high-profile vehicles",
-                expiresAt: Calendar.current.date(byAdding: .hour, value: 4, to: Date()),
-                isActive: true
-            ))
-        }
-
-        // UV alerts
-        if weatherData.uvIndex > 7 {
-            alerts.append(WeatherAlertDisplay(
-                id: UUID(),
-                timestamp: Date(),
-                title: "SunHat UV Advisory",
-                description: "Current UV index is above SunHat's advisory threshold of 7.",
-                severity: WeatherAlertSeverity.moderate,
-                type: .uv,
-                area: "Local Area",
-                instructions: "Use SPF 30+ sunscreen, wear protective clothing, and seek shade",
-                expiresAt: Calendar.current.date(byAdding: .hour, value: 6, to: Date()),
-                isActive: true
-            ))
-        }
-
-        activeAlerts = alerts
     }
     
     private func loadTemperatureUnit() {

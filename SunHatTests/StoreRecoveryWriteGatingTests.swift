@@ -88,7 +88,7 @@ struct ReminderWriteGatingTests {
     }
 
     @Test("Creating a reminder while write-blocked fails with a clear error and saves nothing")
-    func createReminderBlockedDuringRecovery() throws {
+    func createReminderBlockedDuringRecovery() async throws {
         StoreRecoveryState.shared.resetForTesting()
         defer { StoreRecoveryState.shared.resetForTesting() }
         StoreRecoveryState.shared.setLevelForTesting(.inMemoryFallback)
@@ -103,7 +103,7 @@ struct ReminderWriteGatingTests {
         viewModel.selectManualLocation(location)
 
         #expect(viewModel.isWriteBlocked == true)
-        #expect(viewModel.createReminder() == false)
+        #expect(await viewModel.createReminder() == false)
         #expect(viewModel.creationErrorMessage != nil)
 
         let reminders = try modelContext.fetch(FetchDescriptor<WeatherReminder>())
@@ -111,7 +111,7 @@ struct ReminderWriteGatingTests {
     }
 
     @Test("Creating a reminder succeeds normally once recovery clears")
-    func createReminderSucceedsAfterRecoveryClears() throws {
+    func createReminderSucceedsAfterRecoveryClears() async throws {
         StoreRecoveryState.shared.resetForTesting()
         defer { StoreRecoveryState.shared.resetForTesting() }
 
@@ -125,7 +125,7 @@ struct ReminderWriteGatingTests {
         viewModel.selectManualLocation(location)
 
         #expect(viewModel.isWriteBlocked == false)
-        #expect(viewModel.createReminder() == true)
+        #expect(await viewModel.createReminder() == true)
 
         let reminders = try modelContext.fetch(FetchDescriptor<WeatherReminder>())
         #expect(reminders.count == 1)

@@ -21,7 +21,8 @@ final class PaywallScreenshotTests: XCTestCase {
         // Argument-domain defaults: skip onboarding deterministically.
         app.launchArguments += [
             "-hasCompletedOnboarding", "YES",
-            "-hasCreatedFirstReminder", "YES"
+            "-hasCreatedFirstReminder", "YES",
+            "-sunhatDisableAdSDK"
         ]
         app.launch()
 

@@ -33,9 +33,7 @@ struct DashboardView: View {
                             .offset(y: cardsVisible || reduceMotion ? 0 : 16)
                             .animation(SunHatMotion.reveal(reduceMotion: reduceMotion), value: cardsVisible)
 
-                        NextReadyReminderCompactView(
-                            snapshot: NextReadyReminderSelector.snapshot(from: viewModel.activeReminders)
-                        )
+                        nextReminderSection
                         .opacity(cardsVisible ? 1 : 0)
                         .offset(y: cardsVisible || reduceMotion ? 0 : 16)
                         .animation(SunHatMotion.reveal(reduceMotion: reduceMotion, delay: 0.05), value: cardsVisible)
@@ -69,6 +67,22 @@ struct DashboardView: View {
         }
     }
 
+    @ViewBuilder
+    private var nextReminderSection: some View {
+        let snapshot = NextReadyReminderSelector.snapshot(from: viewModel.activeReminders, matchingReminderIDs: Set(viewModel.readyReminders.map(\.id)), temperatureUnit: viewModel.temperatureUnit)
+        if let id = snapshot.id {
+            NavigationLink {
+                NotificationReminderDestination(reminderID: id)
+            } label: {
+                NextReadyReminderCompactView(snapshot: snapshot)
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Opens task details.")
+        } else {
+            NextReadyReminderCompactView(snapshot: snapshot)
+        }
+    }
+
     // MARK: - Active Reminders Section
 
     private var readyNowSection: some View {
@@ -84,7 +98,7 @@ struct DashboardView: View {
                     message: String(localized: "Create a weather task and SunHat will watch for matching conditions.", comment: "Empty state message when the user has no weather tasks"),
                     systemImage: "bell.slash"
                 )
-            } else if viewModel.activeAlerts.isEmpty {
+            } else if viewModel.readyReminders.isEmpty {
                 SunHatEmptyState(
                     title: String(localized: "Nothing Ready Right Now", comment: "Empty state title when no active tasks currently match the weather"),
                     message: String(localized: "SunHat is still watching your active tasks and will notify you when the weather matches.", comment: "Empty state message when no active tasks currently match the weather"),
@@ -92,8 +106,13 @@ struct DashboardView: View {
                 )
             } else {
                 LazyVStack(spacing: 8) {
-                    ForEach(Array(viewModel.activeAlerts.prefix(2)), id: \.id) { alert in
-                        WeatherAlertCard(alert: alert)
+                    ForEach(Array(viewModel.readyReminders.prefix(2)), id: \.id) { reminder in
+                        NavigationLink {
+                            NotificationReminderDestination(reminderID: reminder.id)
+                        } label: {
+                            ActiveReminderCard(reminder: reminder, weatherData: viewModel.weatherData(for: reminder), temperatureUnit: viewModel.temperatureUnit)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -117,7 +136,13 @@ struct DashboardView: View {
             } else {
                 LazyVStack(spacing: 12) {
                     SwiftUI.ForEach(Array(viewModel.activeReminders.prefix(3)), id: \.id) { reminder in
-                        ActiveReminderCard(reminder: reminder, weatherData: viewModel.currentWeatherData, temperatureUnit: viewModel.temperatureUnit)
+                        NavigationLink {
+                            NotificationReminderDestination(reminderID: reminder.id)
+                        } label: {
+                            ActiveReminderCard(reminder: reminder, weatherData: viewModel.weatherData(for: reminder), temperatureUnit: viewModel.temperatureUnit)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityHint("Opens task details.")
                     }
 
                     if viewModel.activeReminders.count > 3 {

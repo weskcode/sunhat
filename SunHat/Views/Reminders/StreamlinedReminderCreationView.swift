@@ -17,6 +17,7 @@ struct StreamlinedReminderCreationView: View {
 
     var onReminderCreated: (() -> Void)?
 
+    @State private var creationTask: Task<Void, Never>?
     @State private var showLocationPicker = false
     @State private var didCreateReminder = false
 
@@ -41,9 +42,11 @@ struct StreamlinedReminderCreationView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 32)
+                .disabled(viewModel.isCreatingReminder)
             }
             .background(Color(.systemBackground))
             .scrollIndicators(.hidden)
+            .onDisappear { creationTask?.cancel() }
             .navigationTitle("New Task")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -51,9 +54,15 @@ struct StreamlinedReminderCreationView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Create", action: createReminder)
-                        .fontWeight(.semibold)
-                        .disabled(!viewModel.isReminderValid || viewModel.isWriteBlocked)
+                    Button(action: createReminder) {
+                        if viewModel.isCreatingReminder {
+                            ProgressView("Saving")
+                        } else {
+                            Text("Create")
+                        }
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(!viewModel.isReminderValid || viewModel.isWriteBlocked || viewModel.isCreatingReminder)
                 }
             }
         }
@@ -182,11 +191,14 @@ struct StreamlinedReminderCreationView: View {
     // MARK: - Actions
 
     private func createReminder() {
-        guard viewModel.createReminder() else { return }
-
-        didCreateReminder = true
-        onReminderCreated?()
-        dismiss()
+        guard creationTask == nil else { return }
+        creationTask = Task {
+            defer { creationTask = nil }
+            guard await viewModel.createReminder(), !Task.isCancelled else { return }
+            didCreateReminder = true
+            onReminderCreated?()
+            dismiss()
+        }
     }
 }
 

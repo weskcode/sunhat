@@ -18,7 +18,7 @@ struct EditableTriggerConditionsView: View {
                     .foregroundStyle(.primary)
 
                 Picker("Trigger Type", selection: $condition.triggerType) {
-                    ForEach(TriggerType.allCases, id: \.self) { type in
+                    ForEach(TriggerType.allCases.filter { $0 == .exactTemperature || $0 == .temperatureRange || $0 == condition.triggerType }, id: \.self) { type in
                         Text(type.displayName).tag(type)
                     }
                 }
@@ -31,49 +31,82 @@ struct EditableTriggerConditionsView: View {
                     .fontWeight(.medium)
                     .foregroundStyle(.primary)
 
-                VStack(spacing: 8) {
-                    HStack {
-                        Text("Target Temperature")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                if condition.triggerType == .temperatureRange || condition.comparisonType == .between {
+                    TemperatureRangeSlider(minTemp: minimumTemperature, maxTemp: maximumTemperature, temperatureUnit: temperatureUnit)
+                } else {
+                    VStack(spacing: 8) {
+                        HStack {
+                            Text("Target Temperature")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
 
-                        Spacer()
+                            Spacer()
 
-                        Text("\(displayTemperature)°\(temperatureUnit.symbol.dropFirst())")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.blue)
+                            Text("\(displayTemperature)°\(temperatureUnit.symbol.dropFirst())")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.blue)
+                        }
+
+                        Slider(
+                            value: targetTemperatureInUnit,
+                            in: sliderRange,
+                            step: 1
+                        )
+                        .tint(temperatureColor(for: condition.targetTemperature))
                     }
 
-                    Slider(
-                        value: targetTemperatureInUnit,
-                        in: sliderRange,
-                        step: 1
-                    )
-                    .tint(temperatureColor(for: condition.targetTemperature))
                 }
 
-                Picker("Comparison", selection: $condition.comparisonType) {
-                    ForEach(ComparisonType.allCases, id: \.self) { type in
-                        Text(type.displayName).tag(type)
+                if condition.triggerType != .temperatureRange {
+                    Picker("Comparison", selection: $condition.comparisonType) {
+                        ForEach(ComparisonType.allCases, id: \.self) { type in
+                            Text(type.displayName).tag(type)
+                        }
                     }
+                    .pickerStyle(.segmented)
                 }
-                .pickerStyle(.segmented)
+
 
                 Toggle("Use 'feels like' temperature", isOn: $condition.useFeelsLike)
                     .font(.caption)
             }
         }
+        .onAppear {
+            if condition.triggerType == .temperatureRange || condition.comparisonType == .between { prepareRange() }
+        }
+        .onChange(of: condition.comparisonType) { _, comparison in
+            if comparison == .between { prepareRange() }
+        }
+        .onChange(of: condition.triggerType) { _, type in
+            if type == .temperatureRange {
+                prepareRange()
+            } else if condition.comparisonType == .between {
+                condition.comparisonType = .equals
+            }
+        }
+    }
+
+    private func prepareRange() {
+        condition.minTemperature = condition.minTemperature ?? condition.targetTemperature
+        condition.maxTemperature = condition.maxTemperature ?? condition.targetTemperature
+        condition.comparisonType = .between
+    }
+
+    private var minimumTemperature: Binding<Double> {
+        Binding(get: { condition.minTemperature ?? condition.targetTemperature }, set: { condition.minTemperature = $0 })
+    }
+
+    private var maximumTemperature: Binding<Double> {
+        Binding(get: { condition.maxTemperature ?? condition.targetTemperature }, set: { condition.maxTemperature = $0 })
     }
 
     private var displayTemperature: Int {
         temperatureUnit.roundedFromFahrenheit(condition.targetTemperature)
     }
 
-    /// The slider range below is the same physical range (0-110°F) expressed
-    /// in each unit, so switching units never changes what's reachable.
     private var sliderRange: ClosedRange<Double> {
-        temperatureUnit == .fahrenheit ? 0...110 : -18...44
+        TemperatureSliderBounds.range(for: temperatureUnit)
     }
 
     private var targetTemperatureInUnit: Binding<Double> {

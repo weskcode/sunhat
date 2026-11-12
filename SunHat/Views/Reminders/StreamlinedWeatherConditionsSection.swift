@@ -90,32 +90,26 @@ struct StreamlinedWeatherConditionsSection: View {
 
             HStack(spacing: 6) {
                 Image(systemName: sky.icon)
-                    .font(.caption)
-                    .foregroundStyle(isSelected && !isExcluded ? .white : sky.color)
-
+                    .foregroundStyle(sky.color)
+                    .accessibilityHidden(true)
                 Text(sky.displayName)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(isSelected && !isExcluded ? .white : .primary)
-                    .strikethrough(isExcluded, pattern: .solid, color: .secondary)
+                    .strikethrough(isExcluded)
+                Image(systemName: isSelected ? (isExcluded ? "minus.circle.fill" : "checkmark.circle.fill") : "circle")
+                    .accessibilityHidden(true)
             }
+            .font(.subheadline)
+            .foregroundStyle(.primary)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
+            .frame(minHeight: 44)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(
-                        isExcluded
-                            ? Color(.tertiarySystemBackground)
-                            : (isSelected ? sky.color.opacity(0.85) : Color(.tertiarySystemBackground))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(isExcluded ? Color.secondary.opacity(0.4) : .clear, lineWidth: 1.5)
-                    )
+                    .fill(isSelected ? Color(.secondarySystemFill) : Color(.tertiarySystemBackground))
             )
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(sky.displayName), \(viewModel.customReminder.selectedSkyConditions.contains(sky) ? "selected" : "not selected")")
+        .accessibilityAddTraits(viewModel.customReminder.selectedSkyConditions.contains(sky) ? .isSelected : [])
     }
 
     // MARK: - Temperature Controls
@@ -133,7 +127,7 @@ struct StreamlinedWeatherConditionsSection: View {
                 Text("\(unit.roundedFromFahrenheit(viewModel.customReminder.minTemperature))° - \(unit.roundedFromFahrenheit(viewModel.customReminder.maxTemperature))\(unit.symbol)")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(viewModel.customReminder.selectedColor)
+                    .foregroundStyle(.primary)
             }
 
             TemperatureRangeSlider(
@@ -157,7 +151,7 @@ struct StreamlinedWeatherConditionsSection: View {
                 Text("\(unit.roundedFromFahrenheit(viewModel.customReminder.minTemperature))\(unit.symbol)")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(viewModel.customReminder.selectedColor)
+                    .foregroundStyle(.primary)
             }
 
             SingleTemperatureSlider(

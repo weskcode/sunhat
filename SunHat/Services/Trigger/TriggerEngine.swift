@@ -214,7 +214,7 @@ actor TriggerEngine {
             return results
             
         } catch {
-            logger.warning("Failed to fetch weather data for location \(location.coordinate.latitude),\(location.coordinate.longitude): \(error)")
+            logger.warning("Failed to fetch weather data for location \(location.coordinate.latitude, privacy: .private),\(location.coordinate.longitude, privacy: .private): \(error)")
             return []
         }
     }
@@ -229,7 +229,12 @@ actor TriggerEngine {
     ) async -> TriggerEvaluationResult? {
         
         // Check cache first
-        if let cachedResult = getCachedResult(for: reminderId) {
+        if weatherData == nil,
+           let cachedResult = getCachedResult(for: reminderId),
+           cachedResult.conditionData == conditionData,
+           let cachedWeather = cachedResult.weatherData,
+           cachedWeather.locationLatitude == location.coordinate.latitude,
+           cachedWeather.locationLongitude == location.coordinate.longitude {
             return cachedResult
         }
         
@@ -423,7 +428,7 @@ extension TriggerEngine {
         case .equals:
             let difference = abs(currentTemp - targetTemp)
             triggered = difference <= tolerance
-            confidence = max(0.0, 1.0 - (difference / tolerance))
+            confidence = tolerance > 0 ? max(0.0, 1.0 - (difference / tolerance)) : (triggered ? 1.0 : 0.0)
             triggerReason = triggered ?
                 String(localized: "Temperature \(String(format: "%.1f", currentTemp))° matches target \(String(format: "%.1f", targetTemp))° (±\(String(format: "%.1f", tolerance))°)", comment: "Notification body: current temperature matches the target within tolerance") :
                 String(localized: "Temperature \(String(format: "%.1f", currentTemp))° differs from target \(String(format: "%.1f", targetTemp))° by \(String(format: "%.1f", difference))°", comment: "Notification body: current temperature misses the target by some amount")
@@ -488,7 +493,7 @@ extension TriggerEngine {
             let distanceFromMin = currentTemp - minTemp
             let distanceFromMax = maxTemp - currentTemp
             let minDistance = min(distanceFromMin, distanceFromMax)
-            confidence = min(1.0, minDistance / (rangeWidth * 0.1)) // 10% of range for full confidence
+            confidence = rangeWidth > 0 ? min(1.0, minDistance / (rangeWidth * 0.1)) : 1.0
         } else {
             confidence = 0.0
         }
