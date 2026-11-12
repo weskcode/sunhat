@@ -162,7 +162,9 @@ increments it, and writes the result into the built product's
 `CFBundleVersion`. `buildnumber.txt` is gitignored and local to your
 machine. Every upload needs a unique build number against the same
 `MARKETING_VERSION`, if an upload is rejected as a duplicate, bump the
-file and archive again.
+file and archive again. Xcode Cloud builds use the cloud run number
+instead, so before a manual upload after a cloud build, raise the local
+number above the latest cloud build.
 
 ### Export compliance
 

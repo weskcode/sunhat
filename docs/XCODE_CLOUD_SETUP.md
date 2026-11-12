@@ -22,8 +22,12 @@ in the Xcode GUI.
   (`xcshareddata/xcschemes/`), which Xcode Cloud requires to see them.
 - The Release build phase (`Set Build Number`) checks for `CI_BUILD_NUMBER`
   first and uses it as `CFBundleVersion` when set. Xcode Cloud sets that
-  variable automatically, so no extra configuration is needed for build
-  numbering once a workflow exists.
+  variable automatically and stamps the same run number again at export.
+  The run number is per product, not per workflow, and starts at 1. If an
+  upload fails with "The bundle version must be higher than the previously
+  uploaded version", raise Next Build Number for the product in App Store
+  Connect (Xcode Cloud, then the product's Settings). An offset in the
+  build phase does not help, because export overwrites it.
 - `.gitignore` excludes `buildnumber.txt` (the local-only fallback) and
   `ci_scripts/` isn't needed for this project: dependencies are a single
   SPM package (Google Mobile Ads) that Xcode Cloud resolves on its own, no
